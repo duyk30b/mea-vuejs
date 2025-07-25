@@ -114,8 +114,8 @@ const handleSave = async () => {
       paymentItemData: {
         moneyTopUpAdd: 0,
         payDebt: receiptPaymentList.value
-          .map((i) => ({ receiptId: i.receipt.id, amount: i.money }))
-          .filter((i) => i.amount > 0),
+          .map((i) => ({ receiptId: i.receipt.id, paidAmount: i.money }))
+          .filter((i) => i.paidAmount > 0),
       },
     })
     AlertStore.addSuccess(`NCC ${distributor.value.fullName} thanh toán thành công`)

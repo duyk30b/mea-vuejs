@@ -150,14 +150,19 @@ const handleSave = async () => {
         paymentItemData: {
           moneyTopUpAdd: moneyTopUp.value,
           payDebt: payDebtTicketList.value
-            .map((i) => ({ ticketId: i.ticket.id, amount: i.money }))
-            .filter((i) => i.amount > 0),
+            .map((i) => ({ ticketId: i.ticket.id, paidAmount: i.money }))
+            .filter((i) => i.paidAmount > 0),
           prepayment: prepaymentTicket.value
             ? {
                 ticketId: prepaymentTicket.value.ticket.id,
                 itemList: [
                   {
-                    amount: prepaymentTicket.value.money,
+                    paidAmount: prepaymentTicket.value.money,
+                    expectedPrice: prepaymentTicket.value.money,
+                    actualPrice: prepaymentTicket.value.money,
+                    quantity: 1,
+                    discountMoney: 0,
+                    discountPercent: 0,
                     ticketItemId: 0,
                     paymentInteractId: 0,
                     voucherItemType: PaymentVoucherItemType.Other,

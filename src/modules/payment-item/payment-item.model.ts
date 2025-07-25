@@ -37,6 +37,11 @@ export class PaymentItem {
   voucherItemId: number
   paymentInteractId: number
 
+  expectedPrice: number // Số tiền thu
+  actualPrice: number // Số tiền thu
+  quantity: number // Số tiền thu
+  discountMoney: number // Số tiền thu
+  discountPercent: number // Số tiền thu
   paidAmount: number // Số tiền thu
   debtAmount: number // Số tiền thu
   openDebt: number // Số tiền thu
@@ -64,6 +69,11 @@ export class PaymentItem {
     ins.id = 0
     ins.paymentId = 0
     ins.voucherId = 0
+    ins.expectedPrice = 0
+    ins.actualPrice = 0
+    ins.discountMoney = 0
+    ins.discountPercent = 0
+    ins.quantity = 1
     ins.paidAmount = 0
     ins.debtAmount = 0
     ins.openDebt = 0

@@ -86,7 +86,12 @@ const startPrepayment = async () => {
             ticketId: ticketClone.value.id,
             itemList: [
               {
-                amount: money.value,
+                paidAmount: money.value,
+                expectedPrice: money.value,
+                actualPrice: money.value,
+                quantity: 1,
+                discountMoney: 0,
+                discountPercent: 0,
                 ticketItemId: 0,
                 paymentInteractId: 0,
                 voucherItemType: PaymentVoucherItemType.Other,
@@ -141,7 +146,7 @@ const startPayDebt = async () => {
           moneyTopUpAdd: 0,
           payDebt: [
             {
-              amount: money.value,
+              paidAmount: money.value,
               ticketId: ticketClone.value.id,
             },
           ],

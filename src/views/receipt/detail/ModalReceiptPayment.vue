@@ -89,9 +89,15 @@ const handlePayment = async () => {
             receiptId: receipt.value.id,
             itemList: [
               {
-                amount: money.value,
+                paidAmount: money.value,
+                expectedPrice: money.value,
+                actualPrice: money.value,
+                quantity: 1,
+                discountMoney: 0,
+                discountPercent: 0,
                 receiptItemId: 0,
                 voucherItemType: PaymentVoucherItemType.Other,
+                paymentInteractId: 0,
               },
             ],
           },
@@ -115,7 +121,7 @@ const handlePayment = async () => {
           moneyTopUpAdd: 0,
           payDebt: [
             {
-              amount: money.value,
+              paidAmount: money.value,
               receiptId: receipt.value.id,
             },
           ],

@@ -96,8 +96,8 @@ const handleSave = async () => {
         paymentItemData: {
           moneyTopUpAdd: 0,
           payDebt: ticketPaymentList.value
-            .map((i) => ({ ticketId: i.ticket.id, amount: i.money }))
-            .filter((i) => i.amount > 0),
+            .map((i) => ({ ticketId: i.ticket.id, paidAmount: i.money }))
+            .filter((i) => i.paidAmount > 0),
           prepayment: undefined,
         },
       },

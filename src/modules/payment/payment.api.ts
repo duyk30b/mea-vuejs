@@ -58,14 +58,19 @@ export class PaymentApi {
       reason: string
       note: string
       paymentItemData: {
-        payDebt: { ticketId: number; amount: number }[]
+        payDebt: { ticketId: number; paidAmount: number }[]
         prepayment?: {
           ticketId: number
           itemList: {
             ticketItemId: number // nếu không chọn ticketItem thì là tạm ứng vào đơn
             voucherItemType: PaymentVoucherItemType
-            amount: number
             paymentInteractId: number
+            expectedPrice: number
+            actualPrice: number
+            quantity: number
+            discountMoney: number
+            discountPercent: number
+            paidAmount: number
           }[]
         }
         moneyTopUpAdd: number
@@ -119,13 +124,19 @@ export class PaymentApi {
     reason: string
     note: string
     paymentItemData: {
-      payDebt: { receiptId: number; amount: number }[]
+      payDebt: { receiptId: number; paidAmount: number }[]
       prepayment?: {
         receiptId: number
         itemList: {
-          amount: number
           receiptItemId: number
           voucherItemType: PaymentVoucherItemType
+          paymentInteractId: number
+          paidAmount: number
+          expectedPrice: number
+          actualPrice: number
+          quantity: number
+          discountMoney: number
+          discountPercent: number
         }[]
       }
       moneyTopUpAdd: number

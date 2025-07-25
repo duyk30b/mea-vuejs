@@ -8,8 +8,8 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer } from '@/modules/customer'
 import { PaymentMoneyStatus } from '@/modules/enum'
-import { Payment, PaymentApi } from '@/modules/payment'
-import { PaymentVoucherItemType } from '@/modules/payment-item'
+import { MoneyDirection, Payment, PaymentApi, PaymentPersonType } from '@/modules/payment'
+import { PaymentItem, PaymentVoucherItemType, PaymentVoucherType } from '@/modules/payment-item'
 import { PaymentMethodService, type PaymentMethod } from '@/modules/payment-method'
 import { PrintHtmlAction } from '@/modules/print-html'
 import { Ticket, TicketService } from '@/modules/ticket'
@@ -173,50 +173,75 @@ const startPrepayment = async (options?: { print: boolean }) => {
                 .filter(([id, value]) => !!value)
                 .map(([id, value]) => {
                   return {
-                    amount: value!.quantity * value!.actualPrice,
                     ticketItemId: value!.id,
-                    paymentInteractId: value!.procedureId,
                     voucherItemType: PaymentVoucherItemType.TicketProcedure,
+                    paymentInteractId: value!.procedureId,
+                    expectedPrice: value!.expectedPrice,
+                    actualPrice: value!.actualPrice,
+                    quantity: value!.quantity,
+                    discountMoney: value!.discountMoney,
+                    discountPercent: value!.discountPercent,
+                    paidAmount: value!.quantity * value!.actualPrice,
                   }
                 }),
               ...Object.entries(checkboxConsumable.value)
                 .filter(([id, value]) => !!value)
                 .map(([id, value]) => {
                   return {
-                    amount: value!.quantity * value!.actualPrice,
                     ticketItemId: value!.id,
                     paymentInteractId: value!.productId,
                     voucherItemType: PaymentVoucherItemType.TicketProductConsumable,
+                    expectedPrice: value!.expectedPrice,
+                    actualPrice: value!.actualPrice,
+                    quantity: value!.quantity,
+                    discountMoney: value!.discountMoney,
+                    discountPercent: value!.discountPercent,
+                    paidAmount: value!.quantity * value!.actualPrice,
                   }
                 }),
               ...Object.entries(checkboxPrescription.value)
                 .filter(([id, value]) => !!value)
                 .map(([id, value]) => {
                   return {
-                    amount: value!.quantity * value!.actualPrice,
                     ticketItemId: value!.id,
                     paymentInteractId: value!.productId,
                     voucherItemType: PaymentVoucherItemType.TicketProductPrescription,
+                    expectedPrice: value!.expectedPrice,
+                    actualPrice: value!.actualPrice,
+                    quantity: value!.quantity,
+                    discountMoney: value!.discountMoney,
+                    discountPercent: value!.discountPercent,
+                    paidAmount: value!.quantity * value!.actualPrice,
                   }
                 }),
               ...Object.entries(checkboxLaboratory.value)
                 .filter(([id, value]) => !!value)
                 .map(([id, value]) => {
                   return {
-                    amount: value!.actualPrice,
                     ticketItemId: value!.id,
                     paymentInteractId: value!.laboratoryId,
                     voucherItemType: PaymentVoucherItemType.TicketLaboratory,
+                    expectedPrice: value!.expectedPrice,
+                    actualPrice: value!.actualPrice,
+                    quantity: 1,
+                    discountMoney: value!.discountMoney,
+                    discountPercent: value!.discountPercent,
+                    paidAmount: 1 * value!.actualPrice,
                   }
                 }),
               ...Object.entries(checkboxRadiology.value)
                 .filter(([id, value]) => !!value)
                 .map(([id, value]) => {
                   return {
-                    amount: value!.actualPrice,
                     ticketItemId: value!.id,
                     paymentInteractId: value!.radiologyId,
                     voucherItemType: PaymentVoucherItemType.TicketRadiology,
+                    expectedPrice: value!.expectedPrice,
+                    actualPrice: value!.actualPrice,
+                    quantity: 1,
+                    discountMoney: value!.discountMoney,
+                    discountPercent: value!.discountPercent,
+                    paidAmount: 1 * value!.actualPrice,
                   }
                 }),
             ],
@@ -237,6 +262,127 @@ const startPrepayment = async (options?: { print: boolean }) => {
     closeModal()
   } catch (error) {
     console.log('🚀 ~ ModalPrepaymentTicketItem.vue:216 ~ startPrepayment ~ error:', error)
+  }
+}
+
+const startPint = async (options?: { print: boolean }) => {
+  try {
+    const paymentTemp = Payment.blank()
+    paymentTemp.personId = ticket.value.customerId
+    paymentTemp.paymentPersonType = PaymentPersonType.Customer
+    paymentTemp.createdAt = Date.now()
+    paymentTemp.moneyDirection = MoneyDirection.In
+    paymentTemp.money = totalMoney.value
+    paymentTemp.cashierId = MeService.user.value!.id
+    paymentTemp.reason = reason.value
+    paymentTemp.note = 'Thanh toán'
+    paymentTemp.paymentMethodId = paymentMethodId.value
+
+    const paymentItemProcedure: PaymentItem[] = Object.entries(checkboxProcedure.value)
+      .filter(([id, value]) => !!value)
+      .map(([id, value]) => {
+        const paymentItem = PaymentItem.blank()
+        paymentItem.voucherType = PaymentVoucherType.Ticket
+        paymentItem.voucherItemType = PaymentVoucherItemType.TicketProcedure
+        paymentItem.voucherItemId = value!.id
+        paymentItem.paymentInteractId = value!.procedureId
+
+        paymentItem.expectedPrice = value!.expectedPrice
+        paymentItem.actualPrice = value!.actualPrice
+        paymentItem.quantity = value!.quantity
+        paymentItem.discountMoney = value!.discountMoney
+        paymentItem.discountPercent = value!.discountPercent
+        paymentItem.paidAmount = value!.quantity * value!.actualPrice
+        return paymentItem
+      })
+
+    const paymentItemConsumable: PaymentItem[] = Object.entries(checkboxConsumable.value)
+      .filter(([id, value]) => !!value)
+      .map(([id, value]) => {
+        const paymentItem = PaymentItem.blank()
+        paymentItem.voucherType = PaymentVoucherType.Ticket
+        paymentItem.voucherItemType = PaymentVoucherItemType.TicketProductConsumable
+        paymentItem.voucherItemId = value!.id
+        paymentItem.paymentInteractId = value!.productId
+
+        paymentItem.expectedPrice = value!.expectedPrice
+        paymentItem.actualPrice = value!.actualPrice
+        paymentItem.quantity = value!.quantity
+        paymentItem.discountMoney = value!.discountMoney
+        paymentItem.discountPercent = value!.discountPercent
+        paymentItem.paidAmount = value!.quantity * value!.actualPrice
+        return paymentItem
+      })
+
+    const paymentItemPrescription: PaymentItem[] = Object.entries(checkboxPrescription.value)
+      .filter(([id, value]) => !!value)
+      .map(([id, value]) => {
+        const paymentItem = PaymentItem.blank()
+        paymentItem.voucherType = PaymentVoucherType.Ticket
+        paymentItem.voucherItemType = PaymentVoucherItemType.TicketProductPrescription
+        paymentItem.voucherItemId = value!.id
+        paymentItem.paymentInteractId = value!.productId
+
+        paymentItem.expectedPrice = value!.expectedPrice
+        paymentItem.actualPrice = value!.actualPrice
+        paymentItem.quantity = value!.quantity
+        paymentItem.discountMoney = value!.discountMoney
+        paymentItem.discountPercent = value!.discountPercent
+        paymentItem.paidAmount = value!.quantity * value!.actualPrice
+        return paymentItem
+      })
+
+    const paymentItemLaboratory: PaymentItem[] = Object.entries(checkboxLaboratory.value)
+      .filter(([id, value]) => !!value)
+      .map(([id, value]) => {
+        const paymentItem = PaymentItem.blank()
+        paymentItem.voucherType = PaymentVoucherType.Ticket
+        paymentItem.voucherItemType = PaymentVoucherItemType.TicketLaboratory
+        paymentItem.voucherItemId = value!.id
+        paymentItem.paymentInteractId = value!.laboratoryId
+
+        paymentItem.expectedPrice = value!.expectedPrice
+        paymentItem.actualPrice = value!.actualPrice
+        paymentItem.quantity = 1
+        paymentItem.discountMoney = value!.discountMoney
+        paymentItem.discountPercent = value!.discountPercent
+        paymentItem.paidAmount = 1 * value!.actualPrice
+        return paymentItem
+      })
+
+    const paymentItemRadiology: PaymentItem[] = Object.entries(checkboxRadiology.value)
+      .filter(([id, value]) => !!value)
+      .map(([id, value]) => {
+        const paymentItem = PaymentItem.blank()
+        paymentItem.voucherType = PaymentVoucherType.Ticket
+        paymentItem.voucherItemType = PaymentVoucherItemType.TicketRadiology
+        paymentItem.voucherItemId = value!.id
+        paymentItem.paymentInteractId = value!.radiologyId
+
+        paymentItem.expectedPrice = value!.expectedPrice
+        paymentItem.actualPrice = value!.actualPrice
+        paymentItem.quantity = 1
+        paymentItem.discountMoney = value!.discountMoney
+        paymentItem.discountPercent = value!.discountPercent
+        paymentItem.paidAmount = 1 * value!.actualPrice
+        return paymentItem
+      })
+
+    paymentTemp.paymentItemList = [
+      ...paymentItemProcedure,
+      ...paymentItemConsumable,
+      ...paymentItemPrescription,
+      ...paymentItemLaboratory,
+      ...paymentItemRadiology,
+    ]
+
+    const paymentPrint = await Payment.refreshData(paymentTemp)
+    await PrintHtmlAction.startPrintCustomerPayment({
+      customer: ticket.value.customer!,
+      payment: paymentPrint,
+    })
+  } catch (error) {
+    console.log('🚀 ~ ModalPrepaymentTicketItem.vue:380 ~ startPint ~ error:', error)
   }
 }
 
@@ -636,12 +782,12 @@ defineExpose({ openModal })
         <VueButton type="reset" @click="closeModal" icon="close">Đóng lại</VueButton>
         <VueButton
           color="blue"
-          @click="startPrepayment({ print: true })"
+          @click="startPint"
           icon="print"
           style="margin-left: auto"
           :disabled="disabledButtonSave"
         >
-          Thanh toán và In
+          In
         </VueButton>
         <VueButton
           color="blue"
@@ -649,7 +795,7 @@ defineExpose({ openModal })
           icon="dollar"
           :disabled="disabledButtonSave"
         >
-          Thanh toán
+          Xác nhận thanh toán
         </VueButton>
       </div>
     </div>
