@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import Breadcrumb from '../../component/Breadcrumb.vue'
-import PrintHtmlDefault from './PrintHtmlDefault.vue'
+import PrintHtmlDefault from './PrintHtmlSettingList.vue'
 import PrintHtmlList from './PrintHtmlList.vue'
 
 const TABS_KEY = {

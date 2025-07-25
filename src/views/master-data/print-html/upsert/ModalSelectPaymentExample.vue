@@ -1,18 +1,23 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-import VuePagination from '../../../../common/VuePagination.vue'
 import { IconClose } from '../../../../common/icon-antd'
-import { InputSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { PrintHtml, PrintHtmlApi, PrintHtmlService } from '../../../../modules/print-html'
-import { CONFIG } from '@/config'
+import { Ticket, TicketQueryApi, TicketType } from '../../../../modules/ticket'
+import { ESTimer } from '../../../../utils'
+import VuePagination from '../../../../common/VuePagination.vue'
+import { InputSelect } from '../../../../common/vue-form'
+import { Payment, PaymentApi } from '@/modules/payment'
+import { useSettingStore } from '@/modules/_me/setting.store'
 
 const emit = defineEmits<{
-  (e: 'select', value: PrintHtml): void
+  (e: 'select', payment: Payment): void
 }>()
 
 const showModal = ref(false)
-const printHtmlList = ref<PrintHtml[]>([])
+const paymentList = ref<Payment[]>([])
+
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const page = ref(1)
 const limit = ref(10)
@@ -22,16 +27,22 @@ let firstLoad = true
 
 const startFetchData = async () => {
   try {
-    const paginationResponse = await PrintHtmlService.pagination({
-      filter: { oid: 1 },
-      sort: { priority: 'ASC' },
+    const paginationResult = await PaymentApi.pagination({
       page: page.value,
       limit: limit.value,
+      relation: {
+        paymentItemList: true,
+        cashier: true,
+        paymentMethod: true,
+        customer: true,
+      },
+      sort: { id: 'DESC' },
     })
-    printHtmlList.value = paginationResponse.printHtmlList
-    total.value = paginationResponse.total
+
+    paymentList.value = paginationResult.paymentList
+    total.value = paginationResult.total
   } catch (error) {
-    console.log('🚀 ~ file: ModalSelectPrintHtmlExample.vue:24 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ file: ModalSelectTicketExample.vue:37 ~ startFetchData ~ error:', error)
   }
 }
 
@@ -51,11 +62,10 @@ const openModal = async () => {
 
 const closeModal = () => {
   showModal.value = false
-  printHtmlList.value = []
 }
 
-const selectPrintHtml = (pintHtml: PrintHtml) => {
-  emit('select', pintHtml)
+const selectPaymentDemo = (payment: Payment) => {
+  emit('select', payment)
   closeModal()
 }
 
@@ -66,7 +76,7 @@ defineExpose({ openModal })
   <VueModal v-model:show="showModal" style="margin-top: 50px">
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
-        <div class="flex-1 font-medium" style="font-size: 16px">Chọn mẫu in Demo</div>
+        <div class="flex-1 font-medium" style="font-size: 16px">Chọn phiếu thanh toán</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
         </div>
@@ -77,24 +87,28 @@ defineExpose({ openModal })
           <table>
             <thead>
               <tr>
-                <th v-if="CONFIG.MODE === 'development'">ID</th>
-                <th>STT</th>
-                <th>Tên</th>
+                <th>ID</th>
+                <th>Thời gian</th>
+                <th>Khách hàng</th>
+                <th>Số tiền</th>
+                <th>Note</th>
                 <th style="width: 100px">#</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-if="printHtmlList.length === 0">
+              <tr v-if="paymentList.length === 0">
                 <td colspan="20" class="text-center">Không có dữ liệu</td>
               </tr>
-              <tr v-for="printHtml in printHtmlList" :key="printHtml.id">
-                <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
-                  {{ printHtml.id }}
-                </td>
-                <td class="text-center">{{ printHtml.priority }}</td>
-                <td>{{ printHtml.name }}</td>
+              <tr v-for="payment in paymentList" :key="payment.id">
+                <td class="text-center">{{ payment.id }}</td>
                 <td class="text-center">
-                  <a @click="selectPrintHtml(printHtml)">Chọn</a>
+                  {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
+                </td>
+                <td>{{ payment.customer?.fullName }}</td>
+                <td>{{ formatMoney(payment.money) }}</td>
+                <td>{{ payment.note }}</td>
+                <td class="text-center">
+                  <a @click="selectPaymentDemo(payment)">Chọn</a>
                 </td>
               </tr>
             </tbody>

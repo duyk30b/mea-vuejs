@@ -1,3 +1,4 @@
+import { CONFIG } from '@/config'
 import { ESTimer } from '@/utils'
 
 export class ImageApi {
@@ -5,8 +6,12 @@ export class ImageApi {
     const { file, oid, customerId } = options
     const formData = new FormData()
     formData.append('file', file) // `file` là object File hoặc URL
-    formData.append('upload_preset', 'meavn-preset') // hoặc dùng api_key + signature nếu có
-    formData.append('folder', `mea-vn-${oid}`)
+    formData.append('upload_preset', 'mea-vn-preset') // hoặc dùng api_key + signature nếu có
+    if (CONFIG.MODE === 'production') {
+      formData.append('folder', `mea-vn-${CONFIG.MODE}/mea-${oid}`)
+    } else {
+      formData.append('folder', `mea-vn-${CONFIG.MODE}`)
+    }
     formData.append(
       'public_id',
       `${oid}-${customerId}-${ESTimer.timeToText(new Date(), 'YY-MM-DD-hh-mm-ss-xxx')}`,

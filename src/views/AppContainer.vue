@@ -8,6 +8,7 @@ import { AuthService } from '../modules/auth/auth.service'
 import { ProductService } from '../modules/product'
 import VueLayout from './layout/VueLayout.vue'
 import { CustomerService } from '@/modules/customer'
+import { RoomService } from '@/modules/room'
 
 const loaded = ref(false)
 
@@ -23,6 +24,7 @@ onBeforeMount(async () => {
       await MeaDatabase.runMigration()
       await MeService.initData()
       await Promise.all([ProductService.refreshDB(), CustomerService.refreshDB()])
+      await RoomService.getAll({ refetch: true })
     }
   } catch (error) {
     console.log('🚀 ~ file: AppContainer.vue:26 ~ onBeforeMount ~ error:', error)

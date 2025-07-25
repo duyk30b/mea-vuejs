@@ -1,8 +1,8 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionNumber } from '../_base/base-condition'
-import type { PrintHtmlType } from './print-html.model'
+import type { PrintHtmlType } from '../print-html/print-html.model'
 
-export class PrintHtmlGetQuery {
+export class PrintHtmlSettingGetQuery {
   page?: number
   limit?: number
   relation?: object
@@ -14,12 +14,11 @@ export class PrintHtmlGetQuery {
 
   sort?: {
     id?: 'ASC' | 'DESC'
-    priority?: 'ASC' | 'DESC'
+    printHtmlId?: 'ASC' | 'DESC'
     printHtmlType?: 'ASC' | 'DESC'
-    name?: 'ASC' | 'DESC'
   }
 
-  static toQuery(instance: Partial<PrintHtmlGetQuery>) {
+  static toQuery(instance: Partial<PrintHtmlSettingGetQuery>) {
     return {
       page: instance?.page,
       limit: instance?.limit,
@@ -30,7 +29,12 @@ export class PrintHtmlGetQuery {
   }
 }
 
-export class PrintHtmlPaginationQuery extends PrintHtmlGetQuery { }
-export class PrintHtmlGetListQuery extends OmitClass(PrintHtmlGetQuery, ['page']) { }
-export class PrintHtmlGetOneQuery extends OmitClass(PrintHtmlGetQuery, ['page', 'limit']) { }
-export class PrintHtmlDetailQuery extends PickClass(PrintHtmlGetQuery, ['relation']) { }
+export class PrintHtmlSettingPaginationQuery extends PrintHtmlSettingGetQuery { }
+export class PrintHtmlSettingGetListQuery extends OmitClass(PrintHtmlSettingGetQuery, ['page']) { }
+export class PrintHtmlSettingGetOneQuery extends OmitClass(PrintHtmlSettingGetQuery, [
+  'page',
+  'limit',
+]) { }
+export class PrintHtmlSettingDetailQuery extends PickClass(PrintHtmlSettingGetQuery, [
+  'relation',
+]) { }

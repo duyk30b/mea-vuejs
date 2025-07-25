@@ -529,12 +529,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal
-    v-model:show="showModal"
-    :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.modalStyle"
-    style="width: 1000px"
-    @close="closeModal"
-  >
+  <VueModal v-model:show="showModal" style="width: 1000px; margin-top: 40px" @close="closeModal">
     <form
       ref="ticketClinicCreateForm"
       class="bg-white"

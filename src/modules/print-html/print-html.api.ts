@@ -52,7 +52,6 @@ export class PrintHtmlApi {
     const response = await AxiosInstance.post('/print-html/create', {
       priority: printHtml.priority || 0,
       printHtmlType: printHtml.printHtmlType || 0,
-      isDefault: printHtml.isDefault || 0,
       name: printHtml.name || '',
       html: printHtml.html || '',
       css: printHtml.css || '',
@@ -67,7 +66,6 @@ export class PrintHtmlApi {
     const response = await AxiosInstance.patch(`/print-html/update/${id}`, {
       priority: printHtml.priority || 0,
       printHtmlType: printHtml.printHtmlType || 0,
-      isDefault: printHtml.isDefault || 0,
       name: printHtml.name || '',
       html: printHtml.html || '',
       css: printHtml.css || '',
@@ -86,15 +84,7 @@ export class PrintHtmlApi {
 
   static async systemList() {
     const response = await AxiosInstance.get('/print-html/system-list')
-    const { data, time } = response.data as BaseResponse
-    return PrintHtml.fromList(data)
-  }
-
-  static async saveListDefault(body: {
-    listDefault: { printHtmlType: PrintHtmlType; printHtmlId: number }[]
-  }) {
-    const response = await AxiosInstance.put('/print-html/save-list-default', body)
-    const { data, time } = response.data as BaseResponse
-    return PrintHtml.fromList(data)
+    const { data, time } = response.data as BaseResponse<{ printHtmlSystem: any[] }>
+    return PrintHtml.fromList(data.printHtmlSystem)
   }
 }

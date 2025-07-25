@@ -4,6 +4,7 @@ import { ESArray } from '../../utils'
 import { PrintHtmlApi } from './print-html.api'
 import type {
   PrintHtmlGetListQuery,
+  PrintHtmlGetOneQuery,
   PrintHtmlGetQuery,
   PrintHtmlPaginationQuery,
 } from './print-html.dto'
@@ -96,6 +97,16 @@ export class PrintHtmlService {
     return PrintHtml.fromList(data)
   }
 
+  static async getOne(query: PrintHtmlGetOneQuery, options?: { refetch: boolean }) {
+    await PrintHtmlService.fetchAll({ refetch: !!options?.refetch })
+
+    const data = PrintHtmlService.executeQuery(PrintHtmlService.printHtmlAll, query)
+    if (data.length > 0) {
+      return PrintHtml.from(data[0])
+    }
+    return null
+  }
+
   static async detail(id: number) {
     await PrintHtmlService.fetchAll()
     return PrintHtmlService.printHtmlAll.find((i) => {
@@ -119,13 +130,5 @@ export class PrintHtmlService {
     const result = await PrintHtmlApi.destroyOne(id)
     PrintHtmlService.loadedAll = false
     return result
-  }
-
-  static async saveListDefault(body: {
-    listDefault: { printHtmlId: number; printHtmlType: PrintHtmlType }[]
-  }) {
-    const response = await PrintHtmlApi.saveListDefault(body)
-    PrintHtmlService.loadedAll = false
-    return
   }
 }

@@ -46,8 +46,14 @@ const printHtmlHeader = ref(PrintHtml.blank())
 const printHtmlFooter = ref(PrintHtml.blank())
 
 onBeforeMount(async () => {
-  printHtmlHeader.value = await PrintHtmlAction.getPrintHtmlByType({ type: PrintHtmlType._HEADER })
-  printHtmlFooter.value = await PrintHtmlAction.getPrintHtmlByType({ type: PrintHtmlType._FOOTER })
+  printHtmlHeader.value = await PrintHtmlAction.getPrintHtmlByType({
+    oid: organization.value.id,
+    type: PrintHtmlType._HEADER,
+  })
+  printHtmlFooter.value = await PrintHtmlAction.getPrintHtmlByType({
+    oid: organization.value.id,
+    type: PrintHtmlType._FOOTER,
+  })
 })
 
 onMounted(async () => {
@@ -67,6 +73,7 @@ onMounted(async () => {
     // radiologySample.value.printHtmlId = 21
   }
   const printHtml = await PrintHtmlAction.getPrintHtmlByType({
+    oid: organization.value.id,
     type: PrintHtmlType.RadiologyResult,
     id: radiologySample.value.printHtmlId,
   })
@@ -101,6 +108,7 @@ const selectPrintHtml = async (printHtmlProp?: PrintHtml) => {
     radiologySample.value.printHtml = printHtmlProp
   } else {
     radiologySample.value.printHtml = await PrintHtmlAction.getPrintHtmlByType({
+      oid: organization.value.id,
       type: PrintHtmlType.RadiologyResult,
     })
   }

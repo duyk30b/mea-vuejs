@@ -84,8 +84,14 @@ onBeforeMount(async () => {
   ]
   roleOptions.value = roleAll.map((i) => ({ value: i.id, text: i.name, data: i }))
 
-  printHtmlHeader.value = await PrintHtmlAction.getPrintHtmlByType({ type: PrintHtmlType._HEADER })
-  printHtmlFooter.value = await PrintHtmlAction.getPrintHtmlByType({ type: PrintHtmlType._FOOTER })
+  printHtmlHeader.value = await PrintHtmlAction.getPrintHtmlByType({
+    oid: organization.value.id,
+    type: PrintHtmlType._HEADER,
+  })
+  printHtmlFooter.value = await PrintHtmlAction.getPrintHtmlByType({
+    oid: organization.value.id,
+    type: PrintHtmlType._FOOTER,
+  })
 })
 
 onMounted(async () => {
@@ -180,6 +186,7 @@ const handleSave = async () => {
 
 const handleSelectPrintHtml = async () => {
   radiology.value.printHtml = await PrintHtmlAction.getPrintHtmlByType({
+    oid: organization.value.id,
     id: radiology.value.printHtmlId,
     type: PrintHtmlType.RadiologyResult,
   })

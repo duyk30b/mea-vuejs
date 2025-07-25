@@ -20,8 +20,12 @@ import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalSelectPrintHtmlExample from './ModalSelectPrintHtmlExample.vue'
 import ModalSelectTicketExample from './ModalSelectTicketExample.vue'
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
+import ModalSelectPaymentExample from './ModalSelectPaymentExample.vue'
+import { Payment } from '@/modules/payment'
+import { Customer } from '@/modules/customer'
 
 const modalSelectTicketExample = ref<InstanceType<typeof ModalSelectTicketExample>>()
+const modalSelectPaymentExample = ref<InstanceType<typeof ModalSelectPaymentExample>>()
 const modalSelectPrintHtmlExample = ref<InstanceType<typeof ModalSelectPrintHtmlExample>>()
 
 const emit = defineEmits<{
@@ -42,6 +46,8 @@ const ticketDemo = ref(Ticket.blank())
 const saveLoading = ref(false)
 
 const ticketMap: Record<string, Ticket> = {}
+const paymentDemo = ref(Payment.blank())
+const customerDemo = ref(Customer.blank())
 
 let systemVarLog = {}
 
@@ -60,22 +66,21 @@ onBeforeMount(async () => {
     printHtml.value = PrintHtml.blank()
   }
 
-  const printHtmlHeaderCurrent = await PrintHtmlAction.getPrintHtmlByType({
-    type: PrintHtmlType._HEADER,
-  })
-  if (printHtmlHeaderCurrent.id !== printHtmlId) {
+  if (printHtml.value.printHtmlType !== PrintHtmlType._HEADER) {
     printHtmlHeader.value = await PrintHtmlAction.getPrintHtmlByType({
+      oid: organization.value.id,
       type: PrintHtmlType._HEADER,
     })
+  } else {
+    printHtmlHeader.value = PrintHtml.blank()
   }
-
-  const printHtmlFooterCurrent = await PrintHtmlAction.getPrintHtmlByType({
-    type: PrintHtmlType._FOOTER,
-  })
-  if (printHtmlFooterCurrent.id !== printHtmlId) {
+  if (printHtml.value.printHtmlType !== PrintHtmlType._FOOTER) {
     printHtmlFooter.value = await PrintHtmlAction.getPrintHtmlByType({
+      oid: organization.value.id,
       type: PrintHtmlType._FOOTER,
     })
+  } else {
+    printHtmlFooter.value = PrintHtml.blank()
   }
 })
 
@@ -83,8 +88,7 @@ const hasChangeData = computed(() => {
   return !PrintHtml.equal(printHtmlOrigin.value, printHtml.value)
 })
 
-const updatePreview = () => {
-  if (!ticketDemo.value.id) return
+const startCompile = () => {
   if (!iframe.value) return
   let data: Record<string, any> = {}
   const ticket = ticketDemo.value
@@ -100,31 +104,65 @@ const updatePreview = () => {
 
   let ticketRadiology: TicketRadiology = data.ticketRadiology || {}
 
+  let printHtmlCompiled: { htmlString?: string; _SYSTEM_VARIABLE?: any } | undefined = {}
+
+  const dataCompile = {
+    organization: organization.value,
+    me: user.value!,
+    ticket,
+    customer: customerDemo.value!,
+    payment: paymentDemo.value,
+    ...data,
+  }
+
+  if (printHtml.value.printHtmlType === PrintHtmlType._HEADER) {
+    printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
+      data: dataCompile,
+      template: {
+        _header: printHtml.value.html,
+        _footer: '',
+        _content: '',
+        _wrapper: '${_LAYOUT._HEADER}',
+      },
+      variablesString: [printHtml.value.initVariable],
+    })
+  } else if (printHtml.value.printHtmlType === PrintHtmlType._FOOTER) {
+    printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
+      data: dataCompile,
+      template: {
+        _header: '',
+        _footer: printHtml.value.html,
+        _content: '',
+        _wrapper: '${_LAYOUT._FOOTER}',
+      },
+      variablesString: [printHtmlHeader.value.initVariable, printHtml.value.initVariable],
+    })
+  } else {
+    printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
+      data: dataCompile,
+      template: {
+        _header: printHtmlHeader.value.html,
+        _footer: printHtmlFooter.value.html,
+        _content: ticketRadiology.description || '',
+        _wrapper: printHtml.value.html,
+      },
+      variablesString: [
+        printHtmlHeader.value.initVariable,
+        printHtmlFooter.value.initVariable,
+        printHtml.value.initVariable,
+        // ticketRadiology.customVariables, // không cho ghi đè để tránh nhầm lẫn
+      ],
+    })
+  }
+
+  systemVarLog = printHtmlCompiled?._SYSTEM_VARIABLE || {}
+  return printHtmlCompiled
+}
+
+const updatePreview = async () => {
   const doc = iframe.value?.contentDocument || iframe.value?.contentWindow?.document
   if (!doc) return
-
-  const printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
-    data: {
-      organization: organization.value,
-      me: user.value!,
-      ticket,
-      customer: ticket.customer!,
-      ...data,
-    },
-    template: {
-      _header: printHtmlHeader.value.html,
-      _footer: printHtmlFooter.value.html,
-      _content: ticketRadiology.description || '',
-      _wrapper: printHtml.value.html,
-    },
-    variablesString: [
-      printHtmlHeader.value.initVariable,
-      printHtmlFooter.value.initVariable,
-      printHtml.value.initVariable,
-      // ticketRadiology.customVariables, // không cho ghi đè để tránh nhầm lẫn
-    ],
-  })
-  systemVarLog = printHtmlCompiled?._SYSTEM_VARIABLE || {}
+  const printHtmlCompiled = startCompile()
 
   ESDom.writeWindow(doc, {
     html: printHtmlCompiled?.htmlString || '',
@@ -165,10 +203,18 @@ const handleModalSelectTicketDemoSuccess = async (ticketDemoId: number) => {
       await ticketResponse.refreshAllData()
       ticketMap[ticketDemoId] = ticketResponse
       ticketDemo.value = ticketResponse
+      customerDemo.value = ticketResponse.customer!
     } catch (error) {
       console.log('🚀 ~ PrintHtmlUpsert.vue:145  ~ error:', error)
     }
   }
+  updatePreview()
+}
+
+const handleModalSelectPaymentDemoSuccess = async (paymentData: Payment) => {
+  paymentDemo.value = Payment.from(paymentData)
+  customerDemo.value = paymentDemo.value.customer!
+  await Payment.refreshData(paymentDemo.value)
   updatePreview()
 }
 
@@ -199,28 +245,8 @@ const startTestPrint = async () => {
     const doc = iframe.value?.contentDocument || iframe.value?.contentWindow?.document
     if (!doc) return
 
-    const printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
-      data: {
-        organization: organization.value,
-        me: user.value!,
-        ticket,
-        customer: ticket.customer!,
-        ...data,
-      },
-      template: {
-        _header: printHtmlHeader.value.html,
-        _footer: printHtmlFooter.value.html,
-        _wrapper: printHtml.value.html,
-        _content: ticketRadiology.description || '',
-      },
-      variablesString: [
-        printHtmlHeader.value.initVariable,
-        printHtmlFooter.value.initVariable,
-        printHtml.value.initVariable,
-        ticketRadiology.customVariables,
-      ],
-    })
-    systemVarLog = printHtmlCompiled?._SYSTEM_VARIABLE || {}
+    const printHtmlCompiled = startCompile()
+
     ESDom.writeWindow(doc, {
       html: printHtmlCompiled?.htmlString || '',
       cssList: [
@@ -277,6 +303,10 @@ const handleSave = async () => {
     ref="modalSelectTicketExample"
     @select="handleModalSelectTicketDemoSuccess"
   />
+  <ModalSelectPaymentExample
+    ref="modalSelectPaymentExample"
+    @select="handleModalSelectPaymentDemoSuccess"
+  />
   <ModalSelectPrintHtmlExample
     ref="modalSelectPrintHtmlExample"
     @select="handleModalSelectPrintHtmlExampleSuccess"
@@ -308,21 +338,13 @@ const handleSave = async () => {
       </div>
       <div style="flex-basis: 300px; flex-grow: 1">
         <div class="flex gap-4 justify-start">
-          <span>Loại mẫu in</span>
+          <span>Loại mẫu in ({{ printHtml.printHtmlType }})</span>
         </div>
         <div>
           <InputSelect
             v-model:value="printHtml.printHtmlType"
             :options="printHtmlTypeOptions"
           ></InputSelect>
-        </div>
-      </div>
-      <div style="flex-basis: 100px">
-        <div class="flex gap-4 justify-start">
-          <span>Đặt mặc định</span>
-        </div>
-        <div class="flex items-center">
-          <VueSwitch v-model:modelValue="printHtml.isDefault" typeParser="number" required />
         </div>
       </div>
     </div>
@@ -364,7 +386,12 @@ const handleSave = async () => {
 
       <div style="grid-area: viewer" class="flex flex-col">
         <div class="flex justify-between">
-          <a @click="modalSelectTicketExample?.openModal()">Xem thử</a>
+          <div v-if="printHtml.printHtmlType === PrintHtmlType.CustomerPayment">
+            <a @click="modalSelectPaymentExample?.openModal()">Chọn mẫu thanh toán thử</a>
+          </div>
+          <div v-else>
+            <a @click="modalSelectTicketExample?.openModal()">Chọn mẫu thử</a>
+          </div>
           <a @click="startTestPrint">In thử</a>
         </div>
         <div style="flex-grow: 3; box-shadow: 4px 4px 8px 4px rgba(0, 0, 0, 0.2)">

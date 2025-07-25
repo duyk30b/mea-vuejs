@@ -82,6 +82,7 @@ onMounted(async () => {
     () => props.modelValue,
     (newVal) => {
       if (editorInstance && newVal !== currentContent) {
+        currentContent = newVal
         editorInstance.setContent(newVal || '')
       }
     },

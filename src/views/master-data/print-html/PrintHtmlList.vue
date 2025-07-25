@@ -3,20 +3,20 @@ import { VueButton } from '@/common'
 import { IconEye } from '@/common/icon-antd'
 import { IconSortChange } from '@/common/icon-font-awesome'
 import { IconDelete, IconEditSquare } from '@/common/icon-google'
-import { InputSelect, VueSwitch } from '@/common/vue-form'
+import { InputSelect } from '@/common/vue-form'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import VuePagination from '@/common/VuePagination.vue'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PrintHtml, PrintHtmlApi, PrintHtmlService, PrintHtmlTypeText } from '@/modules/print-html'
+import { PrintHtml, PrintHtmlService, PrintHtmlTypeText } from '@/modules/print-html'
 import { onBeforeMount, ref } from 'vue'
 
 const { userPermission, user } = MeService
 
 const printHtmlList = ref<PrintHtml[]>([])
 
-const sortColumn = ref<'id' | 'priority' | 'printHtmlType' | 'name' | 'isDefault' | ''>('')
+const sortColumn = ref<'id' | 'priority' | 'printHtmlType' | 'name' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const page = ref(1)
@@ -41,7 +41,6 @@ const startFetchData = async (options?: { refetch?: boolean }) => {
               priority: sortColumn.value === 'priority' ? sortValue.value : undefined,
               printHtmlType: sortColumn.value === 'printHtmlType' ? sortValue.value : undefined,
               name: sortColumn.value === 'name' ? sortValue.value : undefined,
-              isDefault: sortColumn.value === 'isDefault' ? sortValue.value : undefined,
             }
           : { priority: 'ASC' },
       },
@@ -64,7 +63,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   startFetchData()
 }
 
-const changeSort = async (column: 'id' | 'priority' | 'printHtmlType' | 'name' | 'isDefault') => {
+const changeSort = async (column: 'id' | 'priority' | 'printHtmlType' | 'name') => {
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
     sortValue.value = ''
@@ -138,12 +137,6 @@ const handleClickDeletePrintHtml = async (printHtml: PrintHtml) => {
               <IconSortChange :sort="sortColumn === 'printHtmlType' ? sortValue : ''" />
             </div>
           </th>
-          <th class="cursor-pointer" @click="changeSort('isDefault')">
-            <div class="flex items-center gap-1 justify-center">
-              <span>Mặc định</span>
-              <IconSortChange :sort="sortColumn === 'isDefault' ? sortValue : ''" />
-            </div>
-          </th>
           <th style="width: 100px"></th>
         </tr>
       </thead>
@@ -172,13 +165,6 @@ const handleClickDeletePrintHtml = async (printHtml: PrintHtml) => {
           <td class="text-center">{{ printHtml.priority }}</td>
           <td>{{ printHtml.name }}</td>
           <td>{{ PrintHtmlTypeText[printHtml.printHtmlType] }}</td>
-          <td class="text-center">
-            <VueSwitch
-              size="14px"
-              :modelValue="printHtml.isDefault"
-              typeParser="number"
-            ></VueSwitch>
-          </td>
           <td>
             <div
               v-if="userPermission[PermissionId.MASTER_DATA_PRINT_HTML]"

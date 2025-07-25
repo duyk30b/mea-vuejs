@@ -153,7 +153,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="width: 900px; margin-top: 100px" @close="closeModal">
+  <VueModal v-model:show="showModal" style="width: 900px; margin-top: 50px" @close="closeModal">
     <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
@@ -222,7 +222,7 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div style="flex-grow: 1; flex-basis: 45%; min-width: 600px">
+        <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
           <template v-if="checkAllInteract">
             <!-- <div><InputText :value="''" disabled /></div> -->
           </template>
@@ -295,7 +295,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          style="flex-grow: 1; flex-basis: 45%; min-width: 600px"
+          style="flex-grow: 1; flex-basis: 90%; min-width: 300px"
           class="flex flex-wrap gap-4 mb-4"
         >
           <div style="width: 100px">Chọn kiểu:</div>
@@ -311,9 +311,9 @@ defineExpose({ openModal })
         </div>
 
         <template v-if="discount.discountRepeatType === DiscountRepeatType.Weekly">
-          <div style="flex-grow: 1; flex-basis: 45%; min-width: 600px" class="flex flex-wrap gap-4">
+          <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px" class="flex flex-wrap gap-4">
             <div style="width: 100px">Ngày:</div>
-            <div style="flex: 1" class="flex flex-wrap gap-6">
+            <div style="flex-grow: 1; display: flex; flex-wrap: wrap" class="gap-6">
               <InputCheckbox :label="'Thứ 2'" v-model:value="periodsDayMap[1]" />
               <InputCheckbox :label="'Thứ 3'" v-model:value="periodsDayMap[2]" />
               <InputCheckbox :label="'Thứ 4'" v-model:value="periodsDayMap[3]" />
@@ -323,7 +323,7 @@ defineExpose({ openModal })
               <InputCheckbox :label="'Chủ nhật'" v-model:value="periodsDayMap[7]" />
             </div>
           </div>
-          <div style="flex-grow: 1; flex-basis: 45%; min-width: 600px" class="flex flex-wrap gap-4">
+          <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px" class="flex flex-wrap gap-4">
             <div style="width: 100px">Giờ:</div>
             <div style="flex: 1">
               <div
@@ -364,7 +364,7 @@ defineExpose({ openModal })
         </template>
 
         <template v-if="discount.discountRepeatType === DiscountRepeatType.Once">
-          <div style="flex-grow: 1; flex-basis: 45%; min-width: 600px" class="flex flex-wrap gap-4">
+          <div style="flex-grow: 1; flex-basis: 45%; min-width: 300px" class="flex flex-wrap gap-4">
             <div style="width: 100px">Thời gian:</div>
             <div style="flex: 1">
               <div
@@ -405,7 +405,7 @@ defineExpose({ openModal })
         </template>
 
         <div
-          style="flex-grow: 1; flex-basis: 45%; min-width: 600px"
+          style="flex-grow: 1; flex-basis: 45%; min-width: 300px"
           class="flex flex-wrap gap-4 mb-4"
         >
           <div style="width: 100px">Trạng thái:</div>

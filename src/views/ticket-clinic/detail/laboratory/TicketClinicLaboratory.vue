@@ -384,6 +384,7 @@ const startPrintRequest = async () => {
       )
     })
     .map((i) => {
+      console.log('🚀 ~ TicketClinicLaboratory.vue:387 ~ .map ~ i:', i)
       i.room = roomMap[i.roomId]
       return i
     })
@@ -577,8 +578,8 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
         </table>
       </div>
       <div class="mt-4 flex-0">
-          <div>Thời gian chỉ định</div>
-          <div><InputDate v-model:value="registeredAt" show-time /></div>
+        <div>Thời gian chỉ định</div>
+        <div><InputDate v-model:value="registeredAt" show-time /></div>
       </div>
       <div class="mt-4 flex justify-center flex-0 gap-4">
         <VueButton v-if="tlgEdit.id" @click="clear">Hủy bỏ</VueButton>
@@ -763,7 +764,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
           </template>
 
           <tr>
-            <td colspan="8" class="text-right">
+            <td :colspan="7 + (CONFIG.MODE === 'development' ? 1 : 0)" class="text-right">
               <b>Tổng tiền</b>
             </td>
             <td class="text-right">

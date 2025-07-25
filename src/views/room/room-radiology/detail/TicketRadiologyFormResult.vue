@@ -218,10 +218,10 @@ const updateResult = async (options: { print: boolean }) => {
 const resetResult = () => {
   const radiologyDefault = radiologyMap.value[ticketRadiology.value.radiologyId]
   ticketRadiology.value.printHtmlId = radiologyDefault.printHtmlId
-  ticketRadiology.value.description = radiologyDefault.descriptionDefault
-  ticketRadiology.value.result = radiologyDefault.resultDefault
-  ticketRadiology.value.customStyles = radiologyDefault.customStyles
-  ticketRadiology.value.customVariables = radiologyDefault.customVariables
+  ticketRadiology.value.description = radiologyDefault.descriptionDefault || ''
+  ticketRadiology.value.result = radiologyDefault.resultDefault || ''
+  ticketRadiology.value.customStyles = radiologyDefault.customStyles || ''
+  ticketRadiology.value.customVariables = radiologyDefault.customVariables || ''
   ticketRadiology.value.startedAt = null as any
 }
 
@@ -401,7 +401,7 @@ const startPrintDemo = async () => {
       </div>
     </div>
 
-    <div class="mt-6 flex justify-end gap-4">
+    <div class="mt-6 flex flex-wrap justify-end gap-4">
       <VueButton
         v-if="ticketRadiology.status === TicketRadiologyStatus.Completed"
         icon="close"

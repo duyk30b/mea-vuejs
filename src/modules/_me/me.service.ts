@@ -16,6 +16,7 @@ import { MeApi } from './me.api'
 import { SETTING_DEFAULT } from './setting.default'
 import { useSettingStore } from './setting.store'
 import { SettingKey } from './store.variable'
+import { UserRoomService } from '../user-room'
 
 export class MeService {
   static user = ref(LocalStorageService.getRefreshToken() ? User.blank() : null)
@@ -190,5 +191,15 @@ export class MeService {
     }
 
     return pickupStrategyMap
+  }
+
+  static async reloadRoomId(options?: { refetch?: boolean }) {
+    const userRoomAll = await UserRoomService.getAll({ refetch: options?.refetch })
+    const roomIdList = userRoomAll
+      .filter((i) => i.userId === MeService.user.value?.id)
+      .map((i) => i.roomId)
+    const roomIdMap: Record<string, boolean> = {}
+    roomIdList.forEach((roomId) => (roomIdMap[roomId] = true))
+    MeService.roomIdMap.value = roomIdMap
   }
 }

@@ -289,7 +289,7 @@ export const SETTING_DEFAULT = {
     roleIdList: [],
     requestProcedure: false,
     SCREEN: {
-      modalStyle: 'margin-top: 100px; width: 800px',
+      modalStyle: 'width: 800px',
       itemStyle: 'flex-basis: 40%; flex-grow: 1; min-width: 300px',
     },
   },

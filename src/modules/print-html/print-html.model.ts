@@ -31,7 +31,6 @@ export class PrintHtml {
   id: number
   priority: number
   printHtmlType: PrintHtmlType
-  isDefault: number
   name: string
   html: string // Dạng HTML
   css: string // Dạng HTML
@@ -44,7 +43,6 @@ export class PrintHtml {
     ins.id = 0
     ins.priority = 1
     ins.printHtmlType = 0 as any
-    ins.isDefault = 0
     ins.name = ''
     ins.html = ''
     ins.css = ''
@@ -85,7 +83,6 @@ export class PrintHtml {
     if (a.id != b.id) return false
     if (a.priority != b.priority) return false
     if (a.printHtmlType != b.printHtmlType) return false
-    if (a.isDefault != b.isDefault) return false
     if (a.name != b.name) return false
     if (a.html != b.html) return false
     if (a.css != b.css) return false

@@ -49,13 +49,22 @@ export class RoomService {
     return data
   }
 
-  static async executeRelation(roomList: Room[], relation: RoomGetQuery['relation']) {
+  static async executeRelation(data: {
+    roomList: Room[]
+    relation: RoomGetQuery['relation']
+    options?: { refetch?: boolean }
+  }) {
     try {
+      const { relation, roomList, options } = data
       const roomIdList = roomList.map((i) => i.id)
 
       const [userRoomAll, userMap] = await Promise.all([
-        relation?.userRoomList ? UserRoomService.getAll() : <UserRoom[]>[],
-        relation?.userRoomList?.user ? UserService.getMap() : <Record<string, User>>{},
+        relation?.userRoomList
+          ? UserRoomService.getAll({ refetch: !!options?.refetch })
+          : <UserRoom[]>[],
+        relation?.userRoomList?.user
+          ? UserService.getMap({ refetch: !!options?.refetch })
+          : <Record<string, User>>{},
       ])
 
       roomList.forEach((room) => {
@@ -83,29 +92,25 @@ export class RoomService {
     return RoomService.roomList.value
   }
 
-  static async pagination(
-    query: RoomPaginationQuery,
-    options?: { refetch?: boolean; query?: boolean },
-  ) {
-    if (options?.query) {
-      const queryResponse = RoomApi.pagination(query)
-      return queryResponse
-    } else {
-      const page = query.page || 1
-      const limit = query.limit || 10
-      await RoomService.fetchAll({ refetch: !!options?.refetch })
+  static async pagination(query: RoomPaginationQuery, options?: { refetch?: boolean }) {
+    const page = query.page || 1
+    const limit = query.limit || 10
+    await RoomService.fetchAll({ refetch: !!options?.refetch })
 
-      const dataQuery = RoomService.executeQuery(RoomService.roomList.value, query)
-      const data = dataQuery.slice((page - 1) * limit, page * limit)
+    const dataQuery = RoomService.executeQuery(RoomService.roomList.value, query)
+    const data = dataQuery.slice((page - 1) * limit, page * limit)
 
-      if (query.relation) {
-        await RoomService.executeRelation(data, query.relation)
-      }
+    if (query.relation) {
+      await RoomService.executeRelation({
+        roomList: data,
+        relation: query.relation,
+        options: { refetch: options?.refetch },
+      })
+    }
 
-      return {
-        roomList: Room.fromList(data),
-        total: dataQuery.length,
-      }
+    return {
+      roomList: Room.fromList(data),
+      total: dataQuery.length,
     }
   }
 
@@ -113,7 +118,11 @@ export class RoomService {
     await RoomService.fetchAll({ refetch: !!options?.refetch })
     const data = RoomService.executeQuery(RoomService.roomList.value, query)
     if (query.relation) {
-      await RoomService.executeRelation(data, query.relation)
+      await RoomService.executeRelation({
+        roomList: data,
+        relation: query.relation,
+        options: { refetch: options?.refetch },
+      })
     }
     return Room.fromList(data)
   }

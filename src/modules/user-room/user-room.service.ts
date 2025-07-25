@@ -42,7 +42,7 @@ export class UserRoomService {
     return UserRoomService.userRoomMapList.value
   }
 
-  static async getAll(options?: { refetch: boolean }) {
+  static async getAll(options?: { refetch?: boolean }) {
     await UserRoomService.fetchAll({ refetch: !!options?.refetch })
     return UserRoomService.userRoomAll.value
   }

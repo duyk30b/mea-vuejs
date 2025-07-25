@@ -3,6 +3,7 @@ import { ESDom } from '../../utils'
 import { MeService } from '../_me/me.service'
 import type { Customer } from '../customer'
 import type { Payment } from '../payment/payment.model'
+import { PrintHtmlSettingService } from '../print-html-setting'
 import type { Ticket } from '../ticket'
 import type { TicketLaboratory } from '../ticket-laboratory'
 import type { TicketLaboratoryGroup } from '../ticket-laboratory-group'
@@ -12,25 +13,42 @@ import { PrintHtml, PrintHtmlType } from './print-html.model'
 import { PrintHtmlService } from './print-html.service'
 
 export class PrintHtmlAction {
-  static async getPrintHtmlByType(options: { type: PrintHtmlType; id?: number }) {
-    const printHtmlAll = await PrintHtmlService.getAll()
-    const printHtmlList = printHtmlAll.filter((i) => {
-      return i.printHtmlType === options.type || !i.printHtmlType
-    })
-
-    let printHtml: PrintHtml | undefined
+  static async getPrintHtmlByType(options: { oid: number; type: PrintHtmlType; id?: number }) {
+    let printHtml: PrintHtml | null | undefined
     if (options.id) {
-      printHtml = printHtmlList.find((i) => i.id === options.id)
+      // nếu có id thì lấy theo id trước (chấp nhận lấy của oid = 1)
+      printHtml = await PrintHtmlService.getOne({
+        filter: { printHtmlType: options.type, id: options.id },
+      })
     }
     if (!printHtml) {
-      printHtml = printHtmlList.find((i) => i.oid !== 1 && i.isDefault)
+      // nếu không có id, hoặc có id mà ko lấy được, thì lấy theo mặc định
+      const printHtmlSetting = await PrintHtmlSettingService.getOne({
+        filter: { oid: options.oid, printHtmlType: options.type },
+      })
+      if (printHtmlSetting) {
+        printHtml = await PrintHtmlService.getOne({
+          filter: { printHtmlType: options.type, id: printHtmlSetting.printHtmlId },
+        })
+      }
     }
     if (!printHtml) {
-      printHtml = printHtmlList.find((i) => i.oid === 1 && i.isDefault)
+      // nếu lấy theo mặc định mà vẫn không được thì lấy mặc định của hệ thống
+      const printHtmlSettingSystem = await PrintHtmlSettingService.getOne({
+        filter: { oid: 1, printHtmlType: options.type },
+      })
+      if (printHtmlSettingSystem) {
+        printHtml = await PrintHtmlService.getOne({
+          filter: { printHtmlType: options.type, id: printHtmlSettingSystem.printHtmlId },
+        })
+      }
     }
     if (!printHtml) {
-      printHtmlList.sort((a, b) => (a < b ? -1 : 1))
-      printHtml = printHtmlList[0]
+      // nếu lấy theo hệ thống mà vẫn báo lỗi, thì lấy 1 cái bất kỳ cùng type
+      printHtml = await PrintHtmlService.getOne({
+        filter: { printHtmlType: options.type },
+        sort: { id: 'ASC' },
+      })
     }
 
     return printHtml ? PrintHtml.from(printHtml) : PrintHtml.blank()
@@ -42,12 +60,15 @@ export class PrintHtmlAction {
 
     try {
       const printHtmlHeader = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._HEADER,
       })
       const printHtmlFooter = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._FOOTER,
       })
       const printHtmlWrapper = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType.ProcedureRequest,
       })
 
@@ -94,12 +115,15 @@ export class PrintHtmlAction {
     const { organization, user } = MeService
     try {
       const printHtmlHeader = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._HEADER,
       })
       const printHtmlFooter = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._FOOTER,
       })
       const printHtmlWrapper = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType.Prescription,
       })
 
@@ -150,12 +174,15 @@ export class PrintHtmlAction {
     const { organization, user } = MeService
     try {
       const printHtmlHeader = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._HEADER,
       })
       const printHtmlFooter = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._FOOTER,
       })
       const printHtmlWrapper = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType.LaboratoryRequest,
       })
 
@@ -208,12 +235,15 @@ export class PrintHtmlAction {
     try {
       let printHtmlId = ticketLaboratoryGroup.laboratoryGroup?.printHtmlId || 0
       const printHtmlHeader = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._HEADER,
       })
       const printHtmlFooter = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._FOOTER,
       })
       const printHtmlWrapper = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType.LaboratoryResult,
         id: printHtmlId,
       })
@@ -266,12 +296,15 @@ export class PrintHtmlAction {
     const { organization, user } = MeService
     try {
       const printHtmlHeader = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._HEADER,
       })
       const printHtmlFooter = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._FOOTER,
       })
       const printHtmlWrapper = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType.RadiologyRequest,
       })
 
@@ -325,11 +358,14 @@ export class PrintHtmlAction {
       let printHtmlId = ticketRadiologyData.printHtmlId
       const printHtmlHeader = await PrintHtmlAction.getPrintHtmlByType({
         type: PrintHtmlType._HEADER,
+        oid: organization.value.id,
       })
       const printHtmlFooter = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._FOOTER,
       })
       const printHtmlWrapper = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType.RadiologyResult,
         id: printHtmlId,
       })
@@ -384,12 +420,15 @@ export class PrintHtmlAction {
     const { organization, user } = MeService
     try {
       const printHtmlHeader = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._HEADER,
       })
       const printHtmlFooter = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._FOOTER,
       })
       const printHtmlWrapper = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType.Invoice,
       })
 
@@ -432,12 +471,15 @@ export class PrintHtmlAction {
     const { organization, user } = MeService
     try {
       const printHtmlHeader = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._HEADER,
       })
       const printHtmlFooter = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._FOOTER,
       })
       const printHtmlWrapper = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType.Optometry,
       })
 
@@ -484,12 +526,15 @@ export class PrintHtmlAction {
     const { organization, user } = MeService
     try {
       const printHtmlHeader = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._HEADER,
       })
       const printHtmlFooter = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType._FOOTER,
       })
       const printHtmlWrapper = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
         type: PrintHtmlType.CustomerPayment,
       })
 

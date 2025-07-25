@@ -219,7 +219,7 @@ const updateTicketLaboratory = async () => {
 defineExpose({ openModal })
 </script>
 <template>
-  <VueModal v-model:show="showModal" style="width: 800px; margin-top: 100px">
+  <VueModal v-model:show="showModal" style="width: 800px; margin-top: 50px">
     <div class="bg-white">
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">

@@ -35,7 +35,7 @@ const handleCancel = async (func: () => Promise<void>, key: string) => {
   <template v-for="(modal, key) in ModalStore.data" :key="key">
     <VueModal
       v-model:show="modal.show"
-      style="width: 520px; margin-top: 100px"
+      style="width: 520px; margin-top: 50px"
       @update:show="(v) => handleUpdateShowModal(v, key)"
     >
       <div class="bg-white">

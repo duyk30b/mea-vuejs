@@ -24,7 +24,7 @@ const total = ref(0)
 
 const dataLoading = ref(false)
 
-const startFetchData = async (options?: { refetch?: boolean; query?: boolean }) => {
+const startFetchData = async (options?: { refetch?: boolean }) => {
   try {
     dataLoading.value = true
 
@@ -36,7 +36,7 @@ const startFetchData = async (options?: { refetch?: boolean; query?: boolean }) 
         filter: {},
         sort: { id: 'ASC' },
       },
-      { refetch: options?.refetch, query: options?.query },
+      { refetch: options?.refetch },
     )
 
     roomList.value = paginationResponse.roomList
@@ -61,11 +61,12 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 }
 
 onBeforeMount(async () => {
-  await startFetchData({ query: true })
+  await startFetchData({ refetch: true })
 })
 
 const handleModalRoomUpsertSuccess = async (data: Room, type: 'CREATE' | 'UPDATE' | 'DESTROY') => {
-  await startFetchData({ query: true })
+  await startFetchData({ refetch: true })
+  await MeService.reloadRoomId()
 }
 </script>
 
