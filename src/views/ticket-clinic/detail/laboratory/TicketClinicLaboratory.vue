@@ -647,7 +647,9 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   <VueButton
                     v-if="
                       ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                      tlg.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
+                      [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
+                        tlg.paymentMoneyStatus,
+                      ) &&
                       userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
                     "
                     size="small"
@@ -669,7 +671,9 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   v-if="
                     tlg.id &&
                     tlg.status === TicketLaboratoryStatus.Pending &&
-                    tlg.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
+                    [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
+                      tlg.paymentMoneyStatus,
+                    ) &&
                     userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
                   "
                   style="color: var(--text-red)"

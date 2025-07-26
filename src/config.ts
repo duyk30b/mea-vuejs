@@ -10,7 +10,7 @@ export const CONFIG = reactive({
   BUILD_TIME: '',
 })
   ; (window as any)._MEA_CONFIG = CONFIG
-// CONFIG.API_URL = 'https://api.medihome.vn'
+CONFIG.API_URL = 'https://api.medihome.vn'
 
 const loadConfig = async () => {
   try {

@@ -54,6 +54,62 @@ export class PrintHtmlAction {
     return printHtml ? PrintHtml.from(printHtml) : PrintHtml.blank()
   }
 
+  static async startPrintAllRequest(options: { ticket: Ticket; customer: Customer }) {
+    const { customer, ticket } = options
+    const { organization, user } = MeService
+
+    try {
+      const printHtmlHeader = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
+        type: PrintHtmlType._HEADER,
+      })
+      const printHtmlFooter = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
+        type: PrintHtmlType._FOOTER,
+      })
+      const printHtmlWrapper = await PrintHtmlAction.getPrintHtmlByType({
+        oid: organization.value.id,
+        type: PrintHtmlType.AllRequest,
+      })
+
+      if (!printHtmlHeader || !printHtmlWrapper || !printHtmlWrapper.html) {
+        return AlertStore.addError('Cài đặt in thất bại')
+      }
+
+      const printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
+        data: {
+          organization: organization.value,
+          me: user.value!,
+          ticket,
+          customer,
+        },
+        template: {
+          _header: printHtmlHeader.html,
+          _footer: printHtmlFooter.html,
+          _wrapper: printHtmlWrapper.html,
+          _content: '',
+        },
+        variablesString: [
+          printHtmlHeader.initVariable,
+          printHtmlFooter.initVariable,
+          printHtmlWrapper.initVariable,
+        ],
+      })
+
+      if (!printHtmlCompiled?.htmlString) {
+        AlertStore.addError('Mẫu in không hợp lệ')
+        return
+      }
+
+      await ESDom.startPrint('iframe-print', {
+        html: printHtmlCompiled?.htmlString || '',
+        cssList: [printHtmlHeader.css, printHtmlFooter.css, printHtmlWrapper.css],
+      })
+    } catch (error) {
+      console.log('🚀 ~ print-html.action.ts:227 ~ PrintHtmlAction ~ error:', error)
+    }
+  }
+
   static async startPrintRequestProcedure(options: { ticket: Ticket; customer: Customer }) {
     const { customer, ticket } = options
     const { organization, user } = MeService

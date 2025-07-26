@@ -1,33 +1,36 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
+import VueButton from '@/common/VueButton.vue'
 import {
+  IconCalendar,
   IconClockCircle,
   IconDollar,
   IconFileSearch,
   IconPhone,
+  IconPrint,
   IconSend,
   IconWarning,
-} from '../../../common/icon-antd'
-import { InputOptions } from '../../../common/vue-form'
-import type { ItemOption } from '../../../common/vue-form/InputOptions.vue'
-import { VueDivider } from '../../../common/vue-layout'
-import { CONFIG } from '../../../config'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Appointment } from '../../../modules/appointment'
-import { Customer, CustomerService } from '../../../modules/customer'
-import { PaymentViewType } from '../../../modules/enum'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { TicketStatus } from '../../../modules/ticket'
-import { ESString, ESTimer } from '../../../utils'
+} from '@/common/icon-antd'
+import { InputOptions } from '@/common/vue-form'
+import type { ItemOption } from '@/common/vue-form/InputOptions.vue'
+import { VueDivider } from '@/common/vue-layout'
+import { CONFIG } from '@/config'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Appointment } from '@/modules/appointment'
+import { Customer, CustomerService } from '@/modules/customer'
+import { PaymentViewType } from '@/modules/enum'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { PrintHtmlAction } from '@/modules/print-html'
+import { ticketRoomRef } from '@/modules/room/room.ref'
+import { TicketStatus } from '@/modules/ticket'
+import { ESString, ESTimer } from '@/utils'
+import { onMounted, ref } from 'vue'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
+import ModalTicketClinicPayment from '../../reception/reception-ticket/modal/ModalTicketClinicPayment.vue'
 import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 import TicketClinicDeliveryStatusTag from '../TicketClinicDeliveryStatusTag.vue'
-import ModalTicketClinicPayment from '../../reception/reception-ticket/modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicRegisterAppointment from './modal/ModalTicketClinicRegisterAppointment.vue'
-import { MeService } from '../../../modules/_me/me.service'
-import { ticketRoomRef } from '@/modules/room/room.ref'
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -97,6 +100,14 @@ const handleClickModalRegisterAppointment = () => {
   }
 
   modalTicketClinicRegisterAppointment.value?.openModal(toAppointment)
+}
+
+const clickPrintAllRequest = async () => {
+  await ticketRoomRef.value.refreshAllData()
+  await PrintHtmlAction.startPrintAllRequest({
+    ticket: ticketRoomRef.value,
+    customer: ticketRoomRef.value.customer!,
+  })
 }
 </script>
 <template>
@@ -177,6 +188,12 @@ const handleClickModalRegisterAppointment = () => {
       <div>
         <TicketStatusTag :ticket="ticketRoomRef" />
       </div>
+    </div>
+    <div class="mt-2 flex gap-4 items-center justify-center">
+      <VueButton color="red" @click="clickPrintAllRequest">
+        <IconPrint />
+        In tất cả chỉ định dịch vụ
+      </VueButton>
     </div>
     <VueDivider class="my-6"></VueDivider>
     <div class="mt-2 flex gap-4 items-center justify-between">
@@ -270,6 +287,7 @@ const handleClickModalRegisterAppointment = () => {
       </div>
       <div v-if="!ticketRoomRef.toAppointment">
         <VueButton size="small" color="blue" @click="handleClickModalRegisterAppointment">
+          <IconCalendar />
           Tạo lịch hẹn
         </VueButton>
       </div>

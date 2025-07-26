@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
-import { InputCheckbox, InputMoney, InputSelect } from '@/common/vue-form'
+import { InputCheckbox, InputMoney, InputSelect, InputText } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
@@ -32,7 +32,7 @@ const dataLoading = ref(false)
 const ticket = ref(Ticket.blank())
 
 const paymentMethodId = ref<number>(0)
-const reason = ref('')
+const note = ref('')
 const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
 const paymentMethodMap = ref<Record<string, PaymentMethod>>({})
 const pickAll = ref(false)
@@ -115,7 +115,7 @@ const openModal = async (options: { ticketId: number; customer: Customer }) => {
 
 const closeModal = () => {
   showModal.value = false
-  reason.value = ''
+  note.value = ''
   paymentMethodId.value = 0
   ticket.value = Ticket.blank()
   pickAll.value = false
@@ -159,8 +159,8 @@ const startPrepayment = async (options?: { print: boolean }) => {
     const { paymentCreated } = await PaymentApi.customerPayment({
       body: {
         customerId: ticket.value.customerId,
-        reason: reason.value,
-        note: 'Thanh toán',
+        note: note.value,
+        reason: 'Thanh toán',
         paymentMethodId: paymentMethodId.value,
         totalMoney: totalMoney.value,
         paymentItemData: {
@@ -274,8 +274,8 @@ const startPint = async (options?: { print: boolean }) => {
     paymentTemp.moneyDirection = MoneyDirection.In
     paymentTemp.money = totalMoney.value
     paymentTemp.cashierId = MeService.user.value!.id
-    paymentTemp.reason = reason.value
-    paymentTemp.note = 'Thanh toán'
+    paymentTemp.note = note.value
+    paymentTemp.reason = 'Thanh toán'
     paymentTemp.paymentMethodId = paymentMethodId.value
 
     const paymentItemProcedure: PaymentItem[] = Object.entries(checkboxProcedure.value)
@@ -772,6 +772,16 @@ defineExpose({ openModal })
                   required
                   disabled
                 />
+              </div>
+            </div>
+          </div>
+          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+            <div class="flex flex-wrap justify-between">
+              <span>Ghi chú</span>
+            </div>
+            <div>
+              <div class="flex">
+                <InputText v-model:value="note" />
               </div>
             </div>
           </div>

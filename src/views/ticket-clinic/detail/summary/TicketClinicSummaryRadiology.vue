@@ -13,7 +13,7 @@ import { TicketRadiologyStatus } from '../../../../modules/ticket-radiology'
 import ModalRadiologyDetail from '../../../master-data/radiology/detail/ModalRadiologyDetail.vue'
 import ModalTicketRadiologyUpdateMoney from '../radiology/ModalTicketRadiologyUpdateMoney.vue'
 import { Discount } from '@/modules/discount'
-import { DiscountType } from '@/modules/enum'
+import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
 import { ticketRoomRef } from '@/modules/room'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadiologyStatusTooltip.vue'
@@ -51,7 +51,10 @@ const radiologyCostAmount = computed(() => {
         <th>#</th>
         <th></th>
         <th></th>
-        <th colspan="4">CHẨN ĐOÁN HÌNH ẢNH</th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th colspan="1">CHẨN ĐOÁN HÌNH ẢNH</th>
         <th>Giá</th>
         <th>Chiết khấu</th>
         <th>Tổng tiền</th>
@@ -112,6 +115,9 @@ const radiologyCostAmount = computed(() => {
           <a
             v-if="
               ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+              [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
+                ticketRadiology.paymentMoneyStatus,
+              ) &&
               userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST]
             "
             class="text-orange-500"

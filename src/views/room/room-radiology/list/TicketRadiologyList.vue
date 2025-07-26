@@ -236,7 +236,7 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
             :options="customerList.map((i) => ({ value: i.id, text: i.fullName, data: i }))"
             :maxHeight="260"
             placeholder="Tên hoặc Số Điện Thoại"
-            @selectItem="({ data }) => selectCustomer(data)"
+            @selectItem="(item) => selectCustomer(item.data)"
             @onFocusinFirst="handleFocusFirstSearchCustomer"
             @update:text="searchingCustomer"
           >

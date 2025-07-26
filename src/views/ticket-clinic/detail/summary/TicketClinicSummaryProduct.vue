@@ -15,6 +15,7 @@ import ModalTicketClinicConsumableUpdate from '../consumable/ModalTicketClinicCo
 import ModalTicketClinicPrescriptionUpdate from '../prescription/ModalTicketClinicPrescriptionUpdate.vue'
 import { ticketRoomRef } from '@/modules/room'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import { PaymentMoneyStatus } from '@/modules/enum'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalTicketClinicConsumableUpdate =
@@ -71,6 +72,122 @@ const prescriptionCostAmount = computed(() => {
   <ModalProductDetail ref="modalProductDetail" />
   <ModalTicketClinicConsumableUpdate ref="modalTicketClinicConsumableUpdate" />
   <ModalTicketClinicPrescriptionUpdate ref="modalTicketClinicPrescriptionUpdate" />
+
+  <template v-if="ticketRoomRef.ticketProductConsumableList?.length">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th style="width: 32px"></th>
+        <th style="width: 32px"></th>
+        <th colspan="1">VẬT TƯ</th>
+        <th></th>
+        <th>Đ.Vị</th>
+        <th>SL</th>
+        <th>Giá</th>
+        <th>Chiết khấu</th>
+        <th>Tổng tiền</th>
+        <th></th>
+        <th v-if="CONFIG.MODE === 'development'" class="text-right italic">Vốn</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        v-for="(tpConsumable, tpConsumableIndex) in ticketRoomRef.ticketProductConsumableList"
+        :key="tpConsumable.id + '_' + tpConsumableIndex"
+      >
+        <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
+          {{ tpConsumableIndex + 1 }}
+        </td>
+        <td>
+          <PaymentMoneyStatusTooltip :paymentMoneyStatus="tpConsumable.paymentMoneyStatus" />
+        </td>
+        <td class="text-center">
+          <TicketDeliveryStatusTooltip :deliveryStatus="tpConsumable.deliveryStatus" />
+        </td>
+        <td colspan="2">
+          <div class="flex items-center gap-1" style="font-weight: 500">
+            <span>{{ tpConsumable.product?.brandName }}</span>
+            <a style="line-height: 0" @click="modalProductDetail?.openModal(tpConsumable.product!)">
+              <IconFileSearch />
+            </a>
+          </div>
+          <div v-if="tpConsumable.product?.substance" class="text-xs italic">
+            {{ tpConsumable.product.substance }}
+          </div>
+          <div v-for="tb in tpConsumable.ticketBatchList || []" :key="tb.id">
+            <div
+              v-if="tb.batchId && tb.batch?.lotNumber && tb.batch?.expiryDate"
+              class="text-xs italic"
+            >
+              Lô {{ tb.batch?.lotNumber }} - HSD
+              {{ ESTimer.timeToText(tb.batch?.expiryDate) }}
+            </div>
+          </div>
+        </td>
+        <td class="text-center">{{ tpConsumable.unitName }}</td>
+        <td class="text-center">{{ tpConsumable.unitQuantity }}</td>
+        <td class="text-right whitespace-nowrap">
+          <div v-if="tpConsumable.discountMoney" class="text-xs italic text-red-500">
+            <del>{{ formatMoney(tpConsumable.unitExpectedPrice) }}</del>
+          </div>
+          <div>{{ formatMoney(tpConsumable.unitActualPrice) }}</div>
+        </td>
+        <td class="text-center" style="width: 40px">
+          <div v-if="tpConsumable.discountMoney">
+            <VueTag v-if="tpConsumable.discountType === 'VNĐ'" color="green">
+              {{ formatMoney(tpConsumable.discountMoney * tpConsumable.unitRate) }}
+            </VueTag>
+            <VueTag v-if="tpConsumable.discountType === '%'" color="green">
+              {{ tpConsumable.discountPercent || 0 }}%
+            </VueTag>
+          </div>
+        </td>
+        <td class="text-right whitespace-nowrap">
+          <div v-if="tpConsumable.discountMoney" class="text-xs italic text-red-500">
+            <del>
+              {{ formatMoney(tpConsumable.unitExpectedPrice * tpConsumable.quantity) }}
+            </del>
+          </div>
+          {{ formatMoney(tpConsumable.actualPrice * tpConsumable.quantity) }}
+        </td>
+        <td class="text-center">
+          <a
+            v-if="
+              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+              [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
+                tpConsumable.paymentMoneyStatus,
+              ) &&
+              userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
+            "
+            class="text-orange-500"
+            @click="modalTicketClinicConsumableUpdate?.openModal(tpConsumable)"
+          >
+            <IconEditSquare width="20" height="20" />
+          </a>
+        </td>
+        <td v-if="CONFIG.MODE === 'development'" class="text-right italic">
+          {{ formatMoney(tpConsumable.costAmount) }}
+        </td>
+      </tr>
+      <tr>
+        <td class="text-right" colspan="8">
+          <div class="flex items-center justify-end gap-2">
+            <span class="uppercase">Tiền vật tư</span>
+            <span v-if="consumableDiscount" class="italic" style="font-size: 13px">
+              (CK: {{ formatMoney(consumableDiscount) }})
+            </span>
+          </div>
+        </td>
+        <td class="font-bold text-right whitespace-nowrap">
+          {{ formatMoney(consumableMoney) }}
+        </td>
+        <td></td>
+        <td v-if="CONFIG.MODE === 'development'" class="text-right italic">
+          {{ formatMoney(consumableCostAmount) }}
+        </td>
+      </tr>
+    </tbody>
+  </template>
   <template v-if="ticketRoomRef.ticketProductPrescriptionList?.length">
     <thead>
       <tr>
@@ -158,6 +275,9 @@ const prescriptionCostAmount = computed(() => {
           <a
             v-if="
               ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+              [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
+                tpPrescription.paymentMoneyStatus,
+              ) &&
               userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
             "
             class="text-orange-500"
@@ -185,117 +305,6 @@ const prescriptionCostAmount = computed(() => {
         <td></td>
         <td v-if="CONFIG.MODE === 'development'" class="text-right italic">
           {{ formatMoney(prescriptionCostAmount) }}
-        </td>
-      </tr>
-    </tbody>
-  </template>
-  <template v-if="ticketRoomRef.ticketProductConsumableList?.length">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th style="width: 32px"></th>
-        <th style="width: 32px"></th>
-        <th colspan="2">VẬT TƯ</th>
-        <th>Đ.Vị</th>
-        <th>SL</th>
-        <th>Giá</th>
-        <th>Chiết khấu</th>
-        <th>Tổng tiền</th>
-        <th></th>
-        <th v-if="CONFIG.MODE === 'development'" class="text-right italic">Vốn</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr
-        v-for="(tpConsumable, tpConsumableIndex) in ticketRoomRef.ticketProductConsumableList"
-        :key="tpConsumable.id + '_' + tpConsumableIndex"
-      >
-        <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-          {{ tpConsumableIndex + 1 }}
-        </td>
-        <td>
-          <PaymentMoneyStatusTooltip :paymentMoneyStatus="tpConsumable.paymentMoneyStatus" />
-        </td>
-        <td class="text-center">
-          <TicketDeliveryStatusTooltip :deliveryStatus="tpConsumable.deliveryStatus" />
-        </td>
-        <td colspan="2">
-          <div class="flex items-center gap-1" style="font-weight: 500">
-            <span>{{ tpConsumable.product?.brandName }}</span>
-            <a style="line-height: 0" @click="modalProductDetail?.openModal(tpConsumable.product!)">
-              <IconFileSearch />
-            </a>
-          </div>
-          <div v-if="tpConsumable.product?.substance" class="text-xs italic">
-            {{ tpConsumable.product.substance }}
-          </div>
-          <div v-for="tb in tpConsumable.ticketBatchList || []" :key="tb.id">
-            <div
-              v-if="tb.batchId && tb.batch?.lotNumber && tb.batch?.expiryDate"
-              class="text-xs italic"
-            >
-              Lô {{ tb.batch?.lotNumber }} - HSD
-              {{ ESTimer.timeToText(tb.batch?.expiryDate) }}
-            </div>
-          </div>
-        </td>
-        <td class="text-center">{{ tpConsumable.unitName }}</td>
-        <td class="text-center">{{ tpConsumable.unitQuantity }}</td>
-        <td class="text-right whitespace-nowrap">
-          <div v-if="tpConsumable.discountMoney" class="text-xs italic text-red-500">
-            <del>{{ formatMoney(tpConsumable.unitExpectedPrice) }}</del>
-          </div>
-          <div>{{ formatMoney(tpConsumable.unitActualPrice) }}</div>
-        </td>
-        <td class="text-center" style="width: 40px">
-          <div v-if="tpConsumable.discountMoney">
-            <VueTag v-if="tpConsumable.discountType === 'VNĐ'" color="green">
-              {{ formatMoney(tpConsumable.discountMoney * tpConsumable.unitRate) }}
-            </VueTag>
-            <VueTag v-if="tpConsumable.discountType === '%'" color="green">
-              {{ tpConsumable.discountPercent || 0 }}%
-            </VueTag>
-          </div>
-        </td>
-        <td class="text-right whitespace-nowrap">
-          <div v-if="tpConsumable.discountMoney" class="text-xs italic text-red-500">
-            <del>
-              {{ formatMoney(tpConsumable.unitExpectedPrice * tpConsumable.quantity) }}
-            </del>
-          </div>
-          {{ formatMoney(tpConsumable.actualPrice * tpConsumable.quantity) }}
-        </td>
-        <td class="text-center">
-          <a
-            v-if="
-              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-              userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
-            "
-            class="text-orange-500"
-            @click="modalTicketClinicConsumableUpdate?.openModal(tpConsumable)"
-          >
-            <IconEditSquare width="20" height="20" />
-          </a>
-        </td>
-        <td v-if="CONFIG.MODE === 'development'" class="text-right italic">
-          {{ formatMoney(tpConsumable.costAmount) }}
-        </td>
-      </tr>
-      <tr>
-        <td class="text-right" colspan="8">
-          <div class="flex items-center justify-end gap-2">
-            <span class="uppercase">Tiền vật tư</span>
-            <span v-if="consumableDiscount" class="italic" style="font-size: 13px">
-              (CK: {{ formatMoney(consumableDiscount) }})
-            </span>
-          </div>
-        </td>
-        <td class="font-bold text-right whitespace-nowrap">
-          {{ formatMoney(consumableMoney) }}
-        </td>
-        <td></td>
-        <td v-if="CONFIG.MODE === 'development'" class="text-right italic">
-          {{ formatMoney(consumableCostAmount) }}
         </td>
       </tr>
     </tbody>

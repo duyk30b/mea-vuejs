@@ -1,30 +1,30 @@
 <script lang="ts" setup>
+import VueButton from '@/common/VueButton.vue'
+import { IconFileSearch, IconSpin } from '@/common/icon-antd'
+import { IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
+import { IconEditSquare } from '@/common/icon-google'
+import { InputFilter } from '@/common/vue-form'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { DeliveryStatus, PaymentMoneyStatus } from '@/modules/enum'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { PositionInteractType, PositionService } from '@/modules/position'
+import type { Product } from '@/modules/product'
+import { RoleService } from '@/modules/role'
+import { ticketRoomRef } from '@/modules/room'
+import { TicketStatus } from '@/modules/ticket'
+import { TicketClinicProductApi, TicketClinicUserApi } from '@/modules/ticket-clinic'
+import { TicketProduct } from '@/modules/ticket-product'
+import { TicketUser } from '@/modules/ticket-user'
+import { UserService } from '@/modules/user'
+import { UserRoleService } from '@/modules/user-role'
+import { ESString } from '@/utils'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import { computed, onMounted, ref, watch } from 'vue'
-import VueButton from '../../../../common/VueButton.vue'
-import { IconFileSearch, IconSpin } from '../../../../common/icon-antd'
-import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
-import { IconEditSquare } from '../../../../common/icon-google'
-import { InputFilter } from '../../../../common/vue-form'
-import { MeService } from '../../../../modules/_me/me.service'
-import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { PositionService, PositionInteractType } from '../../../../modules/position'
-import { DeliveryStatus, PaymentMoneyStatus } from '../../../../modules/enum'
-import { PermissionId } from '../../../../modules/permission/permission.enum'
-import type { Product } from '../../../../modules/product'
-import { RoleService } from '../../../../modules/role'
-import { TicketStatus } from '../../../../modules/ticket'
-import { TicketClinicProductApi, TicketClinicUserApi } from '../../../../modules/ticket-clinic'
-import { TicketProduct } from '../../../../modules/ticket-product'
-import { TicketUser } from '../../../../modules/ticket-user'
-import { UserService } from '../../../../modules/user'
-import { UserRoleService } from '../../../../modules/user-role'
-import { ESString } from '../../../../utils'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
 import TicketDeliveryStatusTooltip from '../../../ticket-base/TicketDeliveryStatusTooltip.vue'
 import ModalTicketClinicConsumableUpdate from './ModalTicketClinicConsumableUpdate.vue'
 import TicketClinicConsumableSelectItem from './TicketClinicConsumableSelectItem.vue'
-import { ticketRoomRef } from '@/modules/room'
-import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 
 const modalTicketClinicConsumableUpdate =
   ref<InstanceType<typeof ModalTicketClinicConsumableUpdate>>()
@@ -301,6 +301,9 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
               <a
                 v-else-if="
                   tpItem.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
+                  [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
+                    tpItem.paymentMoneyStatus,
+                  ) &&
                   userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
                 "
                 class="text-orange-500"

@@ -17,6 +17,7 @@ import type { TicketUser } from '../../../../modules/ticket-user'
 import ModalTicketProcedureUpdate from './ModalTicketProcedureUpdate.vue'
 import TicketClinicProcedureSelectItem from './TicketClinicProcedureSelectItem.vue'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import { PaymentMoneyStatus } from '@/modules/enum'
 
 const modalTicketProcedureUpdate = ref<InstanceType<typeof ModalTicketProcedureUpdate>>()
 
@@ -178,6 +179,7 @@ const startPrintRequest = async () => {
               <a
                 v-else-if="
                   ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                  [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(tpItem.paymentMoneyStatus) &&
                   userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST]
                 "
                 class="text-orange-500"

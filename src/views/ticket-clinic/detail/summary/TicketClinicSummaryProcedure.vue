@@ -12,6 +12,7 @@ import ModalProcedureDetail from '../../../master-data/procedure/detail/ModalPro
 import ModalTicketProcedureUpdate from '../procedure/ModalTicketProcedureUpdate.vue'
 import { ticketRoomRef } from '@/modules/room'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import { PaymentMoneyStatus } from '@/modules/enum'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalTicketProcedureUpdate = ref<InstanceType<typeof ModalTicketProcedureUpdate>>()
@@ -40,7 +41,9 @@ const procedureDiscount = computed(() => {
         <th>#</th>
         <th></th>
         <th></th>
-        <th colspan="3">DỊCH VỤ - THỦ THUẬT</th>
+        <th></th>
+        <th></th>
+        <th colspan="1">DỊCH VỤ - THỦ THUẬT</th>
         <th>SL</th>
         <th>Giá</th>
         <th>Chiết khấu</th>
@@ -94,6 +97,7 @@ const procedureDiscount = computed(() => {
           <a
             v-if="
               ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+              [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(ticketProcedure.paymentMoneyStatus) &&
               userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST]
             "
             class="text-orange-500"

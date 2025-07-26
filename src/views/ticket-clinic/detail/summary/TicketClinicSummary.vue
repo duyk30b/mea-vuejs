@@ -285,8 +285,8 @@ const startPrint = async () => {
   </div>
   <div class="mt-4 table-wrapper">
     <table>
-      <TicketClinicSummaryProduct />
       <TicketClinicSummaryProcedure v-if="organizationPermission[PermissionId.PROCEDURE]" />
+      <TicketClinicSummaryProduct />
       <TicketClinicSummaryLaboratory v-if="organizationPermission[PermissionId.LABORATORY]" />
       <TicketClinicSummaryRadiology v-if="organizationPermission[PermissionId.RADIOLOGY]" />
       <tbody>

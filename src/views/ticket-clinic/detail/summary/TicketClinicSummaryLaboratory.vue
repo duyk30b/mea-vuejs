@@ -14,6 +14,7 @@ import ModalTicketLaboratoryUpdateMoney from '../laboratory/ModalTicketLaborator
 import { ticketRoomRef } from '@/modules/room'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import TicketLaboratoryStatusTooltip from '@/views/room/room-laboratory/TicketLaboratoryStatusTooltip.vue'
+import { PaymentMoneyStatus } from '@/modules/enum'
 
 const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
@@ -46,7 +47,10 @@ const laboratoryCostAmount = computed(() => {
         <th>#</th>
         <th></th>
         <th></th>
-        <th colspan="4" style="text-transform: uppercase">Xét nghiệm</th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th colspan="1" style="text-transform: uppercase">Xét nghiệm</th>
         <th>Giá</th>
         <th>Chiết khấu</th>
         <th>Tổng tiền</th>
@@ -97,6 +101,9 @@ const laboratoryCostAmount = computed(() => {
             <a
               v-if="
                 ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
+                  tl.paymentMoneyStatus,
+                ) &&
                 userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
               "
               class="text-orange-500"
