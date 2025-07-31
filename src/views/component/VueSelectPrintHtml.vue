@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { VueSelect } from '@/common/vue-form'
 import { CONFIG } from '@/config'
-import { PrintHtml, PrintHtmlService } from '@/modules/print-html'
+import { PrintHtml, PrintHtmlService, PrintHtmlType } from '@/modules/print-html'
 import { onMounted, ref, watch } from 'vue'
 
 const emit = defineEmits<{
@@ -12,6 +12,7 @@ const emit = defineEmits<{
 const props = withDefaults(
   defineProps<{
     printHtmlId: number
+    printHtmlType: PrintHtmlType
     disabled?: boolean
     required?: boolean
     label?: string
@@ -19,6 +20,7 @@ const props = withDefaults(
   }>(),
   {
     printHtmlId: 0,
+    printHtmlType: 0 as any,
     disabled: false,
     required: false,
     label: 'Chọn mẫu in',
@@ -43,11 +45,14 @@ watch(
 )
 
 onMounted(async () => {
-  const printHtmlAll = await PrintHtmlService.list({ sort: { priority: 'ASC' } })
+  const printHtmlList = await PrintHtmlService.list({
+    filter: { printHtmlType: props.printHtmlType ? props.printHtmlType : undefined },
+    sort: { priority: 'ASC' },
+  })
 
   printHtmlOptions.value = [
     { text: 'Mặc định', value: 0, data: PrintHtml.blank() },
-    ...printHtmlAll.map((i) => {
+    ...printHtmlList.map((i) => {
       return { value: i.id, text: i.name, data: i }
     }),
   ]

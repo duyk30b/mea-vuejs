@@ -30,7 +30,7 @@ const tableNameDeleteMapDefault = {
   Organization: 0,
   User: 0,
   Appointment: 1,
-  Batch: 1,
+  Batch: 0,
   Customer: 0,
   CustomerSource: 0,
   Discount: 0,
@@ -40,11 +40,12 @@ const tableNameDeleteMapDefault = {
   LaboratoryGroup: 0,
   LaboratorySample: 0,
   Payment: 1,
-  PaymentItem: 1,
+  PaymentTicketItem: 1,
   PaymentMethod: 0,
   Position: 0,
   PrescriptionSample: 0,
   PrintHtml: 0,
+  PrintHtmlSetting: 0,
   Procedure: 0,
   ProcedureGroup: 0,
   Product: 0,
@@ -160,7 +161,7 @@ defineExpose({ openModal })
 
         <div class="mt-4">
           <h2 class="italic">
-            1. Chọn bảng Database cần update sạch (quantity = 0 hoặc deb = 0,...)
+            1. Chọn bảng Database cần update sạch (quantity = 0 hoặc debt = 0,...)
           </h2>
           <div class="mt-4 flex flex-wrap gap-4">
             <div v-for="(v, key) in tableNameClearMap" :key="key" style="width: 22%">

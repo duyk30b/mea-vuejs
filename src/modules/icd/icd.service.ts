@@ -13,11 +13,11 @@ export class ICDService {
 
   static async refreshDB() {
     try {
-      let refreshTime = await RefreshTimeDB.findOneByCode('ADDRESS')
+      let refreshTime = await RefreshTimeDB.findOneByCode('ICD')
       if (!refreshTime) {
-        refreshTime = { code: 'ADDRESS', dataVersion: 0, time: new Date(0).toISOString() }
+        refreshTime = { code: 'ICD', dataVersion: 2, time: new Date(0).toISOString() }
       }
-      const dataVersion = MeService.settingMapRoot.value.dataVersionParse?.icd || 0
+      const dataVersion = MeService.settingMapRoot.value.dataVersionParse?.icd || 2
 
       if (refreshTime.dataVersion !== dataVersion) {
         await ICDDB.truncate()
@@ -38,6 +38,7 @@ export class ICDService {
 
   // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng loadedAll
   static fetchAll = (() => {
+    console.log('🚀 ~ icd.service.ts:42 ~ ICDService ~ fetchAll:')
     const start = async () => {
       try {
         await ICDService.refreshDB()
@@ -58,6 +59,7 @@ export class ICDService {
 
   static search = ESFunction.debounceAsync(
     async (text: string, options: { limit: 20 }): Promise<ICD[]> => {
+      await ICDService.fetchAll()
       if (!text) text = ''
       const result = []
       for (let i = 0; i < ICDService.icdAll.length; i++) {

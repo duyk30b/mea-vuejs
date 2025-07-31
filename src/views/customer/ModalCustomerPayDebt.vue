@@ -86,20 +86,15 @@ const handleSave = async () => {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
 
-    const data = await PaymentApi.customerPayment({
+    const data = await PaymentApi.customerPayDebt({
       body: {
         customerId: customer.value.id,
         paymentMethodId: paymentMethodId.value,
-        reason: 'Trả nợ',
-        totalMoney: money.value,
+        paidAmount: money.value,
         note: '',
-        paymentItemData: {
-          moneyTopUpAdd: 0,
-          payDebt: ticketPaymentList.value
-            .map((i) => ({ ticketId: i.ticket.id, amount: i.money }))
-            .filter((i) => i.amount > 0),
-          prepayment: undefined,
-        },
+        dataList: ticketPaymentList.value
+          .map((i) => ({ ticketId: i.ticket.id, paidAmount: i.money }))
+          .filter((i) => i.paidAmount > 0),
       },
     })
     AlertStore.addSuccess(`Trả nợ cho KH ${customer.value.fullName} thành công`)

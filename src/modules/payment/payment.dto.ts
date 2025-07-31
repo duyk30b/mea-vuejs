@@ -1,22 +1,26 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionEnum } from '../_base/base-condition'
-import type { MoneyDirection, PaymentPersonType } from './payment.model'
+import type { MoneyDirection, PaymentPersonType, PaymentVoucherType } from './payment.model'
 
 export class PaymentGetParams {
   page?: number
   limit?: number
   relation?: {
+    ticket?: boolean
+    receipt?: boolean
     customer?: boolean
     distributor?: boolean
     employee?: boolean
     cashier?: boolean
     paymentMethod?: boolean
-    paymentItemList?: boolean
+    paymentTicketItemList?: boolean
   }
 
   filter?: {
+    voucherType?: PaymentVoucherType
+    voucherId?: number
     paymentMethodId?: number
-    paymentPersonType?: PaymentPersonType | ConditionEnum<PaymentPersonType>
+    personType?: PaymentPersonType | ConditionEnum<PaymentPersonType>
     personId?: number
     moneyDirection?: MoneyDirection | ConditionEnum<MoneyDirection>
     cashierId?: number
@@ -46,7 +50,7 @@ export class PaymentDetailQuery extends PickClass(PaymentGetParams, ['relation']
 export class PaymentResponseParams {
   response?: {
     payment?: {
-      paymentItemList?: boolean
+      paymentTicketItemList?: boolean
     }
   }
 

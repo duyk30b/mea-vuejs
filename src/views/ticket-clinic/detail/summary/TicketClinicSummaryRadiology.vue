@@ -13,7 +13,7 @@ import { TicketRadiologyStatus } from '../../../../modules/ticket-radiology'
 import ModalRadiologyDetail from '../../../master-data/radiology/detail/ModalRadiologyDetail.vue'
 import ModalTicketRadiologyUpdateMoney from '../radiology/ModalTicketRadiologyUpdateMoney.vue'
 import { Discount } from '@/modules/discount'
-import { DiscountType } from '@/modules/enum'
+import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
 import { ticketRoomRef } from '@/modules/room'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadiologyStatusTooltip.vue'
@@ -48,19 +48,26 @@ const radiologyCostAmount = computed(() => {
   <template v-if="ticketRoomRef.ticketRadiologyList?.length">
     <thead>
       <tr>
+        <th v-if="CONFIG.MODE === 'development'">ID</th>
         <th>#</th>
         <th></th>
         <th></th>
-        <th colspan="4">CHẨN ĐOÁN HÌNH ẢNH</th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th colspan="1">CHẨN ĐOÁN HÌNH ẢNH</th>
         <th>Giá</th>
         <th>Chiết khấu</th>
+        <th v-if="CONFIG.MODE === 'development'">Vốn</th>
         <th>Tổng tiền</th>
         <th></th>
-        <th v-if="CONFIG.MODE === 'development'" class="text-right italic">Vốn</th>
       </tr>
     </thead>
     <tbody>
       <tr v-for="(ticketRadiology, index) in ticketRoomRef.ticketRadiologyList" :key="index">
+        <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+          {{ ticketRadiology.id }}
+        </td>
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ index + 1 }}
         </td>
@@ -82,9 +89,6 @@ const radiologyCostAmount = computed(() => {
           </div>
         </td>
         <td class="text-right whitespace-nowrap">
-          <div v-if="CONFIG.MODE === 'development'" class="text-xs italic">
-            Vốn: {{ formatMoney(ticketRadiology.costPrice) }}
-          </div>
           <div v-if="ticketRadiology.discountMoney" class="text-xs italic text-red-500">
             <del>{{ formatMoney(ticketRadiology.expectedPrice) }}</del>
           </div>
@@ -100,6 +104,9 @@ const radiologyCostAmount = computed(() => {
             </VueTag>
           </div>
         </td>
+        <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: right">
+          {{ formatMoney(ticketRadiology.costPrice) }}
+        </td>
         <td class="text-right whitespace-nowrap">
           <div v-if="ticketRadiology.discountMoney" class="text-xs italic text-red-500">
             <del>
@@ -112,6 +119,9 @@ const radiologyCostAmount = computed(() => {
           <a
             v-if="
               ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+              [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
+                ticketRadiology.paymentMoneyStatus,
+              ) &&
               userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST]
             "
             class="text-orange-500"
@@ -122,7 +132,8 @@ const radiologyCostAmount = computed(() => {
         </td>
       </tr>
       <tr>
-        <td class="text-right" colspan="8">
+        <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet"></td>
+        <td class="text-right" colspan="9">
           <div class="flex items-center justify-end gap-2">
             <span class="uppercase">Tiền CĐHA</span>
             <span v-if="radiologyDiscount" class="italic" style="font-size: 13px">
@@ -130,13 +141,13 @@ const radiologyCostAmount = computed(() => {
             </span>
           </div>
         </td>
+        <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet;">
+          {{ formatMoney(radiologyCostAmount) }}
+        </td>
         <td class="font-bold text-right whitespace-nowrap">
           {{ formatMoney(ticketRoomRef.radiologyMoney) }}
         </td>
         <td></td>
-        <td v-if="CONFIG.MODE === 'development'" class="text-right italic">
-          {{ formatMoney(radiologyCostAmount) }}
-        </td>
       </tr>
     </tbody>
   </template>

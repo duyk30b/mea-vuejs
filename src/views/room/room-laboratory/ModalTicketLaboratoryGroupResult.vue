@@ -9,6 +9,7 @@ import { LaboratoryGroupService } from '@/modules/laboratory-group'
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import { TicketLaboratoryGroup, TicketLaboratoryGroupApi } from '@/modules/ticket-laboratory-group'
 import { TicketLaboratoryResult } from '@/modules/ticket-laboratory-result'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import { computed, ref } from 'vue'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
@@ -122,7 +123,7 @@ const updateResult = async (options: { print: boolean }) => {
       await PrintHtmlAction.startPrintResultTicketLaboratory({
         ticketLaboratoryGroup: ticketLaboratoryGroupUpdate,
         ticket: ticketLaboratoryGroupUpdate.ticket!,
-        customer: ticketLaboratoryGroupUpdate.customer!
+        customer: ticketLaboratoryGroupUpdate.customer!,
       })
     }
 
@@ -193,6 +194,7 @@ defineExpose({ openModal })
             <thead>
               <tr>
                 <th>#</th>
+                <th></th>
                 <th>Tên</th>
                 <th>Kết quả</th>
                 <th>Tham chiếu</th>
@@ -215,6 +217,9 @@ defineExpose({ openModal })
                   "
                 >
                   <td class="text-center">{{ index + 1 }}</td>
+                  <td>
+                    <PaymentMoneyStatusTooltip :paymentMoneyStatus="tlItem.paymentMoneyStatus" />
+                  </td>
                   <td>{{ laboratoryParent?.name }}</td>
                   <td>
                     <div v-if="laboratoryParent.valueType === LaboratoryValueType.Number">
@@ -269,6 +274,7 @@ defineExpose({ openModal })
                     ticketLaboratoryResultTree[laboratoryChild.id].attention ? 'color: red' : ''
                   "
                 >
+                  <td></td>
                   <td></td>
                   <td>{{ laboratoryChild?.name }}</td>
                   <td>

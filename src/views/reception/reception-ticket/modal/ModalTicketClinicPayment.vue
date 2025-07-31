@@ -1,20 +1,19 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref } from 'vue'
-import VueButton from '../../../../common/VueButton.vue'
-import { IconClose } from '../../../../common/icon-antd'
-import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputMoney, InputNumber, InputSelect, InputText } from '../../../../common/vue-form'
-import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { MeService } from '../../../../modules/_me/me.service'
-import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { PaymentViewType } from '../../../../modules/enum'
-import { PaymentMethodService, type PaymentMethod } from '../../../../modules/payment-method'
-import { PaymentApi } from '../../../../modules/payment/payment.api'
-import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { Ticket, TicketStatus } from '../../../../modules/ticket'
-import { ESArray } from '../../../../utils'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputMoney, InputNumber, InputSelect, InputText } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { PaymentViewType } from '@/modules/enum'
+import { PaymentVoucherType } from '@/modules/payment'
+import { PaymentMethodService } from '@/modules/payment-method'
+import { PaymentApi } from '@/modules/payment/payment.api'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { Ticket, TicketStatus } from '@/modules/ticket'
+import { onMounted, ref } from 'vue'
 import TicketPaymentList from '../../../ticket-base/TicketPaymentList.vue'
-import { PaymentItemApi, PaymentVoucherItemType, PaymentVoucherType } from '@/modules/payment-item'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputNumber>>()
 
@@ -33,11 +32,9 @@ const money = ref(0)
 const paymentMethodId = ref<number>(0)
 const note = ref('')
 const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
-const paymentMethodMap = ref<Record<string, PaymentMethod>>({})
 
 onMounted(async () => {
   const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
-  paymentMethodMap.value = ESArray.arrayToKeyValue(paymentMethodAll, 'id')
   paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
   paymentMethodId.value = paymentMethodAll[0]?.id || 0
 })
@@ -50,7 +47,7 @@ const openModal = async (options: { ticket: Ticket; paymentView: PaymentViewType
   try {
     ticketClone.value = Ticket.from(options.ticket)
 
-    ticketClone.value.paymentItemList = await PaymentItemApi.list({
+    ticketClone.value.paymentList = await PaymentApi.list({
       filter: {
         voucherId: ticketClone.value.id,
         voucherType: PaymentVoucherType.Ticket,
@@ -72,28 +69,13 @@ const closeModal = () => {
 const startPrepayment = async () => {
   paymentLoading.value = true
   try {
-    const result = await PaymentApi.customerPayment({
+    const result = await PaymentApi.customerPrepaymentMoney({
       body: {
         customerId: ticketClone.value.customerId,
         paymentMethodId: paymentMethodId.value,
-        totalMoney: money.value,
-        reason: 'Tạm ứng',
+        paidAmount: money.value,
         note: '',
-        paymentItemData: {
-          moneyTopUpAdd: 0,
-          payDebt: [],
-          prepayment: {
-            ticketId: ticketClone.value.id,
-            itemList: [
-              {
-                amount: money.value,
-                ticketItemId: 0,
-                paymentInteractId: 0,
-                voucherItemType: PaymentVoucherItemType.Other,
-              },
-            ],
-          },
-        },
+        ticketId: ticketClone.value.id,
       },
     })
     emit('success')
@@ -111,12 +93,14 @@ const startRefundOverpaid = async () => {
   }
   paymentLoading.value = true
   try {
-    const result = await PaymentApi.customerRefund({
-      customerId: ticketClone.value.customerId,
-      ticketId: ticketClone.value.id,
-      paymentMethodId: paymentMethodId.value,
-      money: money.value,
-      reason: 'Hoàn tiền',
+    const result = await PaymentApi.customerRefundMoney({
+      body: {
+        customerId: ticketClone.value.customerId,
+        ticketId: ticketClone.value.id,
+        paymentMethodId: paymentMethodId.value,
+        refundAmount: money.value,
+        note: '',
+      },
     })
     emit('success')
     closeModal()
@@ -130,22 +114,18 @@ const startRefundOverpaid = async () => {
 const startPayDebt = async () => {
   paymentLoading.value = true
   try {
-    const result = await PaymentApi.customerPayment({
+    const result = await PaymentApi.customerPayDebt({
       body: {
         customerId: ticketClone.value.customerId,
         paymentMethodId: paymentMethodId.value,
-        totalMoney: money.value,
-        reason: 'Trả nợ',
+        paidAmount: money.value,
         note: '',
-        paymentItemData: {
-          moneyTopUpAdd: 0,
-          payDebt: [
-            {
-              amount: money.value,
-              ticketId: ticketClone.value.id,
-            },
-          ],
-        },
+        dataList: [
+          {
+            paidAmount: money.value,
+            ticketId: ticketClone.value.id,
+          },
+        ],
       },
     })
     emit('success')
@@ -173,7 +153,7 @@ defineExpose({ openModal })
       </div>
 
       <div class="p-4">
-        <TicketPaymentList :ticket="ticketClone" :payment-method-map="paymentMethodMap" />
+        <TicketPaymentList :ticket="ticketClone" />
       </div>
 
       <!-- Prepayment -->

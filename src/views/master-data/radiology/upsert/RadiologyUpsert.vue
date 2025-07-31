@@ -1,37 +1,36 @@
 <script setup lang="ts">
-import { Discount, DiscountInteractType } from '@/modules/discount'
-import { computed, nextTick, onBeforeMount, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import VueButton from '@/common/VueButton.vue'
 import VueTinyMCE from '@/common/VueTinyMCE.vue'
-import { IconDelete, IconPrint, IconRight } from '@/common/icon-antd'
+import { IconPrint, IconRight } from '@/common/icon-antd'
 import MonacoEditor from '@/common/monaco-editor/MonacoEditor.vue'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { InputFilter, InputMoney, InputNumber, InputText, VueSelect } from '@/common/vue-form'
+import { InputMoney, InputText, VueSelect } from '@/common/vue-form'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
 import { MeService } from '@/modules/_me/me.service'
 import { Customer } from '@/modules/customer'
+import { Discount, DiscountInteractType } from '@/modules/discount'
 import { Image, ImageHostType } from '@/modules/image/image.model'
+import { PermissionId } from '@/modules/permission/permission.enum'
 import { CommissionCalculatorType, Position, PositionInteractType } from '@/modules/position'
 import {
   PrintHtml,
   PrintHtmlAction,
   PrintHtmlCompile,
-  PrintHtmlService,
-  PrintHtmlType,
+  PrintHtmlType
 } from '@/modules/print-html'
 import { Radiology, RadiologyApi, RadiologyService } from '@/modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '@/modules/radiology-group'
-import { Role, RoleService } from '@/modules/role'
 import { Ticket } from '@/modules/ticket'
 import { TicketRadiology } from '@/modules/ticket-radiology'
 import { ESDom } from '@/utils'
-import Breadcrumb from '../../../component/Breadcrumb.vue'
-import ModalSelectRadiologyExample from './ModalSelectRadiologyExample.vue'
-import DiscountTableAction from '../../discount/common/DiscountTableAction.vue'
-import { PermissionId } from '@/modules/permission/permission.enum'
+import VueSelectPrintHtml from '@/views/component/VueSelectPrintHtml.vue'
 import PositionTableAction from '@/views/user/position/common/PositionTableAction.vue'
+import { computed, nextTick, onBeforeMount, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import Breadcrumb from '../../../component/Breadcrumb.vue'
+import DiscountTableAction from '../../discount/common/DiscountTableAction.vue'
+import ModalSelectRadiologyExample from './ModalSelectRadiologyExample.vue'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
@@ -51,8 +50,6 @@ const radiologyOrigin = ref(Radiology.blank())
 const radiology = ref(Radiology.blank())
 
 const radiologyGroupAll = ref<RadiologyGroup[]>([])
-const printHtmlOptions = ref<{ text: string; value: number }[]>([])
-const roleOptions = ref<{ value: number; text: string; data: Role }[]>([])
 
 const ticketDemo = Ticket.blank()
 ticketDemo.note = 'Viêm mũi dị ứng'
@@ -68,21 +65,8 @@ const printHtmlHeader = ref(PrintHtml.blank())
 const printHtmlFooter = ref(PrintHtml.blank())
 
 onBeforeMount(async () => {
-  const promiseInit = await Promise.all([
-    RadiologyGroupService.list({}),
-    PrintHtmlService.list({ sort: { priority: 'ASC' } }),
-    RoleService.list({}),
-  ])
+  const promiseInit = await Promise.all([RadiologyGroupService.list({})])
   radiologyGroupAll.value = promiseInit[0]
-  const printHtmlAll = promiseInit[1]
-  const roleAll = promiseInit[2]
-  printHtmlOptions.value = [
-    { text: 'Mặc định', value: 0 },
-    ...printHtmlAll.map((i) => {
-      return { value: i.id, text: i.name }
-    }),
-  ]
-  roleOptions.value = roleAll.map((i) => ({ value: i.id, text: i.name, data: i }))
 
   printHtmlHeader.value = await PrintHtmlAction.getPrintHtmlByType({
     oid: organization.value.id,
@@ -111,7 +95,6 @@ onMounted(async () => {
   if (!radiology.value.positionList?.length) {
     handleAddPosition()
   }
-  await handleSelectPrintHtml()
 })
 
 const hasChangeDiscountList = computed(() => {
@@ -184,12 +167,18 @@ const handleSave = async () => {
   }
 }
 
-const handleSelectPrintHtml = async () => {
-  radiology.value.printHtml = await PrintHtmlAction.getPrintHtmlByType({
-    oid: organization.value.id,
-    id: radiology.value.printHtmlId,
-    type: PrintHtmlType.RadiologyResult,
-  })
+const selectPrintHtml = async (printHtmlProp?: PrintHtml) => {
+  let printHtmlData: PrintHtml
+  if (printHtmlProp?.id) {
+    printHtmlData = PrintHtml.from(printHtmlProp)
+  } else {
+    printHtmlData = await PrintHtmlAction.getPrintHtmlByType({
+      oid: organization.value.id,
+      type: PrintHtmlType.RadiologyResult,
+    })
+  }
+
+  radiology.value.printHtml = printHtmlData
   updatePreview()
 }
 
@@ -463,14 +452,11 @@ const startCleanHtml = () => {
           <div class="mt-4 flex flex-wrap gap-4">
             <div style="flex-basis: 500px; flex-grow: 1; min-height: 800px" class="flex flex-col">
               <div>
-                <div class="">Chọn mẫu in</div>
-                <div>
-                  <VueSelect
-                    v-model:value="radiology.printHtmlId"
-                    :options="printHtmlOptions"
-                    @select-item="handleSelectPrintHtml"
-                  />
-                </div>
+                <VueSelectPrintHtml
+                  v-model:printHtmlId="radiology.printHtmlId"
+                  :printHtmlType="PrintHtmlType.RadiologyResult"
+                  @selectPrintHtml="(v) => selectPrintHtml(v)"
+                />
               </div>
               <div class="mt-4">
                 <span>Nội dung mô tả mặc định</span>

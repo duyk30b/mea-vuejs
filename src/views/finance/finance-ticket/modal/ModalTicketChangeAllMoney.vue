@@ -4,7 +4,7 @@ import { IconClose } from '@/common/icon-antd'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer } from '@/modules/customer'
-import { DiscountType } from '@/modules/enum'
+import { DeliveryStatus, DiscountType, PaymentMoneyStatus } from '@/modules/enum'
 import { Ticket, TicketActionApi, TicketService } from '@/modules/ticket'
 import type { TicketLaboratory } from '@/modules/ticket-laboratory'
 import type { TicketProcedure } from '@/modules/ticket-procedure'
@@ -14,6 +14,7 @@ import TicketLaboratoryStatusTooltip from '@/views/room/room-laboratory/TicketLa
 import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadiologyStatusTooltip.vue'
 import TicketDeliveryStatusTooltip from '@/views/ticket-base/TicketDeliveryStatusTooltip.vue'
 import { computed, ref } from 'vue'
+import PaymentMoneyStatusTooltip from '../../payment/PaymentMoneyStatusTooltip.vue'
 
 const ticket = ref<Ticket>(Ticket.blank())
 
@@ -103,44 +104,54 @@ const startChangeAllMoney = async () => {
   try {
     changeLoading.value = true
     const ticketResponse = await TicketActionApi.changeAllMoney(ticket.value.id, {
-      ticketProcedureList:
-        ticket.value.ticketProcedureList?.map((i) => ({
+      ticketProcedureList: (ticket.value.ticketProcedureList || [])
+        .filter((i) => i.paymentMoneyStatus !== PaymentMoneyStatus.Paid)
+        .map((i) => ({
           id: i.id,
           quantity: i.quantity,
           discountMoney: i.discountMoney,
           discountType: i.discountType,
           discountPercent: i.discountPercent,
           actualPrice: i.actualPrice,
-        })) || [],
+        })),
       ticketProductList: [
         ...(ticket.value.ticketProductConsumableList || []),
         ...(ticket.value.ticketProductPrescriptionList || []),
-      ].map((i) => ({
-        id: i.id,
-        quantity: i.quantity,
-        discountMoney: i.discountMoney,
-        discountType: i.discountType,
-        discountPercent: i.discountPercent,
-        actualPrice: i.actualPrice,
-      })),
-      ticketLaboratoryList:
-        ticket.value.ticketLaboratoryList?.map((i) => ({
+      ]
+        .filter(
+          (i) =>
+            i.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
+            i.deliveryStatus !== DeliveryStatus.Delivered,
+        )
+        .map((i) => ({
+          id: i.id,
+          quantity: i.quantity,
+          discountMoney: i.discountMoney,
+          discountType: i.discountType,
+          discountPercent: i.discountPercent,
+          actualPrice: i.actualPrice,
+        })),
+      ticketLaboratoryList: (ticket.value.ticketLaboratoryList || [])
+        .filter((i) => i.paymentMoneyStatus !== PaymentMoneyStatus.Paid)
+        .map((i) => ({
           id: i.id,
           quantity: 1,
           discountMoney: i.discountMoney,
           discountType: i.discountType,
           discountPercent: i.discountPercent,
           actualPrice: i.actualPrice,
-        })) || [],
+        })),
       ticketRadiologyList:
-        ticket.value.ticketRadiologyList?.map((i) => ({
-          id: i.id,
-          quantity: 1,
-          discountMoney: i.discountMoney,
-          discountType: i.discountType,
-          discountPercent: i.discountPercent,
-          actualPrice: i.actualPrice,
-        })) || [],
+        (ticket.value.ticketRadiologyList || [])
+          .filter((i) => i.paymentMoneyStatus !== PaymentMoneyStatus.Paid)
+          .map((i) => ({
+            id: i.id,
+            quantity: 1,
+            discountMoney: i.discountMoney,
+            discountType: i.discountType,
+            discountPercent: i.discountPercent,
+            actualPrice: i.actualPrice,
+          })) || [],
     })
 
     emit('success', ticketResponse)
@@ -226,6 +237,7 @@ defineExpose({ openModal })
               <tr>
                 <th>#</th>
                 <th></th>
+                <th></th>
                 <th colspan="3">Tên</th>
                 <th>G.Niêm Yết</th>
                 <th>Chiết khấu (%)</th>
@@ -237,17 +249,31 @@ defineExpose({ openModal })
             </thead>
             <template v-if="ticket.ticketProcedureList?.length">
               <tbody>
-                <tr>
-                  <td colspan="100" class="font-bold" style="color: var(--text-blue)">
-                    DỊCH VỤ - THỦ THUẬT
-                  </td>
+                <tr class="font-bold" style="color: var(--text-blue); text-align: center">
+                  <td style="text-align: left" colspan="6">DỊCH VỤ - THỦ THUẬT</td>
+                  <td>NY</td>
+                  <td>CK%</td>
+                  <td>CK</td>
+                  <td>Giá</td>
+                  <td>SL</td>
+                  <td>Tổng</td>
                 </tr>
                 <tr
                   v-for="(ticketProcedure, index) in ticket.ticketProcedureList"
                   :key="ticketProcedure.id"
+                  :style="
+                    ticketProcedure.paymentMoneyStatus === PaymentMoneyStatus.Paid
+                      ? 'font-style: italic; opacity: 0.7'
+                      : ''
+                  "
                 >
                   <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
                     {{ index + 1 }}
+                  </td>
+                  <td>
+                    <PaymentMoneyStatusTooltip
+                      :paymentMoneyStatus="ticketProcedure.paymentMoneyStatus"
+                    />
                   </td>
                   <td></td>
                   <td colspan="3">
@@ -260,7 +286,11 @@ defineExpose({ openModal })
                     <div>{{ formatMoney(ticketProcedure.expectedPrice) }}</div>
                   </td>
                   <td class="text-right">
+                    <span v-if="ticketProcedure.paymentMoneyStatus == PaymentMoneyStatus.Paid">
+                      {{ ticketProcedure.discountPercent }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketProcedure.discountPercent"
                       min="0"
@@ -271,7 +301,11 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
+                    <span v-if="ticketProcedure.paymentMoneyStatus == PaymentMoneyStatus.Paid">
+                      {{ ticketProcedure.discountMoney }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketProcedure.discountMoney"
                       min="0"
@@ -281,7 +315,11 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
+                    <span v-if="ticketProcedure.paymentMoneyStatus == PaymentMoneyStatus.Paid">
+                      {{ ticketProcedure.actualPrice }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketProcedure.actualPrice"
                       min="0"
@@ -289,8 +327,12 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
+                    <span v-if="ticketProcedure.paymentMoneyStatus == PaymentMoneyStatus.Paid">
+                      {{ ticketProcedure.quantity }}
+                    </span>
                     <input
                       type="number"
+                      v-else
                       :value="ticketProcedure.quantity"
                       min="0"
                       @input="(e) => handleChangeQuantity(e, ticket.ticketProcedureList!, index)"
@@ -301,7 +343,7 @@ defineExpose({ openModal })
                   </td>
                 </tr>
                 <tr>
-                  <td colspan="10" class="text-right uppercase">
+                  <td colspan="11" class="text-right uppercase">
                     <span class="uppercase font-bold">Tiền dịch vụ</span>
                   </td>
                   <!-- <td class="font-bold text-right whitespace-nowrap">
@@ -322,15 +364,32 @@ defineExpose({ openModal })
             </template>
             <template v-if="ticket.ticketProductConsumableList?.length">
               <tbody>
-                <tr>
-                  <td colspan="100" class="font-bold" style="color: var(--text-blue)">VẬT TƯ</td>
+                <tr class="font-bold" style="color: var(--text-blue); text-align: center">
+                  <td style="text-align: left" colspan="6">VẬT TƯ</td>
+                  <td>NY</td>
+                  <td>CK%</td>
+                  <td>CK</td>
+                  <td>Giá</td>
+                  <td>SL</td>
+                  <td>Tổng</td>
                 </tr>
                 <tr
                   v-for="(ticketConsumable, index) in ticket.ticketProductConsumableList"
                   :key="ticketConsumable.id"
+                  :style="
+                    ticketConsumable.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
+                    ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
+                      ? 'font-style: italic; opacity: 0.7'
+                      : ''
+                  "
                 >
                   <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
                     {{ index + 1 }}
+                  </td>
+                  <td>
+                    <PaymentMoneyStatusTooltip
+                      :paymentMoneyStatus="ticketConsumable.paymentMoneyStatus"
+                    />
                   </td>
                   <td class="text-center">
                     <TicketDeliveryStatusTooltip
@@ -347,7 +406,16 @@ defineExpose({ openModal })
                     <div>{{ formatMoney(ticketConsumable.expectedPrice) }}</div>
                   </td>
                   <td class="text-right">
+                    <span
+                      v-if="
+                        ticketConsumable.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
+                        ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
+                      "
+                    >
+                      {{ ticketConsumable.discountPercent }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketConsumable.discountPercent"
                       min="0"
@@ -359,7 +427,16 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
+                    <span
+                      v-if="
+                        ticketConsumable.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
+                        ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
+                      "
+                    >
+                      {{ ticketConsumable.discountMoney }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketConsumable.discountMoney"
                       min="0"
@@ -370,7 +447,16 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
+                    <span
+                      v-if="
+                        ticketConsumable.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
+                        ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
+                      "
+                    >
+                      {{ ticketConsumable.actualPrice }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketConsumable.actualPrice"
                       min="0"
@@ -381,7 +467,16 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
+                    <span
+                      v-if="
+                        ticketConsumable.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
+                        ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
+                      "
+                    >
+                      {{ ticketConsumable.quantity }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketConsumable.quantity"
                       min="0"
@@ -395,7 +490,7 @@ defineExpose({ openModal })
                   </td>
                 </tr>
                 <tr>
-                  <td colspan="10" class="text-right uppercase">
+                  <td colspan="11" class="text-right uppercase">
                     <span class="uppercase font-bold">Tiền vật tư</span>
                   </td>
 
@@ -417,15 +512,32 @@ defineExpose({ openModal })
             </template>
             <template v-if="ticket.ticketProductPrescriptionList?.length">
               <tbody>
-                <tr>
-                  <td colspan="100" class="font-bold" style="color: var(--text-blue)">THUỐC</td>
+                <tr class="font-bold" style="color: var(--text-blue); text-align: center">
+                  <td style="text-align: left" colspan="6">THUỐC</td>
+                  <td>NY</td>
+                  <td>CK%</td>
+                  <td>CK</td>
+                  <td>Giá</td>
+                  <td>SL</td>
+                  <td>Tổng</td>
                 </tr>
                 <tr
                   v-for="(ticketPrescription, index) in ticket.ticketProductPrescriptionList"
                   :key="ticketPrescription.id"
+                  :style="
+                    ticketPrescription.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
+                    ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
+                      ? 'font-style: italic; opacity: 0.7'
+                      : ''
+                  "
                 >
                   <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
                     {{ index + 1 }}
+                  </td>
+                  <td>
+                    <PaymentMoneyStatusTooltip
+                      :paymentMoneyStatus="ticketPrescription.paymentMoneyStatus"
+                    />
                   </td>
                   <td class="text-center">
                     <TicketDeliveryStatusTooltip
@@ -442,7 +554,16 @@ defineExpose({ openModal })
                     <div>{{ formatMoney(ticketPrescription.expectedPrice) }}</div>
                   </td>
                   <td class="text-right">
+                    <span
+                      v-if="
+                        ticketPrescription.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
+                        ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
+                      "
+                    >
+                      {{ ticketPrescription.discountPercent }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketPrescription.discountPercent"
                       min="0"
@@ -458,7 +579,16 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
+                    <span
+                      v-if="
+                        ticketPrescription.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
+                        ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
+                      "
+                    >
+                      {{ ticketPrescription.discountMoney }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketPrescription.discountMoney"
                       min="0"
@@ -469,7 +599,16 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
+                    <span
+                      v-if="
+                        ticketPrescription.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
+                        ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
+                      "
+                    >
+                      {{ ticketPrescription.actualPrice }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketPrescription.actualPrice"
                       min="0"
@@ -480,7 +619,16 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
+                    <span
+                      v-if="
+                        ticketPrescription.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
+                        ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
+                      "
+                    >
+                      {{ ticketPrescription.quantity }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketPrescription.quantity"
                       min="0"
@@ -494,7 +642,7 @@ defineExpose({ openModal })
                   </td>
                 </tr>
                 <tr>
-                  <td colspan="10" class="text-right uppercase">
+                  <td colspan="11" class="text-right uppercase">
                     <span class="uppercase font-bold">Tiền thuốc</span>
                   </td>
 
@@ -516,17 +664,31 @@ defineExpose({ openModal })
             </template>
             <template v-if="ticket.ticketLaboratoryList?.length">
               <tbody>
-                <tr>
-                  <td colspan="100" class="font-bold" style="color: var(--text-blue)">
-                    XÉT NGHIỆM
-                  </td>
+                <tr class="font-bold" style="color: var(--text-blue); text-align: center">
+                  <td style="text-align: left" colspan="6">XÉT NGHIỆM</td>
+                  <td>NY</td>
+                  <td>CK%</td>
+                  <td>CK</td>
+                  <td>Giá</td>
+                  <td></td>
+                  <td>Tổng</td>
                 </tr>
                 <tr
                   v-for="(ticketLaboratory, index) in ticket.ticketLaboratoryList"
                   :key="ticketLaboratory.id"
+                  :style="
+                    ticketLaboratory.paymentMoneyStatus === PaymentMoneyStatus.Paid
+                      ? 'font-style: italic; opacity: 0.7'
+                      : ''
+                  "
                 >
                   <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
                     {{ index + 1 }}
+                  </td>
+                  <td>
+                    <PaymentMoneyStatusTooltip
+                      :paymentMoneyStatus="ticketLaboratory.paymentMoneyStatus"
+                    />
                   </td>
                   <td class="text-center">
                     <TicketLaboratoryStatusTooltip :status="ticketLaboratory.status" />
@@ -541,7 +703,11 @@ defineExpose({ openModal })
                     <div>{{ formatMoney(ticketLaboratory.expectedPrice) }}</div>
                   </td>
                   <td class="text-right">
+                    <span v-if="ticketLaboratory.paymentMoneyStatus === PaymentMoneyStatus.Paid">
+                      {{ ticketLaboratory.discountPercent }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketLaboratory.discountPercent"
                       min="0"
@@ -552,7 +718,11 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
+                    <span v-if="ticketLaboratory.paymentMoneyStatus === PaymentMoneyStatus.Paid">
+                      {{ ticketLaboratory.discountMoney }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketLaboratory.discountMoney"
                       min="0"
@@ -562,7 +732,11 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
+                    <span v-if="ticketLaboratory.paymentMoneyStatus === PaymentMoneyStatus.Paid">
+                      {{ ticketLaboratory.actualPrice }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketLaboratory.actualPrice"
                       min="0"
@@ -577,7 +751,7 @@ defineExpose({ openModal })
                   </td>
                 </tr>
                 <tr>
-                  <td colspan="10" class="text-right uppercase">
+                  <td colspan="11" class="text-right uppercase">
                     <span class="uppercase font-bold">Tiền Xét nghiệm</span>
                   </td>
 
@@ -599,17 +773,31 @@ defineExpose({ openModal })
             </template>
             <template v-if="ticket.ticketRadiologyList?.length">
               <tbody>
-                <tr>
-                  <td colspan="100" class="font-bold" style="color: var(--text-blue)">
-                    CHẨN ĐOÁN HÌNH ẢNH
-                  </td>
+                <tr class="font-bold" style="color: var(--text-blue); text-align: center">
+                  <td colspan="6" style="text-align: left">CHẨN ĐOÁN HÌNH ẢNH</td>
+                  <td>NY</td>
+                  <td>CK%</td>
+                  <td>CK</td>
+                  <td>Giá</td>
+                  <td></td>
+                  <td>Tổng</td>
                 </tr>
                 <tr
                   v-for="(ticketRadiology, index) in ticket.ticketRadiologyList"
                   :key="ticketRadiology.id"
+                  :style="
+                    ticketRadiology.paymentMoneyStatus === PaymentMoneyStatus.Paid
+                      ? 'font-style: italic; opacity: 0.7'
+                      : ''
+                  "
                 >
                   <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
                     {{ index + 1 }}
+                  </td>
+                  <td>
+                    <PaymentMoneyStatusTooltip
+                      :paymentMoneyStatus="ticketRadiology.paymentMoneyStatus"
+                    />
                   </td>
                   <td class="text-center">
                     <TicketRadiologyStatusTooltip :status="ticketRadiology.status" />
@@ -624,7 +812,11 @@ defineExpose({ openModal })
                     <div>{{ formatMoney(ticketRadiology.expectedPrice) }}</div>
                   </td>
                   <td class="text-right">
+                    <span v-if="ticketRadiology.paymentMoneyStatus === PaymentMoneyStatus.Paid">
+                      {{ ticketRadiology.discountPercent }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketRadiology.discountPercent"
                       min="0"
@@ -635,7 +827,11 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
+                    <span v-if="ticketRadiology.paymentMoneyStatus === PaymentMoneyStatus.Paid">
+                      {{ ticketRadiology.discountMoney }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketRadiology.discountMoney"
                       min="0"
@@ -645,7 +841,11 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
+                    <span v-if="ticketRadiology.paymentMoneyStatus === PaymentMoneyStatus.Paid">
+                      {{ ticketRadiology.actualPrice }}
+                    </span>
                     <input
+                      v-else
                       type="number"
                       :value="ticketRadiology.actualPrice"
                       min="0"
@@ -658,7 +858,7 @@ defineExpose({ openModal })
                   </td>
                 </tr>
                 <tr>
-                  <td colspan="10" class="text-right uppercase">
+                  <td colspan="11" class="text-right uppercase">
                     <span class="uppercase font-bold">Tiền CĐHA</span>
                   </td>
 
@@ -678,7 +878,7 @@ defineExpose({ openModal })
                 </tr>
                 <tr>
                   <td
-                    colspan="10"
+                    colspan="11"
                     class="font-bold text-right uppercase"
                     style="color: var(--text-red); font-size: 16px"
                   >

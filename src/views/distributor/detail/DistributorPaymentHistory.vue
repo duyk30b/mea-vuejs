@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { PaymentPersonType } from '@/modules/payment'
-import { PaymentItemApi, type PaymentItem } from '@/modules/payment-item'
+import { CONFIG } from '@/config'
+import { Payment, PaymentActionTypeText, PaymentApi, PaymentPersonType } from '@/modules/payment'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import VuePagination from '../../../common/VuePagination.vue'
@@ -8,7 +8,6 @@ import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { ESTimer } from '../../../utils'
 import LinkAndStatusReceipt from '../../receipt/LinkAndStatusReceipt.vue'
-import { CONFIG } from '@/config'
 
 const props = withDefaults(defineProps<{ distributorId: number }>(), {
   distributorId: 0,
@@ -20,24 +19,24 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const { userPermission } = MeService
 
-const paymentItemList = ref<PaymentItem[]>([])
+const paymentList = ref<Payment[]>([])
 const page = ref(1)
 const limit = ref(10)
 const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const paginationResponse = await PaymentItemApi.pagination({
-      relation: { receipt: true },
+    const paginationResponse = await PaymentApi.pagination({
+      relation: { receipt: true, paymentMethod: true },
       page: page.value,
       limit: limit.value,
       filter: {
         personId: props.distributorId,
-        paymentPersonType: PaymentPersonType.Distributor,
+        personType: PaymentPersonType.Distributor,
       },
       sort: { id: 'DESC' },
     })
-    paymentItemList.value = paginationResponse.paymentItemList
+    paymentList.value = paginationResponse.paymentList
     total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: PaymentsHistory.vue:33 ~ error:', error)
@@ -48,7 +47,7 @@ watch(
   () => props.distributorId,
   async (newValue) => {
     if (newValue) await startFetchData()
-    else paymentItemList.value = []
+    else paymentList.value = []
   },
   { immediate: true },
 )
@@ -74,31 +73,31 @@ defineExpose({ startFetchData })
         </tr>
       </thead>
       <tbody style="">
-        <tr v-if="paymentItemList.length === 0">
+        <tr v-if="paymentList.length === 0">
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
-        <tr v-for="(paymentItem, index) in paymentItemList" :key="index">
+        <tr v-for="(payment, index) in paymentList" :key="index">
           <td>
-            <LinkAndStatusReceipt :receipt="paymentItem.receipt!" :status="false" />
+            <LinkAndStatusReceipt :receipt="payment.receipt!" :status="false" />
             <div style="white-space: nowrap">
-              {{ ESTimer.timeToText(paymentItem.createdAt, 'hh:mm DD/MM/YYYY') }}
+              {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
-            <div v-if="paymentItem.note">{{ paymentItem.note }}</div>
+            <div v-if="payment.note">{{ payment.note }}</div>
           </td>
           <td class="text-right">
             <div class="flex justify-between item-center">
               <span>T.Toán:</span>
-              <span>{{ formatMoney(paymentItem.paidAmount) }}</span>
+              <span>{{ formatMoney(payment.paidAmount) }}</span>
             </div>
             <div class="flex justify-between item-center">
               <span>Ghi nợ:</span>
-              <span>{{ formatMoney(paymentItem.debtAmount) }}</span>
+              <span>{{ formatMoney(payment.debtAmount) }}</span>
             </div>
             <div class="flex justify-between item-center">
               <span>Nợ:</span>
               <span>
-                {{ formatMoney(paymentItem.openDebt) }} ➞
-                {{ formatMoney(paymentItem.closeDebt) }}
+                {{ formatMoney(payment.openDebt) }} ➞
+                {{ formatMoney(payment.closeDebt) }}
               </span>
             </div>
           </td>
@@ -110,6 +109,7 @@ defineExpose({ startFetchData })
         <tr>
           <th v-if="CONFIG.MODE === 'development'">ID</th>
           <th>Phiếu nhập</th>
+          <th>PT.Thanh Toán</th>
           <th>Note</th>
           <th>Số tiền</th>
           <th>Ghi nợ</th>
@@ -117,37 +117,41 @@ defineExpose({ startFetchData })
         </tr>
       </thead>
       <tbody>
-        <tr v-if="paymentItemList.length === 0">
+        <tr v-if="paymentList.length === 0">
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
-        <tr v-for="paymentItem in paymentItemList" :key="paymentItem.id">
+        <tr v-for="payment in paymentList" :key="payment.id">
           <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
-            {{ paymentItem.id }}
+            {{ payment.id }}
           </td>
           <td>
             <LinkAndStatusReceipt
-              :receipt="paymentItem.receipt!"
-              :receiptId="paymentItem.voucherId"
+              :receipt="payment.receipt!"
+              :receiptId="payment.voucherId"
               :status="false"
             />
             <div style="white-space: nowrap">
-              {{ ESTimer.timeToText(paymentItem.createdAt, 'hh:mm DD/MM/YYYY') }}
+              {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
           </td>
-          <td class="px-4">
-            <div v-if="paymentItem.note" style="">
-              {{ paymentItem.note }}
+          <td class="text-center">
+            {{ payment.paymentMethod?.name }}
+          </td>
+          <td>
+            <div>{{ PaymentActionTypeText[payment.paymentActionType] }}</div>
+            <div v-if="payment.note" style="font-size: 0.9em">
+              {{ payment.note }}
             </div>
           </td>
           <td style="white-space: nowrap; text-align: right">
-            {{ formatMoney(paymentItem.paidAmount) }}
+            {{ formatMoney(payment.paidAmount) }}
           </td>
           <td style="white-space: nowrap; text-align: right">
-            {{ formatMoney(paymentItem.debtAmount) }}
+            {{ formatMoney(payment.debtAmount) }}
           </td>
-          <td class="text-right">
-            {{ formatMoney(paymentItem.openDebt) }} ➞
-            {{ formatMoney(paymentItem.closeDebt) }}
+          <td class="text-center">
+            {{ formatMoney(payment.openDebt) }} ➞
+            {{ formatMoney(payment.closeDebt) }}
           </td>
         </tr>
       </tbody>

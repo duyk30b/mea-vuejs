@@ -15,16 +15,17 @@ import {
   PaymentPersonType,
   PaymentVoucherType,
 } from '@/modules/payment'
-import { PaymentMethodService } from '@/modules/payment-method'
-import { PaymentTicketItem, TicketItemType } from '@/modules/payment-ticket-item'
+import { PaymentMethodService, type PaymentMethod } from '@/modules/payment-method'
 import { PrintHtmlAction } from '@/modules/print-html'
 import { Ticket, TicketService } from '@/modules/ticket'
 import type { TicketLaboratory } from '@/modules/ticket-laboratory'
 import type { TicketProcedure } from '@/modules/ticket-procedure'
 import type { TicketProduct } from '@/modules/ticket-product'
 import type { TicketRadiology } from '@/modules/ticket-radiology'
+import { ESArray } from '@/utils'
 import { computed, onMounted, ref } from 'vue'
 import PaymentMoneyStatusTooltip from '../../payment/PaymentMoneyStatusTooltip.vue'
+import { PaymentTicketItem, TicketItemType } from '@/modules/payment-ticket-item'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -81,27 +82,27 @@ const openModal = async (options: { ticketId: number; customer: Customer }) => {
       relation: {
         ticketProcedureList: {
           filter: {
-            paymentMoneyStatus: PaymentMoneyStatus.Pending,
+            paymentMoneyStatus: PaymentMoneyStatus.Paid,
           },
         },
         ticketProductConsumableList: {
           filter: {
-            paymentMoneyStatus: PaymentMoneyStatus.Pending,
+            paymentMoneyStatus: PaymentMoneyStatus.Paid,
           },
         },
         ticketProductPrescriptionList: {
           filter: {
-            paymentMoneyStatus: PaymentMoneyStatus.Pending,
+            paymentMoneyStatus: PaymentMoneyStatus.Paid,
           },
         },
         ticketLaboratoryList: {
           filter: {
-            paymentMoneyStatus: PaymentMoneyStatus.Pending,
+            paymentMoneyStatus: PaymentMoneyStatus.Paid,
           },
         },
         ticketRadiologyList: {
           filter: {
-            paymentMoneyStatus: PaymentMoneyStatus.Pending,
+            paymentMoneyStatus: PaymentMoneyStatus.Paid,
           },
         },
       },
@@ -157,15 +158,15 @@ const startPickAll = (v: boolean) => {
   }
 }
 
-const startPrepayment = async (options?: { print: boolean }) => {
+const startRefund = async (options?: { print: boolean }) => {
   try {
-    const { paymentCreated } = await PaymentApi.customerPrepaymentTicketItemList({
+    const { ticketModified, paymentCreated } = await PaymentApi.customerRefundTicketItemList({
       body: {
         ticketId: ticket.value.id,
         customerId: ticket.value.customerId,
         paymentMethodId: paymentMethodId.value,
+        refundAmount: totalMoney.value,
         note: note.value,
-        paidAmount: totalMoney.value,
         ticketItemList: [
           ...Object.entries(checkboxProcedure.value)
             .filter(([id, value]) => !!value)
@@ -248,7 +249,7 @@ const startPrepayment = async (options?: { print: boolean }) => {
 
     if (options?.print) {
       const paymentPrint = await Payment.refreshData(paymentCreated)
-      await PrintHtmlAction.startPrintCustomerPayment({
+      await PrintHtmlAction.startPrintCustomerRefund({
         customer: ticket.value.customer!,
         payment: paymentPrint,
       })
@@ -257,7 +258,7 @@ const startPrepayment = async (options?: { print: boolean }) => {
     emit('success')
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ ModalPrepaymentTicketItem.vue:216 ~ startPrepayment ~ error:', error)
+    console.log('🚀 ~ ModalPrepaymentTicketItem.vue:216 ~ startRefund ~ error:', error)
   }
 }
 
@@ -270,7 +271,7 @@ const startPint = async (options?: { print: boolean }) => {
     paymentTemp.personId = ticket.value.customerId
 
     paymentTemp.createdAt = Date.now()
-    paymentTemp.moneyDirection = MoneyDirection.In
+    paymentTemp.moneyDirection = MoneyDirection.Out
     paymentTemp.cashierId = MeService.user.value!.id
     paymentTemp.note = note.value
     paymentTemp.paymentMethodId = paymentMethodId.value
@@ -305,11 +306,11 @@ const startPint = async (options?: { print: boolean }) => {
         paymentTicketItem.interactId = value!.productId
 
         paymentTicketItem.expectedPrice = value!.expectedPrice
-        paymentTicketItem.actualPrice = value!.actualPrice
-        paymentTicketItem.quantity = value!.quantity
         paymentTicketItem.discountMoney = value!.discountMoney
         paymentTicketItem.discountPercent = value!.discountPercent
         paymentTicketItem.discountType = value!.discountType
+        paymentTicketItem.actualPrice = value!.actualPrice
+        paymentTicketItem.quantity = value!.quantity
         return paymentTicketItem
       })
 
@@ -377,7 +378,7 @@ const startPint = async (options?: { print: boolean }) => {
     ]
 
     const paymentPrint = await Payment.refreshData(paymentTemp)
-    await PrintHtmlAction.startPrintCustomerPayment({
+    await PrintHtmlAction.startPrintCustomerRefund({
       customer: ticket.value.customer!,
       payment: paymentPrint,
     })
@@ -799,13 +800,8 @@ defineExpose({ openModal })
         >
           In
         </VueButton>
-        <VueButton
-          color="blue"
-          @click="startPrepayment"
-          icon="dollar"
-          :disabled="disabledButtonSave"
-        >
-          Xác nhận thanh toán
+        <VueButton color="blue" @click="startRefund" icon="dollar" :disabled="disabledButtonSave">
+          Xác nhận hoàn trả toán
         </VueButton>
       </div>
     </div>

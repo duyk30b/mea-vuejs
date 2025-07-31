@@ -22,8 +22,10 @@ import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 import { fromTime, toTime } from './finance-ticket-list.ref'
 import ModalTicketChangeAllMoney from './modal/ModalTicketChangeAllMoney.vue'
 import ModalPrepaymentTicketItem from './modal/ModalPrepaymentTicketItem.vue'
+import ModalRefundTicketItem from './modal/ModalRefundTicketItem.vue'
 
 const modalPrepaymentTicketItem = ref<InstanceType<typeof ModalPrepaymentTicketItem>>()
+const modalRefundTicketItem = ref<InstanceType<typeof ModalRefundTicketItem>>()
 const modalTicketChangeAllMoney = ref<InstanceType<typeof ModalTicketChangeAllMoney>>()
 
 const router = useRouter()
@@ -153,6 +155,7 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
   />
 
   <ModalPrepaymentTicketItem ref="modalPrepaymentTicketItem" />
+  <ModalRefundTicketItem ref="modalRefundTicketItem" />
 
   <div class="mx-4 mt-4 gap-4 flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -390,6 +393,18 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
                       "
                     >
                       Sửa giá tiền và chiết khấu
+                    </a>
+                    <a
+                      v-if="userPermission[PermissionId.PAYMENT_CHANGE_DISCOUNT_TICKET]"
+                      style="color: var(--text-red)"
+                      @click="
+                        modalRefundTicketItem?.openModal({
+                          ticketId: ticket.id,
+                          customer: ticket.customer!,
+                        })
+                      "
+                    >
+                      Tạo phiếu hoàn trả
                     </a>
                   </div>
                 </VueDropdown>

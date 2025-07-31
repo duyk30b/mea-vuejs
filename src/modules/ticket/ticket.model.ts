@@ -8,13 +8,14 @@ import { DeliveryStatus, DiscountType } from '../enum'
 import { Image } from '../image/image.model'
 import { LaboratoryService } from '../laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../laboratory-group'
-import { PaymentItem } from '../payment-item'
+import { Payment } from '../payment'
 import { PermissionId } from '../permission/permission.enum'
 import { Procedure, ProcedureService } from '../procedure'
 import { Product, ProductService } from '../product'
 import { RadiologyService } from '../radiology'
 import { RadiologyGroupService } from '../radiology-group'
 import { RoleService } from '../role'
+import { RoomService } from '../room'
 import { TicketAttribute, type TicketAttributeMap } from '../ticket-attribute'
 import { TicketBatch } from '../ticket-batch'
 import { TicketExpense } from '../ticket-expense/ticket-expense.model'
@@ -93,7 +94,7 @@ export class Ticket {
   updatedAt: number | null // Giờ kết thúc khám
 
   customer?: Customer
-  paymentItemList?: PaymentItem[]
+  paymentList?: Payment[]
   customerSource?: CustomerSource
   ticketAttributeList?: TicketAttribute[]
   ticketBatchList?: TicketBatch[]
@@ -141,7 +142,7 @@ export class Ticket {
   static blank(): Ticket {
     const ins = Ticket.init()
     ins.customer = Customer.init() // Uncaught ReferenceError: Cannot access 'Customer' before initialization
-    ins.paymentItemList = []
+    ins.paymentList = []
     ins.ticketAttributeList = []
     ins.ticketBatchList = []
     ins.ticketProductList = []
@@ -215,10 +216,12 @@ export class Ticket {
     }
     const radiologyMap = await RadiologyService.getMap()
     const radiologyGroupMap = await RadiologyGroupService.getMap()
+    const roomMap = await RoomService.getMap()
     this.ticketRadiologyList.forEach((i) => {
       i.radiology = radiologyMap![i.radiologyId]
       if (i.radiology) {
         i.radiology.radiologyGroup = radiologyGroupMap[i.radiology.radiologyGroupId]
+        i.room = roomMap[i.roomId]
       }
     })
   }
@@ -260,6 +263,8 @@ export class Ticket {
     if (!this.ticketLaboratoryGroupList) this.ticketLaboratoryGroupList = []
     if (!this.ticketLaboratoryResultList) this.ticketLaboratoryResultList = []
 
+    const roomMap = await RoomService.getMap()
+
     const [laboratoryMap, laboratoryGroupMap] = await Promise.all([
       LaboratoryService.getMap(),
       LaboratoryGroupService.getMap(),
@@ -267,6 +272,7 @@ export class Ticket {
 
     this.ticketLaboratoryList.forEach((tl) => {
       tl.laboratory = laboratoryMap[tl.laboratoryId]
+      tl.room = roomMap[tl.roomId]
     })
 
     this.ticketLaboratoryGroupList.forEach((tlg) => {
@@ -284,6 +290,7 @@ export class Ticket {
       tlg.ticketLaboratoryList = this.ticketLaboratoryList!.filter((tl) => {
         return tl.ticketLaboratoryGroupId === tlg.id
       })
+      tlg.room = roomMap[tlg.roomId]
     })
 
     // === fix cho những xét nghiệm cũ chưa phân nhóm
@@ -363,8 +370,8 @@ export class Ticket {
       target.refreshTicketUserGroup()
     }
 
-    if (source.paymentItemList) {
-      target.paymentItemList = PaymentItem.basicList(source.paymentItemList)
+    if (source.paymentList) {
+      target.paymentList = Payment.basicList(source.paymentList)
     }
     if (source.ticketProductList) {
       target.ticketProductList = TicketProduct.basicList(source.ticketProductList)

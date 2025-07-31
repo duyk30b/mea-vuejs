@@ -1,6 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
-import { PaymentItem } from '../payment-item'
+import { Payment } from '../payment'
 import { TicketProduct } from '../ticket-product'
 import { Ticket } from '../ticket/ticket.model'
 
@@ -292,10 +292,10 @@ export class TicketOrderApi {
   static async sendProductAndPaymentAndClose(
     ticketId: number,
     body: {
-      money: number
+      paidAmount: number
       customerId: number
       paymentMethodId: number
-      reason: string
+      note: string
       ticketProductIdList: number[]
     },
   ) {
@@ -305,12 +305,12 @@ export class TicketOrderApi {
     )
     const { data } = response.data as BaseResponse<{
       ticketModified: any
-      paymentItemCreatedList: any[]
+      paymentCreatedList: any[]
       ticketProductModifiedAll?: any[]
     }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
-      paymentItemCreatedList: PaymentItem.fromList(data.paymentItemCreatedList),
+      paymentCreatedList: Payment.fromList(data.paymentCreatedList),
       ticketProductModifiedAll: data.ticketProductModifiedAll
         ? TicketProduct.fromList(data.ticketProductModifiedAll)
         : undefined,

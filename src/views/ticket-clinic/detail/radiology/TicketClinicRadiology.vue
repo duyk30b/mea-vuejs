@@ -17,14 +17,16 @@ import { RadiologyGroupService } from '@/modules/radiology-group'
 import { RoomInteractType, RoomService, ticketRoomRef } from '@/modules/room'
 import { TicketStatus } from '@/modules/ticket'
 import { TicketClinicRadiologyApi } from '@/modules/ticket-clinic/ticket-clinic-radiology.api'
-import { TicketRadiology, TicketRadiologyStatus } from '@/modules/ticket-radiology'
+import { TicketRadiology, TicketRadiologyApi, TicketRadiologyStatus } from '@/modules/ticket-radiology'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import ModalTicketRadiologyResult from '@/views/room/room-radiology/ModalTicketRadiologyResult.vue'
 import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadiologyStatusTooltip.vue'
 import { computed, onMounted, ref, watch } from 'vue'
+import ModalTicketRadiologyUpdateMoney from './ModalTicketRadiologyUpdateMoney.vue'
 
-const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 const inputSearchRadiology = ref<InstanceType<typeof InputOptions>>()
+const modalTicketRadiologyUpdateMoney = ref<InstanceType<typeof ModalTicketRadiologyUpdateMoney>>()
+const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 
 const { userPermission, organization } = MeService
 
@@ -138,26 +140,6 @@ const savePriorityTicketRadiology = async () => {
   }
 }
 
-const clickDestroy = async (ticketRadiologyId: number) => {
-  ModalStore.confirm({
-    title: 'Xác nhận xóa phiếu CĐHA ?',
-    content: [
-      '- Hệ thống sẽ xóa phiếu CĐHA này khỏi phiếu khám',
-      '- Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
-    ],
-    async onOk() {
-      try {
-        await TicketClinicRadiologyApi.destroyTicketRadiology({
-          ticketId: ticketRoomRef.value.id,
-          ticketRadiologyId,
-        })
-      } catch (error) {
-        console.log('🚀 ~ TicketClinicRadiology.vue:132 ~ clickDestroy ~ error:', error)
-      }
-    },
-  })
-}
-
 const startPrintRequest = async () => {
   const roomMap = await RoomService.getMap()
   const ticketRadiologyPrint = (ticketRoomRef.value.ticketRadiologyList || [])
@@ -179,7 +161,10 @@ const startPrintRequest = async () => {
   })
 }
 
-const startPrintResult = async (ticketRadiologyData: TicketRadiology) => {
+const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
+  const ticketRadiologyData = await TicketRadiologyApi.detail(ticketRadiologySelect.id, {
+    relation: { imageList: true, ticketUserList: true },
+  })
   ticketRadiologyData.radiology = await RadiologyService.detail(ticketRadiologyData.radiologyId, {
     relation: { radiologyGroup: true },
   })
@@ -192,6 +177,7 @@ const startPrintResult = async (ticketRadiologyData: TicketRadiology) => {
 }
 </script>
 <template>
+  <ModalTicketRadiologyUpdateMoney ref="modalTicketRadiologyUpdateMoney" />
   <ModalTicketRadiologyResult ref="modalTicketRadiologyResult" />
   <div class="mt-4 flex justify-between">
     <span>Chỉ định CĐHA</span>
@@ -234,6 +220,7 @@ const startPrintResult = async (ticketRadiologyData: TicketRadiology) => {
             <!-- <th>BS thực hiện</th> -->
             <th>Kết quả</th>
             <th>Giá</th>
+            <th></th>
             <th></th>
             <th></th>
           </tr>
@@ -300,9 +287,6 @@ const startPrintResult = async (ticketRadiologyData: TicketRadiology) => {
                 >
                   {{ tpItem.result }}
                 </div>
-                <a @click="startPrintResult(tpItem)">
-                  <IconPrint width="18px" height="18px" />
-                </a>
               </div>
             </td>
             <td class="text-right whitespace-nowrap">
@@ -312,35 +296,47 @@ const startPrintResult = async (ticketRadiologyData: TicketRadiology) => {
               <div>{{ formatMoney(tpItem.actualPrice) }}</div>
             </td>
             <td class="text-center">
+              <a
+                v-if="tpItem.status === TicketRadiologyStatus.Completed"
+                @click="startPrintResult(tpItem)"
+              >
+                <IconPrint width="18px" height="18px" />
+              </a>
+            </td>
+            <td class="text-center">
               <a v-if="!tpItem.id">
                 <IconSpin width="20" height="20" />
               </a>
               <a
                 v-else-if="
                   ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                  tpItem.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
                   userPermission[PermissionId.RADIOLOGY_UPDATE_RESULT]
                 "
                 class="text-orange-500"
                 @click="modalTicketRadiologyResult?.openModal(tpItem.id)"
               >
-                <IconEditSquare width="20" height="20" />
+                <IconEye width="20" height="20" />
               </a>
               <a v-else @click="modalTicketRadiologyResult?.openModal(tpItem.id, { noEdit: true })">
-                <IconEye width="22" height="22" />
+                <IconEye width="20" height="20" />
               </a>
             </td>
             <td class="text-center">
+              <a v-if="!tpItem.id">
+                <IconSpin width="20" height="20" />
+              </a>
               <a
-                v-if="
-                  tpItem.id &&
-                  tpItem.status === TicketRadiologyStatus.Pending &&
-                  tpItem.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
+                v-else-if="
+                  ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                  [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
+                    tpItem.paymentMoneyStatus,
+                  ) &&
                   userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST]
                 "
-                style="color: var(--text-red)"
+                @click="modalTicketRadiologyUpdateMoney?.openModal(tpItem)"
+                style="color: var(--text-orange)"
               >
-                <IconDelete width="22" height="22" @click="clickDestroy(tpItem.id)" />
+                <IconEditSquare width="20" height="20" />
               </a>
             </td>
           </tr>
@@ -355,6 +351,7 @@ const startPrintResult = async (ticketRadiologyData: TicketRadiology) => {
                 }}
               </b>
             </td>
+            <td></td>
             <td></td>
             <td></td>
           </tr>

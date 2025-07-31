@@ -52,7 +52,7 @@ const startFetchData = async (receiptId: number) => {
       relation: {
         distributor: true,
         receiptItemList: { product: true, batch: true },
-        paymentItemList: true,
+        paymentList: true,
       },
     })
   } catch (error) {
@@ -106,7 +106,7 @@ const close = async () => {
     loadingProcess.value = true
     const result = await ReceiptApi.close({ receiptId: receipt.value.id! })
     Object.assign(receipt.value, result.receiptModified)
-    receipt.value.paymentItemList?.push(...result.paymentItemCreatedList)
+    receipt.value.paymentList?.push(...result.paymentCreatedList)
   } catch (error) {
     console.log('🚀 ~ ReceiptDetail.vue:124 ~ close ~ error:', error)
   } finally {
@@ -134,7 +134,7 @@ const clickTerminate = () => {
         loadingProcess.value = true
         const result = await ReceiptApi.terminate(receipt.value.id!)
         Object.assign(receipt.value, result.receiptModified)
-        receipt.value.paymentItemList?.push(...result.paymentItemCreatedList)
+        receipt.value.paymentList?.push(...result.paymentCreatedList)
         AlertStore.add({ type: 'success', message: 'Hủy phiếu thành công', time: 1000 })
       } catch (error) {
         console.log('🚀 ~ file: ReceiptDetail.vue:114 ~ startTerminate ~ error:', error)

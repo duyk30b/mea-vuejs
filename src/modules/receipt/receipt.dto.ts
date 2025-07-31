@@ -7,7 +7,7 @@ export class ReceiptGetQuery {
   limit?: number
   relation?: {
     distributor?: boolean
-    paymentItemList?: boolean
+    paymentList?: boolean
     receiptItemList?: { product?: boolean; batch?: boolean } | false
   }
 
@@ -32,6 +32,6 @@ export class ReceiptGetQuery {
   }
 }
 
-export class ReceiptPaginationQuery extends ReceiptGetQuery {}
-export class ReceiptListQuery extends OmitClass(ReceiptGetQuery, ['page']) {}
-export class ReceiptDetailQuery extends PickClass(ReceiptGetQuery, ['relation']) {}
+export class ReceiptPaginationQuery extends ReceiptGetQuery { }
+export class ReceiptListQuery extends OmitClass(ReceiptGetQuery, ['page']) { }
+export class ReceiptDetailQuery extends PickClass(ReceiptGetQuery, ['relation']) { }

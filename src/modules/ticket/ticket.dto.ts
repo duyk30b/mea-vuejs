@@ -13,7 +13,7 @@ export class TicketGetQuery {
   limit?: number
   relation?: {
     customer?: boolean
-    paymentItemList?: boolean
+    paymentList?: boolean
     ticketSurchargeList?: boolean
     ticketExpenseList?: boolean
     ticketAttributeList?: boolean

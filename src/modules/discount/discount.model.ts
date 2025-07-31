@@ -54,13 +54,13 @@ export class Discount extends BaseModel {
 
   get periodsDayText() {
     const dayName: Record<string, string> = {
+      0: 'Chủ Nhật',
       1: 'Thứ 2',
       2: 'Thứ 3',
       3: 'Thứ 4',
       4: 'Thứ 5',
       5: 'Thứ 6',
       6: 'Thứ 7',
-      7: 'Chủ Nhật',
     }
     return this.periodsDayParse.map((i: any) => dayName[i]).join(', ')
   }

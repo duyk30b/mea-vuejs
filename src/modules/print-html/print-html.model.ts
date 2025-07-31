@@ -1,20 +1,26 @@
 export enum PrintHtmlType {
   _HEADER = 1,
   _FOOTER = 2,
-  Prescription = 10,
-  ProcedureRequest = 20,
-  LaboratoryRequest = 30,
-  LaboratoryResult = 31,
-  Optometry = 32,
-  RadiologyRequest = 40,
-  RadiologyResult = 41,
-  CustomerPayment = 50,
-  Invoice = 60,
+  AllRequest = 10,
+  Invoice = 20,
+  CustomerPayment = 30,
+  CustomerRefund = 31,
+  Prescription = 100,
+  ProcedureRequest = 200,
+  LaboratoryRequest = 300,
+  LaboratoryResult = 301,
+  Optometry = 311,
+  RadiologyRequest = 400,
+  RadiologyResult = 401,
 }
 
 export const PrintHtmlTypeText = {
   [PrintHtmlType._HEADER]: '_HEADER',
   [PrintHtmlType._FOOTER]: '_FOOTER',
+  [PrintHtmlType.AllRequest]: 'Phiếu in của tất cả các chỉ định',
+  [PrintHtmlType.Invoice]: 'Hóa đơn',
+  [PrintHtmlType.CustomerPayment]: 'Phiếu thu tiền',
+  [PrintHtmlType.CustomerRefund]: 'Phiếu hoàn trả',
   [PrintHtmlType.Prescription]: 'Đơn thuốc',
   [PrintHtmlType.ProcedureRequest]: 'Phiếu chỉ định dịch vụ',
   [PrintHtmlType.LaboratoryRequest]: 'Phiếu chỉ định xét nghiệm',
@@ -22,8 +28,6 @@ export const PrintHtmlTypeText = {
   [PrintHtmlType.Optometry]: 'Phiếu kết quả đo thị lực',
   [PrintHtmlType.RadiologyRequest]: 'Phiếu chỉ định CĐHA',
   [PrintHtmlType.RadiologyResult]: 'Phiếu kết quả CĐHA',
-  [PrintHtmlType.CustomerPayment]: 'Phiếu thu tiền khách hàng',
-  [PrintHtmlType.Invoice]: 'Hóa đơn',
 }
 
 export class PrintHtml {

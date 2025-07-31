@@ -1,10 +1,14 @@
 import { AxiosInstance } from '@/core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
+import { Ticket } from '../ticket/ticket.model'
 
 export class TicketClinicApi {
   static async startCheckup(params: { ticketId: number }) {
     const response = await AxiosInstance.post(`/ticket-clinic/${params.ticketId}/start-checkup`)
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as BaseResponse<{ ticketModified: any }>
+    return {
+      ticket: Ticket.from(data.ticketModified),
+    }
   }
 
   static async updateDiagnosis(options: {

@@ -1,10 +1,10 @@
+import { AxiosInstance } from '@/core/axios.instance'
+import { Customer } from '@/modules/customer'
 import type { DiscountType } from '@/modules/enum'
-import { AxiosInstance } from '../../../core/axios.instance'
+import { Payment } from '@/modules/payment'
+import { TicketProduct } from '@/modules/ticket-product'
 import type { BaseResponse } from '../../_base/base-dto'
 import { Ticket } from '../ticket.model'
-import { TicketProduct } from '@/modules/ticket-product'
-import { Customer } from '@/modules/customer'
-import { PaymentItem } from '@/modules/payment-item'
 
 export type TicketItemChangeMoney = {
   id: number
@@ -84,12 +84,12 @@ export class TicketActionApi {
     const { data } = response.data as BaseResponse<{
       ticketModified: any
       customerModified?: any
-      paymentItemCreatedList: any[]
+      paymentCreatedList: any[]
     }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
       customerModified: data.customerModified ? Customer.from(data.customerModified) : undefined,
-      paymentItemCreatedList: PaymentItem.fromList(data.paymentItemCreatedList),
+      paymentCreatedList: Payment.fromList(data.paymentCreatedList),
     }
   }
 
@@ -99,12 +99,12 @@ export class TicketActionApi {
     const { data } = response.data as BaseResponse<{
       ticketModified: any
       customerModified: any
-      paymentItemCreatedList: any[]
+      paymentCreatedList: any[]
     }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
       customerModified: data.customerModified ? Customer.from(data.customerModified) : undefined,
-      paymentItemCreatedList: PaymentItem.fromList(data.paymentItemCreatedList),
+      paymentCreatedList: Payment.fromList(data.paymentCreatedList),
     }
   }
 
@@ -114,13 +114,13 @@ export class TicketActionApi {
     const { data } = response.data as BaseResponse<{
       ticketModified: any
       customerModified?: any
-      paymentItemCreatedList: any[]
+      paymentCreatedList: any[]
       ticketProductModifiedAll?: any[]
     }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
       customerModified: data.customerModified ? Customer.from(data.customerModified) : undefined,
-      paymentItemCreatedList: PaymentItem.fromList(data.paymentItemCreatedList),
+      paymentCreatedList: Payment.fromList(data.paymentCreatedList),
       ticketProductModifiedAll: data.ticketProductModifiedAll
         ? TicketProduct.fromList(data.ticketProductModifiedAll)
         : undefined,

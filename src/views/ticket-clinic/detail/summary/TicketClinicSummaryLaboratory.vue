@@ -14,6 +14,7 @@ import ModalTicketLaboratoryUpdateMoney from '../laboratory/ModalTicketLaborator
 import { ticketRoomRef } from '@/modules/room'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import TicketLaboratoryStatusTooltip from '@/views/room/room-laboratory/TicketLaboratoryStatusTooltip.vue'
+import { PaymentMoneyStatus } from '@/modules/enum'
 
 const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
@@ -43,23 +44,30 @@ const laboratoryCostAmount = computed(() => {
   <template v-if="ticketRoomRef.ticketLaboratoryGroupList?.length">
     <thead>
       <tr>
+        <th v-if="CONFIG.MODE === 'development'">ID</th>
         <th>#</th>
         <th></th>
         <th></th>
-        <th colspan="4" style="text-transform: uppercase">Xét nghiệm</th>
+        <th colspan="1" style="text-transform: uppercase">Xét nghiệm</th>
+        <th></th>
+        <th></th>
+        <th></th>
         <th>Giá</th>
         <th>Chiết khấu</th>
+        <th v-if="CONFIG.MODE === 'development'">Vốn</th>
         <th>Tổng tiền</th>
         <th></th>
-        <th v-if="CONFIG.MODE === 'development'" class="text-right italic">Vốn</th>
       </tr>
     </thead>
     <tbody>
       <template v-for="tlg in ticketRoomRef.ticketLaboratoryGroupList || []" :key="tlg.id">
         <tr>
-          <td colspan="11" class="font-bold">{{ tlg.laboratoryGroup?.name }}</td>
+          <td colspan="100" class="font-bold">{{ tlg.laboratoryGroup?.name }}</td>
         </tr>
         <tr v-for="(tl, index) in tlg.ticketLaboratoryList" :key="tl.id">
+          <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+            {{ tl.id }}
+          </td>
           <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
             {{ index + 1 }}
           </td>
@@ -70,10 +78,9 @@ const laboratoryCostAmount = computed(() => {
             <TicketLaboratoryStatusTooltip :status="tl.status" />
           </td>
           <td colspan="4">
-            <div class="flex items-center gap-1">
-              <span>{{ tl.laboratory?.name }}</span>
-            </div>
+            <span>{{ tl.laboratory?.name }}</span>
           </td>
+
           <td class="text-right whitespace-nowrap">
             <div v-if="tl.discountMoney" class="text-xs italic text-red-500">
               <del>{{ formatMoney(tl.expectedPrice) }}</del>
@@ -90,6 +97,9 @@ const laboratoryCostAmount = computed(() => {
               </VueTag>
             </div>
           </td>
+          <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
+            {{ formatMoney(tl.costPrice) }}
+          </td>
           <td class="text-right whitespace-nowrap">
             {{ formatMoney(tl.actualPrice) }}
           </td>
@@ -97,6 +107,9 @@ const laboratoryCostAmount = computed(() => {
             <a
               v-if="
                 ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
+                  tl.paymentMoneyStatus,
+                ) &&
                 userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
               "
               class="text-orange-500"
@@ -105,13 +118,11 @@ const laboratoryCostAmount = computed(() => {
               <IconEditSquare width="20" height="20" />
             </a>
           </td>
-          <td v-if="CONFIG.MODE === 'development'" class="text-right italic">
-            {{ formatMoney(tl.costPrice) }}
-          </td>
         </tr>
       </template>
       <tr>
-        <td class="text-right" colspan="8">
+        <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet"></td>
+        <td class="text-right" colspan="9">
           <div class="flex items-center justify-end gap-2">
             <span class="uppercase">Tiền xét nghiệm</span>
             <span v-if="laboratoryDiscount" class="italic" style="font-size: 13px">
@@ -119,13 +130,13 @@ const laboratoryCostAmount = computed(() => {
             </span>
           </div>
         </td>
+        <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
+          {{ formatMoney(laboratoryCostAmount) }}
+        </td>
         <td class="font-bold text-right whitespace-nowrap">
           {{ formatMoney(ticketRoomRef.laboratoryMoney) }}
         </td>
         <td></td>
-        <td v-if="CONFIG.MODE === 'development'" class="text-right italic">
-          {{ formatMoney(laboratoryCostAmount) }}
-        </td>
       </tr>
     </tbody>
   </template>

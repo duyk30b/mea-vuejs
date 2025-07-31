@@ -1,23 +1,21 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputMoney, InputSelect, InputText } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { PaymentViewType } from '@/modules/enum'
 import { PaymentApi } from '@/modules/payment'
-import { PaymentVoucherItemType } from '@/modules/payment-item'
-import { nextTick, onMounted, ref } from 'vue'
-import { IconClose } from '../../../common/icon-antd'
-import { MeService } from '../../../modules/_me/me.service'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { PaymentViewType } from '../../../modules/enum'
-import { PaymentMethodService, type PaymentMethod } from '../../../modules/payment-method'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { TicketStatus } from '../../../modules/ticket'
-import { TicketOrderApi } from '../../../modules/ticket-order'
-import { ESArray } from '../../../utils'
+import { PaymentMethodService } from '@/modules/payment-method'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { TicketStatus } from '@/modules/ticket'
+import { TicketOrderApi } from '@/modules/ticket-order'
+import { TicketProduct } from '@/modules/ticket-product'
+import { onMounted, ref } from 'vue'
 import TicketPaymentList from '../../ticket-base/TicketPaymentList.vue'
 import { ticketOrderDetailRef } from './ticket-order-detail.ref'
-import { TicketProduct } from '@/modules/ticket-product'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputMoney>>()
 const emit = defineEmits<{ (e: 'success'): void }>()
@@ -34,12 +32,10 @@ const money = ref(0)
 const paymentMethodId = ref<number>(0)
 const note = ref('')
 const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
-const paymentMethodMap = ref<Record<string, PaymentMethod>>({})
 
 onMounted(async () => {
   try {
     const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
-    paymentMethodMap.value = ESArray.arrayToKeyValue(paymentMethodAll, 'id')
     paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
     paymentMethodId.value = paymentMethodAll[0]?.id || 0
   } catch (error) {
@@ -66,32 +62,17 @@ const startPrepayment = async () => {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
     paymentLoading.value = true
-    const result = await PaymentApi.customerPayment({
+    const result = await PaymentApi.customerPrepaymentMoney({
       body: {
         customerId: ticketOrderDetailRef.value.customerId,
         paymentMethodId: paymentMethodId.value,
-        totalMoney: money.value,
-        reason: 'Tạm ứng',
+        paidAmount: money.value,
         note: '',
-        paymentItemData: {
-          moneyTopUpAdd: 0,
-          payDebt: [],
-          prepayment: {
-            ticketId: ticketOrderDetailRef.value.id,
-            itemList: [
-              {
-                amount: money.value,
-                ticketItemId: 0,
-                paymentInteractId: 0,
-                voucherItemType: PaymentVoucherItemType.Other,
-              },
-            ],
-          },
-        },
+        ticketId: ticketOrderDetailRef.value.id,
       },
     })
-    Object.assign(ticketOrderDetailRef.value, result.ticketModifiedList[0])
-    ticketOrderDetailRef.value.paymentItemList!.push(...result.paymentItemCreatedList)
+    Object.assign(ticketOrderDetailRef.value, result.ticketModified)
+    ticketOrderDetailRef.value.paymentList!.push(result.paymentCreated)
 
     emit('success')
     showModal.value = false
@@ -115,14 +96,14 @@ const startSendProductAndPaymentAndClose = async () => {
       ticketOrderDetailRef.value.id,
       {
         customerId: ticketOrderDetailRef.value.customerId,
-        money: money.value,
+        paidAmount: money.value,
         paymentMethodId: paymentMethodId.value,
-        reason: note.value,
+        note: note.value,
         ticketProductIdList: (ticketOrderDetailRef.value.ticketProductList || []).map((i) => i.id),
       },
     )
     Object.assign(ticketOrderDetailRef.value, response.ticketModified)
-    ticketOrderDetailRef.value.paymentItemList?.push(...response.paymentItemCreatedList)
+    ticketOrderDetailRef.value.paymentList?.push(...response.paymentCreatedList)
     ticketOrderDetailRef.value.ticketProductList = TicketProduct.updateListByPartialList(
       ticketOrderDetailRef.value.ticketProductList || [],
       response.ticketProductModifiedAll,
@@ -130,10 +111,7 @@ const startSendProductAndPaymentAndClose = async () => {
     emit('success')
     showModal.value = false
   } catch (error) {
-    console.log(
-      '🚀 ~ ModalTicketOrderPayment.vue:116 ~ startSendProductAndPaymentAndClose ~ error:',
-      error,
-    )
+    console.log('🚀 ~ ModalTicketOrderPayment.vue:116 ~ SendProductAndPaymentAndClose :', error)
   } finally {
     paymentLoading.value = false
   }
@@ -149,15 +127,17 @@ const startRefundOverpaid = async () => {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
 
-    const result = await PaymentApi.customerRefund({
-      customerId: ticketOrderDetailRef.value.customerId,
-      ticketId: ticketOrderDetailRef.value.id,
-      paymentMethodId: paymentMethodId.value,
-      money: money.value,
-      reason: 'Hoàn tiền',
+    const result = await PaymentApi.customerRefundMoney({
+      body: {
+        customerId: ticketOrderDetailRef.value.customerId,
+        ticketId: ticketOrderDetailRef.value.id,
+        paymentMethodId: paymentMethodId.value,
+        note: '',
+        refundAmount: money.value,
+      },
     })
     Object.assign(ticketOrderDetailRef.value, result.ticketModified)
-    ticketOrderDetailRef.value.paymentItemList!.push(result.paymentItemCreated)
+    ticketOrderDetailRef.value.paymentList!.push(result.paymentCreated)
 
     emit('success')
     showModal.value = false
@@ -177,26 +157,22 @@ const startPayDebt = async () => {
     ) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
-    const result = await PaymentApi.customerPayment({
+    const result = await PaymentApi.customerPayDebt({
       body: {
         customerId: ticketOrderDetailRef.value.customerId,
         paymentMethodId: paymentMethodId.value,
-        totalMoney: money.value,
-        reason: 'Trả nợ',
+        paidAmount: money.value,
         note: '',
-        paymentItemData: {
-          moneyTopUpAdd: 0,
-          payDebt: [
-            {
-              amount: money.value,
-              ticketId: ticketOrderDetailRef.value.id,
-            },
-          ],
-        },
+        dataList: [
+          {
+            paidAmount: money.value,
+            ticketId: ticketOrderDetailRef.value.id,
+          },
+        ],
       },
     })
     Object.assign(ticketOrderDetailRef.value, result.ticketModifiedList[0])
-    ticketOrderDetailRef.value.paymentItemList!.push(...result.paymentItemCreatedList)
+    ticketOrderDetailRef.value.paymentList!.push(...result.paymentCreatedList)
 
     emit('success')
     showModal.value = false
@@ -221,7 +197,7 @@ defineExpose({ openModal })
       </div>
 
       <div class="p-4">
-        <TicketPaymentList :ticket="ticketOrderDetailRef" :payment-method-map="paymentMethodMap" />
+        <TicketPaymentList :ticket="ticketOrderDetailRef" />
       </div>
 
       <!-- RefundOverpaid -->

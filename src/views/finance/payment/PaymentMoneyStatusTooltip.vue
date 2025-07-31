@@ -19,6 +19,13 @@ const props = withDefaults(defineProps<{ paymentMoneyStatus: PaymentMoneyStatus 
       <div>Chưa thanh toán</div>
     </VueTooltip>
 
+    <VueTooltip v-else-if="paymentMoneyStatus === PaymentMoneyStatus.Partial">
+      <template #trigger>
+        <IconDollar style="font-size: 18px; color: violet; cursor: not-allowed" />
+      </template>
+      <div>Thanh toán 1 phần</div>
+    </VueTooltip>
+
     <VueTooltip v-else-if="paymentMoneyStatus === PaymentMoneyStatus.Paid">
       <template #trigger>
         <IconDollar style="color: #52c41a; font-size: 18px; cursor: not-allowed" />

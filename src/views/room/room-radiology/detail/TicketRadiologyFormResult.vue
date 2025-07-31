@@ -10,7 +10,7 @@ import VueTinyMCE from '@/common/VueTinyMCE.vue'
 import { MeService } from '@/modules/_me/me.service'
 import { Image, ImageHostType } from '@/modules/image/image.model'
 import { PositionInteractType, PositionService } from '@/modules/position'
-import { PrintHtml } from '@/modules/print-html'
+import { PrintHtml, PrintHtmlType } from '@/modules/print-html'
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import { RadiologyService } from '@/modules/radiology'
 import { RadiologySample } from '@/modules/radiology-sample'
@@ -352,6 +352,7 @@ const startPrintDemo = async () => {
           </div>
           <VueSelectPrintHtml
             v-model:printHtmlId="ticketRadiology.printHtmlId"
+            :printHtmlType="PrintHtmlType.RadiologyResult"
             @selectPrintHtml="selectPrintHtml"
             removeLabelWrapper
           />

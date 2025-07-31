@@ -314,13 +314,13 @@ defineExpose({ openModal })
           <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px" class="flex flex-wrap gap-4">
             <div style="width: 100px">Ngày:</div>
             <div style="flex-grow: 1; display: flex; flex-wrap: wrap" class="gap-6">
+              <InputCheckbox :label="'Chủ nhật'" v-model:value="periodsDayMap[0]" />
               <InputCheckbox :label="'Thứ 2'" v-model:value="periodsDayMap[1]" />
               <InputCheckbox :label="'Thứ 3'" v-model:value="periodsDayMap[2]" />
               <InputCheckbox :label="'Thứ 4'" v-model:value="periodsDayMap[3]" />
               <InputCheckbox :label="'Thứ 5'" v-model:value="periodsDayMap[4]" />
               <InputCheckbox :label="'Thứ 6'" v-model:value="periodsDayMap[5]" />
               <InputCheckbox :label="'Thứ 7'" v-model:value="periodsDayMap[6]" />
-              <InputCheckbox :label="'Chủ nhật'" v-model:value="periodsDayMap[7]" />
             </div>
           </div>
           <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px" class="flex flex-wrap gap-4">

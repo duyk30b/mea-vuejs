@@ -1,6 +1,7 @@
 import { Customer } from '../customer'
 import { PaymentMoneyStatus } from '../enum'
 import { LaboratoryGroup } from '../laboratory-group'
+import { Room } from '../room'
 import { TicketLaboratoryResult } from '../ticket-laboratory-result'
 import {
   TicketLaboratory,
@@ -23,6 +24,7 @@ export class TicketLaboratoryGroup {
 
   customer?: Customer
   ticket?: Ticket
+  room?: Room
   laboratoryGroup?: LaboratoryGroup
   ticketLaboratoryList?: TicketLaboratory[]
   ticketLaboratoryResultMap?: Record<string, TicketLaboratoryResult>
@@ -62,6 +64,9 @@ export class TicketLaboratoryGroup {
     }
     if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
       target.customer = source.customer ? Customer.basic(source.customer) : source.customer
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'room')) {
+      target.room = source.room ? Room.basic(source.room) : source.room
     }
     if (Object.prototype.hasOwnProperty.call(source, 'laboratoryGroup')) {
       target.laboratoryGroup = source.laboratoryGroup

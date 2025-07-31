@@ -335,6 +335,7 @@ const startCleanHtml = () => {
           <div style="flex-grow: 1; flex-basis: 45%; min-width: 400px">
             <VueSelectPrintHtml
               v-model:printHtmlId="radiologySample.printHtmlId"
+              :printHtmlType="PrintHtmlType.RadiologyResult"
               @selectPrintHtml="(v) => selectPrintHtml(v)"
             />
           </div>

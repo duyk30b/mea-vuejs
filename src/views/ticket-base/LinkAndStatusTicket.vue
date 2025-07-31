@@ -39,19 +39,19 @@ const openBlankTicketClinicDetail = async (ticket: Ticket) => {
 
 <template>
   <template v-if="!ticket">
-    <div v-if="!ticketId" style="font-size: 0.8rem"></div>
-    <div v-else style="font-size: 0.8rem">
+    <div v-if="!ticketId" style=""></div>
+    <div v-else style="">
       <VueTag icon="exclamation">T{{ ticketId }} - Bị xóa</VueTag>
     </div>
   </template>
   <template v-else>
-    <div v-if="ticket?.ticketType === TicketType.Order" style="font-size: 0.8rem">
+    <div v-if="ticket?.ticketType === TicketType.Order" style="">
       <a v-if="link" style="margin-right: 0.5em" @click="openBlankTicketOrderDetail(ticket.id)">
         BH{{ ticket.id }}
       </a>
       <TicketStatusTag v-if="status" :ticket="ticket" />
     </div>
-    <div v-else style="font-size: 0.8rem">
+    <div v-else style="">
       <a v-if="link" style="margin-right: 0.5em" @click="openBlankTicketClinicDetail(ticket)">
         KB{{ ticket.id }}
       </a>

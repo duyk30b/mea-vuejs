@@ -184,7 +184,7 @@ const handleModalSelectTicketDemoSuccess = async (ticketDemoId: number) => {
       const ticketResponse = await TicketService.detail(ticketDemoId, {
         relation: {
           customer: true,
-          paymentItemList: false, // query khi bật modal thanh toán
+          paymentList: false,
 
           ticketAttributeList: true,
           // ticketProductList: true,

@@ -1,7 +1,7 @@
 import { Batch } from '../batch'
 import { Distributor } from '../distributor'
 import { DeliveryStatus, DiscountType } from '../enum'
-import { PaymentItem } from '../payment-item'
+import { Payment } from '../payment'
 import { Product } from '../product'
 import { ReceiptItem } from '../receipt-item/receipt-item.model'
 
@@ -34,7 +34,7 @@ export class Receipt {
 
   receiptItemList?: ReceiptItem[]
   distributor?: Distributor
-  paymentItemList?: PaymentItem[]
+  paymentList?: Payment[]
 
   static init(): Receipt {
     const ins = new Receipt()
@@ -56,7 +56,7 @@ export class Receipt {
     const ins = Receipt.init()
     ins.receiptItemList = []
     ins.distributor = Distributor.init()
-    ins.paymentItemList = []
+    ins.paymentList = []
     return ins
   }
 
@@ -111,8 +111,8 @@ export class Receipt {
         return receiptItem
       })
     }
-    if (source.paymentItemList) {
-      target.paymentItemList = PaymentItem.basicList(source.paymentItemList)
+    if (source.paymentList) {
+      target.paymentList = Payment.basicList(source.paymentList)
     }
     return target
   }

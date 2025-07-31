@@ -1,21 +1,20 @@
 <script setup lang="ts">
-import { PaymentApi } from '@/modules/payment'
-import { PaymentVoucherItemType } from '@/modules/payment-item'
-import { nextTick, onMounted, ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon-antd'
-import { AlertStore } from '../../../common/vue-alert'
-import { InputMoney, InputSelect } from '../../../common/vue-form'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { MeService } from '../../../modules/_me/me.service'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { PaymentViewType } from '../../../modules/enum'
-import { PaymentMethodService } from '../../../modules/payment-method'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { ReceiptApi } from '../../../modules/receipt'
-import { timeToText } from '../../../utils'
-import { receipt } from './receipt-detail.ref'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert'
+import { InputMoney, InputSelect } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
 import { CONFIG } from '@/config'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { PaymentViewType } from '@/modules/enum'
+import { PaymentActionTypeText, PaymentApi } from '@/modules/payment'
+import { PaymentMethod, PaymentMethodService } from '@/modules/payment-method'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { ReceiptApi } from '@/modules/receipt'
+import { ESArray, timeToText } from '@/utils'
+import { onMounted, ref } from 'vue'
+import { receipt } from './receipt-detail.ref'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputMoney>>()
 
@@ -32,10 +31,11 @@ const paymentView = ref(PaymentViewType.Success)
 const money = ref(0)
 const paymentMethodId = ref<number>(0)
 const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
+const paymentMethodMap = PaymentMethodService.paymentMethodMap
 
 onMounted(async () => {
   try {
-    const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
+    const paymentMethodAll = await PaymentMethodService.getAll()
     paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
     paymentMethodId.value = paymentMethodAll[0]?.id || 0
   } catch (error) {
@@ -64,80 +64,68 @@ const handlePayment = async () => {
         return AlertStore.addError('Số tiền thanh toán không hợp lệ')
       }
       const result = await ReceiptApi.sendProductAndPaymentAndClose(receipt.value.id, {
-        money: money.value,
+        paidAmount: money.value,
         distributorId: receipt.value.distributorId,
         paymentMethodId: paymentMethodId.value,
-        reason: 'Thanh toán',
+        note: '',
       })
       Object.assign(receipt.value, result.receiptModified)
-      receipt.value.paymentItemList?.push(...result.paymentItemCreatedList)
+      receipt.value.paymentList?.push(...result.paymentCreatedList)
     }
     if (paymentView.value === PaymentViewType.Prepayment) {
       if (money.value <= 0) {
         return AlertStore.addError('Số tiền không hợp lệ')
       }
-      const result = await PaymentApi.distributorPayment({
-        distributorId: receipt.value.distributorId,
-        paymentMethodId: paymentMethodId.value,
-        totalMoney: money.value,
-        reason: 'Tạm ứng',
-        note: '',
-        paymentItemData: {
-          moneyTopUpAdd: 0,
-          payDebt: [],
-          prepayment: {
-            receiptId: receipt.value.id,
-            itemList: [
-              {
-                amount: money.value,
-                receiptItemId: 0,
-                voucherItemType: PaymentVoucherItemType.Other,
-              },
-            ],
-          },
+      const result = await PaymentApi.distributorPrepaymentMoney({
+        body: {
+          receiptId: receipt.value.id,
+          distributorId: receipt.value.distributorId,
+          paymentMethodId: paymentMethodId.value,
+          paidAmount: money.value,
+          note: '',
         },
       })
-      Object.assign(receipt.value, result.receiptModifiedList[0])
-      receipt.value.paymentItemList!.push(...result.paymentItemCreatedList)
+      Object.assign(receipt.value, result.receiptModified)
+      receipt.value.paymentList!.push(result.paymentCreated)
     }
     if (paymentView.value === PaymentViewType.PayDebt) {
       if (money.value <= 0 || money.value + receipt.value.paid > receipt.value.totalMoney) {
         inputMoneyPayment.value?.focus()
         return AlertStore.addError('Số tiền thanh toán không hợp lệ')
       }
-      const result = await PaymentApi.distributorPayment({
-        distributorId: receipt.value.distributorId,
-        paymentMethodId: paymentMethodId.value,
-        totalMoney: money.value,
-        reason: 'Trả nợ',
-        note: '',
-        paymentItemData: {
-          moneyTopUpAdd: 0,
-          payDebt: [
+      const result = await PaymentApi.distributorPayDebt({
+        body: {
+          distributorId: receipt.value.distributorId,
+          paymentMethodId: paymentMethodId.value,
+          paidAmount: money.value,
+          dataList: [
             {
-              amount: money.value,
+              paidAmount: money.value,
               receiptId: receipt.value.id,
             },
           ],
+          note: '',
         },
       })
       Object.assign(receipt.value, result.receiptModifiedList[0])
-      receipt.value.paymentItemList!.push(...result.paymentItemCreatedList)
+      receipt.value.paymentList!.push(...result.paymentCreatedList)
     }
     if (paymentView.value === PaymentViewType.RefundOverpaid) {
       if (money.value <= 0 || receipt.value.paid - money.value < receipt.value.totalMoney) {
         inputMoneyPayment.value?.focus()
         return AlertStore.addError('Số tiền thanh toán không hợp lệ')
       }
-      const result = await PaymentApi.distributorRefund({
-        distributorId: receipt.value.distributorId,
-        receiptId: receipt.value.id,
-        paymentMethodId: paymentMethodId.value,
-        money: money.value,
-        reason: 'Hoàn tiền',
+      const result = await PaymentApi.distributorRefundMoney({
+        body: {
+          receiptId: receipt.value.id,
+          distributorId: receipt.value.distributorId,
+          paymentMethodId: paymentMethodId.value,
+          refundAmount: money.value,
+          note: '',
+        },
       })
       Object.assign(receipt.value, result.receiptModified)
-      receipt.value.paymentItemList!.push(result.paymentItemCreated)
+      receipt.value.paymentList!.push(result.paymentCreated)
     }
 
     emit('success')
@@ -156,7 +144,9 @@ defineExpose({ openModal })
   <VueModal v-model:show="showModal" :style="'width: 800px'">
     <div class="bg-white">
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
-        <div class="flex-1 text-lg font-medium">Thông tin thanh toán</div>
+        <div class="flex-1 text-lg font-medium">
+          {{ receipt.distributor?.fullName }} - Thanh toán
+        </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
         </div>
@@ -176,6 +166,7 @@ defineExpose({ openModal })
                 <th v-if="CONFIG.MODE === 'development'">ID</th>
                 <th>#</th>
                 <th>Thời gian</th>
+                <th>PT Thanh toán</th>
                 <th>Note</th>
                 <th>Tiền</th>
                 <th v-if="CONFIG.MODE === 'development'">Ghi nợ</th>
@@ -183,39 +174,57 @@ defineExpose({ openModal })
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(paymentItem, index) in receipt.paymentItemList" :key="index">
+              <tr v-for="(payment, index) in receipt.paymentList" :key="index">
                 <td v-if="CONFIG.MODE === 'development'" style="color: violet" class="text-center">
-                  {{ paymentItem.id }}
+                  {{ payment.id }}
                 </td>
                 <td class="text-center">{{ index + 1 }}</td>
                 <td class="text-left">
-                  {{ timeToText(paymentItem.createdAt, 'DD/MM/YY hh:mm') }}
+                  {{ timeToText(payment.createdAt, 'DD/MM/YY hh:mm') }}
+                </td>
+                <td class="text-center">
+                  {{ paymentMethodMap[payment.paymentMethodId]?.name }}
                 </td>
                 <td>
-                  <div>{{ paymentItem.note }}</div>
+                  <div>{{ PaymentActionTypeText[payment.paymentActionType] }}</div>
+                  <div v-if="payment.note" style="font-size: 0.9em">
+                    {{ payment.note }}
+                  </div>
                 </td>
                 <td class="text-right" style="padding-right: 8px">
-                  <div>{{ formatMoney(paymentItem.paidAmount) }}</div>
+                  <div>{{ formatMoney(payment.paidAmount) }}</div>
                 </td>
                 <td class="text-right" v-if="CONFIG.MODE === 'development'" style="color: violet">
-                  {{ formatMoney(paymentItem.debtAmount) }}
+                  {{ formatMoney(payment.debtAmount) }}
                 </td>
                 <td class="text-right" v-if="CONFIG.MODE === 'development'" style="color: violet">
-                  {{ formatMoney(paymentItem.openDebt) }} ->
-                  {{ formatMoney(paymentItem.closeDebt) }}
+                  {{ formatMoney(payment.openDebt) }} ->
+                  {{ formatMoney(payment.closeDebt) }}
                 </td>
               </tr>
               <tr>
-                <td colspan="3" class="text-right">Tổng đã thanh toán :</td>
+                <td v-if="CONFIG.MODE === 'development'"></td>
+                <td v-if="CONFIG.MODE === 'development'"></td>
+                <td colspan="4" class="text-right">Tổng đã thanh toán :</td>
                 <td class="text-right font-bold">{{ formatMoney(receipt.paid) }}</td>
+                <td v-if="CONFIG.MODE === 'development'"></td>
+                <td v-if="CONFIG.MODE === 'development'"></td>
               </tr>
               <tr v-if="receipt.debt >= 0">
-                <td colspan="3" class="text-right">Đang thiếu :</td>
+                <td v-if="CONFIG.MODE === 'development'"></td>
+                <td v-if="CONFIG.MODE === 'development'"></td>
+                <td colspan="4" class="text-right">Đang thiếu :</td>
                 <td class="text-right font-bold">{{ formatMoney(receipt.debt) }}</td>
+                <td v-if="CONFIG.MODE === 'development'"></td>
+                <td v-if="CONFIG.MODE === 'development'"></td>
               </tr>
               <tr v-else style="color: var(--text-green)">
-                <td colspan="3" class="text-right">Đang thừa</td>
+                <td v-if="CONFIG.MODE === 'development'"></td>
+                <td v-if="CONFIG.MODE === 'development'"></td>
+                <td colspan="4" class="text-right">Đang thừa</td>
                 <td class="text-right font-bold">{{ formatMoney(-receipt.debt) }}</td>
+                <td v-if="CONFIG.MODE === 'development'"></td>
+                <td v-if="CONFIG.MODE === 'development'"></td>
               </tr>
             </tbody>
           </table>

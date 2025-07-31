@@ -85,17 +85,15 @@ const handleSave = async () => {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
 
-    const data = await PaymentApi.distributorPayment({
-      distributorId: distributor.value.id,
-      paymentMethodId: paymentMethodId.value,
-      reason: 'Trả nợ',
-      totalMoney: money.value,
-      note: '',
-      paymentItemData: {
-        moneyTopUpAdd: 0,
-        payDebt: receiptPaymentList.value
-          .map((i) => ({ receiptId: i.receipt.id, amount: i.money }))
-          .filter((i) => i.amount > 0),
+    const data = await PaymentApi.distributorPayDebt({
+      body: {
+        distributorId: distributor.value.id,
+        paymentMethodId: paymentMethodId.value,
+        paidAmount: money.value,
+        note: '',
+        dataList: receiptPaymentList.value
+          .map((i) => ({ receiptId: i.receipt.id, paidAmount: i.money }))
+          .filter((i) => i.paidAmount > 0),
       },
     })
     AlertStore.addSuccess(`Trả nợ cho NCC ${distributor.value.fullName} thành công`)

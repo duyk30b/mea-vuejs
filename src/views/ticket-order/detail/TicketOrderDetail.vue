@@ -59,7 +59,7 @@ const startFetchData = async (ticketId: number) => {
     ticketOrderDetailRef.value = await TicketService.detail(ticketId, {
       relation: {
         customer: true,
-        paymentItemList: true,
+        paymentList: true,
         // ticketAttributeList: true,
         ticketProductList: { relation: { product: true } },
         ticketProcedureList: { relation: { procedure: true } },
@@ -125,8 +125,8 @@ const close = async () => {
       ticketId: ticketOrderDetailRef.value.id!,
     })
     Object.assign(ticketOrderDetailRef.value, response.ticketModified)
-    ticketOrderDetailRef.value.paymentItemList ||= []
-    ticketOrderDetailRef.value.paymentItemList.push(...response.paymentItemCreatedList)
+    ticketOrderDetailRef.value.paymentList ||= []
+    ticketOrderDetailRef.value.paymentList.push(...response.paymentCreatedList)
   } catch (error) {
     console.log('🚀 ~ startShipAndPayment ~ error:', error)
   } finally {
@@ -159,8 +159,8 @@ const clickTerminate = () => {
           ticketId: ticketOrderDetailRef.value.id!,
         })
         Object.assign(ticketOrderDetailRef.value, response.ticketModified)
-        ticketOrderDetailRef.value.paymentItemList ||= []
-        ticketOrderDetailRef.value.paymentItemList.push(...response.paymentItemCreatedList)
+        ticketOrderDetailRef.value.paymentList ||= []
+        ticketOrderDetailRef.value.paymentList.push(...response.paymentCreatedList)
         ticketOrderDetailRef.value.ticketProductList = TicketProduct.updateListByPartialList(
           ticketOrderDetailRef.value.ticketProductList || [],
           response.ticketProductModifiedAll,
@@ -200,8 +200,8 @@ const clickReopen = () => {
     async onOk() {
       const response = await TicketActionApi.reopen({ ticketId: ticketOrderDetailRef.value.id })
       Object.assign(ticketOrderDetailRef.value, response.ticketModified)
-      ticketOrderDetailRef.value.paymentItemList ||= []
-      ticketOrderDetailRef.value.paymentItemList.push(...response.paymentItemCreatedList)
+      ticketOrderDetailRef.value.paymentList ||= []
+      ticketOrderDetailRef.value.paymentList.push(...response.paymentCreatedList)
     },
   })
 }

@@ -15,9 +15,9 @@ export class AddressService {
     try {
       let refreshTime = await RefreshTimeDB.findOneByCode('ADDRESS')
       if (!refreshTime) {
-        refreshTime = { code: 'ADDRESS', dataVersion: 0, time: new Date(0).toISOString() }
+        refreshTime = { code: 'ADDRESS', dataVersion: 2, time: new Date(0).toISOString() }
       }
-      const dataVersion = MeService.settingMapRoot.value.dataVersionParse?.address || 0
+      const dataVersion = MeService.settingMapRoot.value.dataVersionParse?.address || 2
 
       if (refreshTime.dataVersion !== dataVersion) {
         await AddressDB.truncate()

@@ -93,7 +93,7 @@ const startFetchData = async (ticketId?: number) => {
     const ticketData = await TicketService.detail(ticketId, {
       relation: {
         customer: true,
-        paymentItemList: false, // query khi bật modal thanh toán
+        paymentList: false, // query khi bật modal thanh toán
 
         ticketAttributeList: true,
         // ticketProductList: true,
@@ -142,7 +142,8 @@ const startFetchData = async (ticketId?: number) => {
 const handleChangeTabs = (activeKey: any) => {}
 
 const startCheckup = async () => {
-  await TicketClinicApi.startCheckup({ ticketId: ticketRoomRef.value.id })
+  const response = await TicketClinicApi.startCheckup({ ticketId: ticketRoomRef.value.id })
+  Object.assign(ticketRoomRef.value.id, response.ticket)
 }
 
 const startRegisterExecuting = async () => {

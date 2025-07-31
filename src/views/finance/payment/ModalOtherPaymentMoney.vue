@@ -54,7 +54,7 @@ const handleSave = async () => {
       const payment = await PaymentApi.otherPaymentIn({
         paymentMethodId: paymentMethodId.value,
         note: note.value,
-        money: money.value,
+        paidAmount: money.value,
       })
       emit('success', { payment })
     }
@@ -62,7 +62,7 @@ const handleSave = async () => {
       const payment = await PaymentApi.otherPaymentOut({
         paymentMethodId: paymentMethodId.value,
         note: note.value,
-        money: money.value,
+        paidAmount: money.value,
       })
       emit('success', { payment })
     }
@@ -81,7 +81,10 @@ defineExpose({ openModal })
 <template>
   <VueModal v-model:show="showModal" style="margin-top: 50px" @close="closeModal">
     <div class="pl-4 py-3 flex items-center bg-white" style="border-bottom: 1px solid #dedede">
-      <div class="flex-1 font-medium" style="font-size: 16px">Tạo phiếu thu</div>
+      <div class="flex-1 font-medium" style="font-size: 16px">
+        <span v-if="moneyDirection === MoneyDirection.In">Tạo phiếu thu</span>
+        <span v-if="moneyDirection === MoneyDirection.Out">Tạo phiếu chi</span>
+      </div>
       <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
         <IconClose />
       </div>

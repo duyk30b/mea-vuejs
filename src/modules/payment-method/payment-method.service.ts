@@ -1,16 +1,21 @@
-import { ESString } from '../../utils'
+import { ref } from 'vue'
+import { ESArray, ESString } from '../../utils'
 import { PaymentMethodApi } from './payment-method.api'
 import type {
-    PaymentMethodDetailQuery,
-    PaymentMethodListQuery,
-    PaymentMethodPaginationQuery,
+  PaymentMethodDetailQuery,
+  PaymentMethodListQuery,
+  PaymentMethodPaginationQuery,
 } from './payment-method.dto'
 import { PaymentMethod } from './payment-method.model'
+import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+
+const PaymentMethodDBQuery = new IndexedDBQuery<PaymentMethod>()
 
 export class PaymentMethodService {
   static loadedAll: boolean = false
 
   static paymentMethodAll: PaymentMethod[] = []
+  static paymentMethodMap = ref<Record<string, PaymentMethod>>({})
 
   private static fetchAll = (() => {
     const start = async () => {
@@ -18,14 +23,19 @@ export class PaymentMethodService {
         const { data } = await PaymentMethodApi.list({
           sort: { id: 'ASC' },
         })
-        PaymentMethodService.paymentMethodAll = data
+        const paymentMethodAll = data
+        PaymentMethodService.paymentMethodAll = paymentMethodAll
+        PaymentMethodService.paymentMethodMap.value = ESArray.arrayToKeyValue(
+          paymentMethodAll,
+          'id',
+        )
       } catch (error: any) {
         console.log('🚀 ~ payment-method.service.ts:21 ~ start ~ error:', error)
       }
     }
     let fetchPromise: Promise<void> | null = null
-    return async (options: { refresh?: boolean } = {}) => {
-      if (!fetchPromise || !PaymentMethodService.loadedAll || options.refresh) {
+    return async (options: { refetch?: boolean } = {}) => {
+      if (!fetchPromise || !PaymentMethodService.loadedAll || options.refetch) {
         PaymentMethodService.loadedAll = true
         fetchPromise = start()
       }
@@ -38,24 +48,11 @@ export class PaymentMethodService {
     if (query.filter) {
       const filter = query.filter
       data = data.filter((i) => {
-        return true
+        return PaymentMethodDBQuery.executeFilter(i, filter)
       })
     }
     if (query.sort) {
-      if (query.sort.id) {
-        data.sort((a, b) => {
-          if (query.sort?.id === 'ASC') return a.id < b.id ? -1 : 1
-          if (query.sort?.id === 'DESC') return a.id > b.id ? -1 : 1
-          return a.id > b.id ? -1 : 1
-        })
-      }
-      if (query.sort.priority) {
-        data.sort((a, b) => {
-          if (query.sort?.priority === 'ASC') return a.priority < b.priority ? -1 : 1
-          if (query.sort?.priority === 'DESC') return a.priority > b.priority ? -1 : 1
-          return a.priority > b.priority ? -1 : 1
-        })
-      }
+      data = PaymentMethodDBQuery.executeSort(data, query.sort)
     }
     return data
   }
@@ -64,12 +61,25 @@ export class PaymentMethodService {
     const page = query.page || 1
     const limit = query.limit || 10
     await PaymentMethodService.fetchAll()
-    const dataQuery = PaymentMethodService.executeQuery(PaymentMethodService.paymentMethodAll, query)
+    const dataQuery = PaymentMethodService.executeQuery(
+      PaymentMethodService.paymentMethodAll,
+      query,
+    )
     const data = dataQuery.slice((page - 1) * limit, page * limit)
     return {
       data,
       meta: { total: dataQuery.length },
     }
+  }
+
+  static async getMap(options?: { refetch: boolean }) {
+    await PaymentMethodService.fetchAll({ refetch: !!options?.refetch })
+    return PaymentMethodService.paymentMethodMap.value
+  }
+
+  static async getAll(options?: { refetch: boolean }) {
+    await PaymentMethodService.fetchAll({ refetch: !!options?.refetch })
+    return PaymentMethodService.paymentMethodAll
   }
 
   static async list(query: PaymentMethodListQuery) {

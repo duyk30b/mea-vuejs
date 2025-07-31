@@ -8,7 +8,6 @@ import VueModal from '@/common/vue-modal/VueModal.vue'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Distributor, DistributorService } from '@/modules/distributor'
-import { PaymentApi } from '@/modules/payment'
 import { PaymentMethodService } from '@/modules/payment-method'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { ReceiptApi, ReceiptStatus, type Receipt } from '@/modules/receipt'
@@ -105,21 +104,21 @@ const handleSave = async () => {
     if (money.value === 0) {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
-    const data = await PaymentApi.distributorPayment({
-      distributorId: distributor.value.id,
-      paymentMethodId: paymentMethodId.value,
-      totalMoney: money.value,
-      reason: reason.value,
-      note: '',
-      paymentItemData: {
-        moneyTopUpAdd: 0,
-        payDebt: receiptPaymentList.value
-          .map((i) => ({ receiptId: i.receipt.id, amount: i.money }))
-          .filter((i) => i.amount > 0),
-      },
-    })
+    // const data = await PaymentApi.distributorPayment({
+    //   distributorId: distributor.value.id,
+    //   paymentMethodId: paymentMethodId.value,
+    //   totalMoney: money.value,
+    //   reason: reason.value,
+    //   note: '',
+    //   paymentItemData: {
+    //     moneyTopUpAdd: 0,
+    //     payDebt: receiptPaymentList.value
+    //       .map((i) => ({ receiptId: i.receipt.id, paidAmount: i.money }))
+    //       .filter((i) => i.paidAmount > 0),
+    //   },
+    // })
     AlertStore.addSuccess(`NCC ${distributor.value.fullName} thanh toán thành công`)
-    emit('success', { distributor: data.distributorModified })
+    // emit('success', { distributor: data.distributorModified })
     closeModal()
   } catch (error) {
     console.log('🚀 ~ ModalPaymentMoneyOut.vue:125 ~ handleSave ~ error:', error)

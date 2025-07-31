@@ -31,7 +31,7 @@ const startFetchData = async () => {
       page: page.value,
       limit: limit.value,
       relation: {
-        paymentItemList: true,
+        paymentTicketItemList: true,
         cashier: true,
         paymentMethod: true,
         customer: true,
@@ -105,7 +105,7 @@ defineExpose({ openModal })
                   {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
                 </td>
                 <td>{{ payment.customer?.fullName }}</td>
-                <td>{{ formatMoney(payment.money) }}</td>
+                <td>{{ formatMoney(payment.paidAmount) }}</td>
                 <td>{{ payment.note }}</td>
                 <td class="text-center">
                   <a @click="selectPaymentDemo(payment)">Chọn</a>

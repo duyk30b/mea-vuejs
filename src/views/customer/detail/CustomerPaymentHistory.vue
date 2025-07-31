@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { CONFIG } from '@/config'
-import { PaymentPersonType } from '@/modules/payment'
-import { PaymentItemApi, type PaymentItem } from '@/modules/payment-item'
+import { Payment, PaymentActionTypeText, PaymentApi, PaymentPersonType } from '@/modules/payment'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
@@ -28,24 +27,24 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const { userPermission } = MeService
 
-const paymentItemList = ref<PaymentItem[]>([])
+const paymentList = ref<Payment[]>([])
 const page = ref(1)
 const limit = ref(10)
 const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const paginationResponse = await PaymentItemApi.pagination({
-      relation: { ticket: true },
+    const paginationResponse = await PaymentApi.pagination({
+      relation: { ticket: true, paymentMethod: true },
       page: page.value,
       limit: limit.value,
       filter: {
         personId: props.customerId,
-        paymentPersonType: PaymentPersonType.Customer,
+        personType: PaymentPersonType.Customer,
       },
       sort: { id: 'DESC' },
     })
-    paymentItemList.value = paginationResponse.paymentItemList
+    paymentList.value = paginationResponse.paymentList
     total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: CustomerPaymentsHistory.vue:33 ~ error:', error)
@@ -56,7 +55,7 @@ watch(
   () => props.customerId,
   async (newValue) => {
     if (newValue) await startFetchData()
-    else paymentItemList.value = []
+    else paymentList.value = []
   },
   { immediate: true },
 )
@@ -101,37 +100,37 @@ defineExpose({ startFetchData })
           </tr>
         </thead>
         <tbody style="">
-          <tr v-if="paymentItemList.length === 0">
+          <tr v-if="paymentList.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr v-for="(paymentItem, index) in paymentItemList" :key="index">
+          <tr v-for="(payment, index) in paymentList" :key="index">
             <td>
               <LinkAndStatusTicket
-                :ticket="paymentItem.ticket!"
-                :ticketId="paymentItem.voucherId"
+                :ticket="payment.ticket!"
+                :ticketId="payment.voucherId"
                 :status="false"
               />
               <div style="white-space: nowrap">
-                {{ ESTimer.timeToText(paymentItem.createdAt, 'hh:mm DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
-              <div v-if="paymentItem.note">
-                {{ paymentItem.note }}
+              <div v-if="payment.note">
+                {{ payment.note }}
               </div>
             </td>
             <td class="text-right">
               <div class="flex justify-between item-center" style="white-space: nowrap">
                 <span>T.Toán:</span>
-                <span>{{ formatMoney(paymentItem.paidAmount) }}</span>
+                <span>{{ formatMoney(payment.paidAmount) }}</span>
               </div>
               <div class="flex justify-between item-center">
                 <span>Ghi nợ:</span>
-                <span>{{ formatMoney(paymentItem.debtAmount) }}</span>
+                <span>{{ formatMoney(payment.debtAmount) }}</span>
               </div>
               <div class="flex justify-between item-center">
                 <span>Nợ:</span>
                 <span>
-                  {{ formatMoney(paymentItem.openDebt) }} ➞
-                  {{ formatMoney(paymentItem.closeDebt) }}
+                  {{ formatMoney(payment.openDebt) }} ➞
+                  {{ formatMoney(payment.closeDebt) }}
                 </span>
               </div>
             </td>
@@ -143,7 +142,8 @@ defineExpose({ startFetchData })
           <tr>
             <th v-if="CONFIG.MODE === 'development'">ID</th>
             <th>Hóa đơn</th>
-            <th>Lý do</th>
+            <th>PT.Thanh Toán</th>
+            <th>Note</th>
             <th>Số tiền</th>
             <th>Ghi nợ</th>
             <th>Công nợ</th>
@@ -152,71 +152,63 @@ defineExpose({ startFetchData })
           </tr>
         </thead>
         <tbody>
-          <tr v-if="paymentItemList.length === 0">
+          <tr v-if="paymentList.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr v-for="(paymentItem, index) in paymentItemList" :key="index">
+          <tr v-for="(payment, index) in paymentList" :key="index">
             <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
-              {{ paymentItem.id }}
+              {{ payment.id }}
             </td>
             <td>
               <LinkAndStatusTicket
-                :ticketId="paymentItem.voucherId"
-                :ticket="paymentItem.ticket!"
+                :ticketId="payment.voucherId"
+                :ticket="payment.ticket!"
                 :status="false"
               />
               <div style="white-space: nowrap">
-                {{ ESTimer.timeToText(paymentItem.createdAt, 'hh:mm DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
-            <td class="px-4">
-              <div v-if="paymentItem.note" style="">
-                {{ paymentItem.note }}
+            <td class="text-center">
+              {{ payment.paymentMethod?.name }}
+            </td>
+            <td>
+              <div>{{ PaymentActionTypeText[payment.paymentActionType] }}</div>
+              <div v-if="payment.note" style="font-size: 0.9em">
+                {{ payment.note }}
               </div>
             </td>
             <td style="white-space: nowrap; text-align: right">
-              {{ formatMoney(paymentItem.paidAmount) }}
+              {{ formatMoney(payment.paidAmount) }}
             </td>
             <td style="white-space: nowrap; text-align: right">
               <span
-                v-if="
-                  paymentItem.closeDebt > 0 ||
-                  (paymentItem.closeDebt == 0 && paymentItem.openDebt >= 0)
-                "
+                v-if="payment.closeDebt > 0 || (payment.closeDebt == 0 && payment.openDebt >= 0)"
               >
-                {{ formatMoney(paymentItem.debtAmount) }}
+                {{ formatMoney(payment.debtAmount) }}
               </span>
             </td>
             <td class="text-right">
               <span
-                v-if="
-                  paymentItem.closeDebt > 0 ||
-                  (paymentItem.closeDebt == 0 && paymentItem.openDebt >= 0)
-                "
+                v-if="payment.closeDebt > 0 || (payment.closeDebt == 0 && payment.openDebt >= 0)"
               >
-                {{ formatMoney(paymentItem.openDebt) }} ➞
-                {{ formatMoney(paymentItem.closeDebt) }}
+                {{ formatMoney(payment.openDebt) }} ➞
+                {{ formatMoney(payment.closeDebt) }}
               </span>
             </td>
             <td style="white-space: nowrap; text-align: right">
               <span
-                v-if="
-                  paymentItem.closeDebt < 0 ||
-                  (paymentItem.closeDebt == 0 && paymentItem.openDebt < 0)
-                "
+                v-if="payment.closeDebt < 0 || (payment.closeDebt == 0 && payment.openDebt < 0)"
               >
-                {{ formatMoney(-paymentItem.debtAmount) }}
+                {{ formatMoney(-payment.debtAmount) }}
               </span>
             </td>
             <td class="text-right">
               <span
-                v-if="
-                  paymentItem.closeDebt < 0 ||
-                  (paymentItem.closeDebt == 0 && paymentItem.openDebt < 0)
-                "
+                v-if="payment.closeDebt < 0 || (payment.closeDebt == 0 && payment.openDebt < 0)"
               >
-                {{ formatMoney(-paymentItem.openDebt) }} ➞
-                {{ formatMoney(-paymentItem.closeDebt) }}
+                {{ formatMoney(-payment.openDebt) }} ➞
+                {{ formatMoney(-payment.closeDebt) }}
               </span>
             </td>
           </tr>

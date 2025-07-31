@@ -30,10 +30,10 @@ const openBlankReceiptDetail = async (receiptId: number) => {
 </script>
 
 <template>
-  <div v-if="!receipt.id" style="font-size: 0.8rem">
+  <div v-if="!receipt.id" style="">
     <VueTag icon="exclamation">RC{{ receiptId }} - Bị xóa</VueTag>
   </div>
-  <div v-else style="font-size: 0.8rem">
+  <div v-else style="">
     <a v-if="link" style="margin-right: 0.5em" @click="openBlankReceiptDetail(receipt.id)">
       RC{{ receipt.id }}
     </a>

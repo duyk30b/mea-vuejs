@@ -9,12 +9,8 @@ import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer, CustomerService } from '@/modules/customer'
-import { PaymentVoucherItemType } from '@/modules/payment-item'
 import { PaymentMethodService } from '@/modules/payment-method'
-import { PaymentApi } from '@/modules/payment/payment.api'
-import { MoneyDirection, Payment } from '@/modules/payment/payment.model'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PrintHtmlAction } from '@/modules/print-html'
 import { Ticket, TicketQueryApi, TicketStatus } from '@/modules/ticket'
 import { ESString, ESTimer } from '@/utils'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
@@ -140,36 +136,41 @@ const handleSave = async () => {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
 
-    const data = await PaymentApi.customerPayment({
-      body: {
-        customerId: customer.value.id,
-        paymentMethodId: paymentMethodId.value,
-        reason: reason.value,
-        totalMoney: totalMoney.value,
-        note: '',
-        paymentItemData: {
-          moneyTopUpAdd: moneyTopUp.value,
-          payDebt: payDebtTicketList.value
-            .map((i) => ({ ticketId: i.ticket.id, amount: i.money }))
-            .filter((i) => i.amount > 0),
-          prepayment: prepaymentTicket.value
-            ? {
-                ticketId: prepaymentTicket.value.ticket.id,
-                itemList: [
-                  {
-                    amount: prepaymentTicket.value.money,
-                    ticketItemId: 0,
-                    paymentInteractId: 0,
-                    voucherItemType: PaymentVoucherItemType.Other,
-                  },
-                ],
-              }
-            : undefined,
-        },
-      },
-    })
+    // const data = await PaymentApi.customerPayment({
+    //   body: {
+    //     customerId: customer.value.id,
+    //     paymentMethodId: paymentMethodId.value,
+    //     reason: reason.value,
+    //     totalMoney: totalMoney.value,
+    //     note: '',
+    //     paymentItemData: {
+    //       moneyTopUpAdd: moneyTopUp.value,
+    //       payDebt: payDebtTicketList.value
+    //         .map((i) => ({ ticketId: i.ticket.id, paidAmount: i.money }))
+    //         .filter((i) => i.paidAmount > 0),
+    //       prepayment: prepaymentTicket.value
+    //         ? {
+    //             ticketId: prepaymentTicket.value.ticket.id,
+    //             itemList: [
+    //               {
+    //                 paidAmount: prepaymentTicket.value.money,
+    //                 expectedPrice: prepaymentTicket.value.money,
+    //                 actualPrice: prepaymentTicket.value.money,
+    //                 quantity: 1,
+    //                 discountMoney: 0,
+    //                 discountPercent: 0,
+    //                 ticketItemId: 0,
+    //                 paymentInteractId: 0,
+    //                 voucherItemType: PaymentVoucherItemType.Other,
+    //               },
+    //             ],
+    //           }
+    //         : undefined,
+    //     },
+    //   },
+    // })
     AlertStore.addSuccess(`KH ${customer.value.fullName} thanh toán thành công`)
-    emit('success', { customer: data.customerModified })
+    // emit('success', { customer: data.customerModified })
     closeModal()
   } catch (error) {
     console.log('🚀 ~ ModalPaymentMoneyIn.vue:126 ~ handleSave ~ error:', error)
@@ -206,18 +207,18 @@ const calculatorEachVoucherPayment = () => {
 }
 
 const startPrintPayment = async () => {
-  const tempPayment = Payment.blank()
-  tempPayment.money = totalMoney.value
-  tempPayment.cashierId = MeService.user.value?.id || 0
-  tempPayment.cashier = MeService.user.value!
-  tempPayment.createdAt = Date.now()
-  tempPayment.reason = reason.value
-  tempPayment.moneyDirection = MoneyDirection.In
+  // const tempPayment = Payment.blank()
+  // tempPayment.money = totalMoney.value
+  // tempPayment.cashierId = MeService.user.value?.id || 0
+  // tempPayment.cashier = MeService.user.value!
+  // tempPayment.createdAt = Date.now()
+  // tempPayment.reason = reason.value
+  // tempPayment.moneyDirection = MoneyDirection.In
 
-  await PrintHtmlAction.startPrintCustomerPayment({
-    customer: customer.value,
-    payment: tempPayment,
-  })
+  // await PrintHtmlAction.startPrintCustomerPayment({
+  //   customer: customer.value,
+  //   payment: tempPayment,
+  // })
 }
 
 defineExpose({ openModal })

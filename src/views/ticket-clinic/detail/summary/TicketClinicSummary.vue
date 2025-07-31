@@ -220,6 +220,7 @@ const startPrint = async () => {
 
   <div class="mt-4 flex items-center gap-4">
     <VueButton
+      v-if="userPermission[PermissionId.PRODUCT_SEND_PRODUCT]"
       style="margin-left: auto"
       color="green"
       :disabled="disableSendProduct"
@@ -232,7 +233,8 @@ const startPrint = async () => {
     <VueButton
       v-if="
         [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketRoomRef.status) &&
-        ticketRoomRef.paid > ticketRoomRef.totalMoney
+        ticketRoomRef.paid > ticketRoomRef.totalMoney &&
+        userPermission[PermissionId.PAYMENT_CUSTOMER_REFUND]
       "
       icon="dollar"
       color="green"
@@ -251,7 +253,8 @@ const startPrint = async () => {
           @click="clickRefundOverpaid"
           v-if="
             [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketRoomRef.status) &&
-            ticketRoomRef.paid <= ticketRoomRef.totalMoney
+            ticketRoomRef.paid <= ticketRoomRef.totalMoney &&
+            userPermission[PermissionId.PAYMENT_CUSTOMER_REFUND]
           "
         >
           <span class="text-red-500">
@@ -259,14 +262,17 @@ const startPrint = async () => {
             Hoàn tiền
           </span>
         </a>
-        <a @click="clickReturnProduct">
+        <a @click="clickReturnProduct" v-if="userPermission[PermissionId.PRODUCT_RETURN_PRODUCT]">
           <span class="text-red-500">
             <IconFileSync />
             Hoàn trả thuốc - vật tư
           </span>
         </a>
         <a
-          v-if="[TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status)"
+          v-if="
+            [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+            userPermission[PermissionId.TICKET_CLINIC_REOPEN]
+          "
           @click="clickReopenTicket"
         >
           <span class="text-red-500">
@@ -274,7 +280,7 @@ const startPrint = async () => {
             Mở lại phiếu khám
           </span>
         </a>
-        <a @click="clickDestroyTicket">
+        <a @click="clickDestroyTicket" v-if="userPermission[PermissionId.TICKET_CLINIC_DESTROY]">
           <span class="text-red-500">
             <IconDelete />
             Xóa phiếu
@@ -285,12 +291,13 @@ const startPrint = async () => {
   </div>
   <div class="mt-4 table-wrapper">
     <table>
-      <TicketClinicSummaryProduct />
       <TicketClinicSummaryProcedure v-if="organizationPermission[PermissionId.PROCEDURE]" />
+      <TicketClinicSummaryProduct />
       <TicketClinicSummaryLaboratory v-if="organizationPermission[PermissionId.LABORATORY]" />
       <TicketClinicSummaryRadiology v-if="organizationPermission[PermissionId.RADIOLOGY]" />
       <tbody>
         <tr>
+          <td v-if="CONFIG.MODE === 'development'"></td>
           <td class="text-right" colspan="9">
             <div class="flex items-center justify-end gap-2">
               <span>Tổng thành phần</span>
@@ -299,16 +306,18 @@ const startPrint = async () => {
               </span>
             </div>
           </td>
+          <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
+            {{ formatMoney(ticketRoomRef.itemsCostAmount) }}
+          </td>
           <td class="font-bold text-right whitespace-nowrap">
             {{ formatMoney(ticketRoomRef.itemsActualMoney) }}
           </td>
           <td></td>
-          <td v-if="CONFIG.MODE === 'development'" class="text-right italic">
-            {{ formatMoney(ticketRoomRef.itemsCostAmount) }}
-          </td>
         </tr>
         <tr>
+          <td v-if="CONFIG.MODE === 'development'"></td>
           <td class="text-right" colspan="9">Chiết khấu</td>
+          <td v-if="CONFIG.MODE === 'development'"></td>
           <td class="text-center" style="width: 40px">
             <VueTag v-if="ticketRoomRef.discountType === 'VNĐ'" color="green">
               {{ formatMoney(ticketRoomRef.discountMoney) }}
@@ -329,10 +338,11 @@ const startPrint = async () => {
               <IconEditSquare width="20" height="20" />
             </a>
           </td>
-          <td v-if="CONFIG.MODE === 'development'" class="text-right italic"></td>
         </tr>
         <tr>
+          <td v-if="CONFIG.MODE === 'development'"></td>
           <td class="uppercase text-right font-bold" colspan="9">Tổng tiền</td>
+          <td v-if="CONFIG.MODE === 'development'"></td>
           <td class="font-bold text-right whitespace-nowrap">
             {{ formatMoney(ticketRoomRef.totalMoney) }}
           </td>
