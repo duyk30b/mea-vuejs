@@ -1,18 +1,18 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { InputFilter } from '../../../common/vue-form'
-import { MeService } from '../../../modules/_me/me.service'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Position, PositionService, PositionInteractType } from '../../../modules/position'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { RoleService } from '../../../modules/role'
-import { TicketStatus } from '../../../modules/ticket'
-import { TicketClinicUserApi } from '../../../modules/ticket-clinic'
-import { TicketUser } from '../../../modules/ticket-user'
-import { UserService } from '../../../modules/user'
-import { UserRole, UserRoleService } from '../../../modules/user-role'
-import { ESString } from '../../../utils'
+import VueButton from '@/common/VueButton.vue'
+import { InputFilter } from '@/common/vue-form'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Position, PositionService, PositionInteractType } from '@/modules/position'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { RoleService } from '@/modules/role'
+import { TicketStatus } from '@/modules/ticket'
+import { TicketClinicUserApi } from '@/modules/ticket-clinic'
+import { TicketUser } from '@/modules/ticket-user'
+import { UserService } from '@/modules/user'
+import { UserRole, UserRoleService } from '@/modules/user-role'
+import { ESString } from '@/utils'
 import { ticketRoomRef } from '@/modules/room/room.ref'
 
 const settingStore = useSettingStore()
@@ -99,7 +99,8 @@ const saveTicketUserList = async () => {
 }
 
 const hasChangeData = computed(() => {
-  const ticketUserOrigin = ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.Ticket]?.[0] || []
+  const ticketUserOrigin =
+    ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.Ticket]?.[0] || []
   const ticketUserTicketList = Object.values(ticketUserTicketMap.value).filter((i) => !!i.userId)
   if (ticketUserTicketList.length !== ticketUserOrigin.length) {
     return true

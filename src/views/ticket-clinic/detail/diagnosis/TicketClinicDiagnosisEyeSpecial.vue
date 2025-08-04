@@ -1,14 +1,14 @@
 <script lang="ts" setup>
 import { ticketRoomRef } from '@/modules/room'
 import { computed, onMounted, ref, watch } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { MeService } from '../../../modules/_me/me.service'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { PrintHtmlAction } from '../../../modules/print-html'
+import VueButton from '@/common/VueButton.vue'
+import { MeService } from '@/modules/_me/me.service'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { PrintHtmlAction } from '@/modules/print-html'
 import {
   TicketAttributeKeyOptometryList,
   type TicketAttributeKeyOptometryType,
-} from '../../../modules/ticket-attribute'
+} from '@/modules/ticket-attribute'
 import { TicketClinicApi } from '@/modules/ticket-clinic/ticket-clinic.api'
 
 const { userPermission, organization } = MeService

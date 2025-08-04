@@ -35,6 +35,8 @@ export class TicketProduct {
   discountPercent: number
   discountType: DiscountType
   actualPrice: number
+
+  createdAt: number
   hintUsage: string | null
 
   ticket?: Ticket

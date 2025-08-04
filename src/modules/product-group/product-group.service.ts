@@ -7,7 +7,7 @@ import { ProductGroup } from './product-group.model'
 export class ProductGroupService {
   static loadedAll: boolean = false
 
-  static productGroupAll: ProductGroup[] = []
+  static productGroupAll = ref<ProductGroup[]>([])
   static productGroupMap = ref<Record<string, ProductGroup>>({})
 
   private static fetchAll = (() => {
@@ -15,7 +15,7 @@ export class ProductGroupService {
       try {
         const { data } = await ProductGroupApi.list({ sort: { id: 'ASC' } })
         const radiologyAll = data
-        ProductGroupService.productGroupAll = radiologyAll
+        ProductGroupService.productGroupAll.value = radiologyAll
         ProductGroupService.productGroupMap.value = ESArray.arrayToKeyValue(radiologyAll, 'id')
       } catch (error: any) {
         console.log('🚀 ~ product-group.service.ts:21  ~ fetchAll ~ error:', error)
@@ -33,7 +33,7 @@ export class ProductGroupService {
 
   static async getAll(options?: { refetch: boolean }) {
     await ProductGroupService.fetchAll({ refetch: !!options?.refetch })
-    return ProductGroupService.productGroupAll
+    return ProductGroupService.productGroupAll.value
   }
 
   static async getMap(options?: { refetch: boolean }) {
@@ -45,10 +45,10 @@ export class ProductGroupService {
     const page = options.page || 1
     const limit = options.limit || 10
     await ProductGroupService.getAll()
-    const data = ProductGroupService.productGroupAll.slice((page - 1) * limit, page * limit)
+    const data = ProductGroupService.productGroupAll.value.slice((page - 1) * limit, page * limit)
     return {
       data,
-      meta: { total: ProductGroupService.productGroupAll.length },
+      meta: { total: ProductGroupService.productGroupAll.value.length },
     }
   }
 

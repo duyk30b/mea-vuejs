@@ -122,6 +122,8 @@ const selectProduct = async (productSelect: Product) => {
   temp.discountPercent = 0
   temp.discountMoney = 0
   temp.actualPrice = productSelect.retailPrice
+
+  temp.createdAt = Date.now()
   temp.hintUsage = productSelect.hintUsage
   temp.warehouseIds = JSON.stringify(
     settingStore.TICKET_CLINIC_DETAIL.prescriptions.warehouseIdList,

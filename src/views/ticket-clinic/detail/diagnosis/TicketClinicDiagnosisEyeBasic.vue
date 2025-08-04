@@ -3,17 +3,17 @@ import ImageUploadCloudinary from '@/common/image-upload/ImageUploadCloudinary.v
 import { ticketRoomRef } from '@/modules/room'
 import { TicketClinicApi } from '@/modules/ticket-clinic/ticket-clinic.api'
 import { computed, onMounted, ref, watch } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import VueTinyMCE from '../../../common/VueTinyMCE.vue'
-import { InputText } from '../../../common/vue-form'
-import { MeService } from '../../../modules/_me/me.service'
-import { CustomerService } from '../../../modules/customer'
-import { PermissionId } from '../../../modules/permission/permission.enum'
+import VueButton from '@/common/VueButton.vue'
+import VueTinyMCE from '@/common/VueTinyMCE.vue'
+import { InputText } from '@/common/vue-form'
+import { MeService } from '@/modules/_me/me.service'
+import { CustomerService } from '@/modules/customer'
+import { PermissionId } from '@/modules/permission/permission.enum'
 import {
   TicketAttributeKeyEyeList,
   type TicketAttributeKeyEyeType,
-} from '../../../modules/ticket-attribute'
-import { ESImage } from '../../../utils'
+} from '@/modules/ticket-attribute'
+import { ESImage } from '@/utils'
 
 const { userPermission, organization } = MeService
 

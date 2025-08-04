@@ -60,7 +60,15 @@ const { userPermission } = MeService
 
 const productOrigin = ref(Product.blank())
 const product = ref(Product.blank())
-const productGroupOptions = ref<{ text: string; value: number; data: ProductGroup }[]>([])
+const productGroupOptions = computed(() => {
+  return ProductGroupService.productGroupAll.value.map((i) => {
+    return {
+      value: i.id,
+      text: i.name,
+      data: i,
+    }
+  })
+})
 const unit = ref<UnitType[]>([{ name: '', rate: 1, default: true }])
 
 const warehouseAll = ref<Warehouse[]>([])
@@ -97,13 +105,6 @@ onMounted(async () => {
   try {
     warehouseAll.value = await WarehouseService.list({})
     warehouseMap.value = await WarehouseService.getMap()
-
-    const productGroupAll = await ProductGroupService.list({})
-    productGroupOptions.value = productGroupAll.map((i) => ({
-      value: i.id,
-      text: i.name,
-      data: i,
-    }))
 
     const roleAll = await RoleService.list({})
     roleOptions.value = roleAll.map((i) => ({ value: i.id, text: i.name, data: i }))
@@ -510,7 +511,7 @@ defineExpose({ openModal })
                   </div>
                 </div>
 
-                <div v-if="settingStore.SCREEN_PRODUCT_UPSERT.group" class="grow basis-[300px]">
+                <div class="grow basis-[300px]">
                   <div class="">Nhóm</div>
                   <div>
                     <InputFilter

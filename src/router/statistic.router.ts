@@ -5,16 +5,17 @@ export const statisticRouter: RouteRecordRaw = {
   name: 'Statistic',
   redirect: () => ({ name: 'StatisticTicket' }),
   component: () => import('../views/statistic/Statistics.vue'),
+  meta: { title: 'Thống kê' },
   children: [
     {
-      path: 'statistic-ticket',
       meta: { title: 'Thống kê' },
+      path: 'statistic-ticket',
       name: 'StatisticTicket',
       component: () => import('../views/statistic/statistic-ticket/StatisticTicket.vue'),
     },
     {
       path: 'statistic-product',
-      meta: { title: 'Thống kê' },
+      meta: { title: 'Báo cáo sản phẩm' },
       name: 'StatisticProduct',
       component: () => import('../views/statistic/statistic-product/StatisticProduct.vue'),
     },

@@ -114,6 +114,7 @@ const setSideCollapsed = (value: boolean) => {
     margin-top: 12px;
     padding: 12px;
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     background-color: white;

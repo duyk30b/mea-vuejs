@@ -75,14 +75,14 @@ const startFetchData = async () => {
       data.length,
       ...data.map((i) => {
         return i.costAmount / moneyDivision
-      })
+      }),
     )
     barData.datasets[1].data.splice(
       0,
       data.length,
       ...data.map((i) => {
         return (i.retailPrice * i.quantity - i.costAmount) / moneyDivision
-      })
+      }),
     )
   } catch (error) {
     console.log('🚀 ~ file: ProductReport.vue:28 ~ startFetchData ~ error:', error)
@@ -95,8 +95,8 @@ onBeforeMount(async () => await startFetchData())
 </script>
 
 <template>
-  <div class="flex flex-col" style="height: 100%">
-    <div style="height: 80px" class="flex items-center gap-4">
+  <div class="mt-8">
+    <div class="flex items-center gap-4">
       <span style="font-size: 18px; font-weight: 500">Hàng tồn giá trị cao:</span>
       <div style="width: 120px">
         <VueSelect
@@ -106,10 +106,11 @@ onBeforeMount(async () => await startFetchData())
             { text: 'Tiền bán', value: 'retailAmount' },
             // { text: 'Số lượng', value: 'quantity' },
           ]"
-          @update:value="startFetchData" />
+          @update:value="startFetchData"
+        />
       </div>
     </div>
-    <div class="flex-1">
+    <div style="height: 400px">
       <Bar v-if="loaded" :data="barData" :options="options as any" />
     </div>
   </div>

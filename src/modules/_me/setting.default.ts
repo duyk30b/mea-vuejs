@@ -72,7 +72,6 @@ export const SETTING_DEFAULT = {
   SCREEN_PRODUCT_UPSERT: {
     substance: false,
     unit: false,
-    group: false,
     source: false,
     route: false,
     hintUsage: false,

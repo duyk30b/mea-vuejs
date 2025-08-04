@@ -79,11 +79,6 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
-                <InputCheckbox v-model:checked="settingDisplay.group">Hiển thị nhóm</InputCheckbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
                 <InputCheckbox v-model:checked="settingDisplay.route">
                   Hiển thị đường dùng
                 </InputCheckbox>

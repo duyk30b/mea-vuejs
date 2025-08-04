@@ -23,7 +23,7 @@ const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await TicketProductApi.pagination({
+    const paginationResponse = await TicketProductApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -36,8 +36,8 @@ const startFetchData = async () => {
       },
       sort: { id: 'DESC' },
     })
-    ticketProductList.value = data
-    total.value = meta.total
+    ticketProductList.value = paginationResponse.ticketProductList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: CustomerProductHistory copy.vue:37 ~ error:', error)
   }

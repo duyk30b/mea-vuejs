@@ -217,12 +217,11 @@ const clickDestroy = () => {
           await TicketOrderApi.draftDestroy(ticketOrderDetailRef.value.id!)
         }
         if (ticketOrderDetailRef.value.status === TicketStatus.Deposited) {
-          await TicketOrderApi.draftDestroy(ticketOrderDetailRef.value.id!)
+          await TicketOrderApi.depositedDestroy(ticketOrderDetailRef.value.id!)
         }
         if (ticketOrderDetailRef.value.status === TicketStatus.Cancelled) {
-          await TicketOrderApi.draftDestroy(ticketOrderDetailRef.value.id!)
+          await TicketOrderApi.cancelledDestroy(ticketOrderDetailRef.value.id!)
         }
-        await TicketOrderApi.draftDestroy(ticketOrderDetailRef.value.id!)
         AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
         router.push({ name: 'TicketOrderList' })
       } catch (error) {

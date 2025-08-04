@@ -328,7 +328,7 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
             <th>Thời gian</th>
             <th>Loại</th>
             <th>Người nộp/nhận</th>
-            <th>Lý do</th>
+            <th style="min-width: 100px;">Lý do</th>
             <th>Tiền thu</th>
             <th>Tiền chi</th>
             <th>Ghi nợ</th>

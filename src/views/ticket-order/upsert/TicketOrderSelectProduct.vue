@@ -122,6 +122,8 @@ const selectProduct = async (productProp?: Product) => {
   tpItem.discountMoney = 0
   tpItem.actualPrice = productProp.retailPrice
 
+  tpItem.createdAt = Date.now()
+
   await ProductService.executeRelation([productProp], { discountList: true })
   const discountApply = productProp?.discountApply
   if (discountApply) {

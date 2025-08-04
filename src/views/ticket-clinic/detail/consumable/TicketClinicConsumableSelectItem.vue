@@ -125,6 +125,8 @@ const selectProduct = async (productSelect?: Product) => {
     temp.actualPrice = productSelect.retailPrice
     temp.warehouseIds = JSON.stringify(settingStore.TICKET_CLINIC_DETAIL.consumable.warehouseIdList) // set tạm trước thôi, tí nữa tính toán lại
 
+    temp.createdAt = Date.now()
+
     await ProductService.executeRelation([productSelect], { discountList: true })
     const discountApply = productSelect?.discountApply
     if (discountApply) {

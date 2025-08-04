@@ -343,6 +343,8 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
       temp.quantity = medicine.quantity // lấy theo mẫu
       temp.costAmount = medicine.quantity * (product.costPrice || 0)
       temp.quantityPrescription = medicine.quantity // lấy theo mẫu
+
+      temp.createdAt = Date.now()
       if (product?.warehouseIds !== '[]') {
         if (temp.quantity > product!.quantity) {
           AlertStore.addWarning(

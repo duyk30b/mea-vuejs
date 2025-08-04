@@ -147,7 +147,7 @@ defineExpose({ startFetchData })
             <th>Số tiền</th>
             <th>Ghi nợ</th>
             <th>Công nợ</th>
-            <th>Ghi qũy</th>
+            <th>Ghi quỹ</th>
             <th>Quỹ</th>
           </tr>
         </thead>

@@ -52,28 +52,32 @@ export const roomRouter: RouteRecordRaw = {
               path: 'diagnosis-general',
               name: 'TicketClinicDiagnosisGeneral',
               component: () =>
-                import('../views/ticket-clinic/detail/TicketClinicDiagnosisGeneral.vue'),
+                import('../views/ticket-clinic/detail/diagnosis/TicketClinicDiagnosisGeneral.vue'),
               meta: { keepAlive: true, title: 'Khám' },
             },
             {
               path: 'diagnosis-obstetrics',
               name: 'TicketClinicDiagnosisObstetric',
               component: () =>
-                import('../views/ticket-clinic/detail/TicketClinicDiagnosisObstetric.vue'),
+                import(
+                  '../views/ticket-clinic/detail/diagnosis/TicketClinicDiagnosisObstetric.vue'
+                ),
               meta: { keepAlive: true, title: 'Khám' },
             },
             {
               path: 'diagnosis-eye-basic',
               name: 'TicketClinicDiagnosisEyeBasic',
               component: () =>
-                import('../views/ticket-clinic/detail/TicketClinicDiagnosisEyeBasic.vue'),
+                import('../views/ticket-clinic/detail/diagnosis/TicketClinicDiagnosisEyeBasic.vue'),
               meta: { keepAlive: true, title: 'Khám' },
             },
             {
               path: 'diagnosis-eye-special',
               name: 'TicketClinicDiagnosisEyeSpecial',
               component: () =>
-                import('../views/ticket-clinic/detail/TicketClinicDiagnosisEyeSpecial.vue'),
+                import(
+                  '../views/ticket-clinic/detail/diagnosis/TicketClinicDiagnosisEyeSpecial.vue'
+                ),
               meta: { keepAlive: true, title: 'Đo thị lực' },
             },
             {

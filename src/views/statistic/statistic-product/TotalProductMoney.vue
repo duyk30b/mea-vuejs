@@ -36,7 +36,7 @@ onBeforeMount(async () => {
 </script>
 
 <template>
-  <div class="flex flex-col" style="height: 100%">
+  <div class="">
     <div class="flex justify-between items-center">
       <span style="font-size: 18px; font-weight: 500">Thống kê kho:</span>
     </div>

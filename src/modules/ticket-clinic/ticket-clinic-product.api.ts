@@ -31,6 +31,8 @@ export class TicketClinicProductApi {
           discountType: i.discountType,
           costAmount: i.costAmount,
           actualPrice: i.actualPrice,
+
+          createdAt: i.createdAt,
         })),
       },
     )
@@ -64,7 +66,9 @@ export class TicketClinicProductApi {
           discountType: i.discountType,
           actualPrice: i.actualPrice,
           costAmount: i.costAmount,
+
           hintUsage: i.hintUsage,
+          createdAt: i.createdAt,
         })),
       },
     )

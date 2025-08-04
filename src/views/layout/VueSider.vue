@@ -216,7 +216,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <router-link :to="{ name: 'StatisticCustomer' }">Báo cáo khách hàng</router-link>
       </a-menu-item>
       <a-menu-item v-if="userPermission[PermissionId.STATISTIC_PRODUCT]" key="StatisticProduct">
-        <router-link :to="{ name: 'StatisticProduct' }">Báo cáo kho</router-link>
+        <router-link :to="{ name: 'StatisticProduct' }">Báo cáo sản phẩm</router-link>
       </a-menu-item>
       <a-menu-item
         v-if="
