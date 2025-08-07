@@ -1,22 +1,22 @@
 <script lang="ts" setup>
+import VueButton from '@/common/VueButton.vue'
+import VueTag from '@/common/VueTag.vue'
+import { IconDollar, IconFileSync, IconMore } from '@/common/icon-antd'
+import { IconDelete, IconEditSquare } from '@/common/icon-google'
+import VueDropdown from '@/common/popover/VueDropdown.vue'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { CONFIG } from '@/config'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { DeliveryStatus, PaymentViewType, PickupStrategy } from '@/modules/enum'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { PrintHtmlAction } from '@/modules/print-html'
 import { ticketRoomRef } from '@/modules/room/room.ref'
+import { TicketActionApi, TicketStatus } from '@/modules/ticket'
+import { TicketRadiologyStatus } from '@/modules/ticket-radiology'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import VueButton from '../../../../common/VueButton.vue'
-import VueTag from '../../../../common/VueTag.vue'
-import { IconDollar, IconFileSync, IconMore } from '../../../../common/icon-antd'
-import { IconDelete, IconEditSquare } from '../../../../common/icon-google'
-import VueDropdown from '../../../../common/popover/VueDropdown.vue'
-import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
-import { CONFIG } from '../../../../config'
-import { MeService } from '../../../../modules/_me/me.service'
-import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { DeliveryStatus, PaymentViewType, PickupStrategy } from '../../../../modules/enum'
-import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { PrintHtmlAction } from '../../../../modules/print-html'
-import { TicketActionApi, TicketStatus } from '../../../../modules/ticket'
-import { TicketRadiologyStatus } from '../../../../modules/ticket-radiology'
 import ModalTicketClinicPayment from '../../../reception/reception-ticket/modal/ModalTicketClinicPayment.vue'
 import ModalTicketReturnProduct from '../../../ticket-base/ModalTicketReturnProduct.vue'
 import ModalTicketClinicChangeDiscount from './ModalTicketClinicChangeDiscount.vue'
@@ -206,8 +206,8 @@ const clickReturnProduct = () => {
   }
 }
 
-const startPrint = async () => {
-  await PrintHtmlAction.startPrintRequestInvoice({
+const startPrintAllMoney = async () => {
+  await PrintHtmlAction.startPrintAllMoney({
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
   })
@@ -352,7 +352,7 @@ const startPrint = async () => {
     </table>
   </div>
   <div class="mt-8 flex gap-4">
-    <VueButton color="blue" icon="print" @click="startPrint">In hóa đơn</VueButton>
+    <VueButton color="blue" icon="print" @click="startPrintAllMoney">In bảng kê chi phí</VueButton>
   </div>
 </template>
 

@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { PrintHtmlAction } from '@/modules/print-html'
 import { onBeforeMount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import VuePagination from '../../../common/VuePagination.vue'
-import { IconFileSearch, IconSetting } from '../../../common/icon-antd'
+import { IconFileSearch, IconPrint, IconSetting } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconVisibility } from '../../../common/icon-google'
 import VueDropdown from '../../../common/popover/VueDropdown.vue'
@@ -112,6 +113,16 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
     localStorage.setItem('RECEIPT_PAGINATION_LIMIT', String(options.limit))
   }
   await startFetchData()
+}
+
+const startPrintReceiptDetail = async (receiptId: number) => {
+  const receiptData = await ReceiptApi.detail(receiptId, {
+    relation: {
+      distributor: true,
+      receiptItemList: { product: true },
+    },
+  })
+  await PrintHtmlAction.startPrintReceiptDetail({ receipt: receiptData })
 }
 </script>
 
@@ -289,6 +300,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             <th>Nhà cung cấp</th>
             <th v-if="settingStore.SCREEN_RECEIPT_LIST.receiptItems">Sản phẩm</th>
             <th>Tổng Tiền</th>
+            <th></th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -344,6 +356,15 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
               <div>{{ formatMoney(receipt.totalMoney) }}</div>
               <div v-if="receipt.debt" class="text-xs italic">
                 Nợ: {{ formatMoney(receipt.debt) }}
+              </div>
+            </td>
+            <td>
+              <div
+                class="flex items-center justify-center cursor-pointer"
+                style="color: var(--text-blue)"
+                @click="startPrintReceiptDetail(receipt.id)"
+              >
+                <IconPrint width="16px" height="16px" />
               </div>
             </td>
           </tr>

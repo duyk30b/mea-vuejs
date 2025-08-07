@@ -4,6 +4,7 @@ import { MeService } from '../_me/me.service'
 import type { Customer } from '../customer'
 import type { Payment } from '../payment/payment.model'
 import { PrintHtmlSettingService } from '../print-html-setting'
+import type { Receipt } from '../receipt'
 import type { Ticket } from '../ticket'
 import type { TicketLaboratory } from '../ticket-laboratory'
 import type { TicketLaboratoryGroup } from '../ticket-laboratory-group'
@@ -54,10 +55,12 @@ export class PrintHtmlAction {
     return printHtml ? PrintHtml.from(printHtml) : PrintHtml.blank()
   }
 
-  static async startPrintAllRequest(options: { ticket: Ticket; customer: Customer }) {
-    const { customer, ticket } = options
+  static async startPrintCommon(options: {
+    data: Record<string, any>
+    printHtmlType: PrintHtmlType
+  }) {
+    const { data, printHtmlType } = options
     const { organization, user } = MeService
-
     try {
       const printHtmlHeader = await PrintHtmlAction.getPrintHtmlByType({
         oid: organization.value.id,
@@ -69,7 +72,7 @@ export class PrintHtmlAction {
       })
       const printHtmlWrapper = await PrintHtmlAction.getPrintHtmlByType({
         oid: organization.value.id,
-        type: PrintHtmlType.AllRequest,
+        type: printHtmlType,
       })
 
       if (!printHtmlHeader || !printHtmlWrapper || !printHtmlWrapper.html) {
@@ -80,8 +83,7 @@ export class PrintHtmlAction {
         data: {
           organization: organization.value,
           me: user.value!,
-          ticket,
-          customer,
+          ...data,
         },
         template: {
           _header: printHtmlHeader.html,
@@ -89,11 +91,7 @@ export class PrintHtmlAction {
           _wrapper: printHtmlWrapper.html,
           _content: '',
         },
-        variablesString: [
-          printHtmlHeader.initVariable,
-          printHtmlFooter.initVariable,
-          printHtmlWrapper.initVariable,
-        ],
+        variablesString: [printHtmlHeader.initVariable, printHtmlWrapper.initVariable],
       })
 
       if (!printHtmlCompiled?.htmlString) {
@@ -106,8 +104,20 @@ export class PrintHtmlAction {
         cssList: [printHtmlHeader.css, printHtmlFooter.css, printHtmlWrapper.css],
       })
     } catch (error) {
-      console.log('🚀 ~ print-html.action.ts:227 ~ PrintHtmlAction ~ error:', error)
+      console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
     }
+  }
+
+  static async startPrintReceiptDetail(data: { receipt: Receipt }) {
+    await PrintHtmlAction.startPrintCommon({ data, printHtmlType: PrintHtmlType.ReceiptDetail })
+  }
+
+  static async startPrintAllRequest(data: { ticket: Ticket; customer: Customer }) {
+    await PrintHtmlAction.startPrintCommon({ data, printHtmlType: PrintHtmlType.AllRequest })
+  }
+
+  static async startPrintAllMoney(data: { ticket: Ticket; customer: Customer }) {
+    await PrintHtmlAction.startPrintCommon({ data, printHtmlType: PrintHtmlType.AllMoney })
   }
 
   static async startPrintRequestProcedure(options: { ticket: Ticket; customer: Customer }) {
@@ -468,57 +478,6 @@ export class PrintHtmlAction {
       })
     } catch (error) {
       console.log('🚀 ~ print-html.action.ts:406 ~ PrintHtmlAction ~ error:', error)
-    }
-  }
-
-  static async startPrintRequestInvoice(options: { ticket: Ticket; customer: Customer }) {
-    const { customer, ticket } = options
-    const { organization, user } = MeService
-    try {
-      const printHtmlHeader = await PrintHtmlAction.getPrintHtmlByType({
-        oid: organization.value.id,
-        type: PrintHtmlType._HEADER,
-      })
-      const printHtmlFooter = await PrintHtmlAction.getPrintHtmlByType({
-        oid: organization.value.id,
-        type: PrintHtmlType._FOOTER,
-      })
-      const printHtmlWrapper = await PrintHtmlAction.getPrintHtmlByType({
-        oid: organization.value.id,
-        type: PrintHtmlType.Invoice,
-      })
-
-      if (!printHtmlHeader || !printHtmlWrapper || !printHtmlWrapper.html) {
-        return AlertStore.addError('Cài đặt in thất bại')
-      }
-
-      const printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
-        data: {
-          organization: organization.value,
-          me: user.value!,
-          ticket,
-          customer,
-        },
-        template: {
-          _header: printHtmlHeader.html,
-          _footer: printHtmlFooter.html,
-          _wrapper: printHtmlWrapper.html,
-          _content: '',
-        },
-        variablesString: [printHtmlHeader.initVariable, printHtmlWrapper.initVariable],
-      })
-
-      if (!printHtmlCompiled?.htmlString) {
-        AlertStore.addError('Mẫu in không hợp lệ')
-        return
-      }
-
-      await ESDom.startPrint('iframe-print', {
-        html: printHtmlCompiled?.htmlString || '',
-        cssList: [printHtmlHeader.css, printHtmlFooter.css, printHtmlWrapper.css],
-      })
-    } catch (error) {
-      console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
     }
   }
 

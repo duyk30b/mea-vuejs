@@ -281,7 +281,7 @@ const downloadTicketClinicList = (menu: { key: string }) => {
 
 const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
 
-const startPrintAllItemAndMoney = async (options: { ticketId: number }) => {
+const startPrintAllMoney = async (options: { ticketId: number }) => {
   const ticketData = await TicketService.detail(options.ticketId, {
     relation: {
       customer: true,
@@ -300,7 +300,7 @@ const startPrintAllItemAndMoney = async (options: { ticketId: number }) => {
   if (!ticketData.ticketLaboratoryList) ticketData.ticketLaboratoryList = []
   await ticketData.refreshAllData()
 
-  await PrintHtmlAction.startPrintRequestInvoice({
+  await PrintHtmlAction.startPrintAllMoney({
     ticket: ticketData,
     customer: ticketData.customer!,
   })
@@ -745,7 +745,7 @@ const startPrintAllItemAndMoney = async (options: { ticketId: number }) => {
                   <div class="vue-menu">
                     <a
                       @click="
-                        startPrintAllItemAndMoney({
+                        startPrintAllMoney({
                           ticketId: ticket.id,
                         })
                       "

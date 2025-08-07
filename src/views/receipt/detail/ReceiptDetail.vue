@@ -30,6 +30,7 @@ import ModalReceiptPayment from './ModalReceiptPayment.vue'
 import ReceiptDetailTable from './ReceiptDetailTable.vue'
 import { receipt } from './receipt-detail.ref'
 import { MeService } from '../../../modules/_me/me.service'
+import { PrintHtmlAction } from '@/modules/print-html'
 
 const modalReceiptDetailSettingScreen = ref<InstanceType<typeof ModalReceiptDetailSettingScreen>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -177,6 +178,10 @@ const openModalDistributorDetail = (distributorId: number) => {
 }
 
 const handleModalReceiptPaymentSuccess = () => {}
+
+const startPrintReceiptDetail = async (receiptData: Receipt) => {
+  await PrintHtmlAction.startPrintReceiptDetail({ receipt: receiptData })
+}
 </script>
 
 <template>
@@ -295,6 +300,7 @@ const handleModalReceiptPaymentSuccess = () => {}
         >
           Tạm ứng
         </VueButton>
+        <VueButton icon="print" @click="startPrintReceiptDetail(receipt)">In</VueButton>
       </div>
       <div class="flex items-center gap-2">
         <VueButton v-if="userPermission[PermissionId.RECEIPT_DRAFT_CRUD]" @click="startCopy">
