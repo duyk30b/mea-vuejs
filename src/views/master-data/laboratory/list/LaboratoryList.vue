@@ -134,7 +134,7 @@ const handleModalLaboratoryGroupManagerSuccess = async () => {
 }
 
 const handleModalLaboratoryUpsertSuccess = async () => {
-  await startFetchData()
+  startFetchData({ refetch: true })
 }
 
 const downloadExcelLaboratoryList = async () => {
@@ -351,7 +351,8 @@ const handleModalUploadLaboratorySuccess = async () => {
             <td class="text-center">
               <VueTag
                 v-if="
-                  laboratory.discountApply?.discountMoney || laboratory.discountApply?.discountPercent
+                  laboratory.discountApply?.discountMoney ||
+                  laboratory.discountApply?.discountPercent
                 "
                 color="blue"
               >

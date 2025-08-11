@@ -292,9 +292,9 @@ const changeLimit = async (limitSelect: any) => {
                   <div class="flex justify-center items-center gap-2">
                     <span>
                       {{
-                        ticket.date?.toString().padStart(2, '0') +
-                        ticket.month?.toString().padStart(2, '0') +
                         ticket.year?.toString().slice(-2) +
+                        ticket.month?.toString().padStart(2, '0') +
+                        ticket.date?.toString().padStart(2, '0') +
                         '_' +
                         ticket.dailyIndex?.toString().padStart(2, '0')
                       }}

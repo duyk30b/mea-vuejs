@@ -625,7 +625,7 @@ const handleModalUploadProductSuccess = async () => {
             </th>
             <th v-if="settingStore.SYSTEM_SETTING.wholesalePrice">G.Sỉ</th>
             <th>G.Lẻ</th>
-            <th>Khuyến mại</th>
+            <th>K.Mại</th>
             <th
               v-if="
                 userPermission[PermissionId.PRODUCT_UPDATE] &&
@@ -657,7 +657,7 @@ const handleModalUploadProductSuccess = async () => {
           <template v-for="(product, productIndex) in productList" :key="productIndex">
             <template v-if="!product.batchList || product.batchList.length === 0">
               <tr :style="product.isActive ? '' : 'background-color: #eeeeee; opacity: 0.4'">
-                <td v-if="CONFIG.MODE === 'development'" class="text-center">
+                <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
                   {{ product.id }}
                 </td>
                 <td class="text-center">{{ product.productCode }}</td>
@@ -741,7 +741,7 @@ const handleModalUploadProductSuccess = async () => {
               >
                 <td
                   v-if="CONFIG.MODE === 'development' && batchIndex === 0"
-                  class="text-center"
+                  style="color: violet; text-align: center"
                   :rowspan="product.batchList.length"
                 >
                   {{ product.id }}

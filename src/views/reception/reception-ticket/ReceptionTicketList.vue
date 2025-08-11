@@ -499,6 +499,7 @@ const startPrintAllMoney = async (options: { ticketId: number }) => {
             </th>
             <th v-if="settingStore.TICKET_CLINIC_LIST.showCustomType">Phân loại</th>
             <th style="min-width: 150px">Khách hàng</th>
+            <th>T.Tin</th>
             <th class="">Thuốc - Vật tư</th>
             <th>Thanh toán</th>
             <th>Tổng tiền</th>
@@ -540,9 +541,9 @@ const startPrintAllMoney = async (options: { ticketId: number }) => {
                   <div class="flex justify-center items-center gap-2">
                     <span>
                       {{
-                        ticket.date?.toString().padStart(2, '0') +
-                        ticket.month?.toString().padStart(2, '0') +
                         ticket.year?.toString().slice(-2) +
+                        ticket.month?.toString().padStart(2, '0') +
+                        ticket.date?.toString().padStart(2, '0') +
                         '_' +
                         ticket.dailyIndex?.toString().padStart(2, '0')
                       }}
@@ -570,11 +571,13 @@ const startPrintAllMoney = async (options: { ticketId: number }) => {
                   <IconEditSquare />
                 </a>
               </div>
-              <div>{{ roomMap[ticket.roomId]?.name || '' }}</div>
+              <div class="text-xs italic">{{ roomMap[ticket.roomId]?.name || '' }}</div>
             </td>
             <td>
               <div><TicketStatusTag :ticket="ticket" /></div>
-              <div>{{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}</div>
+              <div class="text-xs italic">
+                {{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+              </div>
             </td>
             <td
               v-if="settingStore.TICKET_CLINIC_LIST.showCustomType"
@@ -589,13 +592,7 @@ const startPrintAllMoney = async (options: { ticketId: number }) => {
                   <IconFileSearch />
                 </a>
               </div>
-              <div v-if="ticket.customer?.note" class="text-xs italic">
-                {{ ticket.customer?.note }}
-              </div>
               <div class="text-xs italic">
-                {{ ESString.formatAddress(ticket.customer!) }}
-              </div>
-              <div>
                 {{
                   ESTimer.timeToText(ticket.customer?.birthday, 'DD/MM/YYYY') ||
                   ticket.customer?.yearOfBirth ||
@@ -603,11 +600,18 @@ const startPrintAllMoney = async (options: { ticketId: number }) => {
                 }}
                 - {{ ticket.customer?.getAge ? ticket.customer?.getAge + ' Tuổi' : '' }}
               </div>
+              <div v-if="ticket.customer?.note" class="text-xs italic">
+                {{ ticket.customer?.note }}
+              </div>
+            </td>
+            <td>
               <div>
                 {{ formatPhone(ticket.customer?.phone) }}
               </div>
+              <div class="text-xs italic">
+                {{ ESString.formatAddress(ticket.customer!) }}
+              </div>
             </td>
-
             <td>
               <div class="flex flex-wrap justify-between items-center">
                 <TicketClinicDeliveryStatusTag :deliveryStatus="ticket.deliveryStatus" />

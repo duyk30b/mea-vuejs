@@ -300,9 +300,6 @@ export const SETTING_DEFAULT = {
     buttonShowModalCreate: true,
     buttonShowTicketDetailBlank: false,
     roleIdList: [],
-    birthday: false,
-    phone: false,
-    address: false,
   },
   TICKET_CLINIC_DETAIL: {
     diagnosis: { icd10: 0 },

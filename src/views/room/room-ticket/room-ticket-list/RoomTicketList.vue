@@ -372,10 +372,9 @@ const handleModalTicketClinicListSettingSuccess = async () => {
               </div>
             </th>
             <th v-if="settingStore.TICKET_CLINIC_LIST.showCustomType">Phân loại</th>
-            <th class="">Trạng thái</th>
             <th class="cursor-pointer" @click="changeSort('registeredAt')">
               <div class="flex items-center gap-1 justify-center">
-                <span>Thời gian</span>
+                <span>T.Thái</span>
                 <IconSort v-if="sortColumn !== 'registeredAt'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'registeredAt' && sortValue === 'ASC'"
@@ -388,8 +387,7 @@ const handleModalTicketClinicListSettingSuccess = async () => {
               </div>
             </th>
             <th style="min-width: 150px">Khách hàng</th>
-            <th v-if="settingStore.TICKET_CLINIC_LIST.birthday">Ngày sinh</th>
-            <th v-if="settingStore.TICKET_CLINIC_LIST.phone">SĐT</th>
+            <th style="white-space: nowrap">T.Tin</th>
             <th style="white-space: nowrap">Chẩn đoán</th>
             <th v-for="(roleId, i) in settingStore.TICKET_CLINIC_LIST.roleIdList" :key="i">
               {{ roleMap[roleId]?.name || '' }}
@@ -433,9 +431,9 @@ const handleModalTicketClinicListSettingSuccess = async () => {
                   <div class="flex justify-center items-center gap-2">
                     <span>
                       {{
-                        ticket.date?.toString().padStart(2, '0') +
-                        ticket.month?.toString().padStart(2, '0') +
                         ticket.year?.toString().slice(-2) +
+                        ticket.month?.toString().padStart(2, '0') +
+                        ticket.date?.toString().padStart(2, '0') +
                         '_' +
                         ticket.dailyIndex?.toString().padStart(2, '0')
                       }}
@@ -452,9 +450,13 @@ const handleModalTicketClinicListSettingSuccess = async () => {
             >
               {{ settingStore.TICKET_CLINIC_LIST.customTypeText[ticket.customType || 0] }}
             </td>
-            <td><TicketStatusTag :ticket="ticket" /></td>
-            <td class="text-center">
-              {{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+            <td>
+              <div>
+                <TicketStatusTag :ticket="ticket" />
+              </div>
+              <div class="text-xs italic">
+                {{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+              </div>
             </td>
             <td>
               <div>
@@ -463,24 +465,25 @@ const handleModalTicketClinicListSettingSuccess = async () => {
                   <IconFileSearch />
                 </a>
               </div>
+              <div class="text-xs italic">
+                {{
+                  ESTimer.timeToText(ticket.customer?.birthday, 'DD/MM/YYYY') ||
+                  ticket.customer?.yearOfBirth ||
+                  ''
+                }}
+                - {{ ticket.customer?.getAge ? ticket.customer?.getAge + ' Tuổi' : '' }}
+              </div>
               <div v-if="ticket.customer?.note" class="text-xs italic">
                 {{ ticket.customer?.note }}
+              </div>
+            </td>
+            <td>
+              <div>
+                {{ formatPhone(ticket.customer?.phone) }}
               </div>
               <div class="text-xs italic">
                 {{ ESString.formatAddress(ticket.customer!) }}
               </div>
-            </td>
-
-            <td v-if="settingStore.TICKET_CLINIC_LIST.birthday" class="text-center">
-              {{
-                ESTimer.timeToText(ticket.customer?.birthday, 'DD/MM/YYYY') ||
-                ticket.customer?.yearOfBirth ||
-                ''
-              }}
-              - {{ ticket.customer?.getAge ? ticket.customer?.getAge + ' Tuổi' : '' }}
-            </td>
-            <td v-if="settingStore.TICKET_CLINIC_LIST.phone" class="text-center">
-              {{ formatPhone(ticket.customer?.phone) }}
             </td>
             <td>
               <div class="max-line-2">
