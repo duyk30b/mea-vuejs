@@ -2,6 +2,7 @@
 import { VueButton, VuePagination, VueTag } from '@/common'
 import { IconFileSearch, IconPrint } from '@/common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
+import { IconEditSquare } from '@/common/icon-google'
 import { InputDate, InputSelect, VueSelect } from '@/common/vue-form'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
@@ -23,19 +24,21 @@ import { ESTimer } from '@/utils'
 import { Breadcrumb } from '@/views/component'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
 import ModalDistributorDetail from '@/views/distributor/detail/ModalDistributorDetail.vue'
-import LinkAndStatusReceipt from '@/views/receipt/LinkAndStatusReceipt.vue'
-import LinkAndStatusTicket from '@/views/ticket-base/LinkAndStatusTicket.vue'
+import LinkAndStatusPurchaseOrder from '@/views/purchase-order/LinkAndStatusPurchaseOrder.vue'
+import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
 import { onBeforeMount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ModalCustomerPaymentMoneyIn from './ModalCustomerPaymentMoneyIn.vue'
 import ModalDistributorPaymentMoneyOut from './ModalDistributorPaymentMoneyOut.vue'
 import ModalOtherPaymentMoney from './ModalOtherPaymentMoney.vue'
+import ModalPaymentUpdateInfo from './ModalPaymentUpdateInfo.vue'
 
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalCustomerPaymentMoneyIn = ref<InstanceType<typeof ModalCustomerPaymentMoneyIn>>()
 const modalDistributorPaymentMoneyOut = ref<InstanceType<typeof ModalDistributorPaymentMoneyOut>>()
 const modalOtherPaymentMoney = ref<InstanceType<typeof ModalOtherPaymentMoney>>()
+const modalPaymentUpdateInfo = ref<InstanceType<typeof ModalPaymentUpdateInfo>>()
 
 const router = useRouter()
 
@@ -74,7 +77,7 @@ const startFetchData = async () => {
     const query: PaymentPaginationQuery = {
       relation: {
         ticket: true,
-        receipt: true,
+        purchaseOrder: true,
         customer: true,
         distributor: true,
         cashier: true,
@@ -109,7 +112,7 @@ const startFetchData = async () => {
     statistics.value = sumMoneyResponse.aggregate
     dataLoading.value = false
   } catch (error) {
-    console.log('🚀 ~ file: ReceiptList.vue:52 ~ error:', error)
+    console.log('🚀 ~ file: PurchaseOrderList.vue:52 ~ error:', error)
   }
 }
 
@@ -173,6 +176,7 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
   <ModalOtherPaymentMoney ref="modalOtherPaymentMoney" @success="startFetchData" />
   <ModalDistributorDetail ref="modalDistributorDetail" />
   <ModalCustomerDetail ref="modalCustomerDetail" />
+  <ModalPaymentUpdateInfo ref="modalPaymentUpdateInfo" @success="startFetchData" />
   <div class="mx-4 mt-4 gap-2 flex items-center">
     <div class="hidden md:flex gap-2 items-center text-lg font-medium">
       <Breadcrumb />
@@ -206,7 +210,7 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
         <div class="flex flex-wrap gap-2">
           <div>
             <VueButton
-              v-if="userPermission[PermissionId.PAYMENT_OTHER_MONEY_IN]"
+              v-if="userPermission[PermissionId.PAYMENT_OTHER_CREATE_MONEY_IN]"
               color="green"
               icon="plus"
               @click="modalOtherPaymentMoney?.openModal(MoneyDirection.In)"
@@ -216,7 +220,7 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
           </div>
           <div>
             <VueButton
-              v-if="userPermission[PermissionId.PAYMENT_OTHER_MONEY_OUT]"
+              v-if="userPermission[PermissionId.PAYMENT_OTHER_CREATE_MONEY_OUT]"
               color="blue"
               icon="plus"
               @click="modalOtherPaymentMoney?.openModal(MoneyDirection.Out)"
@@ -325,10 +329,9 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
               </div>
             </th>
             <th>Phiếu</th>
-            <th>Thời gian</th>
             <th>Loại</th>
             <th>Người nộp/nhận</th>
-            <th style="min-width: 100px;">Lý do</th>
+            <th style="min-width: 100px">Lý do</th>
             <th>Tiền thu</th>
             <th>Tiền chi</th>
             <th>Ghi nợ</th>
@@ -336,6 +339,7 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
             <th v-if="CONFIG.MODE === 'development'">Nợ</th>
             <th>HT Thanh toán</th>
             <th>NV thu/chi</th>
+            <th></th>
             <th></th>
           </tr>
         </thead>
@@ -372,16 +376,16 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
                   :status="false"
                 />
               </div>
-              <div v-if="payment.voucherType === PaymentVoucherType.Receipt">
-                <LinkAndStatusReceipt
-                  :receipt="payment.receipt"
-                  :receiptId="payment.voucherId"
+              <div v-if="payment.voucherType === PaymentVoucherType.PurchaseOrder">
+                <LinkAndStatusPurchaseOrder
+                  :purchaseOrder="payment.purchaseOrder"
+                  :purchaseOrderId="payment.voucherId"
                   :status="false"
                 />
               </div>
-            </td>
-            <td class="text-center">
-              {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
+              <div style="font-size: 0.9em">
+                {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
+              </div>
             </td>
             <td>
               <div class="text-left" v-if="payment.moneyDirection === MoneyDirection.In">
@@ -442,6 +446,12 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
               <div>
                 {{ payment.cashier?.fullName }}
               </div>
+            </td>
+            <td>
+              <IconEditSquare
+                style="font-size: 20px; color: var(--text-orange); cursor: pointer"
+                @click="modalPaymentUpdateInfo?.openModal(payment)"
+              />
             </td>
             <td>
               <IconPrint

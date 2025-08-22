@@ -3,7 +3,7 @@ import type { BaseResponse } from '../_base/base-dto'
 import { Batch } from '../batch'
 import type { Discount } from '../discount'
 import type { Position } from '../position'
-import { ReceiptItem } from '../receipt-item'
+import { PurchaseOrderItem } from '../purchase-order-item'
 import { TicketProduct } from '../ticket-product'
 import {
   ProductDetailQuery,
@@ -20,8 +20,10 @@ export class ProductApi {
     const response = await AxiosInstance.get('/product/pagination', { params })
     const { data, meta } = response.data as BaseResponse
     return {
-      meta,
-      data: Product.fromList(data),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
+      productList: Product.fromList(data.productList),
     }
   }
 
@@ -29,10 +31,10 @@ export class ProductApi {
     const params = ProductGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/product/list', { params })
-    const { data, time } = response.data as BaseResponse
+    const { data, time } = response.data as BaseResponse<{ productList: any[] }>
     return {
       time: new Date(time),
-      data: Product.fromList(data),
+      productList: Product.fromList(data.productList),
     }
   }
 
@@ -178,14 +180,15 @@ export class ProductApi {
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/product/destroy/${id}`)
-    const result = response.data as BaseResponse<{
+    const { data } = response.data as BaseResponse<{
+      success: boolean
       productId: number
-      receiptItemList: ReceiptItem[]
+      purchaseOrderItemList: PurchaseOrderItem[]
       ticketProductList: TicketProduct[]
     }>
-    result.data.receiptItemList = ReceiptItem.fromList(result.data.receiptItemList)
-    result.data.ticketProductList = TicketProduct.fromList(result.data.ticketProductList)
-    return result
+    data.purchaseOrderItemList = PurchaseOrderItem.fromList(data.purchaseOrderItemList)
+    data.ticketProductList = TicketProduct.fromList(data.ticketProductList)
+    return data
   }
 
   static async mergeProduct(options: { productIdSourceList: number[]; productIdTarget: number }) {

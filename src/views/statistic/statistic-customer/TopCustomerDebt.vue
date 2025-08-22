@@ -31,11 +31,11 @@ const startFetchData = async () => {
       StatisticService.sumCustomerDebt(),
     ])
 
-    customerList.value = customerPagination.data
-    total.value = customerPagination.meta.total
+    customerList.value = customerPagination.customerList
+    total.value = customerPagination.total
     sumDebt.value = sumCustomerDebt
   } catch (error) {
-    console.log('🚀 ~ file: ProductReport.vue:28 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ TopCustomerDebt.vue:38 ~ startFetchData ~ error:', error)
   } finally {
     loaded.value = true
   }

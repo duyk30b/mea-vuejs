@@ -7,7 +7,7 @@ export class ProductMovementGetQuery {
   limit?: number
   relation?: {
     product?: boolean
-    receipt?: boolean
+    purchaseOrder?: boolean
     ticket?: boolean
     stockCheck?: boolean
     distributor?: boolean

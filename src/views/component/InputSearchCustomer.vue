@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { IconFileSearch } from '@/common/icon-antd'
-import { InputOptionsValue } from '@/common/vue-form'
-import type { ItemOption } from '@/common/vue-form/InputOptionsValue.vue'
+import { InputSearch } from '@/common/vue-form'
+import type { ItemOption } from '@/common/vue-form/InputSearch.vue'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
@@ -40,7 +40,7 @@ const props = withDefaults(
   },
 )
 
-const inputOptionsCustomer = ref<InstanceType<typeof InputOptionsValue>>()
+const inputOptionsCustomer = ref<InstanceType<typeof InputSearch>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 
@@ -81,12 +81,12 @@ const handleUpsertCustomer = (customerData?: Customer) => {
   }
 }
 
-const handleSelectItem = (item?: ItemOption) => {
+const handleSelectItem = (item?: ItemOption<Customer>) => {
   customerCurrent.value = Customer.from(item?.data)
   emit('selectCustomer', item?.data)
 }
 
-const logicFilter = (item: ItemOption, text: string) => {
+const logicFilter = (item: ItemOption<Customer>, text: string) => {
   const customerItem = item.data as Customer
   if (!customerItem.isActive) return false
   return (
@@ -117,7 +117,7 @@ const logicFilter = (item: ItemOption, text: string) => {
         <b style="color: var(--text-red)">{{ formatMoney(customerCurrent!.debt) }}</b>
       </span>
       <span v-if="customerCurrent!.debt < 0">
-        - Quỹ:
+        - Ví:
         <b style="color: var(--text-green)">{{ formatMoney(-customerCurrent!.debt) }}</b>
       </span>
       <a
@@ -129,7 +129,7 @@ const logicFilter = (item: ItemOption, text: string) => {
     </template>
   </div>
   <div>
-    <InputOptionsValue
+    <InputSearch
       ref="inputOptionsCustomer"
       :value="customerId"
       :disabled="disabled"
@@ -151,7 +151,7 @@ const logicFilter = (item: ItemOption, text: string) => {
         </div>
         <div>{{ ESString.formatAddress(data) }}</div>
       </template>
-    </InputOptionsValue>
+    </InputSearch>
   </div>
 </template>
 

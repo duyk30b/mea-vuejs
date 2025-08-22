@@ -6,7 +6,7 @@ import { PaymentTicketItem, TicketItemType } from '../payment-ticket-item'
 import { ProcedureService } from '../procedure'
 import { ProductService } from '../product'
 import { RadiologyService } from '../radiology'
-import type { Receipt } from '../receipt'
+import type { PurchaseOrder } from '../purchase-order'
 import type { Ticket } from '../ticket'
 import { User, UserService } from '../user'
 
@@ -19,7 +19,7 @@ export enum PaymentPersonType {
 
 export enum PaymentVoucherType {
   Other = 0, // Không xác định
-  Receipt = 1,
+  PurchaseOrder = 1,
   Ticket = 2,
 }
 
@@ -73,7 +73,7 @@ export class Payment {
   closeDebt: number
 
   ticket: Ticket
-  receipt: Receipt
+  purchaseOrder: PurchaseOrder
   customer: Customer
   distributor: Distributor
   employee: User

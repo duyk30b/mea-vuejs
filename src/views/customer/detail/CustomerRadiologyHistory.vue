@@ -1,13 +1,13 @@
 <script setup lang="ts">
+import { IconVisibility } from '@/common/icon-google'
+import VuePagination from '@/common/VuePagination.vue'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { TicketRadiology, TicketRadiologyApi } from '@/modules/ticket-radiology'
+import { ESTimer } from '@/utils'
 import ModalTicketRadiologyResult from '@/views/room/room-radiology/ModalTicketRadiologyResult.vue'
+import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { IconVisibility } from '../../../common/icon-google'
-import VuePagination from '../../../common/VuePagination.vue'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { TicketRadiology, TicketRadiologyApi } from '../../../modules/ticket-radiology'
-import { ESTimer } from '../../../utils'
-import LinkAndStatusTicket from '../../ticket-base/LinkAndStatusTicket.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 
@@ -27,7 +27,7 @@ const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await TicketRadiologyApi.pagination({
+    const paginationResponse= await TicketRadiologyApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -39,8 +39,8 @@ const startFetchData = async () => {
       },
       sort: { id: 'DESC' },
     })
-    ticketRadiologyList.value = data
-    total.value = meta.total
+    ticketRadiologyList.value = paginationResponse.ticketRadiologyList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: CustomerProductHistory copy.vue:37 ~ error:', error)
   }

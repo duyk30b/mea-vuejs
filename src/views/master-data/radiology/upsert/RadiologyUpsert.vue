@@ -13,19 +13,14 @@ import { Discount, DiscountInteractType } from '@/modules/discount'
 import { Image, ImageHostType } from '@/modules/image/image.model'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { CommissionCalculatorType, Position, PositionInteractType } from '@/modules/position'
-import {
-  PrintHtml,
-  PrintHtmlAction,
-  PrintHtmlCompile,
-  PrintHtmlType
-} from '@/modules/print-html'
+import { PrintHtml, PrintHtmlAction, PrintHtmlCompile, PrintHtmlType } from '@/modules/print-html'
 import { Radiology, RadiologyApi, RadiologyService } from '@/modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '@/modules/radiology-group'
 import { Ticket } from '@/modules/ticket'
 import { TicketRadiology } from '@/modules/ticket-radiology'
 import { ESDom } from '@/utils'
 import VueSelectPrintHtml from '@/views/component/VueSelectPrintHtml.vue'
-import PositionTableAction from '@/views/user/position/common/PositionTableAction.vue'
+import PositionTableAction from '@/views/master-data/position/common/PositionTableAction.vue'
 import { computed, nextTick, onBeforeMount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
@@ -560,7 +555,7 @@ const startCleanHtml = () => {
               v-model:positionList="radiology.positionList!"
               :positionType="PositionInteractType.Radiology"
               :positionInteractId="radiology.id"
-              :editable="userPermission[PermissionId.POSITION]"
+              :editable="userPermission[PermissionId.MASTER_DATA_POSITION]"
             />
           </div>
         </VueTabPanel>

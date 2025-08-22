@@ -23,7 +23,7 @@ const startFetchData = async () => {
     loaded.value = false
     statisticWarehouse.value = await StatisticService.sumWarehouse()
   } catch (error) {
-    console.log('🚀 ~ file: ProductReport.vue:28 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ TotalProductMoney.vue:26 ~ startFetchData ~ error:', error)
   } finally {
     loaded.value = true
   }

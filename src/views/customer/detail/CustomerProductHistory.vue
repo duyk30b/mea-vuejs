@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import VuePagination from '@/common/VuePagination.vue'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { TicketProduct, TicketProductApi } from '@/modules/ticket-product'
+import { ESTimer } from '@/utils'
+import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import VuePagination from '../../../common/VuePagination.vue'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { TicketProduct, TicketProductApi } from '../../../modules/ticket-product'
-import { ESTimer } from '../../../utils'
-import LinkAndStatusTicket from '../../ticket-base/LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ customerId: number }>(), {
   customerId: 0,

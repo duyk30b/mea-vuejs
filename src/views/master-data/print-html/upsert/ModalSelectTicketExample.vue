@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { IconClose } from '../../../../common/icon-antd'
-import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { Ticket, TicketQueryApi, TicketType } from '../../../../modules/ticket'
-import { ESTimer } from '../../../../utils'
-import VuePagination from '../../../../common/VuePagination.vue'
-import { InputSelect } from '../../../../common/vue-form'
+import VuePagination from '@/common/VuePagination.vue'
+import { IconClose } from '@/common/icon-antd'
+import { InputSelect } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { Ticket, TicketQueryApi } from '@/modules/ticket'
+import { ESTimer } from '@/utils'
 
 const emit = defineEmits<{
   (e: 'select', value: number): void
@@ -28,7 +28,6 @@ const startFetchData = async () => {
       relation: {
         customer: true,
       },
-      filter: { ticketType: { NOT: TicketType.Order } },
       sort: { registeredAt: 'DESC' },
     })
 

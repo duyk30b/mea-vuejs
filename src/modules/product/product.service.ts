@@ -1,3 +1,4 @@
+import { CONFIG } from '@/config'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { IndexedDBQuery } from '../../core/indexed-db/_base/indexed-db.query'
 import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
@@ -31,7 +32,7 @@ export class ProductService {
         }
         const dataVersion = MeService.organization.value.dataVersionParse?.product || 0
 
-        let apiResponse: { time: Date; data: Product[] }
+        let apiResponse: { time: Date; productList: Product[] }
 
         if (refreshTime.dataVersion !== dataVersion) {
           await ProductDB.truncate()
@@ -43,42 +44,40 @@ export class ProductService {
           })
         }
 
-        if (apiResponse.data.length) {
-          await ProductDB.upsertMany(apiResponse.data)
+        if (apiResponse.productList.length) {
+          await ProductDB.upsertMany(apiResponse.productList)
           refreshTime.time = apiResponse.time.toISOString()
           refreshTime.dataVersion = dataVersion
           await RefreshTimeDB.upsertOne(refreshTime)
         }
 
-        return { numberChange: apiResponse.data.length }
+        return { numberChange: apiResponse.productList.length }
       } catch (error: any) {
         console.log('🚀 ~ file: product.service.ts:43 ~ ProductService ~ refreshDB ~ error:', error)
         AlertStore.add({ type: 'error', message: error.message })
-        await AuthService.logout()
-        location.reload()
+        if (CONFIG.MODE === 'production') {
+          await AuthService.logout()
+          location.reload()
+        }
         return
       }
     },
     5 * 1000, // trong vòng 5s không được query
   )
 
-  private static async executeQuery(all: Product[], query: ProductGetQuery) {
-    let data = all
-
-    if (query.filter) {
-      const filter = query.filter
-      data = data.filter((i) => {
-        return ProductDBQuery.executeFilter(i, filter)
-      })
-    }
-
-    if (query.sort) {
-      data = ProductDBQuery.executeSort(data, query.sort)
-    }
-    return data
+  private static async executeFilter(productList: Product[], filter: ProductGetQuery['filter']) {
+    if (!filter) return productList
+    return productList.filter((i) => {
+      return ProductDBQuery.executeFilter(i, filter)
+    })
+  }
+  private static async executeSort(productList: Product[], sort: ProductGetQuery['sort']) {
+    if (!sort) return productList
+    return ProductDBQuery.executeSort(productList, sort)
   }
 
   static async executeRelation(productList: Product[], relation: ProductGetQuery['relation']) {
+    if (!relation) return productList
     try {
       const productIdList = productList.map((i) => i.id)
 
@@ -88,9 +87,9 @@ export class ProductService {
         relation?.positionList ? PositionService.getAll() : <Position[]>[],
         relation?.batchList
           ? BatchDB.findMany({
-              condition: { quantity: { NOT: 0 }, productId: { IN: productIdList } },
-              sort: { id: 'ASC' },
-            })
+            condition: { quantity: { NOT: 0 }, productId: { IN: productIdList } },
+            sort: { id: 'ASC' },
+          })
           : <Batch[]>[],
       ])
 
@@ -126,6 +125,7 @@ export class ProductService {
     } catch (error) {
       console.log('🚀 ~ product.service.ts:129 ~ ProductService ~ executeRelation ~ error:', error)
     }
+    return productList
   }
 
   static async pagination(query: ProductPaginationQuery) {
@@ -133,12 +133,11 @@ export class ProductService {
     const limit = query.limit || 10
     const productAll = await ProductDB.findAll()
 
-    const dataTotal = await ProductService.executeQuery(productAll, query)
-    const data = dataTotal.slice((page - 1) * limit, page * limit)
+    const dataFilter = await ProductService.executeFilter(productAll, query.filter)
+    const dataRelation = await ProductService.executeRelation(dataFilter, query.relation)
+    const dataSort = await ProductService.executeSort(dataRelation, query.sort)
 
-    if (query.relation) {
-      await ProductService.executeRelation(data, query.relation)
-    }
+    const data = dataSort.slice((page - 1) * limit, page * limit)
 
     const productList = Product.fromList(data)
     productList.forEach((product) => {
@@ -150,7 +149,7 @@ export class ProductService {
     return {
       page,
       limit,
-      total: dataTotal.length,
+      total: dataFilter.length,
       productList,
     }
   }

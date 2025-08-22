@@ -14,8 +14,10 @@ export class ProductMovementApi {
     const { data, meta } = response.data as BaseResponse
 
     return {
-      meta,
-      data: ProductMovement.fromList(data),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
+      productMovementList: ProductMovement.fromList(data.productMovementList),
     }
   }
 }

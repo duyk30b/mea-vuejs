@@ -47,8 +47,8 @@ const startFetchData = async () => {
     sort: { startedAt: 'ASC' },
   })
     .then((result) => {
-      ticketRadiologyList.value = result.data
-      total.value = result.meta.total
+      ticketRadiologyList.value = result.ticketRadiologyList
+      total.value = result.total
     })
     .catch((error) => {
       console.log('🚀 ~ StatisticRadiology.vue:54 ~ startFetchData ~ error:', error)

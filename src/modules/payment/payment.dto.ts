@@ -7,7 +7,7 @@ export class PaymentGetParams {
   limit?: number
   relation?: {
     ticket?: boolean
-    receipt?: boolean
+    purchaseOrder?: boolean
     customer?: boolean
     distributor?: boolean
     employee?: boolean

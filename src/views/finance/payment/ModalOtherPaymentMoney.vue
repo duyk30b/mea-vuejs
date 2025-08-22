@@ -51,7 +51,7 @@ const handleSave = async () => {
   }
   try {
     if (moneyDirection.value === MoneyDirection.In) {
-      const payment = await PaymentApi.otherPaymentIn({
+      const payment = await PaymentApi.otherCreateMoneyIn({
         paymentMethodId: paymentMethodId.value,
         note: note.value,
         paidAmount: money.value,
@@ -59,7 +59,7 @@ const handleSave = async () => {
       emit('success', { payment })
     }
     if (moneyDirection.value === MoneyDirection.Out) {
-      const payment = await PaymentApi.otherPaymentOut({
+      const payment = await PaymentApi.otherCreateMoneyOut({
         paymentMethodId: paymentMethodId.value,
         note: note.value,
         paidAmount: money.value,

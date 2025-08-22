@@ -7,7 +7,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Appointment, AppointmentApi, AppointmentStatus } from '@/modules/appointment'
 import { ESTimer } from '@/utils'
-import AppointmentStatusTag from '@/views/reception/appointment/AppointmentStatusTag.vue'
+import AppointmentStatusTag from '@/views/room/appointment/AppointmentStatusTag.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 

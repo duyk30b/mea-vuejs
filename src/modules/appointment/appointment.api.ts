@@ -1,7 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import type { Customer } from '../customer'
-import type { TicketType } from '../ticket'
 import {
   AppointmentDetailQuery,
   AppointmentGetQuery,
@@ -93,7 +92,7 @@ export class AppointmentApi {
 
   static async registerTicketClinic(
     appointmentId: number,
-    body: { roomId: number; registeredAt: number; ticketType: TicketType },
+    body: { roomId: number; registeredAt: number },
   ) {
     const response = await AxiosInstance.post(
       `/appointment/${appointmentId}/register-ticket-clinic`,

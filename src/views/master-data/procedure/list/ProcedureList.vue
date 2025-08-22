@@ -13,7 +13,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { FileProcedureApi } from '@/modules/file-excel/file-procedure.api'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Procedure, ProcedureService } from '@/modules/procedure'
+import { Procedure, ProcedureService, ProcedureType, ProcedureTypeText } from '@/modules/procedure'
 import { ProcedureGroup, ProcedureGroupService } from '@/modules/procedure-group'
 import { arrayToKeyValue } from '@/utils'
 import { computed, onBeforeMount, ref } from 'vue'
@@ -47,7 +47,7 @@ const searchText = ref('')
 const procedureGroupId = ref<number>(0)
 const isActive = ref<1 | 0 | ''>(1)
 
-const sortColumn = ref<'id' | 'procedureCode' | 'name' | 'price' | ''>('')
+const sortColumn = ref<'id' | 'code' | 'name' | 'price' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const procedureGroupMap = computed(() => arrayToKeyValue(procedureGroupAll.value, 'id'))
@@ -68,11 +68,11 @@ const startFetchData = async (options?: { refetch?: boolean }) => {
         sort: sortValue.value
           ? {
               id: sortColumn.value === 'id' ? sortValue.value : undefined,
-              procedureCode: sortColumn.value === 'procedureCode' ? sortValue.value : undefined,
+              code: sortColumn.value === 'code' ? sortValue.value : undefined,
               name: sortColumn.value === 'name' ? sortValue.value : undefined,
               price: sortColumn.value === 'price' ? sortValue.value : undefined,
             }
-          : { procedureCode: 'ASC' },
+          : { code: 'ASC' },
       },
       { refetch: !!options?.refetch },
     )
@@ -99,7 +99,7 @@ const startSearch = async () => {
   await startFetchData()
 }
 
-const changeSort = async (column: 'id' | 'procedureCode' | 'name' | 'price') => {
+const changeSort = async (column: 'id' | 'code' | 'name' | 'price') => {
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
     sortValue.value = ''
@@ -298,7 +298,7 @@ const handleModalUploadProcedureSuccess = async () => {
             <div class="font-medium text-justify">
               {{ procedure.name }}
             </div>
-            <div v-if="settingStore.SCREEN_PROCEDURE_LIST.table.detail">
+            <div>
               <a
                 class="text-base"
                 style="line-height: 0"
@@ -308,7 +308,7 @@ const handleModalUploadProcedureSuccess = async () => {
               </a>
             </div>
           </div>
-          <div v-if="settingStore.SCREEN_PROCEDURE_LIST.table.group">
+          <div>
             {{ procedureGroupAll[procedure.procedureGroupId] }}
           </div>
         </div>
@@ -331,10 +331,10 @@ const handleModalUploadProcedureSuccess = async () => {
                 <IconSortChange :sort="sortColumn === 'id' ? sortValue : ''" />
               </div>
             </th>
-            <th class="cursor-pointer" @click="changeSort('procedureCode')">
+            <th class="cursor-pointer" @click="changeSort('code')">
               <div class="flex items-center gap-1 justify-center">
                 <span>Mã DV</span>
-                <IconSortChange :sort="sortColumn === 'procedureCode' ? sortValue : ''" />
+                <IconSortChange :sort="sortColumn === 'code' ? sortValue : ''" />
               </div>
             </th>
             <th class="cursor-pointer" @click="changeSort('name')">
@@ -343,7 +343,8 @@ const handleModalUploadProcedureSuccess = async () => {
                 <IconSortChange :sort="sortColumn === 'name' ? sortValue : ''" />
               </div>
             </th>
-            <th v-if="settingStore.SCREEN_PROCEDURE_LIST.table.group">Nhóm</th>
+            <th>Loại</th>
+            <th>Nhóm</th>
             <th class="cursor-pointer" @click="changeSort('price')">
               <div class="flex items-center gap-1 justify-center">
                 <span>Giá</span>
@@ -351,15 +352,8 @@ const handleModalUploadProcedureSuccess = async () => {
               </div>
             </th>
             <th>Khuyến mại</th>
-            <th v-if="settingStore.SCREEN_PROCEDURE_LIST.table.status">Trạng thái</th>
-            <th
-              v-if="
-                userPermission[PermissionId.PROCEDURE_UPDATE] &&
-                settingStore.SCREEN_PROCEDURE_LIST.table.action
-              "
-            >
-              Thao tác
-            </th>
+            <th>Trạng thái</th>
+            <th v-if="userPermission[PermissionId.PROCEDURE_UPDATE]">Thao tác</th>
           </tr>
         </thead>
         <tbody>
@@ -370,18 +364,20 @@ const handleModalUploadProcedureSuccess = async () => {
             <td class="text-center" v-if="CONFIG.MODE === 'development'" style="color: violet">
               {{ procedure.id }}
             </td>
-            <td class="text-center">{{ procedure.procedureCode }}</td>
+            <td class="text-center">{{ procedure.code }}</td>
             <td>
-              {{ procedure.name }}
-              <a
-                v-if="settingStore.SCREEN_PROCEDURE_LIST.table.detail"
-                class="ml-1"
-                @click="modalProcedureDetail?.openModal(procedure.id)"
-              >
+              <span>{{ procedure.name }}</span>
+              <span v-if="procedure.procedureType === ProcedureType.Regimen" class="font-bold">
+                ({{ procedure.totalSessions }} buổi)
+              </span>
+              <a class="ml-1" @click="modalProcedureDetail?.openModal(procedure.id)">
                 <IconFileSearch />
               </a>
             </td>
-            <td v-if="settingStore.SCREEN_PROCEDURE_LIST.table.group" class="text-center">
+            <td class="text-center">
+              {{ ProcedureTypeText[procedure.procedureType] }}
+            </td>
+            <td class="text-center">
               {{ procedureGroupMap[procedure.procedureGroupId]?.name }}
             </td>
             <td class="text-right">
@@ -397,17 +393,11 @@ const handleModalUploadProcedureSuccess = async () => {
                 {{ procedure.discountApply?.valueText }}
               </VueTag>
             </td>
-            <td v-if="settingStore.SCREEN_PROCEDURE_LIST.table.status" class="text-center">
+            <td class="text-center">
               <VueTag v-if="procedure.isActive" icon="check" color="green">Active</VueTag>
               <VueTag v-else icon="minus" color="orange">Active</VueTag>
             </td>
-            <td
-              v-if="
-                userPermission[PermissionId.PRODUCT_UPDATE] &&
-                settingStore.SCREEN_PROCEDURE_LIST.table.action
-              "
-              class="text-center"
-            >
+            <td v-if="userPermission[PermissionId.PRODUCT_UPDATE]" class="text-center">
               <a
                 style="color: #eca52b"
                 class="text-xl"

@@ -11,9 +11,15 @@
       <div v-else class="arrow">&#9652;</div>
     </div>
 
+    <div v-if="CONFIG.MODE === 'development'" class="development" style="color: violet">
+      {{ randomId }} - {{ value }} - {{ options.length }}/{{ options.length }}
+    </div>
+
     <!-- Teleport dropdown to body -->
     <teleport to="body">
-      <transition :name="dropdownDirection === 'up' ? 'slide-up' : 'slide-down'">
+      <transition
+        :name="!transitionSlide ? '' : dropdownDirection === 'up' ? 'slide-up' : 'slide-down'"
+      >
         <div v-if="isOpen" class="input-select-dropdown" :style="dropdownStyle" ref="dropdownRef">
           <div
             v-for="(option, index) in options"
@@ -31,6 +37,7 @@
 </template>
 
 <script setup lang="ts">
+import { CONFIG } from '@/config'
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 
 export type InputSelectOption<T> = {
@@ -45,6 +52,7 @@ const props = defineProps<{
   value: string | number | null | undefined
   height?: string
   disabled?: boolean
+  transitionSlide?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -58,6 +66,10 @@ const isOpen = ref(false)
 const highlightedIndex = ref(-1)
 const dropdownStyle = ref<Record<string, string>>({})
 const dropdownDirection = ref<'up' | 'down'>('down')
+
+const randomId = computed(() => {
+  return Math.random().toString(36).substring(2)
+})
 
 const selectedLabel = computed(() => {
   return props.options.find((o) => o.value === props.value)?.label || 'Chọn...'
@@ -182,6 +194,16 @@ onBeforeUnmount(() => {
       transform: scaleX(1.6);
       color: #777;
     }
+  }
+  .development {
+    position: absolute;
+    right: 5px;
+    top: 0;
+    font-size: 0.8em;
+    transform: translate(0, -50%);
+    background-color: rgba(255, 255, 255, 0.5);
+    padding: 4px;
+    white-space: nowrap;
   }
 }
 

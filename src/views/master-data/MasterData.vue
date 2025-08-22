@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import {
+  IconApartment,
   IconDollar,
   IconPrint,
   IconReconciliation,
+  IconTeam,
   IconTool,
   IconUser,
 } from '../../common/icon-antd'
@@ -29,6 +31,20 @@ const { organizationPermission, userPermission } = MeService
       1. Danh mục chính
     </div>
     <div class="p-4 flex flex-wrap gap-4">
+      <div
+        class="card"
+        @click="router.push({ name: 'MasterDataRoom' })"
+        v-if="userPermission[PermissionId.MASTER_DATA_ROOM]"
+      >
+        <div class="card-icon">
+          <IconApartment />
+        </div>
+        <div class="card-content">
+          <div class="card-title">Danh sách phòng</div>
+          <div class="card-description">Quản lý danh sách khoa, phòng</div>
+        </div>
+      </div>
+
       <div
         class="card"
         @click="router.push({ name: 'Procedure' })"
@@ -91,20 +107,6 @@ const { organizationPermission, userPermission } = MeService
 
       <div
         class="card"
-        @click="router.push({ name: 'MasterDataRoom' })"
-        v-if="userPermission[PermissionId.MASTER_DATA_ROOM]"
-      >
-        <div class="card-icon">
-          <IconWarehouse />
-        </div>
-        <div class="card-content">
-          <div class="card-title">Danh sách phòng</div>
-          <div class="card-description">Quản lý danh sách khoa, phòng</div>
-        </div>
-      </div>
-
-      <div
-        class="card"
         @click="router.push({ name: 'Warehouse' })"
         v-if="userPermission[PermissionId.MASTER_DATA_WAREHOUSE]"
       >
@@ -114,6 +116,22 @@ const { organizationPermission, userPermission } = MeService
         <div class="card-content">
           <div class="card-title">Danh sách kho</div>
           <div class="card-description">Quản lý thông tin, danh sách kho</div>
+        </div>
+      </div>
+
+      <div
+        class="card"
+        @click="router.push({ name: 'Position' })"
+        v-if="userPermission[PermissionId.MASTER_DATA_POSITION]"
+      >
+        <div class="card-icon">
+          <IconTeam />
+        </div>
+        <div class="card-content">
+          <div class="card-title">Vị trí và Hoa hồng</div>
+          <div class="card-description">
+            Cài đặt các vị trí và vai trò làm việc, hoa hồng tính cho mỗi vị trí
+          </div>
         </div>
       </div>
 
@@ -132,14 +150,7 @@ const { organizationPermission, userPermission } = MeService
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <div class="mt-4 mx-4 bg-white">
-    <div class="px-4 py-4 text-lg font-medium" style="border-bottom: 1px solid #dfdfdf">
-      2. Danh mục phụ
-    </div>
-    <div class="p-4 flex flex-wrap gap-4">
       <div
         class="card"
         @click="router.push({ name: 'PaymentMethod' })"
@@ -170,6 +181,45 @@ const { organizationPermission, userPermission } = MeService
         </div>
       </div>
 
+      <div
+        class="card"
+        @click="router.push({ name: 'Surcharge' })"
+        v-if="userPermission[PermissionId.MASTER_DATA_SURCHARGE]"
+      >
+        <div class="card-icon">
+          <IconDollar />
+        </div>
+        <div class="card-content">
+          <div class="card-title">Phụ phí</div>
+          <div class="card-description">
+            Danh sách các phụ phí khách hàng cần trả thêm như: phí tư vấn, phí vận chuyển, ...
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="card"
+        @click="router.push({ name: 'Expense' })"
+        v-if="userPermission[PermissionId.MASTER_DATA_EXPENSE]"
+      >
+        <div class="card-icon">
+          <IconDollar />
+        </div>
+        <div class="card-content">
+          <div class="card-title">Chi phí</div>
+          <div class="card-description">
+            Danh sách chi phí khi bán hàng mà người bán cần chịu: tiền hoa hồng, tiền bảo quản, ...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 mx-4 bg-white">
+    <div class="px-4 py-4 text-lg font-medium" style="border-bottom: 1px solid #dfdfdf">
+      2. Danh mục phụ
+    </div>
+    <div class="p-4 flex flex-wrap gap-4">
       <div
         class="card"
         @click="router.push({ name: 'PrescriptionSample' })"

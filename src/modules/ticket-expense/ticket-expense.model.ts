@@ -1,23 +1,27 @@
-import { UNKNOWN_KEY } from '../enum'
+import { BaseModel } from '../_base/base.model'
+import { Expense } from '../expense'
 
-export class TicketExpense {
+export class TicketExpense extends BaseModel {
   id: number
   ticketId: number
-  key: string
-  name: string
+  expenseId: number
   money: number
+
+  expense: Expense
 
   static init() {
     const ins = new TicketExpense()
+    ins._localId = Math.random()
     ins.id = 0
-    ins.name = ''
-    ins.key = UNKNOWN_KEY
+    ins.expenseId = 0
     ins.money = 0
     return ins
   }
 
   static blank(): TicketExpense {
     const ins = TicketExpense.init()
+
+    ins.expense = Expense.init()
     return ins
   }
 
@@ -28,10 +32,23 @@ export class TicketExpense {
       if (value === undefined) delete target[key as keyof typeof target]
     })
     Object.assign(target, source)
+    target._localId = source.id || source._localId || Math.random()
     return target
   }
 
   static basicList(sources: TicketExpense[]): TicketExpense[] {
     return sources.map((i) => TicketExpense.basic(i))
+  }
+
+  static from(source: TicketExpense) {
+    const target = TicketExpense.basic(source)
+    if (Object.prototype.hasOwnProperty.call(source, 'expense')) {
+      target.expense = source.expense ? Expense.basic(source.expense) : source.expense
+    }
+    return target
+  }
+
+  static fromList(sourceList: TicketExpense[]): TicketExpense[] {
+    return sourceList.map((i) => TicketExpense.from(i))
   }
 }

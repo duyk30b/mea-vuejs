@@ -24,11 +24,11 @@ import { onBeforeMount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalTicketRadiologyGroupResult from '../ModalTicketRadiologyResult.vue'
 import TicketRadiologyStatusTag from '../TicketRadiologyStatusTag.vue'
-import { fromTime, toTime } from './ticket-radiology-list.ref'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import { PaymentMoneyStatus } from '@/modules/enum'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import { fromTime, toTime } from '../../room-ticket-base/room-ticket.ref'
 
 const router = useRouter()
 const route = useRoute()
@@ -67,7 +67,7 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
       dataLoading.value = true
     }
 
-    const { data, meta } = await TicketRadiologyApi.pagination({
+    const paginationResponse = await TicketRadiologyApi.pagination({
       page: page.value,
       limit: limit.value,
       relation: {
@@ -97,8 +97,8 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
         : { registeredAt: 'DESC' },
     })
 
-    ticketRadiologyList.value = data
-    total.value = meta.total
+    ticketRadiologyList.value = paginationResponse.ticketRadiologyList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: TicketClinicList.vue:84 ~ startFetchData ~ error:', error)
   } finally {
@@ -424,7 +424,7 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
                 }"
               >
                 <IconEditSquare
-                  v-if="userPermission[PermissionId.RADIOLOGY_UPDATE_RESULT]"
+                  v-if="userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_RESULT]"
                   width="20px"
                   height="20px"
                   style="color: var(--text-orange)"

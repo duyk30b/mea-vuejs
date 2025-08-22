@@ -253,7 +253,7 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
               <div style="white-space: nowrap">{{ formatMoney(distributor.debt) }}</div>
               <div
                 v-if="
-                  userPermission[PermissionId.PAYMENT_DISTRIBUTOR_PAYMENT] && distributor.debt != 0
+                  userPermission[PermissionId.PURCHASE_ORDER_PAYMENT_MONEY] && distributor.debt != 0
                 "
                 class="flex justify-end"
               >
@@ -375,7 +375,7 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
                 <div>
                   <VueButton
                     v-if="
-                      userPermission[PermissionId.PAYMENT_DISTRIBUTOR_PAYMENT] &&
+                      userPermission[PermissionId.PURCHASE_ORDER_PAYMENT_MONEY] &&
                       distributor.debt != 0
                     "
                     size="small"

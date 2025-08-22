@@ -7,6 +7,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { LaboratoryService, LaboratoryValueType } from '@/modules/laboratory'
 import { LaboratoryGroupService } from '@/modules/laboratory-group'
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
+import { TicketChangeLaboratoryApi } from '@/modules/ticket'
 import { TicketLaboratoryGroup, TicketLaboratoryGroupApi } from '@/modules/ticket-laboratory-group'
 import { TicketLaboratoryResult } from '@/modules/ticket-laboratory-result'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
@@ -100,7 +101,8 @@ const disabledButtonSave = computed(() => {
 const updateResult = async (options: { print: boolean }) => {
   saveLoading.value = true
   try {
-    const ticketLaboratoryGroupUpdate = await TicketLaboratoryGroupApi.updateResult({
+    const ticketLaboratoryGroupUpdate = await TicketChangeLaboratoryApi.updateResult({
+      ticketId: ticketLaboratoryGroup.value.ticketId,
       ticketLaboratoryGroupId: ticketLaboratoryGroupId.value,
       startedAt: startedAt.value,
       ticketLaboratoryResultUpdateList: Object.values(ticketLaboratoryResultTree.value),
@@ -162,7 +164,8 @@ const closeModal = () => {
 const cancelResult = async () => {
   try {
     saveLoading.value = true
-    await TicketLaboratoryGroupApi.cancelResult({
+    await TicketChangeLaboratoryApi.cancelResult({
+      ticketId: ticketLaboratoryGroup.value.ticketId,
       ticketLaboratoryGroupId: ticketLaboratoryGroupId.value,
     })
     closeModal()

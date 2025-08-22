@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import { IconFileSearch } from '@/common/icon-antd'
-import { InputOptionsValue } from '@/common/vue-form'
-import { useSettingStore } from '@/modules/_me/setting.store'
-import { Procedure, ProcedureService } from '@/modules/procedure'
-import { onMounted, ref, watch } from 'vue'
-import ModalProcedureDetail from '../master-data/procedure/detail/ModalProcedureDetail.vue'
-import type { ItemOption } from '@/common/vue-form/InputOptionsValue.vue'
-import { ESString } from '@/utils'
+import { InputSearch } from '@/common/vue-form'
+import type { ItemOption } from '@/common/vue-form/InputSearch.vue'
 import { CONFIG } from '@/config'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Procedure, ProcedureService, ProcedureType } from '@/modules/procedure'
+import { ESString } from '@/utils'
+import { onMounted, ref } from 'vue'
+import ModalProcedureDetail from '../master-data/procedure/detail/ModalProcedureDetail.vue'
 
 const emit = defineEmits<{
   (e: 'selectProcedure', value: Procedure): void
@@ -29,7 +29,7 @@ const props = withDefaults(
   },
 )
 
-const inputOptionsProcedure = ref<InstanceType<typeof InputOptionsValue>>()
+const inputSearchProcedure = ref<InstanceType<typeof InputSearch>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
 const settingStore = useSettingStore()
@@ -46,17 +46,16 @@ const handleUpdateValue = (v: any) => {
   emit('update:procedureId', v)
 }
 
-const handleSelectItem = (item?: ItemOption) => {
-  emit('selectProcedure', item?.data)
+const handleSelectItem = (item?: ItemOption<Procedure>) => {
+  if (item?.data) {
+    emit('selectProcedure', item?.data)
+  }
 }
 
-const logicFilter = (item: ItemOption, text: string) => {
+const logicFilter = (item: ItemOption<Procedure>, text: string) => {
   const procedure = item.data as Procedure
   if (!procedure.isActive) return false
-  return (
-    ESString.customFilter(procedure.name, text) ||
-    ESString.customFilter(procedure.procedureCode, text)
-  )
+  return ESString.customFilter(procedure.name, text) || ESString.customFilter(procedure.code, text)
 }
 </script>
 <template>
@@ -71,11 +70,11 @@ const logicFilter = (item: ItemOption, text: string) => {
   </div>
 
   <div>
-    <InputOptionsValue
-      ref="inputOptionsProcedure"
+    <InputSearch
+      ref="inputSearchProcedure"
       :value="procedureId"
       :disabled="disabled"
-      :maxHeight="320"
+      :maxHeight="260"
       :options="procedureOptions"
       placeholder="Tìm kiếm bằng mã, tên dịch vụ"
       :required="required"
@@ -86,10 +85,13 @@ const logicFilter = (item: ItemOption, text: string) => {
       <template #option="{ item: { data } }">
         <div>
           <b>{{ data.name }}</b>
+          <b v-if="data?.procedureType === ProcedureType.Regimen">
+            ({{ data.totalSessions }} buổi)
+          </b>
           - {{ formatMoney(data.price) }}
         </div>
       </template>
-    </InputOptionsValue>
+    </InputSearch>
   </div>
 </template>
 

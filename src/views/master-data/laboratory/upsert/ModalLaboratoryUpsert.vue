@@ -3,25 +3,19 @@ import VueButton from '@/common/VueButton.vue'
 import { IconClose, IconDelete } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputMoney, InputText, VueSelect } from '@/common/vue-form'
-import InputNumber from '@/common/vue-form/InputNumber.vue'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Discount, DiscountInteractType } from '@/modules/discount'
-import {
-  Laboratory,
-  LaboratoryApi,
-  LaboratoryService,
-  LaboratoryValueType,
-} from '@/modules/laboratory'
+import { Laboratory, LaboratoryService, LaboratoryValueType } from '@/modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '@/modules/laboratory-group'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { Position, PositionInteractType } from '@/modules/position'
+import PositionTableAction from '@/views/master-data/position/common/PositionTableAction.vue'
 import { computed, ref } from 'vue'
 import DiscountTableAction from '../../discount/common/DiscountTableAction.vue'
-import { PermissionId } from '@/modules/permission/permission.enum'
-import PositionTableAction from '@/views/user/position/common/PositionTableAction.vue'
-import { Position, PositionInteractType } from '@/modules/position'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
@@ -183,7 +177,9 @@ const cleanLaboratory = (ins: LaboratoryUpsertType) => {
 }
 
 const handleSave = async () => {
-  saveLoading.value = true
+  if (!laboratory.value.laboratoryGroupId) {
+    return AlertStore.addError('Lỗi: Bắt buộc phải chọn nhóm xét nghiệm')
+  }
 
   cleanLaboratory(laboratory.value)
   if (laboratory.value.children?.length) {
@@ -191,6 +187,7 @@ const handleSave = async () => {
   }
 
   try {
+    saveLoading.value = true
     if (!laboratory.value.id) {
       await LaboratoryService.create({
         laboratory: laboratory.value,
@@ -293,6 +290,7 @@ defineExpose({ openModal })
                   <div>
                     <VueSelect
                       v-model:value="laboratory.laboratoryGroupId"
+                      required
                       :options="
                         laboratoryGroupAll.map((group) => ({ value: group.id, text: group.name }))
                       "
@@ -540,7 +538,7 @@ defineExpose({ openModal })
                   v-model:positionList="laboratory.positionList!"
                   :positionType="PositionInteractType.Laboratory"
                   :positionInteractId="laboratory.id"
-                  :editable="userPermission[PermissionId.POSITION]"
+                  :editable="userPermission[PermissionId.MASTER_DATA_POSITION]"
                 />
               </div>
             </VueTabPanel>

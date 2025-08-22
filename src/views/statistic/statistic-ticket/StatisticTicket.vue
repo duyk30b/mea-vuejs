@@ -1,19 +1,24 @@
 <script setup lang="ts">
+import { IconDownload } from '@/common/icon-google'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { FileTicketApi } from '@/modules/file-excel/file-ticket.api'
+import { RoomInteractType } from '@/modules/room'
+import InputSelectRoom from '@/views/component/InputSelectRoom.vue'
 import type { ChartData } from 'chart.js'
 import dayjs, { type Dayjs } from 'dayjs'
 import { nextTick, onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import VueButton from '../../../common/VueButton.vue'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import { IconBarChart, IconSetting } from '../../../common/icon-antd'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import { VueSelect } from '../../../common/vue-form'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { StatisticService } from '../../../modules/statistics'
-import { TicketStatus, TicketType } from '../../../modules/ticket'
+import { TicketStatus } from '../../../modules/ticket'
 import { ESTimer } from '../../../utils'
 import ModalStatisticTicketSetting from './ModalStatisticTicketSetting.vue'
-import { MeService } from '../../../modules/_me/me.service'
 
 type DataResponseType = {
   timeLabel: string
@@ -43,10 +48,11 @@ const moneyDivision = settingStore.SYSTEM_SETTING.moneyDivisionFormat
 const { formatMoney, isMobile } = settingStore
 const { userPermission, organizationPermission } = MeService
 
+const roomId = ref(0)
+
 const now = new Date()
 const endMonth = ESTimer.endOfMonth(now)
 const startMonth = ESTimer.startOfMonth(now)
-const ticketTypeFilter = ref<TicketType | null>(null)
 const timeRanger = ref<[Dayjs, Dayjs]>([dayjs(startMonth), dayjs(endMonth)])
 const timeType = ref<'date' | 'month'>('date')
 const loaded = ref(false)
@@ -77,7 +83,7 @@ const startFetchData = async () => {
       toTime: toTime.toISOString(),
       groupTimeType: timeType.value,
       filter: {
-        ticketType: ticketTypeFilter.value ?? undefined,
+        roomId: roomId.value ? roomId.value : undefined,
         status: { IN: [TicketStatus.Debt, TicketStatus.Completed] },
       },
     })
@@ -133,6 +139,33 @@ const handleChangeOptionBar = async (option: { text?: string; value?: any }) => 
   await nextTick()
   loaded.value = true
 }
+
+const downloadTicketList = (menu: { key: string }) => {
+  ModalStore.confirm({
+    title: 'Xác nhận tải file báo cáo',
+    content: 'Thời gian tải file có thể tốn vài phút nếu dữ liệu lớn, bạn vẫn mốn tải ?',
+    onOk: async () => {
+      let fromTime: number, toTime: number
+      if (timeType.value === 'date') {
+        fromTime = ESTimer.startOfDate(timeRanger.value?.[0].toISOString()).getTime()
+        toTime = ESTimer.endOfDate(timeRanger.value?.[1].toISOString()).getTime()
+      } else {
+        fromTime = ESTimer.startOfMonth(timeRanger.value?.[0].toISOString()).getTime()
+        toTime = ESTimer.endOfMonth(timeRanger.value?.[1].toISOString()).getTime()
+      }
+      await FileTicketApi.downloadExcelTicketList({
+        filter: {
+          roomId: roomId.value ? roomId.value : undefined,
+          registeredAt:
+            fromTime || toTime
+              ? { GTE: fromTime ? fromTime : undefined, LTE: toTime ? toTime : undefined }
+              : undefined,
+        },
+        sort: { id: 'DESC' },
+      })
+    },
+  })
+}
 </script>
 
 <template>
@@ -168,26 +201,32 @@ const handleChangeOptionBar = async (option: { text?: string; value?: any }) => 
   </div>
 
   <div class="page-main p-4">
-    <div class="flex flex-wrap gap-2 justify-between items-center">
+    <div class="flex flex-wrap gap-2 items-center">
       <div style="width: 150px">
-        <div>Chọn loại phiếu</div>
+        <div>Chọn phòng</div>
         <div>
-          <VueSelect
-            v-model:value="ticketTypeFilter"
-            :options="[
-              { value: null, text: 'Tất cả' },
-              ...(organizationPermission[PermissionId.TICKET_ORDER]
-                ? [{ value: TicketType.Order, text: 'Bán hàng' }]
-                : []),
-              ...(organizationPermission[PermissionId.TICKET_CLINIC]
-                ? [{ value: { NOT: TicketType.Order }, text: 'Phiếu khám' }]
-                : []),
-            ]"
-            @update:value="startFetchData"
+          <InputSelectRoom
+            v-model:roomId="roomId"
+            :roomInteractType="RoomInteractType.Ticket"
+            removeLabelWrapper
+            @update:roomId="startFetchData"
           />
         </div>
       </div>
-      <div>
+      <div style="width: 150px">
+        <div>&nbsp;</div>
+        <div>
+          <VueButton
+            v-if="userPermission[PermissionId.FILE_EXCEL_DOWNLOAD_TICKET_CLINIC]"
+            :icon="IconDownload"
+            color="blue"
+            @click="downloadTicketList"
+          >
+            Download
+          </VueButton>
+        </div>
+      </div>
+      <div class="ml-auto">
         <div>Chọn thời gian</div>
         <div class="flex justify-end items-center gap-2">
           <VueButton
@@ -321,7 +360,9 @@ const handleChangeOptionBar = async (option: { text?: string; value?: any }) => 
     </div>
 
     <div class="mt-8 table-wrapper">
-      <div class="text-lg" style="font-weight: 500">Thông số chi tiết</div>
+      <div class="flex justify-between items-baseline">
+        <div class="text-lg" style="font-weight: 500">Thông số chi tiết</div>
+      </div>
       <table>
         <thead>
           <tr>

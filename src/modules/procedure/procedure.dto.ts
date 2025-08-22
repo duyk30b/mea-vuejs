@@ -19,7 +19,7 @@ export class ProcedureGetQuery {
 
   sort?: {
     id?: 'ASC' | 'DESC'
-    procedureCode?: 'ASC' | 'DESC'
+    code?: 'ASC' | 'DESC'
     name?: 'ASC' | 'DESC'
     price?: 'ASC' | 'DESC'
   }

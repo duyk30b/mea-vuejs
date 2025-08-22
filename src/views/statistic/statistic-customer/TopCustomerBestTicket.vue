@@ -107,12 +107,12 @@ const startFetchHighTotalMoneyInvoice = async () => {
   barData.labels.splice(
     0,
     data.length,
-    ...data.map((i) => `${i.customer.fullName} (${i.countTicket} đơn)`)
+    ...data.map((i) => `${i.customer.fullName} (${i.countTicket} đơn)`),
   )
   barData.datasets[0].data.splice(
     0,
     data.length,
-    ...data.map((i) => i.sumTotalCostAmount / moneyDivision)
+    ...data.map((i) => i.sumTotalCostAmount / moneyDivision),
   )
   barData.datasets[1].data.splice(0, data.length, ...data.map((i) => i.sumExpense / moneyDivision))
   barData.datasets[2].data.splice(0, data.length, ...data.map((i) => i.sumProfit / moneyDivision))
@@ -152,12 +152,12 @@ const startFetchHighProfitInvoice = async () => {
   barData.labels.splice(
     0,
     data.length,
-    ...data.map((i) => `${i.customer.fullName} (${i.countTicket} đơn)`)
+    ...data.map((i) => `${i.customer.fullName} (${i.countTicket} đơn)`),
   )
   barData.datasets[0].data.splice(
     0,
     data.length,
-    ...data.map((i) => i.sumTotalCostAmount / moneyDivision)
+    ...data.map((i) => i.sumTotalCostAmount / moneyDivision),
   )
   barData.datasets[1].data.splice(0, data.length, ...data.map((i) => i.sumExpense / moneyDivision))
   barData.datasets[2].data.splice(0, data.length, ...data.map((i) => i.sumProfit / moneyDivision))
@@ -174,7 +174,7 @@ const startFetchData = async () => {
       await startFetchHighProfitInvoice()
     }
   } catch (error) {
-    console.log('🚀 ~ file: ProductReport.vue:28 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ TopCustomerBestTicket.vue:177 ~ startFetchData ~ error:', error)
   } finally {
     loaded.value = true
   }
@@ -200,14 +200,16 @@ onBeforeMount(async () => await startFetchData())
             { text: 'Tiền đơn', value: 'topTotalMoney' },
             { text: 'Tiền lãi', value: 'topProfit' },
           ]"
-          @update:value="(e) => startFetchData()" />
+          @update:value="(e) => startFetchData()"
+        />
       </div>
       <div>
         <a-range-picker
           v-model:value="timeRanger"
           :onChange="handleChangeTime"
           format="DD-MM-YYYY"
-          :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']" />
+          :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']"
+        />
       </div>
     </div>
     <div class="flex-1">

@@ -12,7 +12,7 @@ import { TicketProduct } from '@/modules/ticket-product'
 import type { TicketRadiology } from '@/modules/ticket-radiology'
 import TicketLaboratoryStatusTooltip from '@/views/room/room-laboratory/TicketLaboratoryStatusTooltip.vue'
 import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadiologyStatusTooltip.vue'
-import TicketDeliveryStatusTooltip from '@/views/ticket-base/TicketDeliveryStatusTooltip.vue'
+import TicketDeliveryStatusTooltip from '@/views/room/room-ticket-base/TicketDeliveryStatusTooltip.vue'
 import { computed, ref } from 'vue'
 import PaymentMoneyStatusTooltip from '../../payment/PaymentMoneyStatusTooltip.vue'
 

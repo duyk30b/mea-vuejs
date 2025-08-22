@@ -1,3 +1,4 @@
+import { CONFIG } from '@/config'
 import { AlertStore } from '../../common/vue-alert'
 import { IndexedDBQuery } from '../../core/indexed-db/_base/indexed-db.query'
 import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
@@ -44,8 +45,10 @@ export class BatchService {
     } catch (error: any) {
       console.log('🚀 ~ file: product.service.ts:43 ~ BatchService ~ refreshDB ~ error:', error)
       AlertStore.add({ type: 'error', message: error.message })
-      await AuthService.logout()
-      location.reload()
+      if (CONFIG.MODE === 'production') {
+        await AuthService.logout()
+        location.reload()
+      }
       return
     }
   }

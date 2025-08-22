@@ -9,20 +9,24 @@ export enum PositionInteractType {
   Ticket = 1,
   Product = 2, // chỉ tương tác với sản phẩm
   Procedure = 3, // chỉ tương tác với thủ thuật
-  Radiology = 4, // chỉ tương tác với phiếu CĐHA
-  Laboratory = 5, // chỉ tương tác với phiếu xét nghiệm
-  ConsumableList = 6, // tương tác với tất cả sản phẩm trong cả tiêu hao
-  PrescriptionList = 7, // tương tác với tất cả sản phẩm trong cả toa thuốc
+  Radiology = 4, // chỉ tương tác với phiếu CĐHA (1 phiếu 1 CHA)
+  Laboratory = 5, // chỉ tương tác với 1 xét nghiệm
+  Regimen = 6, // chỉ tương tác với 1 xét nghiệm
+  ConsumableList = 7, // tương tác với tất cả sản phẩm trong cả tiêu hao
+  PrescriptionList = 8, // tương tác với tất cả sản phẩm trong cả toa thuốc
+  LaboratoryGroup = 9, // chỉ tương tác với phiếu xét nghiệm (1 phiếu nhiều xét nghiệm)
 }
 
 export const PositionInteractTypeText = {
   [PositionInteractType.Ticket]: 'Phòng khám',
-  [PositionInteractType.Procedure]: 'Dịch vụ',
   [PositionInteractType.Product]: 'Sản phẩm',
+  [PositionInteractType.Procedure]: 'Dịch vụ',
   [PositionInteractType.Radiology]: 'Phiếu CĐHA',
   [PositionInteractType.Laboratory]: 'Xét nghiệm',
+  [PositionInteractType.Regimen]: 'Liệu trình',
   [PositionInteractType.ConsumableList]: 'Phiếu Vật tư',
   [PositionInteractType.PrescriptionList]: 'Đơn thuốc',
+  [PositionInteractType.LaboratoryGroup]: 'Phiếu xét nghiệm',
 }
 
 export enum CommissionCalculatorType {

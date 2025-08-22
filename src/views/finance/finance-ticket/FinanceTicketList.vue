@@ -9,20 +9,19 @@ import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { type Customer } from '@/modules/customer'
-import { PaymentViewType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { roomFinancePagination, RoomService } from '@/modules/room'
-import { Ticket, TicketQueryApi, TicketStatus, TicketType } from '@/modules/ticket'
+import { Ticket, TicketQueryApi, TicketStatus } from '@/modules/ticket'
+import { ESString, ESTimer, formatPhone } from '@/utils'
+import Breadcrumb from '@/views/component/Breadcrumb.vue'
 import InputSearchCustomer from '@/views/component/InputSearchCustomer.vue'
+import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
 import { onBeforeMount, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ESString, ESTimer, formatPhone } from '../../../utils'
-import Breadcrumb from '../../component/Breadcrumb.vue'
-import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 import { fromTime, toTime } from './finance-ticket-list.ref'
-import ModalTicketChangeAllMoney from './modal/ModalTicketChangeAllMoney.vue'
 import ModalPrepaymentTicketItem from './modal/ModalPrepaymentTicketItem.vue'
 import ModalRefundTicketItem from './modal/ModalRefundTicketItem.vue'
+import ModalTicketChangeAllMoney from './modal/ModalTicketChangeAllMoney.vue'
 
 const modalPrepaymentTicketItem = ref<InstanceType<typeof ModalPrepaymentTicketItem>>()
 const modalRefundTicketItem = ref<InstanceType<typeof ModalRefundTicketItem>>()
@@ -87,7 +86,6 @@ const startFetchData = async (options?: { dataLoading: boolean }) => {
           }
           return undefined
         })(),
-        ticketType: { NOT: TicketType.Order },
       },
       sort: sortValue.value
         ? {
@@ -293,9 +291,9 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
                   <div class="flex justify-center items-center gap-2">
                     <span>
                       {{
-                        ticket.date?.toString().padStart(2, '0') +
-                        ticket.month?.toString().padStart(2, '0') +
                         ticket.year?.toString().slice(-2) +
+                        ticket.month?.toString().padStart(2, '0') +
+                        ticket.date?.toString().padStart(2, '0') +
                         '_' +
                         ticket.dailyIndex?.toString().padStart(2, '0')
                       }}
@@ -304,12 +302,6 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
                 </router-link>
               </div>
               <div>{{ roomMap[ticket.roomId]?.name || '' }}</div>
-            </td>
-            <td
-              v-if="settingStore.TICKET_CLINIC_LIST.showCustomType"
-              style="font-size: 1em; color: #555"
-            >
-              {{ settingStore.TICKET_CLINIC_LIST.customTypeText[ticket.customType || 0] }}
             </td>
             <td>
               <div><TicketStatusTag :ticket="ticket" /></div>
@@ -354,8 +346,7 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
                       TicketStatus.Draft,
                       TicketStatus.Deposited,
                       TicketStatus.Executing,
-                    ].includes(ticket.status) &&
-                    userPermission[PermissionId.PAYMENT_CUSTOMER_PAYMENT]
+                    ].includes(ticket.status) && userPermission[PermissionId.TICKET_PAYMENT_MONEY]
                   "
                   color="blue"
                   icon="dollar"
@@ -383,7 +374,7 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
                   </template>
                   <div class="vue-menu">
                     <a
-                      v-if="userPermission[PermissionId.PAYMENT_CHANGE_DISCOUNT_TICKET]"
+                      v-if="userPermission[PermissionId.TICKET_CHANGE_DISCOUNT]"
                       style="color: var(--text-red)"
                       @click="
                         modalTicketChangeAllMoney?.openModal({
@@ -395,7 +386,7 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
                       Sửa giá tiền và chiết khấu
                     </a>
                     <a
-                      v-if="userPermission[PermissionId.PAYMENT_CHANGE_DISCOUNT_TICKET]"
+                      v-if="userPermission[PermissionId.TICKET_REFUND_MONEY]"
                       style="color: var(--text-red)"
                       @click="
                         modalRefundTicketItem?.openModal({

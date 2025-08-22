@@ -51,8 +51,8 @@ const startFetchData = async () => {
     sort: { startedAt: 'ASC' },
   })
     .then((result) => {
-      ticketLaboratoryList.value = result.data
-      total.value = result.meta.total
+      ticketLaboratoryList.value = result.ticketLaboratoryList
+      total.value = result.total
     })
     .catch((error) => {
       console.log('🚀 ~ StatisticLaboratory.vue:54 ~ startFetchData ~ error:', error)

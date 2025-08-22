@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CONFIG } from '@/config'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import VuePagination from '../../../common/VuePagination.vue'
@@ -26,7 +27,7 @@ const startFetchData = async () => {
   try {
     dataLoading.value = true
 
-    const { data, meta } = await PaymentMethodService.pagination({
+    const paginationResponse = await PaymentMethodService.pagination({
       page: page.value,
       limit: limit.value,
       relation: {},
@@ -34,8 +35,8 @@ const startFetchData = async () => {
       sort: { id: 'ASC' },
     })
 
-    paymentMethodList.value = data
-    total.value = meta.total
+    paymentMethodList.value = paginationResponse.paymentMethodList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ PaymentMethodList.vue:45 ~ startFetchData ~ error:', error)
   } finally {
@@ -89,7 +90,8 @@ const handleModalPaymentMethodUpsertSuccess = async (
       <table>
         <thead>
           <tr>
-            <th>STT</th>
+            <th v-if="CONFIG.MODE === 'development'">ID</th>
+            <th style="width: 200px">Mã</th>
             <th>Tên</th>
             <th></th>
           </tr>
@@ -113,7 +115,14 @@ const handleModalPaymentMethodUpsertSuccess = async (
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="paymentMethod in paymentMethodList" :key="paymentMethod.id">
-            <td class="text-center" style="width: 100px">{{ paymentMethod.priority }}</td>
+            <td
+              v-if="CONFIG.MODE === 'development'"
+              class="text-center"
+              style="width: 100px; color: violet"
+            >
+              {{ paymentMethod.id }}
+            </td>
+            <td class="text-center" style="width: 100px">{{ paymentMethod.code }}</td>
             <td>{{ paymentMethod.name }}</td>
             <td
               v-if="userPermission[PermissionId.MASTER_DATA_PAYMENT_METHOD]"

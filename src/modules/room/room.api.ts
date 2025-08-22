@@ -52,9 +52,10 @@ export class RoomApi {
     const { room, userIdList } = body
     const response = await AxiosInstance.post('/room/create', {
       room: {
-        roomCode: room.roomCode,
+        code: room.code,
         name: room.name,
         roomInteractType: room.roomInteractType,
+        roomStyle: room.roomStyle,
         isCommon: room.isCommon,
       },
       userIdList,
@@ -67,9 +68,10 @@ export class RoomApi {
     const { room, userIdList } = body
     const response = await AxiosInstance.patch(`/room/update/${id}`, {
       room: {
-        roomCode: room.roomCode,
+        code: room.code,
         name: room.name,
         roomInteractType: room.roomInteractType,
+        roomStyle: room.roomStyle,
         isCommon: room.isCommon,
       },
       userIdList: userIdList ? userIdList : undefined, // không gửi lên nếu không cập nhật

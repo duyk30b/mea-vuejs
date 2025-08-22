@@ -42,8 +42,6 @@ export class MeService {
           SettingKey.PRODUCT_UNIT,
           SettingKey.PRODUCT_ROUTE,
           SettingKey.PRODUCT_HINT_USAGE,
-          SettingKey.INVOICE_SURCHARGE_DETAIL,
-          SettingKey.INVOICE_EXPENSE_DETAIL,
         ].includes(key as any)
       ) {
         settingStore[key as keyof typeof SettingKey] = settingMap[key]
@@ -190,6 +188,20 @@ export class MeService {
       }
     }
 
+    return pickupStrategyMap
+  }
+
+  static getPickupStrategySpa() {
+    const pickupStrategyMap = {
+      product: MeService.settingMap.value.TICKET_SPA_DETAIL.product.pickupStrategy,
+    }
+    if (pickupStrategyMap.product === PickupStrategy.Inherit) {
+      pickupStrategyMap.product =
+        MeService.settingMapRoot.value.TICKET_SPA_DETAIL.product.pickupStrategy
+      if (pickupStrategyMap.product === PickupStrategy.Inherit) {
+        pickupStrategyMap.product = PickupStrategy.AutoWithFIFO
+      }
+    }
     return pickupStrategyMap
   }
 

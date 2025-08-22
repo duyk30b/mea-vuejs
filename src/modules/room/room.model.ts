@@ -10,18 +10,37 @@ export enum RoomInteractType {
 }
 
 export const RoomInteractTypeText = {
-  [RoomInteractType.Ticket]: 'Phòng Khách hàng',
-  [RoomInteractType.Product]: 'Phòng sản phẩm',
-  [RoomInteractType.Procedure]: 'Phòng dịch vụ',
-  [RoomInteractType.Laboratory]: 'Phòng xét nghiệm',
+  [RoomInteractType.Ticket]: 'Phòng Chính',
+  [RoomInteractType.Product]: 'Phòng Sản phẩm',
+  [RoomInteractType.Procedure]: 'Phòng Dịch vụ',
+  [RoomInteractType.Laboratory]: 'Phòng Xét nghiệm',
   [RoomInteractType.Radiology]: 'Phòng CĐHA',
+}
+
+export enum RoomTicketStyle {
+  TicketReception = 101,
+  TicketOrder = 111,
+  TicketClinicGeneral = 121,
+  TicketClinicObstetric = 122,
+  TicketClinicEye = 123,
+  TicketSpa = 151,
+}
+
+export const RoomTicketStyleText = {
+  [RoomTicketStyle.TicketReception]: 'Phòng tiếp đón',
+  [RoomTicketStyle.TicketOrder]: 'Phòng bán hàng',
+  [RoomTicketStyle.TicketClinicGeneral]: 'Phòng khám cơ bản',
+  [RoomTicketStyle.TicketClinicObstetric]: 'Phòng khám sản',
+  [RoomTicketStyle.TicketClinicEye]: 'Phòng khám mắt',
+  [RoomTicketStyle.TicketSpa]: 'Phòng SPA - Liệu trình',
 }
 
 export class Room {
   id: number
-  roomCode: string
+  code: string
   name: string
   roomInteractType: RoomInteractType
+  roomStyle: RoomTicketStyle
 
   isCommon: 1 | 0 // Trạng thái
   userRoomList?: UserRoom[]
@@ -29,15 +48,17 @@ export class Room {
   static init() {
     const ins = new Room()
     ins.id = 0
-    ins.roomCode = ''
+    ins.code = ''
     ins.name = ''
+    ins.roomInteractType = RoomInteractType.Ticket
+    ins.roomStyle = RoomTicketStyle.TicketClinicGeneral
+    ins.isCommon = 0
 
     return ins
   }
 
   static blank() {
     const ins = Room.init()
-    ins.isCommon = 1
     ins.userRoomList = []
     return ins
   }
@@ -76,9 +97,10 @@ export class Room {
 
   static equal(a: Room, b: Room) {
     if (a.id != b.id) return false
-    if (a.roomCode != b.roomCode) return false
+    if (a.code != b.code) return false
     if (a.name != b.name) return false
     if (a.roomInteractType != b.roomInteractType) return false
+    if (a.roomStyle != b.roomStyle) return false
     if (a.isCommon != b.isCommon) return false
 
     return true

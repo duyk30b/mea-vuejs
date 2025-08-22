@@ -16,7 +16,7 @@ const ProcedureDBQuery = new IndexedDBQuery<Procedure>()
 
 export class ProcedureService {
   static loadedAll: boolean = false
-  static procedureAll: Procedure[] = []
+  static procedureAll = ref<Procedure[]>([])
   static procedureMap = ref<Record<string, Procedure>>({})
 
   // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng loadedAll
@@ -24,7 +24,7 @@ export class ProcedureService {
     const start = async () => {
       try {
         const procedureAll = await ProcedureApi.list({})
-        ProcedureService.procedureAll = procedureAll
+        ProcedureService.procedureAll.value = procedureAll
         ProcedureService.procedureMap.value = ESArray.arrayToKeyValue(procedureAll, 'id')
       } catch (error: any) {
         console.log('🚀 ~ file: procedure.service.ts:26 ~ ProcedureService ~ start ~ error:', error)
@@ -86,7 +86,7 @@ export class ProcedureService {
 
   static async getAll(options?: { refetch: boolean }) {
     await ProcedureService.fetchAll({ refetch: !!options?.refetch })
-    return ProcedureService.procedureAll
+    return ProcedureService.procedureAll.value
   }
 
   static async pagination(query: ProcedurePaginationQuery, options?: { refetch: boolean }) {
@@ -94,7 +94,7 @@ export class ProcedureService {
     const limit = query.limit || 10
     await ProcedureService.fetchAll({ refetch: !!options?.refetch })
 
-    const dataQuery = ProcedureService.executeQuery(ProcedureService.procedureAll, query)
+    const dataQuery = ProcedureService.executeQuery(ProcedureService.procedureAll.value, query)
     const data = dataQuery.slice((page - 1) * limit, page * limit)
 
     if (query.relation) {
@@ -109,7 +109,7 @@ export class ProcedureService {
 
   static async list(query: ProcedureListQuery, options?: { refetch: boolean }) {
     await ProcedureService.fetchAll({ refetch: !!options?.refetch })
-    const data = ProcedureService.executeQuery(ProcedureService.procedureAll, query)
+    const data = ProcedureService.executeQuery(ProcedureService.procedureAll.value, query)
 
     return Procedure.fromList(data)
   }
@@ -122,16 +122,15 @@ export class ProcedureService {
     let procedure: Procedure | undefined
     if (options?.query) {
       procedure = await ProcedureApi.detail(id, query)
-      const findIndex = ProcedureService.procedureAll.findIndex((i) => i.id === id)
+      const findIndex = ProcedureService.procedureAll.value.findIndex((i) => i.id === id)
       if (findIndex !== -1) {
-        Object.assign(ProcedureService.procedureAll[findIndex], procedure)
+        Object.assign(ProcedureService.procedureAll.value[findIndex], procedure)
         Object.assign(ProcedureService.procedureMap.value[procedure.id], procedure)
       }
     } else {
       await ProcedureService.fetchAll({ refetch: !!options?.refetch })
-      procedure = ProcedureService.procedureAll.find((i) => i.id === id)
+      procedure = ProcedureService.procedureAll.value.find((i) => i.id === id)
     }
-
     return procedure ? Procedure.from(procedure) : Procedure.blank()
   }
 

@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import VuePagination from '@/common/VuePagination.vue'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { TicketProcedure, TicketProcedureApi } from '@/modules/ticket-procedure'
+import { ESTimer } from '@/utils'
+import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import VuePagination from '../../../common/VuePagination.vue'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { TicketProcedure, TicketProcedureApi } from '../../../modules/ticket-procedure'
-import { ESTimer } from '../../../utils'
-import LinkAndStatusTicket from '../../ticket-base/LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ customerId: number }>(), {
   customerId: 0,
@@ -23,7 +23,7 @@ const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await TicketProcedureApi.pagination({
+    const paginationResponse = await TicketProcedureApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -35,8 +35,8 @@ const startFetchData = async () => {
       },
       sort: { id: 'DESC' },
     })
-    ticketProcedureList.value = data
-    total.value = meta.total
+    ticketProcedureList.value = paginationResponse.ticketProcedureList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: CustomerProductHistory copy.vue:37 ~ error:', error)
   }

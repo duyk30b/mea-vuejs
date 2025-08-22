@@ -30,7 +30,7 @@ export class OrganizationService {
     return organization
   }
 
-  static async saveSettings(type: SettingKey, plain: string) {
+  static async saveSettings(type: keyof typeof SettingKey, plain: string) {
     return await SettingApi.saveSettings(type, plain)
   }
 }

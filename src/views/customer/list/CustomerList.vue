@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CONFIG } from '@/config'
 import { onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import VuePagination from '../../../common/VuePagination.vue'
@@ -26,7 +27,6 @@ import ModalCustomerDetail from '../detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../upsert/ModalCustomerUpsert.vue'
 import ModalCustomerListSettingScreen from './ModalCustomerListSettingScreen.vue'
 import ModalUploadCustomer from './ModalUploadCustomer.vue'
-import { CONFIG } from '@/config'
 
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
@@ -332,7 +332,9 @@ const handleModalUploadCustomerSuccess = async () => {
             <td class="text-right" style="border-left: none">
               <div style="white-space: nowrap">{{ formatMoney(customer.debt) }}</div>
               <div
-                v-if="userPermission[PermissionId.PAYMENT_CUSTOMER_PAYMENT] && customer.debt != 0"
+                v-if="
+                  userPermission[PermissionId.TICKET_PAYMENT_MONEY] && customer.debt != 0
+                "
               >
                 <VueButton
                   color="default"
@@ -484,7 +486,8 @@ const handleModalUploadCustomerSuccess = async () => {
                 <div>
                   <VueButton
                     v-if="
-                      userPermission[PermissionId.PAYMENT_CUSTOMER_PAYMENT] && customer.debt != 0
+                      userPermission[PermissionId.TICKET_PAYMENT_MONEY] &&
+                      customer.debt != 0
                     "
                     size="small"
                     @click="modalCustomerPayDebt?.openModal(customer.id)"

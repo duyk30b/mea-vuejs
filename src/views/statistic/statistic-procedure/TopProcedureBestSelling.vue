@@ -97,12 +97,12 @@ const startFetchHighActualMoney = async () => {
   barData.labels.splice(
     0,
     data.length,
-    ...data.map((i) => `${i.procedure.name} (${i.sumQuantity})`)
+    ...data.map((i) => `${i.procedure.name} (${i.sumQuantity})`),
   )
   barData.datasets[0].data.splice(
     0,
     data.length,
-    ...data.map((i) => i.sumActualAmount / moneyDivision)
+    ...data.map((i) => i.sumActualAmount / moneyDivision),
   )
 }
 
@@ -115,7 +115,7 @@ const startFetchData = async () => {
       await startFetchHighActualMoney()
     }
   } catch (error) {
-    console.log('🚀 ~ file: ProductReport.vue:28 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ TopProcedureBestSelling.vue:118 ~ startFetchData ~ error:', error)
   } finally {
     loaded.value = true
   }
@@ -141,14 +141,16 @@ onBeforeMount(async () => await startFetchData())
               { text: 'Số lượng', value: 'topQuantity' },
               { text: 'Tổng tiền', value: 'topActualMoney' },
             ]"
-            @update:value="(e) => startFetchData()" />
+            @update:value="(e) => startFetchData()"
+          />
         </div>
       </div>
       <a-range-picker
         v-model:value="timeRanger"
         :onChange="handleChangeTime"
         format="DD-MM-YYYY"
-        :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']" />
+        :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']"
+      />
     </div>
     <div class="flex-1">
       <Bar v-if="loaded" :data="barData" :options="options as any" />

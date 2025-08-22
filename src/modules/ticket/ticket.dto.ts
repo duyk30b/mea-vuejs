@@ -6,7 +6,7 @@ import type { TicketLaboratoryGroupListQuery } from '../ticket-laboratory-group'
 import type { TicketProcedureListQuery } from '../ticket-procedure'
 import type { TicketProductListQuery } from '../ticket-product'
 import type { TicketRadiologyListQuery } from '../ticket-radiology'
-import type { TicketStatus, TicketType } from './ticket.model'
+import type { TicketStatus } from './ticket.model'
 
 export class TicketGetQuery {
   page: number
@@ -36,9 +36,7 @@ export class TicketGetQuery {
     roomId?: number | ConditionNumber
     customerId?: number
     status?: TicketStatus | ConditionEnum<TicketStatus>
-    ticketType?: TicketType | ConditionEnum<TicketType>
     deliveryStatus?: DeliveryStatus | ConditionEnum<DeliveryStatus>
-    customType?: number
     registeredAt?: ConditionDate
     startedAt?: ConditionDate
     updatedAt?: ConditionDate

@@ -9,7 +9,7 @@ export class SettingApi {
     return data
   }
 
-  static async saveSettings(type: SettingKey, plain: string) {
+  static async saveSettings(type: keyof typeof SettingKey, plain: string) {
     const response = await AxiosInstance.post(`/setting/upsert/${type}`, {
       data: plain,
     })

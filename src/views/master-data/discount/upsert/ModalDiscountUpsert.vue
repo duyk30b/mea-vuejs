@@ -233,7 +233,7 @@ defineExpose({ openModal })
                 required
                 :disabled="!!discount.id || !!requiredInteract"
                 :showQuantity="false"
-                :showEditText="false"
+                :showEditProduct="false"
               />
             </template>
             <template v-if="discount.discountInteractType === DiscountInteractType.Procedure">
@@ -364,13 +364,13 @@ defineExpose({ openModal })
         </template>
 
         <template v-if="discount.discountRepeatType === DiscountRepeatType.Once">
-          <div style="flex-grow: 1; flex-basis: 45%; min-width: 300px" class="flex flex-wrap gap-4">
+          <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px" class="flex flex-wrap gap-4">
             <div style="width: 100px">Thời gian:</div>
             <div style="flex: 1">
               <div
                 v-for="(time, index) in periodsTimeOnce"
                 :key="index"
-                class="flex flex-wrap gap-2 items-center mt-1"
+                class="flex flex-wrap gap-2 items-center mt-2"
               >
                 <div>
                   <InputDate
@@ -405,7 +405,7 @@ defineExpose({ openModal })
         </template>
 
         <div
-          style="flex-grow: 1; flex-basis: 45%; min-width: 300px"
+          style="flex-grow: 1; flex-basis: 90%; min-width: 300px"
           class="flex flex-wrap gap-4 mb-4"
         >
           <div style="width: 100px">Trạng thái:</div>

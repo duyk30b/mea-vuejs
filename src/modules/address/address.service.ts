@@ -6,6 +6,7 @@ import { MeService } from '../_me/me.service'
 import { AuthService } from '../auth/auth.service'
 import { AddressApi } from './address.api'
 import { Address } from './address.model'
+import { CONFIG } from '@/config'
 
 export class AddressService {
   static loadedAll: boolean = false
@@ -30,8 +31,10 @@ export class AddressService {
     } catch (error: any) {
       console.log('🚀 ~ address.service.ts:29 ~ AddressService ~ refreshDB ~ error:', error)
       AlertStore.add({ type: 'error', message: error.message })
-      await AuthService.logout()
-      location.reload()
+      if (CONFIG.MODE === 'production') {
+        await AuthService.logout()
+        location.reload()
+      }
       return
     }
   }

@@ -10,11 +10,15 @@ import { useSettingStore } from '@/modules/_me/setting.store'
 import { Distributor, DistributorService } from '@/modules/distributor'
 import { PaymentMethodService } from '@/modules/payment-method'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { ReceiptApi, ReceiptStatus, type Receipt } from '@/modules/receipt'
+import {
+  PurchaseOrderQueryApi,
+  PurchaseOrderStatus,
+  type PurchaseOrder,
+} from '@/modules/purchase-order'
 import { ESString, ESTimer } from '@/utils'
 import ModalDistributorDetail from '@/views/distributor/detail/ModalDistributorDetail.vue'
 import ModalDistributorUpsert from '@/views/distributor/upsert/ModalDistributorUpsert.vue'
-import LinkAndStatusReceipt from '@/views/receipt/LinkAndStatusReceipt.vue'
+import LinkAndStatusPurchaseOrder from '@/views/purchase-order/LinkAndStatusPurchaseOrder.vue'
 import { onMounted, ref } from 'vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
@@ -35,11 +39,11 @@ const distributor = ref<Distributor>(Distributor.blank())
 const money = ref(0)
 const reason = ref('')
 const paymentMethodId = ref<number>(0)
-const receiptPaymentList = ref<{ receipt: Receipt; money: number }[]>([])
+const purchaseOrderPaymentList = ref<{ purchaseOrder: PurchaseOrder; money: number }[]>([])
 const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
 
 const showModal = ref(false)
-const receiptLoading = ref(false)
+const purchaseOrderLoading = ref(false)
 const saveLoading = ref(false)
 
 onMounted(async () => {
@@ -66,22 +70,25 @@ const selectDistributor = async (data?: Distributor) => {
   distributor.value = data ? Distributor.from(data) : Distributor.blank()
   if (distributor.value.debt > 0) {
     try {
-      receiptLoading.value = true
-      const receiptDebtList = await ReceiptApi.list({
+      purchaseOrderLoading.value = true
+      const purchaseOrderDebtList = await PurchaseOrderQueryApi.list({
         filter: {
           distributorId: distributor.value.id,
-          status: ReceiptStatus.Debt,
+          status: PurchaseOrderStatus.Debt,
         },
         sort: { id: 'ASC' },
       })
-      receiptPaymentList.value = receiptDebtList.map((i) => ({ receipt: i, money: 0 }))
+      purchaseOrderPaymentList.value = purchaseOrderDebtList.map((i) => ({
+        purchaseOrder: i,
+        money: 0,
+      }))
     } catch (error) {
       console.log('🚀 ~ ModalPaymentMoneyIn.vue:82 ~ selectDistributor ~ error:', error)
     } finally {
-      receiptLoading.value = false
+      purchaseOrderLoading.value = false
     }
   } else {
-    receiptPaymentList.value = []
+    purchaseOrderPaymentList.value = []
   }
 }
 
@@ -91,7 +98,7 @@ const openModal = async () => {
 
 const closeModal = () => {
   showModal.value = false
-  receiptPaymentList.value = []
+  purchaseOrderPaymentList.value = []
   money.value = 0
   reason.value = ''
   distributor.value = Distributor.blank()
@@ -112,8 +119,8 @@ const handleSave = async () => {
     //   note: '',
     //   paymentItemData: {
     //     moneyTopUpAdd: 0,
-    //     payDebt: receiptPaymentList.value
-    //       .map((i) => ({ receiptId: i.receipt.id, paidAmount: i.money }))
+    //     payDebt: purchaseOrderPaymentList.value
+    //       .map((i) => ({ purchaseOrderId: i.purchaseOrder.id, paidAmount: i.money }))
     //       .filter((i) => i.paidAmount > 0),
     //   },
     // })
@@ -134,8 +141,8 @@ const handleClickPayAllDebt = () => {
 
 const calculatorEachVoucherPayment = () => {
   let totalMoney = money.value
-  receiptPaymentList.value.forEach((item) => {
-    const number = Math.min(totalMoney, item.receipt.debt)
+  purchaseOrderPaymentList.value.forEach((item) => {
+    const number = Math.min(totalMoney, item.purchaseOrder.debt)
     item.money = number
     totalMoney = totalMoney - number
   })
@@ -166,7 +173,7 @@ defineExpose({ openModal })
               )
             </span>
             <span v-if="distributor.debt < 0">
-              (Quỹ:
+              (Ví:
               <b style="color: var(--text-green)">{{ formatMoney(-distributor.debt) }}</b>
               )
             </span>
@@ -207,7 +214,7 @@ defineExpose({ openModal })
                   <strong style="color: var(--text-red)">{{ formatMoney(data.debt) }}</strong>
                 </span>
                 <span v-if="data.debt < 0">
-                  Quỹ:
+                  Ví:
                   <strong style="color: var(--text-green)">{{ formatMoney(-data.debt) }}</strong>
                 </span>
               </div>
@@ -234,7 +241,7 @@ defineExpose({ openModal })
                 <th>Số tiền trả</th>
               </tr>
             </thead>
-            <tbody v-if="receiptLoading">
+            <tbody v-if="purchaseOrderLoading">
               <tr>
                 <td colspan="100">
                   <div class="vue-skeleton-loading"></div>
@@ -249,18 +256,23 @@ defineExpose({ openModal })
               </tr>
             </tbody>
             <tbody>
-              <tr v-for="(receiptPayment, index) in receiptPaymentList" :key="index">
+              <tr v-for="(purchaseOrderPayment, index) in purchaseOrderPaymentList" :key="index">
                 <td>
-                  <LinkAndStatusReceipt :receipt="receiptPayment.receipt" />
+                  <LinkAndStatusPurchaseOrder :purchaseOrder="purchaseOrderPayment.purchaseOrder" />
                   <div>
-                    {{ ESTimer.timeToText(receiptPayment.receipt.startedAt, 'DD/MM/YYYY hh:mm') }}
+                    {{
+                      ESTimer.timeToText(
+                        purchaseOrderPayment.purchaseOrder.startedAt,
+                        'DD/MM/YYYY hh:mm',
+                      )
+                    }}
                   </div>
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(receiptPayment.receipt.debt) }}
+                  {{ formatMoney(purchaseOrderPayment.purchaseOrder.debt) }}
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(receiptPayment.money) }}
+                  {{ formatMoney(purchaseOrderPayment.money) }}
                 </td>
               </tr>
             </tbody>

@@ -19,26 +19,26 @@ export const inventoryRouter: RouteRecordRaw = {
       meta: { title: 'Chờ xuất hàng' },
     },
     {
-      path: 'receipt',
-      name: 'Receipt',
-      redirect: () => ({ name: 'ReceiptList' }),
+      path: 'purchase-order',
+      name: 'PurchaseOrder',
+      redirect: () => ({ name: 'PurchaseOrderList' }),
       children: [
         {
           path: 'list',
-          name: 'ReceiptList',
-          component: () => import('../views/receipt/list/ReceiptList.vue'),
+          name: 'PurchaseOrderList',
+          component: () => import('../views/purchase-order/list/PurchaseOrderList.vue'),
           meta: { title: 'Nhập hàng' },
         },
         {
           path: 'detail/:id',
-          name: 'ReceiptDetail',
-          component: () => import('../views/receipt/detail/ReceiptDetail.vue'),
+          name: 'PurchaseOrderDetailContainer',
+          component: () => import('../views/purchase-order/detail/PurchaseOrderDetailContainer.vue'),
           meta: { title: 'Nhập hàng' },
         },
         {
           path: 'upsert/:id?',
-          name: 'ReceiptUpsert',
-          component: () => import('../views/receipt/upsert/ReceiptUpsert.vue'),
+          name: 'PurchaseOrderUpsertContainer',
+          component: () => import('../views/purchase-order/upsert/PurchaseOrderUpsertContainer.vue'),
           meta: {
             title: (route: RouteLocationNormalizedLoaded) => {
               if (route.query?.mode === 'UPDATE') return 'Nhập hàng'

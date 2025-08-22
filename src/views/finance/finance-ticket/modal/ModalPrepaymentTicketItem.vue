@@ -18,7 +18,7 @@ import {
 import { PaymentMethodService } from '@/modules/payment-method'
 import { PaymentTicketItem, TicketItemType } from '@/modules/payment-ticket-item'
 import { PrintHtmlAction } from '@/modules/print-html'
-import { Ticket, TicketService } from '@/modules/ticket'
+import { Ticket, TicketMoneyApi, TicketService } from '@/modules/ticket'
 import type { TicketLaboratory } from '@/modules/ticket-laboratory'
 import type { TicketProcedure } from '@/modules/ticket-procedure'
 import type { TicketProduct } from '@/modules/ticket-product'
@@ -159,9 +159,9 @@ const startPickAll = (v: boolean) => {
 
 const startPrepayment = async (options?: { print: boolean }) => {
   try {
-    const { paymentCreated } = await PaymentApi.customerPrepaymentTicketItemList({
+    const { paymentCreated } = await TicketMoneyApi.prepaymentTicketItemList({
+      ticketId: ticket.value.id,
       body: {
-        ticketId: ticket.value.id,
         customerId: ticket.value.customerId,
         paymentMethodId: paymentMethodId.value,
         note: note.value,

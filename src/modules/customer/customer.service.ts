@@ -1,3 +1,4 @@
+import { CONFIG } from '@/config'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { CustomerDB } from '../../core/indexed-db/repository/customer.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
@@ -5,7 +6,6 @@ import { throttleAsync } from '../../utils'
 import { MeService } from '../_me/me.service'
 import { useSettingStore } from '../_me/setting.store'
 import { AuthService } from '../auth/auth.service'
-import { PaymentApi } from '../payment/payment.api'
 import { CustomerApi } from './customer.api'
 import type { CustomerListQuery, CustomerPaginationQuery } from './customer.dto'
 import { Customer } from './customer.model'
@@ -22,7 +22,7 @@ export class CustomerService {
         }
         const dataVersion = MeService.organization.value.dataVersionParse?.customer || -1
 
-        let apiResponse: { time: Date; data: Customer[] }
+        let apiResponse: { time: Date; customerList: Customer[] }
 
         if (refreshTime.dataVersion !== dataVersion) {
           await CustomerDB.truncate()
@@ -34,19 +34,21 @@ export class CustomerService {
           })
         }
 
-        if (apiResponse.data.length) {
-          await CustomerDB.upsertMany(apiResponse.data)
+        if (apiResponse.customerList.length) {
+          await CustomerDB.upsertMany(apiResponse.customerList)
           refreshTime.time = apiResponse.time.toISOString()
           refreshTime.dataVersion = dataVersion
           await RefreshTimeDB.upsertOne(refreshTime)
         }
 
-        return { numberChange: apiResponse.data.length }
+        return { numberChange: apiResponse.customerList.length }
       } catch (error: any) {
         console.log('🚀 ~ file: customer.service.ts:45 ~  ~ refreshDB ~ error:', error)
         AlertStore.add({ type: 'error', message: error.message })
-        await AuthService.logout()
-        location.reload()
+        if (CONFIG.MODE === 'production') {
+          await AuthService.logout()
+          location.reload()
+        }
         return
       }
     },

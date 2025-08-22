@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import VuePagination from '../../../common/VuePagination.vue'
-import VueTag from '../../../common/VueTag.vue'
-import { InputCheckbox, VueSelect } from '../../../common/vue-form'
-import { CONFIG } from '../../../config'
-import { MeService } from '../../../modules/_me/me.service'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Product } from '../../../modules/product'
-import { ProductMovementApi } from '../../../modules/product-movement/product-movement.api'
+import VuePagination from '@/common/VuePagination.vue'
+import VueTag from '@/common/VueTag.vue'
+import { InputCheckbox, VueSelect } from '@/common/vue-form'
+import type { VueSelectOption } from '@/common/vue-form/VueSelect.vue'
+import { CONFIG } from '@/config'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Product } from '@/modules/product'
+import { ProductMovementApi } from '@/modules/product-movement/product-movement.api'
 import {
   MovementType,
   MovementTypeText,
   type ProductMovement,
-} from '../../../modules/product-movement/product-movement.model'
-import { ESTypescript, timeToText } from '../../../utils'
-import ReceiptStatusTag from '../../receipt/ReceiptStatusTag.vue'
-import StockCheckStatusTag from '../../stock-check/StockCheckStatusTag.vue'
-import LinkAndStatusTicket from '../../ticket-base/LinkAndStatusTicket.vue'
-import type { VueSelectOption } from '@/common/vue-form/VueSelect.vue'
+} from '@/modules/product-movement/product-movement.model'
+import { ESTypescript, timeToText } from '@/utils'
+import PurchaseOrderStatusTag from '@/views/purchase-order/PurchaseOrderStatusTag.vue'
+import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
+import StockCheckStatusTag from '@/views/stock-check/StockCheckStatusTag.vue'
+import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
 const props = withDefaults(defineProps<{ product: Product }>(), { product: () => Product.blank() })
 
@@ -46,7 +46,7 @@ const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await ProductMovementApi.pagination({
+    const paginationResponse = await ProductMovementApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -55,7 +55,7 @@ const startFetchData = async () => {
       },
       relation: {
         ticket: true,
-        receipt: true,
+        purchaseOrder: true,
         stockCheck: true,
         distributor: true,
         customer: true,
@@ -63,9 +63,10 @@ const startFetchData = async () => {
       },
       sort: { id: 'DESC' },
     })
-    data.forEach((i) => (i.product = props.product))
-    productMovementList.value = data
-    total.value = meta.total
+    productMovementList.value = paginationResponse.productMovementList
+    total.value = paginationResponse.total
+
+    productMovementList.value.forEach((i) => (i.product = props.product))
   } catch (error) {
     console.log('🚀 ~ file: ProductMovement.vue:53 ~ error:', error)
   }
@@ -91,9 +92,9 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const openBlankReceiptDetail = async (voucherId: number) => {
+const openBlankPurchaseOrderDetail = async (voucherId: number) => {
   const route = router.resolve({
-    name: 'ReceiptDetail',
+    name: 'PurchaseOrderDetailContainer',
     params: { id: voucherId },
   })
   window.open(route.href, '_blank')
@@ -136,16 +137,16 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
         </tr>
         <tr v-for="(productMovement, index) in productMovementList" :key="index">
           <td>
-            <div v-if="productMovement.movementType === MovementType.Receipt">
+            <div v-if="productMovement.movementType === MovementType.PurchaseOrder">
               <div>
                 {{ productMovement.distributor?.fullName }}
               </div>
               <div style="font-size: 0.8rem">
-                <a @click="openBlankReceiptDetail(productMovement.voucherId)">
+                <a @click="openBlankPurchaseOrderDetail(productMovement.voucherId)">
                   NH{{ productMovement.voucherId }}
                 </a>
                 <span class="ml-2">
-                  <ReceiptStatusTag :receipt="productMovement.receipt" />
+                  <PurchaseOrderStatusTag :purchaseOrder="productMovement.purchaseOrder" />
                 </span>
               </div>
               <div style="font-size: 0.8rem; white-space: nowrap">
@@ -236,7 +237,7 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
         <tr v-for="(productMovement, index) in productMovementList" :key="index">
-          <template v-if="productMovement.movementType === MovementType.Receipt">
+          <template v-if="productMovement.movementType === MovementType.PurchaseOrder">
             <td>Nhập hàng</td>
             <td>
               <div>{{ productMovement.distributor?.fullName }}</div>
@@ -248,12 +249,12 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
               <div>
                 <a
                   style="font-size: 0.8rem"
-                  @click="openBlankReceiptDetail(productMovement.voucherId)"
+                  @click="openBlankPurchaseOrderDetail(productMovement.voucherId)"
                 >
                   NH{{ productMovement.voucherId }}
                 </a>
                 <span class="ml-2">
-                  <ReceiptStatusTag :receipt="productMovement.receipt" />
+                  <PurchaseOrderStatusTag :purchaseOrder="productMovement.purchaseOrder" />
                 </span>
               </div>
               <div>{{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}</div>

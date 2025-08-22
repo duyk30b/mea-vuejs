@@ -14,8 +14,10 @@ export class TicketLaboratoryApi {
     const response = await AxiosInstance.get('/ticket-laboratory/pagination', { params })
     const { data, meta } = response.data as BaseResponse
     return {
-      meta,
-      data: TicketLaboratory.fromList(data),
+      page: data.page,
+      limit: data.limit,
+      total: data.total,
+      ticketLaboratoryList: TicketLaboratory.fromList(data.ticketLaboratoryList),
     }
   }
 

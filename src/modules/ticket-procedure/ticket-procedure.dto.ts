@@ -1,5 +1,5 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { ConditionEnum } from '../_base/base-condition'
+import type { ConditionEnum, ConditionNumber } from '../_base/base-condition'
 import type { PaymentMoneyStatus } from '../enum'
 
 export class TicketProcedureGetQuery {
@@ -9,13 +9,14 @@ export class TicketProcedureGetQuery {
     ticket?: boolean
     customer?: boolean
     procedure?: boolean
+    ticketProcedureItemList?: { imageList?: boolean }
   }
 
   filter?: {
     paymentMoneyStatus?: PaymentMoneyStatus | ConditionEnum<PaymentMoneyStatus>
     procedureId?: number
     customerId?: number
-    ticketId?: number
+    ticketId?: number | ConditionNumber
   }
 
   sort?: { id?: 'ASC' | 'DESC' }

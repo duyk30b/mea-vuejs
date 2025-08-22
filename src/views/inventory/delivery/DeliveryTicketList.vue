@@ -13,17 +13,17 @@ import { DeliveryStatus } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { RoleService } from '@/modules/role'
 import { roomDeliveryPagination, RoomService } from '@/modules/room'
-import { TicketQueryApi, TicketStatus, TicketType } from '@/modules/ticket'
+import { TicketQueryApi, TicketStatus } from '@/modules/ticket'
 import { UserService } from '@/modules/user'
 import { UserRoleService } from '@/modules/user-role'
 import InputSearchCustomer from '@/views/component/InputSearchCustomer.vue'
-import ModalTicketSendProduct from '@/views/ticket-base/ModalTicketSendProduct.vue'
-import TicketClinicDeliveryStatusTag from '@/views/ticket-clinic/TicketClinicDeliveryStatusTag.vue'
+import ModalTicketSendProduct from '@/views/room/room-ticket-base/ModalTicketSendProduct.vue'
+import TicketDeliveryStatusTag from '@/views/room/room-ticket-base/TicketDeliveryStatusTag.vue'
+import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
 import { onBeforeMount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ESString, ESTimer, formatPhone } from '../../../utils'
 import Breadcrumb from '../../component/Breadcrumb.vue'
-import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 import { fromTime, toTime } from './delivery-ticket-list.ref'
 
 const modalTicketSendProduct = ref<InstanceType<typeof ModalTicketSendProduct>>()
@@ -72,7 +72,6 @@ const startFetchData = async (options?: { dataLoading: boolean }) => {
               }
             : undefined,
         deliveryStatus: deliveryStatus.value ?? undefined,
-        ticketType: { NOT: TicketType.Order },
       },
       sort: sortValue.value
         ? {
@@ -252,7 +251,6 @@ const changeLimit = async (limitSelect: any) => {
                 />
               </div>
             </th>
-            <th v-if="settingStore.TICKET_CLINIC_LIST.showCustomType">Phân loại</th>
             <th style="min-width: 150px">Khách hàng</th>
             <th class="">Thuốc - Vật tư</th>
             <th>Thanh toán</th>
@@ -292,9 +290,9 @@ const changeLimit = async (limitSelect: any) => {
                   <div class="flex justify-center items-center gap-2">
                     <span>
                       {{
-                        ticket.date?.toString().padStart(2, '0') +
-                        ticket.month?.toString().padStart(2, '0') +
                         ticket.year?.toString().slice(-2) +
+                        ticket.month?.toString().padStart(2, '0') +
+                        ticket.date?.toString().padStart(2, '0') +
                         '_' +
                         ticket.dailyIndex?.toString().padStart(2, '0')
                       }}
@@ -307,12 +305,6 @@ const changeLimit = async (limitSelect: any) => {
             <td>
               <div><TicketStatusTag :ticket="ticket" /></div>
               <div>{{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}</div>
-            </td>
-            <td
-              v-if="settingStore.TICKET_CLINIC_LIST.showCustomType"
-              style="font-size: 1em; color: #555"
-            >
-              {{ settingStore.TICKET_CLINIC_LIST.customTypeText[ticket.customType || 0] }}
             </td>
             <td>
               <div>
@@ -338,11 +330,11 @@ const changeLimit = async (limitSelect: any) => {
 
             <td>
               <div class="flex flex-wrap justify-between items-center">
-                <TicketClinicDeliveryStatusTag :deliveryStatus="ticket.deliveryStatus" />
+                <TicketDeliveryStatusTag :deliveryStatus="ticket.deliveryStatus" />
                 <VueButton
                   v-if="
                     ticket.deliveryStatus === DeliveryStatus.Pending &&
-                    userPermission[PermissionId.PRODUCT_SEND_PRODUCT]
+                    userPermission[PermissionId.TICKET_CHANGE_PRODUCT_SEND_PRODUCT]
                   "
                   size="small"
                   icon="send"

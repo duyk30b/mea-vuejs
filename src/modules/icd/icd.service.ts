@@ -6,6 +6,7 @@ import { MeService } from '../_me/me.service'
 import { AuthService } from '../auth/auth.service'
 import { ICDApi } from './icd.api'
 import { ICD } from './icd.model'
+import { CONFIG } from '@/config'
 
 export class ICDService {
   static loadedAll: boolean = false
@@ -30,8 +31,10 @@ export class ICDService {
     } catch (error: any) {
       console.log('🚀 ~ icd.service.ts:29 ~ ICDService ~ refreshDB ~ error:', error)
       AlertStore.add({ type: 'error', message: error.message })
-      await AuthService.logout()
-      location.reload()
+      if (CONFIG.MODE === 'production') {
+        await AuthService.logout()
+        location.reload()
+      }
       return
     }
   }

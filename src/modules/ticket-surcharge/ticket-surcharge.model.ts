@@ -1,23 +1,27 @@
-import { UNKNOWN_KEY } from '../enum'
+import { BaseModel } from '../_base/base.model'
+import { Surcharge } from '../surcharge'
 
-export class TicketSurcharge {
+export class TicketSurcharge extends BaseModel {
   id: number
   ticketId: number
-  key: string
-  name: string
+  surchargeId: number
   money: number
+
+  surcharge: Surcharge
 
   static init() {
     const ins = new TicketSurcharge()
+    ins._localId = Math.random()
     ins.id = 0
-    ins.key = UNKNOWN_KEY
-    ins.name = ''
+    ins.surchargeId = 0
     ins.money = 0
     return ins
   }
 
   static blank(): TicketSurcharge {
     const ins = TicketSurcharge.init()
+
+    ins.surcharge = Surcharge.init()
     return ins
   }
 
@@ -28,10 +32,23 @@ export class TicketSurcharge {
       if (value === undefined) delete target[key as keyof typeof target]
     })
     Object.assign(target, source)
+    target._localId = source.id || source._localId || Math.random()
     return target
   }
 
   static basicList(sources: TicketSurcharge[]): TicketSurcharge[] {
     return sources.map((i) => TicketSurcharge.basic(i))
+  }
+
+  static from(source: TicketSurcharge) {
+    const target = TicketSurcharge.basic(source)
+    if (Object.prototype.hasOwnProperty.call(source, 'surcharge')) {
+      target.surcharge = source.surcharge ? Surcharge.basic(source.surcharge) : source.surcharge
+    }
+    return target
+  }
+
+  static fromList(sourceList: TicketSurcharge[]): TicketSurcharge[] {
+    return sourceList.map((i) => TicketSurcharge.from(i))
   }
 }

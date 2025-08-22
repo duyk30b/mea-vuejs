@@ -1,16 +1,16 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import VuePagination from '@/common/VuePagination.vue'
 import { CONFIG } from '@/config'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { type Customer } from '@/modules/customer'
 import { Payment, PaymentActionTypeText, PaymentApi, PaymentPersonType } from '@/modules/payment'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { ESTimer } from '@/utils'
+import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import VueButton from '../../../common/VueButton.vue'
-import VuePagination from '../../../common/VuePagination.vue'
-import { MeService } from '../../../modules/_me/me.service'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { type Customer } from '../../../modules/customer'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { ESTimer } from '../../../utils'
-import LinkAndStatusTicket from '../../ticket-base/LinkAndStatusTicket.vue'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
@@ -81,7 +81,7 @@ defineExpose({ startFetchData })
     <div class="flex flex-wrap items-center gap-2">
       <div style="margin-left: auto">
         <VueButton
-          v-if="userPermission[PermissionId.PAYMENT_CUSTOMER_PAYMENT]"
+          v-if="userPermission[PermissionId.TICKET_PAYMENT_MONEY]"
           color="blue"
           icon="dollar"
           @click="modalCustomerPayDebt?.openModal(customerId)"
@@ -148,7 +148,7 @@ defineExpose({ startFetchData })
             <th>Ghi nợ</th>
             <th>Công nợ</th>
             <th>Ghi quỹ</th>
-            <th>Quỹ</th>
+            <th>Ví</th>
           </tr>
         </thead>
         <tbody>

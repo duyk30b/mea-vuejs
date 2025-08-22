@@ -28,6 +28,7 @@ import InputSearchRadiologySample from '@/views/component/InputSearchRadiologySa
 import VueSelectPrintHtml from '@/views/component/VueSelectPrintHtml.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import ModalSaveRadiologySample from '../modal/ModalSaveRadiologySample.vue'
+import { TicketChangeRadiologyApi } from '@/modules/ticket'
 
 const emit = defineEmits<{
   (e: 'updateResultSuccess', value: TicketRadiology): void
@@ -183,7 +184,8 @@ const updateResult = async (options: { print: boolean }) => {
         imageUrls: [],
       }
 
-    const ticketRadiologyUpdate = await TicketRadiologyApi.updateResult({
+    const ticketRadiologyUpdate = await TicketChangeRadiologyApi.updateResult({
+      ticketId: ticketRadiology.value.ticketId,
       ticketRadiologyId: ticketRadiology.value.id,
       ticketRadiology: ticketRadiology.value,
       ticketUserList: hasChangeTicketUserList.value ? ticketUserList.value : undefined,
@@ -233,16 +235,17 @@ const clickCancelResult = async () => {
       try {
         saveLoading.value = true
         const radiologyDefault = radiologyMap.value[ticketRadiology.value.radiologyId]
-        const ticketRadiologyUpdate = await TicketRadiologyApi.cancelResult(
-          ticketRadiology.value.id,
-          {
+        const ticketRadiologyUpdate = await TicketChangeRadiologyApi.cancelResult({
+          ticketId: ticketRadiology.value.ticketId,
+          ticketRadiologyId: ticketRadiology.value.id,
+          body: {
             printHtmlId: radiologyDefault?.printHtmlId || 0,
             description: radiologyDefault?.descriptionDefault || '',
             result: radiologyDefault?.resultDefault || '',
             customStyles: radiologyDefault?.customStyles || '',
             customVariables: radiologyDefault?.customVariables || '',
           },
-        )
+        })
 
         Object.assign(ticketRadiology.value, ticketRadiologyUpdate)
         emit('cancelResultSuccess', ticketRadiologyUpdate)

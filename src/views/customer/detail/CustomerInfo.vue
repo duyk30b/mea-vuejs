@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Customer } from '@/modules/customer'
+import { CustomerSource, CustomerSourceService } from '@/modules/customer-source'
+import { ESString, ESTimer, formatPhone } from '@/utils'
 import { onMounted, ref } from 'vue'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Customer } from '../../../modules/customer'
-import { ESString, ESTimer, formatPhone } from '../../../utils'
-import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
 
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
   customer: () => Customer.blank(),
@@ -94,7 +94,7 @@ onMounted(async () => {
       style="flex-basis: 90%; flex: 1; min-width: 90%"
       class="my-2 flex gap-4 items-center"
     >
-      <div style="width: 100px; flex-shrink: 0">Quỹ</div>
+      <div style="width: 100px; flex-shrink: 0">Ví</div>
       <div
         style="flex-shrink: 1; flex-grow: 1; flex-basis: 0; color: var(--text-green)"
         class="font-bold text-xl"

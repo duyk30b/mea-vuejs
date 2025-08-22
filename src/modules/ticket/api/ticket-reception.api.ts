@@ -3,20 +3,19 @@ import { AxiosInstance } from '../../../core/axios.instance'
 import type { BaseResponse } from '../../_base/base-dto'
 import type { Customer } from '../../customer'
 import type { TicketUser } from '../../ticket-user'
-import { Ticket, type TicketStatus, type TicketType } from '../ticket.model'
+import { Ticket, type TicketStatus } from '../ticket.model'
 
 export class TicketReceptionApi {
   static async create(body: {
     customer?: Customer
     ticketReception: {
       roomId: number
-      ticketType: TicketType
       status: TicketStatus
-      customType: number
       customerSourceId: number
       registeredAt: number
       customerId: number
       fromAppointmentId: number
+      note: string
     }
     ticketAttributeList: { key: string; value: any }[]
     ticketUserList: TicketUser[]
@@ -50,11 +49,10 @@ export class TicketReceptionApi {
         customerId: ticketReception.customerId || 0,
         roomId: ticketReception.roomId || 0,
         fromAppointmentId: ticketReception.fromAppointmentId,
-        customType: ticketReception.customType,
         customerSourceId: ticketReception.customerSourceId || 0,
-        ticketType: ticketReception.ticketType,
         status: ticketReception.status,
         registeredAt: ticketReception.registeredAt,
+        note: ticketReception.note,
       },
       ticketAttributeList: ticketAttributeList.map((i) => {
         return { key: i.key, value: i.value }
@@ -62,17 +60,34 @@ export class TicketReceptionApi {
       ticketUserList: ticketUserList.map((i) => {
         return { id: i.id || 0, userId: i.userId || 0, roleId: i.roleId }
       }),
-      ticketProcedureList: (ticketProcedureList || []).map((i) => {
+      ticketProcedureList: (ticketProcedureList || []).map((tp) => {
         return {
-          priority: i.priority,
-          paymentMoneyStatus: i.paymentMoneyStatus,
-          procedureId: i.procedureId,
-          quantity: i.quantity,
-          expectedPrice: i.expectedPrice,
-          discountMoney: i.discountMoney,
-          discountPercent: i.discountPercent,
-          discountType: i.discountType,
-          actualPrice: i.actualPrice,
+          ticketUserList:
+            tp.ticketUserList?.map((i) => ({
+              id: i.id || 0,
+              roleId: i.roleId || 0,
+              userId: i.userId || 0,
+            })) || undefined,
+          ticketProcedureItemList: (tp.ticketProcedureItemList || []).map((i) => ({
+            completedAt: i.completedAt,
+          })),
+          ticketProcedure: {
+            priority: tp.priority,
+            procedureId: tp.procedureId,
+
+            quantity: tp.quantity,
+            totalSessions: tp.totalSessions,
+
+            expectedPrice: tp.expectedPrice,
+            discountMoney: tp.discountMoney,
+            discountPercent: tp.discountPercent,
+            discountType: tp.discountType,
+            actualPrice: tp.actualPrice,
+
+            status: tp.status,
+            paymentMoneyStatus: tp.paymentMoneyStatus,
+            startedAt: tp.startedAt,
+          },
         }
       }),
     })
@@ -84,20 +99,20 @@ export class TicketReceptionApi {
     ticketId: number
     ticketReception: {
       roomId: number
-      customType: number
       customerSourceId: number
       registeredAt: number
+      note: string
     }
     ticketAttributeList: { key: string; value: any }[]
     ticketUserList: TicketUser[]
   }) {
     const { ticketId, ticketReception, ticketAttributeList, ticketUserList } = body
-    const response = await AxiosInstance.post(`/ticket/reception-update/${ticketId}`, {
+    const response = await AxiosInstance.post(`/ticket/${ticketId}/reception-update`, {
       ticketReception: {
         roomId: ticketReception.roomId,
-        customType: ticketReception.customType,
         customerSourceId: ticketReception.customerSourceId || 0,
         registeredAt: ticketReception.registeredAt,
+        note: ticketReception.note,
       },
       ticketAttributeList: ticketAttributeList.map((i) => {
         return { key: i.key, value: i.value != null ? i.value : '' }

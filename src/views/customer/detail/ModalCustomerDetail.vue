@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
+import VueButton from '@/common/VueButton.vue'
 import {
   IconAudit,
   IconClose,
@@ -9,14 +8,16 @@ import {
   IconReconciliation,
   IconSchedule,
   IconUser,
-} from '../../../common/icon-antd'
-import { IconRadiology } from '../../../common/icon-google'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Customer, CustomerService } from '../../../modules/customer'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { ESString } from '../../../utils'
+} from '@/common/icon-antd'
+import { IconRadiology } from '@/common/icon-google'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Customer, CustomerService } from '@/modules/customer'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { ESString } from '@/utils'
+import { ref } from 'vue'
 import CustomerAppointmentHistory from './CustomerAppointmentHistory.vue'
 import CustomerInfo from './CustomerInfo.vue'
 import CustomerPaymentHistory from './CustomerPaymentHistory.vue'
@@ -24,7 +25,6 @@ import CustomerProcedureHistory from './CustomerProcedureHistory.vue'
 import CustomerProductHistory from './CustomerProductHistory.vue'
 import CustomerRadiologyHistory from './CustomerRadiologyHistory.vue'
 import CustomerTicketHistory from './CustomerTicketHistory.vue'
-import { MeService } from '../../../modules/_me/me.service'
 
 const TABS_KEY = {
   INFO: 'CUSTOMER_INFO',
@@ -82,7 +82,7 @@ defineExpose({ openModal })
               <b style="color: var(--text-red)">{{ formatMoney(customer.debt) }}</b>
             </span>
             <span v-if="customer.debt < 0">
-              - Quỹ:
+              - Ví:
               <b style="color: var(--text-green)">{{ formatMoney(-customer.debt) }}</b>
             </span>
           </div>
@@ -107,14 +107,7 @@ defineExpose({ openModal })
               <IconSchedule />
               Lịch hẹn
             </VueTabMenu>
-            <VueTabMenu
-              v-if="
-                organizationPermission[PermissionId.TICKET_ORDER] ||
-                organizationPermission[PermissionId.TICKET_CLINIC]
-              "
-              style="padding: 6px 6px"
-              :tabKey="TABS_KEY.TICKET_HISTORY"
-            >
+            <VueTabMenu style="padding: 6px 6px" :tabKey="TABS_KEY.TICKET_HISTORY">
               <IconAudit />
               Tiếp đón
             </VueTabMenu>

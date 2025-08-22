@@ -1,29 +1,23 @@
 <script setup lang="ts">
+import { IconClose, IconDollar, IconHistory, IconOneToOne, IconUser } from '@/common/icon-antd'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
+import VueButton from '@/common/VueButton.vue'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Distributor, DistributorService } from '@/modules/distributor'
+import { PermissionId } from '@/modules/permission/permission.enum'
 import { ref } from 'vue'
-import {
-  IconClose,
-  IconDollar,
-  IconHistory,
-  IconOneToOne,
-  IconUser,
-} from '../../../common/icon-antd'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
-import VueButton from '../../../common/VueButton.vue'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Distributor, DistributorService } from '../../../modules/distributor'
-import { PermissionId } from '../../../modules/permission/permission.enum'
 import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import DistributorInfo from './DistributorInfo.vue'
 import DistributorPaymentHistory from './DistributorPaymentHistory.vue'
 import DistributorProductHistory from './DistributorProductHistory.vue'
-import DistributorReceiptHistory from './DistributorReceiptHistory.vue'
-import { MeService } from '../../../modules/_me/me.service'
+import DistributorPurchaseOrderHistory from './DistributorPurchaseOrderHistory.vue'
 
 const TABS_KEY = {
   INFO: 'INFO',
   PAYMENT_HISTORY: 'PAYMENT_HISTORY',
-  RECEIPT_HISTORY: 'RECEIPT_HISTORY',
+  PURCHASE_ORDER_HISTORY: 'PURCHASE_ORDER_HISTORY',
   PRODUCT_HISTORY: 'PRODUCT_HISTORY',
 }
 
@@ -76,7 +70,7 @@ defineExpose({ openModal })
               <b style="color: var(--text-red)">{{ formatMoney(distributor.debt) }}</b>
             </span>
             <span v-if="distributor.debt < 0">
-              - Quỹ:
+              - Ví:
               <b style="color: var(--text-green)">{{ formatMoney(-distributor.debt) }}</b>
             </span>
           </div>
@@ -100,7 +94,7 @@ defineExpose({ openModal })
               <IconDollar />
               Thanh toán
             </VueTabMenu>
-            <VueTabMenu :tabKey="TABS_KEY.RECEIPT_HISTORY">
+            <VueTabMenu :tabKey="TABS_KEY.PURCHASE_ORDER_HISTORY">
               <IconHistory />
               Lịch sử nhập hàng
             </VueTabMenu>
@@ -124,7 +118,7 @@ defineExpose({ openModal })
                 <div>
                   <VueButton
                     v-if="
-                      userPermission[PermissionId.PAYMENT_DISTRIBUTOR_PAYMENT] &&
+                      userPermission[PermissionId.PURCHASE_ORDER_PAYMENT_MONEY] &&
                       distributor.debt != 0
                     "
                     color="blue"
@@ -140,8 +134,8 @@ defineExpose({ openModal })
                 :distributorId="distributor.id"
               />
             </VueTabPanel>
-            <VueTabPanel :tabKey="TABS_KEY.RECEIPT_HISTORY">
-              <DistributorReceiptHistory :distributor="distributor" />
+            <VueTabPanel :tabKey="TABS_KEY.PURCHASE_ORDER_HISTORY">
+              <DistributorPurchaseOrderHistory :distributor="distributor" />
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.PRODUCT_HISTORY">
               <DistributorProductHistory :distributor="distributor" />

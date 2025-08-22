@@ -6,13 +6,19 @@ import { InputRadio, InputSelect, InputText } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Room, RoomInteractType, RoomInteractTypeText } from '../../../modules/room'
+import {
+  Room,
+  RoomInteractType,
+  RoomInteractTypeText,
+  RoomTicketStyle,
+  RoomTicketStyleText,
+} from '../../../modules/room'
 import { RoomService } from '../../../modules/room/room.service'
 import { MeService } from '../../../modules/_me/me.service'
 import { AlertStore } from '@/common/vue-alert'
 import InputCheckboxUserList from '@/views/component/InputCheckboxUserList.vue'
 import { CONFIG } from '@/config'
-import { ESArray } from '@/utils'
+import { ESArray, ESTypescript } from '@/utils'
 
 const emit = defineEmits<{
   (e: 'success', value: Room, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
@@ -27,6 +33,11 @@ const userIdList = ref<number[]>([])
 
 const showModal = ref(false)
 const saveLoading = ref(false)
+
+const roomTicketStyleOptions = ESTypescript.keysEnum(RoomTicketStyle).map((key) => ({
+  value: RoomTicketStyle[key],
+  label: RoomTicketStyleText[RoomTicketStyle[key]],
+}))
 
 const openModal = async (roomId?: number) => {
   showModal.value = true
@@ -68,6 +79,12 @@ const hasChangeData = computed(() => {
   }
   return false
 })
+
+const handleUpdateRoomStyle = (v: any) => {
+  if (!room.value.name) {
+    room.value.name = RoomTicketStyleText[room.value.roomStyle]
+  }
+}
 
 const handleSave = async () => {
   if (!room.value.roomInteractType) {
@@ -131,67 +148,80 @@ defineExpose({ openModal })
 
       <div class="p-4 flex flex-wrap gap-4">
         <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-          <div class="">Mã phòng</div>
-          <div class="">
-            <InputText v-model:value="room.roomCode" placeholder="Tạo tự động" />
-          </div>
-        </div>
-
-        <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-          <div>Loại phòng</div>
-          <div>
-            <div>
-              <InputSelect
-                v-model:value="room.roomInteractType"
-                required
-                :disabled="!!room.id"
-                :options="[
-                  {
-                    value: RoomInteractType.Ticket,
-                    label: RoomInteractTypeText[RoomInteractType.Ticket],
-                  },
-                  {
-                    value: RoomInteractType.Product,
-                    label: RoomInteractTypeText[RoomInteractType.Product],
-                  },
-                  ...(organizationPermission[PermissionId.PROCEDURE]
-                    ? [
-                        {
-                          value: RoomInteractType.Procedure,
-                          label: RoomInteractTypeText[RoomInteractType.Procedure],
-                        },
-                      ]
-                    : []),
-                  ...(organizationPermission[PermissionId.LABORATORY]
-                    ? [
-                        {
-                          value: RoomInteractType.Laboratory,
-                          label: RoomInteractTypeText[RoomInteractType.Laboratory],
-                        },
-                      ]
-                    : []),
-                  ...(organizationPermission[PermissionId.RADIOLOGY]
-                    ? [
-                        {
-                          value: RoomInteractType.Radiology,
-                          label: RoomInteractTypeText[RoomInteractType.Radiology],
-                        },
-                      ]
-                    : []),
-                ]"
-              ></InputSelect>
-            </div>
-          </div>
-        </div>
-
-        <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
           <div>Tên phòng</div>
           <div>
             <InputText v-model:value="room.name" required />
           </div>
         </div>
 
-        <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
+        <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+          <div class="">Mã phòng</div>
+          <div class="">
+            <InputText v-model:value="room.code" placeholder="Tạo tự động" />
+          </div>
+        </div>
+
+        <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+          <div>Loại phòng</div>
+          <div>
+            <InputSelect
+              v-model:value="room.roomInteractType"
+              required
+              :disabled="!!room.id"
+              :options="[
+                {
+                  value: RoomInteractType.Ticket,
+                  label: RoomInteractTypeText[RoomInteractType.Ticket],
+                },
+                {
+                  value: RoomInteractType.Product,
+                  label: RoomInteractTypeText[RoomInteractType.Product],
+                },
+                ...(organizationPermission[PermissionId.PROCEDURE]
+                  ? [
+                      {
+                        value: RoomInteractType.Procedure,
+                        label: RoomInteractTypeText[RoomInteractType.Procedure],
+                      },
+                    ]
+                  : []),
+                ...(organizationPermission[PermissionId.LABORATORY]
+                  ? [
+                      {
+                        value: RoomInteractType.Laboratory,
+                        label: RoomInteractTypeText[RoomInteractType.Laboratory],
+                      },
+                    ]
+                  : []),
+                ...(organizationPermission[PermissionId.RADIOLOGY]
+                  ? [
+                      {
+                        value: RoomInteractType.Radiology,
+                        label: RoomInteractTypeText[RoomInteractType.Radiology],
+                      },
+                    ]
+                  : []),
+              ]"
+            ></InputSelect>
+          </div>
+        </div>
+
+        <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+          <div>Kiểu phòng</div>
+          <div v-if="room.roomInteractType === RoomInteractType.Ticket">
+            <InputSelect
+              v-model:value="room.roomStyle"
+              required
+              :options="roomTicketStyleOptions"
+              @update:value="handleUpdateRoomStyle"
+            ></InputSelect>
+          </div>
+          <div v-else>
+            <InputText :value="''" disabled />
+          </div>
+        </div>
+
+        <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px" class="flex flex-wrap">
           <div style="width: 120px">Chức năng:</div>
           <div style="flex: 1">
             <InputRadio

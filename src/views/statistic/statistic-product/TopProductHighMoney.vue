@@ -85,7 +85,7 @@ const startFetchData = async () => {
       }),
     )
   } catch (error) {
-    console.log('🚀 ~ file: ProductReport.vue:28 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ TopProductHighMoney.vue:88 ~ startFetchData ~ error:', error)
   } finally {
     loaded.value = true
   }

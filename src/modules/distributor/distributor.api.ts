@@ -1,6 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
-import { Receipt } from '../receipt'
+import { PurchaseOrder } from '../purchase-order'
 import {
   DistributorDetailQuery,
   DistributorGetQuery,
@@ -16,8 +16,10 @@ export class DistributorApi {
     const response = await AxiosInstance.get('/distributor/pagination', { params })
     const { data, meta } = response.data as BaseResponse
     return {
-      meta,
-      data: Distributor.fromList(data),
+      page: data.page,
+      limit: data.limit,
+      total: data.total,
+      distributorList: Distributor.fromList(data.distributorList),
     }
   }
 
@@ -28,7 +30,7 @@ export class DistributorApi {
     const { data, time } = response.data as BaseResponse
     return {
       time: new Date(time),
-      data: Distributor.fromList(data),
+      distributorList: Distributor.fromList(data.distributorList),
     }
   }
 
@@ -76,8 +78,12 @@ export class DistributorApi {
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/distributor/destroy/${id}`)
-    const result = response.data as BaseResponse<{ distributorId?: number; receiptList: Receipt[] }>
-    result.data.receiptList = Receipt.fromList(result.data.receiptList)
-    return result
+    const { data } = response.data as BaseResponse<{
+      distributorId: number
+      purchaseOrderList: PurchaseOrder[]
+      success: boolean
+    }>
+    data.purchaseOrderList = PurchaseOrder.fromList(data.purchaseOrderList)
+    return data
   }
 }

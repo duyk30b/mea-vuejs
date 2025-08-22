@@ -57,7 +57,7 @@ const handleSave = async () => {
 const clickDelete = () => {
   ModalStore.confirm({
     title: 'Bạn có chắc chắn muốn xóa phương thức thanh toán này này',
-    content: 'Kho hàng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    content: 'Phương thức đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
     async onOk() {
       try {
         const response = await PaymentMethodService.destroyOne(paymentMethod.value.id)
@@ -96,9 +96,9 @@ defineExpose({ openModal })
 
       <div class="p-4">
         <div class="">
-          <div>STT</div>
+          <div>Mã phương thức thanh toán</div>
           <div>
-            <InputNumber v-model:value="paymentMethod.priority" required />
+            <InputText v-model:value="paymentMethod.code" />
           </div>
         </div>
         <div class="mt-4">

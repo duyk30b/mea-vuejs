@@ -1,13 +1,13 @@
 <script setup lang="ts">
+import VuePagination from '@/common/VuePagination.vue'
 import { CONFIG } from '@/config'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
 import { Payment, PaymentActionTypeText, PaymentApi, PaymentPersonType } from '@/modules/payment'
+import { ESTimer } from '@/utils'
+import LinkAndStatusPurchaseOrder from '@/views/purchase-order/LinkAndStatusPurchaseOrder.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import VuePagination from '../../../common/VuePagination.vue'
-import { MeService } from '../../../modules/_me/me.service'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { ESTimer } from '../../../utils'
-import LinkAndStatusReceipt from '../../receipt/LinkAndStatusReceipt.vue'
 
 const props = withDefaults(defineProps<{ distributorId: number }>(), {
   distributorId: 0,
@@ -27,7 +27,7 @@ const total = ref(0)
 const startFetchData = async () => {
   try {
     const paginationResponse = await PaymentApi.pagination({
-      relation: { receipt: true, paymentMethod: true },
+      relation: { purchaseOrder: true, paymentMethod: true },
       page: page.value,
       limit: limit.value,
       filter: {
@@ -78,7 +78,7 @@ defineExpose({ startFetchData })
         </tr>
         <tr v-for="(payment, index) in paymentList" :key="index">
           <td>
-            <LinkAndStatusReceipt :receipt="payment.receipt!" :status="false" />
+            <LinkAndStatusPurchaseOrder :purchaseOrder="payment.purchaseOrder!" :status="false" />
             <div style="white-space: nowrap">
               {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
@@ -125,9 +125,9 @@ defineExpose({ startFetchData })
             {{ payment.id }}
           </td>
           <td>
-            <LinkAndStatusReceipt
-              :receipt="payment.receipt!"
-              :receiptId="payment.voucherId"
+            <LinkAndStatusPurchaseOrder
+              :purchaseOrder="payment.purchaseOrder!"
+              :purchaseOrderId="payment.voucherId"
               :status="false"
             />
             <div style="white-space: nowrap">

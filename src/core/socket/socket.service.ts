@@ -10,7 +10,6 @@ import {
   roomFinancePagination,
   roomLaboratory,
   roomRadiology,
-  roomReceptionPagination,
   roomTicketPagination,
   ticketRoomRef,
 } from '@/modules/room/room.ref'
@@ -170,7 +169,6 @@ export class SocketService {
 
   static getRoomPaginationAction() {
     return [
-      roomReceptionPagination.value || [],
       roomFinancePagination.value || [],
       roomDeliveryPagination.value || [],
       [ticketRoomRef.value],
@@ -551,6 +549,48 @@ export class SocketService {
     await LaboratoryGroupService.getMap()
     roomIdAction.forEach((roomId) => {
       roomLaboratory.value[roomId] = new Date().toISOString()
+    })
+  }
+
+  static async listenSocketTicketProductChange(data: {
+    ticketId: number
+    ticketProductDestroyList?: TicketProduct[]
+    ticketProductUpsertList?: TicketProduct[]
+    ticketProductReplaceList?: TicketProduct[]
+  }) {
+    const { ticketId } = data
+    const ticketAction: Ticket[] = SocketService.getTicketAction({
+      ticketId: data.ticketId,
+    })
+
+    ticketAction.forEach(async (ticket) => {
+      if (!ticket.ticketProductList) return
+
+      if (data.ticketProductUpsertList) {
+        data.ticketProductUpsertList.forEach((i) => {
+          const temp = TicketProduct.from(i)
+          const index = ticket.ticketProductList!.findIndex((j) => {
+            return i.id === j.id
+          })
+          if (index !== -1) {
+            ticket.ticketProductList![index] = temp
+          } else {
+            ticket.ticketProductList!.push(temp)
+          }
+        })
+      }
+
+      if (data.ticketProductDestroyList) {
+        const idDestroyList = data.ticketProductDestroyList.map((i) => i.id)
+        ticket.ticketProductList = ticket.ticketProductList.filter((i) => {
+          return !idDestroyList.includes(i.id)
+        })
+      }
+
+      if (data?.ticketProductReplaceList) {
+        ticket.ticketProductList = TicketProduct.fromList(data.ticketProductReplaceList)
+      }
+      await ticket.refreshProduct()
     })
   }
 

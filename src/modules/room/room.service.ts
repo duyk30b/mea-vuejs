@@ -1,11 +1,11 @@
 import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
 import { ref } from 'vue'
 import { ESArray } from '../../utils'
+import { User, UserService } from '../user'
+import { UserRoom, UserRoomService } from '../user-room'
 import { RoomApi } from './room.api'
 import type { RoomDetailQuery, RoomGetQuery, RoomListQuery, RoomPaginationQuery } from './room.dto'
 import { Room } from './room.model'
-import { UserRoom, UserRoomService } from '../user-room'
-import { User, UserService } from '../user'
 
 const RoomDBQuery = new IndexedDBQuery<Room>()
 
@@ -18,7 +18,7 @@ export class RoomService {
   private static fetchAll = (() => {
     const start = async () => {
       try {
-        const roomAll = await RoomApi.list({ sort: { roomCode: 'ASC' } })
+        const roomAll = await RoomApi.list({ sort: { code: 'ASC' } })
         RoomService.roomList.value = roomAll
         RoomService.roomMap.value = ESArray.arrayToKeyValue(roomAll, 'id')
       } catch (error: any) {
@@ -150,16 +150,19 @@ export class RoomService {
 
   static async createOne(body: { room: Room; userIdList: number[] }) {
     const room = await RoomApi.createOne(body)
+    RoomService.loadedAll = false
     return room
   }
 
   static async updateOne(id: number, body: { room: Room; userIdList?: number[] }) {
     const room = await RoomApi.updateOne(id, body)
+    RoomService.loadedAll = false
     return room
   }
 
   static async destroyOne(id: number) {
     const result = await RoomApi.destroyOne(id)
+    RoomService.loadedAll = false
     return result
   }
 }

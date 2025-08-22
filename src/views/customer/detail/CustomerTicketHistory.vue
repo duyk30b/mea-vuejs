@@ -1,14 +1,14 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import VuePagination from '@/common/VuePagination.vue'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { Ticket, TicketQueryApi, TicketStatus } from '@/modules/ticket'
+import { ESTimer } from '@/utils'
+import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import VueButton from '../../../common/VueButton.vue'
-import VuePagination from '../../../common/VuePagination.vue'
-import { MeService } from '../../../modules/_me/me.service'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Ticket, TicketQueryApi, TicketStatus } from '../../../modules/ticket'
-import { ESTimer } from '../../../utils'
-import LinkAndStatusTicket from '../../ticket-base/LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ customerId: number }>(), {
   customerId: 0,
@@ -56,30 +56,10 @@ watch(
   },
   { immediate: true },
 )
-
-const openBlankTicketOrderUpsert = (customerId: number) => {
-  const route = router.resolve({
-    name: 'TicketOrderUpsert',
-    query: { customer_id: customerId, mode: 'CREATE' },
-  })
-  window.open(route.href, '_blank')
-}
 </script>
 
 <template>
   <div class="mt-4">
-    <div class="flex flex-wrap items-center gap-2">
-      <div>
-        <VueButton
-          v-if="userPermission[PermissionId.TICKET_ORDER_DRAFT_CRUD]"
-          color="blue"
-          icon="plus"
-          @click="openBlankTicketOrderUpsert(customerId!)"
-        >
-          Bán hàng mới
-        </VueButton>
-      </div>
-    </div>
     <div class="mt-4 w-full table-wrapper">
       <table>
         <thead>

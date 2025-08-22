@@ -3,10 +3,8 @@ import { MeService } from '../modules/_me/me.service'
 import { AuthService } from '../modules/auth/auth.service'
 import { inventoryRouter } from './inventory.router'
 import { masterDataRouter } from './master-data.router'
-import { receptionRouter } from './reception.router'
 import { roomRouter } from './room.router'
 import { statisticRouter } from './statistic.router'
-import { ticketRouter } from './ticket.router'
 
 enum AuthLevel {
   GUEST = 'GUEST',
@@ -29,9 +27,7 @@ const Router = createRouter({
           component: () => import('../views/AppHome.vue'),
           meta: { title: 'Trang chủ' },
         },
-        receptionRouter,
         roomRouter,
-        ...ticketRouter,
         inventoryRouter,
         masterDataRouter,
         statisticRouter,
@@ -81,12 +77,6 @@ const Router = createRouter({
                   },
                 },
               ],
-            },
-            {
-              path: 'position',
-              meta: { title: 'Vị trí' },
-              name: 'Position',
-              component: () => import('../views/user/position/list/PositionList.vue'),
             },
           ],
         },

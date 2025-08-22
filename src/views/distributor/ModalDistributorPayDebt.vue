@@ -1,19 +1,23 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref } from 'vue'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputMoney, InputSelect, InputText } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Distributor, DistributorService } from '@/modules/distributor'
+import { PaymentMethodService } from '@/modules/payment-method'
+import {
+  PurchaseOrderMoneyApi,
+  PurchaseOrderQueryApi,
+  PurchaseOrderStatus,
+  type PurchaseOrder,
+} from '@/modules/purchase-order'
+import { ESTimer } from '@/utils'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import VueButton from '../../common/VueButton.vue'
-import { IconClose } from '../../common/icon-antd'
-import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { InputMoney, InputSelect, InputText } from '../../common/vue-form'
-import VueModal from '../../common/vue-modal/VueModal.vue'
-import { useSettingStore } from '../../modules/_me/setting.store'
-import { Distributor, DistributorService } from '../../modules/distributor'
-import { PaymentMethodService } from '../../modules/payment-method'
-import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
-import { ESTimer } from '../../utils'
-import LinkAndStatusReceipt from '../receipt/LinkAndStatusReceipt.vue'
-import { MeService } from '../../modules/_me/me.service'
-import { PaymentApi } from '@/modules/payment'
+import LinkAndStatusPurchaseOrder from '../purchase-order/LinkAndStatusPurchaseOrder.vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -32,7 +36,7 @@ const distributor = ref<Distributor>(Distributor.blank())
 const paymentMethodId = ref<number>(0)
 const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
 
-const receiptPaymentList = ref<{ receipt: Receipt; money: number }[]>([])
+const purchaseOrderPaymentList = ref<{ purchaseOrder: PurchaseOrder; money: number }[]>([])
 
 const showModal = ref(false)
 const dataLoading = ref(false)
@@ -52,16 +56,16 @@ const openModal = async (distributorId: number) => {
     dataLoading.value = true
     const fetchPromise = await Promise.all([
       DistributorService.detail(distributorId),
-      ReceiptApi.list({
+      PurchaseOrderQueryApi.list({
         filter: {
           distributorId,
-          status: ReceiptStatus.Debt,
+          status: PurchaseOrderStatus.Debt,
         },
         sort: { id: 'ASC' },
       }),
     ])
     distributor.value = fetchPromise[0] || Distributor.blank()
-    receiptPaymentList.value = fetchPromise[1].map((i) => ({ receipt: i, money: 0 }))
+    purchaseOrderPaymentList.value = fetchPromise[1].map((i) => ({ purchaseOrder: i, money: 0 }))
   } catch (error) {
     console.log('🚀 ~ ModalDistributorPayDebt.vue:62 ~ openModal ~ error:', error)
   } finally {
@@ -71,7 +75,7 @@ const openModal = async (distributorId: number) => {
 
 const closeModal = () => {
   showModal.value = false
-  receiptPaymentList.value = []
+  purchaseOrderPaymentList.value = []
   money.value = 0
   note.value = ''
   distributor.value = Distributor.blank()
@@ -85,16 +89,14 @@ const handleSave = async () => {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
 
-    const data = await PaymentApi.distributorPayDebt({
-      body: {
-        distributorId: distributor.value.id,
-        paymentMethodId: paymentMethodId.value,
-        paidAmount: money.value,
-        note: '',
-        dataList: receiptPaymentList.value
-          .map((i) => ({ receiptId: i.receipt.id, paidAmount: i.money }))
-          .filter((i) => i.paidAmount > 0),
-      },
+    const data = await PurchaseOrderMoneyApi.payDebt({
+      distributorId: distributor.value.id,
+      paymentMethodId: paymentMethodId.value,
+      paidAmount: money.value,
+      note: '',
+      dataList: purchaseOrderPaymentList.value
+        .map((i) => ({ purchaseOrderId: i.purchaseOrder.id, paidAmount: i.money }))
+        .filter((i) => i.paidAmount > 0),
     })
     AlertStore.addSuccess(`Trả nợ cho NCC ${distributor.value.fullName} thành công`)
     emit('success', { distributor: data.distributorModified })
@@ -108,13 +110,13 @@ const handleSave = async () => {
 
 const handleClickPayAllDebt = () => {
   money.value = distributor.value.debt
-  calculatorEachReceiptPayment()
+  calculatorEachPurchaseOrderPayment()
 }
 
-const calculatorEachReceiptPayment = () => {
+const calculatorEachPurchaseOrderPayment = () => {
   let totalMoney = money.value
-  receiptPaymentList.value.forEach((item) => {
-    const number = Math.min(totalMoney, item.receipt.debt)
+  purchaseOrderPaymentList.value.forEach((item) => {
+    const number = Math.min(totalMoney, item.purchaseOrder.debt)
     item.money = number
     totalMoney = totalMoney - number
   })
@@ -167,18 +169,23 @@ defineExpose({ openModal })
               </tr>
             </tbody>
             <tbody>
-              <tr v-for="(receiptPayment, index) in receiptPaymentList" :key="index">
+              <tr v-for="(purchaseOrderPayment, index) in purchaseOrderPaymentList" :key="index">
                 <td>
-                  <LinkAndStatusReceipt :receipt="receiptPayment.receipt" />
+                  <LinkAndStatusPurchaseOrder :purchaseOrder="purchaseOrderPayment.purchaseOrder" />
                   <div>
-                    {{ ESTimer.timeToText(receiptPayment.receipt.startedAt, 'DD/MM/YYYY hh:mm') }}
+                    {{
+                      ESTimer.timeToText(
+                        purchaseOrderPayment.purchaseOrder.startedAt,
+                        'DD/MM/YYYY hh:mm',
+                      )
+                    }}
                   </div>
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(receiptPayment.receipt.debt) }}
+                  {{ formatMoney(purchaseOrderPayment.purchaseOrder.debt) }}
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(receiptPayment.money) }}
+                  {{ formatMoney(purchaseOrderPayment.money) }}
                 </td>
               </tr>
             </tbody>
@@ -214,7 +221,7 @@ defineExpose({ openModal })
                     textAlign="right"
                     :validate="{ lte: distributor.debt, gt: 0 }"
                     required
-                    @update:value="calculatorEachReceiptPayment"
+                    @update:value="calculatorEachPurchaseOrderPayment"
                   />
                 </div>
               </div>

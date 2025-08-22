@@ -26,11 +26,7 @@ onMounted(async () => {
   </div>
   <div class="mt-4 mx-4 bg-white">
     <div class="p-4 flex flex-wrap gap-4">
-      <div
-        v-if="userPermission[PermissionId.RECEIPT_MENU]"
-        class="card"
-        @click="router.push({ name: 'ReceptionTicketList' })"
-      >
+      <div class="card" @click="router.push({ name: 'ReceptionTicketList' })">
         <div class="card-icon">
           <IconDoorOpen />
         </div>

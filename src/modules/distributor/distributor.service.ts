@@ -19,8 +19,8 @@ export class DistributorService {
   static getAll = (() => {
     const start = async () => {
       try {
-        const { data } = await DistributorApi.list({})
-        DistributorService.distributorAll = data
+        const { distributorList } = await DistributorApi.list({})
+        DistributorService.distributorAll = distributorList
       } catch (error: any) {
         console.log('🚀 ~ file: distributor.service.ts:33 ~ :', error)
       }
@@ -152,7 +152,7 @@ export class DistributorService {
   }
 
   static async getDistributorDefault() {
-    const idDefault = useSettingStore().SCREEN_RECEIPT_UPSERT.distributor.idDefault
+    const idDefault = useSettingStore().SCREEN_PURCHASE_ORDER_UPSERT.distributor.idDefault
 
     if (idDefault) {
       await DistributorService.getAll()

@@ -5,7 +5,6 @@ import {
   SplitBatchByDistributor,
   SplitBatchByExpiryDate,
   SplitBatchByWarehouse,
-  TicketType,
 } from '../enum'
 
 export const SETTING_DEFAULT = {
@@ -45,17 +44,6 @@ export const SETTING_DEFAULT = {
     'Bôi dưới da 3 lần/ngày',
   ],
 
-  INVOICE_SURCHARGE_DETAIL: <Record<string, string>>{
-    _unknown: 'Khác',
-    shipCost: 'Tiền vận chuyển',
-    advisory: 'Phí tư vấn',
-  },
-  INVOICE_EXPENSE_DETAIL: <Record<string, string>>{
-    _unknown: 'Khác',
-    miss: 'Thất thoát',
-    package: 'Đóng gói',
-  },
-
   SCREEN_PRODUCT_LIST: {
     zeroQuantity: false,
     detail: true,
@@ -71,14 +59,13 @@ export const SETTING_DEFAULT = {
   SCREEN_PRODUCT_DETAIL: {},
   SCREEN_PRODUCT_UPSERT: {
     substance: false,
-    unit: false,
+    unit: true,
     source: false,
     route: false,
     hintUsage: false,
   },
 
   SCREEN_PROCEDURE_LIST: {
-    table: { detail: true, group: true, status: true, action: true },
     upsert: {},
   },
   SCREEN_PROCEDURE_DETAIL: {},
@@ -125,11 +112,11 @@ export const SETTING_DEFAULT = {
     customerSource: false,
   },
 
-  SCREEN_RECEIPT_LIST: {
-    receiptItems: false,
+  SCREEN_PURCHASE_ORDER_LIST: {
+    purchaseOrderItems: false,
   },
-  SCREEN_RECEIPT_DETAIL: {
-    receiptItemsTable: {
+  SCREEN_PURCHASE_ORDER_DETAIL: {
+    purchaseOrderItemsTable: {
       substance: true,
       detail: true,
       lotNumberAndExpiryDate: true,
@@ -144,12 +131,12 @@ export const SETTING_DEFAULT = {
       debt: true,
     },
   },
-  SCREEN_RECEIPT_UPSERT: {
-    receiptItemsSelect: {
+  SCREEN_PURCHASE_ORDER_UPSERT: {
+    purchaseOrderItemsSelect: {
       warehouse: false,
       lotNumberAndExpiryDate: true,
     },
-    receiptItemsTable: {
+    purchaseOrderItemsTable: {
       detail: true,
       substance: true,
       lotNumberAndExpiryDate: true,
@@ -242,10 +229,8 @@ export const SETTING_DEFAULT = {
     paymentInfo: {
       itemsActualMoney: true,
       discount: true,
-      surcharge: false,
       paid: false,
       debt: false,
-      expense: false,
       itemsCostAmount: true,
       profit: true,
     },
@@ -294,15 +279,7 @@ export const SETTING_DEFAULT = {
   },
 
   TICKET_CLINIC_LIST: {
-    ticketType: TicketType.Clinic,
-    customTypeText: <string[]>['Mặc định'],
-    showCustomType: false,
-    buttonShowModalCreate: true,
-    buttonShowTicketDetailBlank: false,
     roleIdList: [],
-    birthday: false,
-    phone: false,
-    address: false,
   },
   TICKET_CLINIC_DETAIL: {
     diagnosis: { icd10: 0 },
@@ -328,6 +305,16 @@ export const SETTING_DEFAULT = {
       paymentMoneyStatus: PaymentMoneyStatus.NoEffect,
     },
   },
+  TICKET_SPA_LIST: {
+    roleIdList: [],
+  },
+  TICKET_SPA_DETAIL: {
+    product: {
+      warehouseIdList: [0],
+      searchIncludeZeroQuantity: 1,
+      pickupStrategy: PickupStrategy.Inherit,
+    },
+  },
 
   TICKET_STATISTIC: {
     countTicket: true,
@@ -342,5 +329,22 @@ export const SETTING_DEFAULT = {
     sumDiscountMoney: true,
     sumProfit: true,
     sumDebt: true,
+  },
+
+  ROOM_TICKET_REGISTER: {
+    facebook: false,
+    zalo: false,
+    birthday: true,
+    gender: true,
+    address: true,
+    relative: false,
+    note: false,
+    customerSource: false,
+    roleIdList: [],
+    requestProcedure: false,
+    SCREEN: {
+      modalStyle: 'width: 800px',
+      itemStyle: 'flex-basis: 40%; flex-grow: 1; min-width: 300px',
+    },
   },
 }

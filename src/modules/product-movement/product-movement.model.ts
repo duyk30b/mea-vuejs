@@ -1,14 +1,14 @@
 import { Customer } from '../customer'
 import { Distributor } from '../distributor'
 import { Product } from '../product'
-import { Receipt } from '../receipt'
+import { PurchaseOrder } from '../purchase-order'
 import { StockCheck } from '../stock-check'
 import { Ticket } from '../ticket'
 import { User } from '../user'
 
 export enum MovementType {
   Unknown = 0,
-  Receipt = 1,
+  PurchaseOrder = 1,
   Ticket = 2,
   UserChange = 3,
   StockCheck = 4,
@@ -17,7 +17,7 @@ export enum MovementType {
 
 export const MovementTypeText = {
   [MovementType.Unknown]: 'Tất cả',
-  [MovementType.Receipt]: 'Phiếu nhập',
+  [MovementType.PurchaseOrder]: 'Phiếu nhập',
   [MovementType.Ticket]: 'Phiếu xuất',
   [MovementType.UserChange]: 'NV sửa',
   [MovementType.StockCheck]: 'Kiểm hàng',
@@ -28,8 +28,8 @@ export class ProductMovement {
   id: number
   movementType: MovementType
   contactId: number
-  voucherId: number // ticketId hoặc receiptId
-  voucherProductId: number // ticketProductId hoặc receiptItemId
+  voucherId: number // ticketId hoặc purchaseOrderId
+  voucherProductId: number // ticketProductId hoặc purchaseOrderItemId
   warehouseId: number
   productId: number
   batchId: number
@@ -49,7 +49,7 @@ export class ProductMovement {
   createdAt: number
 
   product?: Product
-  receipt?: Receipt
+  purchaseOrder?: PurchaseOrder
   ticket?: Ticket
   stockCheck?: StockCheck
   distributor?: Distributor
@@ -76,8 +76,8 @@ export class ProductMovement {
       target.product = source.product ? Product.basic(source.product) : source.product
     }
 
-    if (Object.prototype.hasOwnProperty.call(source, 'receipt')) {
-      target.receipt = source.receipt ? Receipt.basic(source.receipt) : source.receipt
+    if (Object.prototype.hasOwnProperty.call(source, 'purchaseOrder')) {
+      target.purchaseOrder = source.purchaseOrder ? PurchaseOrder.basic(source.purchaseOrder) : source.purchaseOrder
     }
     if (Object.prototype.hasOwnProperty.call(source, 'ticket')) {
       target.ticket = source.ticket ? Ticket.basic(source.ticket) : source.ticket

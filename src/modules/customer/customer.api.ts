@@ -11,8 +11,10 @@ export class CustomerApi {
     const response = await AxiosInstance.get('/customer/pagination', { params })
     const { data, meta } = response.data as BaseResponse
     return {
-      data: Customer.fromList(data),
-      meta,
+      page: data.page,
+      limit: data.limit,
+      total: data.total,
+      customerList: Customer.fromList(data.customerList),
     }
   }
 
@@ -20,10 +22,10 @@ export class CustomerApi {
     const params = CustomerGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/customer/list', { params })
-    const { data, time } = response.data as BaseResponse
+    const { data, time } = response.data as BaseResponse<{ customerList: any[] }>
     return {
       time: new Date(time),
-      data: Customer.fromList(data),
+      customerList: Customer.fromList(data.customerList),
     }
   }
 
@@ -65,7 +67,7 @@ export class CustomerApi {
 
   static async updateOne(id: number, customer: Partial<Customer>) {
     const response = await AxiosInstance.patch(`/customer/update/${id}`, {
-      customerCode: customer.customerCode || '',
+      customerCode: customer.customerCode,
       fullName: customer.fullName !== undefined ? customer.fullName : undefined,
       phone: customer.phone !== undefined ? customer.phone : undefined,
       facebook: customer.facebook !== undefined ? customer.facebook : undefined,
@@ -90,8 +92,12 @@ export class CustomerApi {
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/customer/destroy/${id}`)
-    const result = response.data as BaseResponse<{ customerId: number; ticketList: Ticket[] }>
-    result.data.ticketList = Ticket.fromList(result.data.ticketList)
-    return result
+    const { data } = response.data as BaseResponse<{
+      customerId: number
+      ticketList: Ticket[]
+      success: boolean
+    }>
+    data.ticketList = Ticket.fromList(data.ticketList)
+    return data
   }
 }

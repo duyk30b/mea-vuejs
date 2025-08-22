@@ -1,20 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconSetting } from '../../../common/icon-antd'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputHint, InputOptions, InputText, VueSwitch } from '../../../common/vue-form'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { AddressInstance } from '../../../core/address.instance'
-import { MeService } from '../../../modules/_me/me.service'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { DistributorService } from '../../../modules/distributor'
-import { Distributor } from '../../../modules/distributor/distributor.model'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { customFilter } from '../../../utils'
-import ModalDistributorUpsertSetting from './ModalDistributorUpsertSetting.vue'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose, IconSetting } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputOptions, InputText, VueSwitch } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
 import { Address, AddressService } from '@/modules/address'
+import { DistributorService } from '@/modules/distributor'
+import { Distributor } from '@/modules/distributor/distributor.model'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { ref } from 'vue'
+import ModalDistributorUpsertSetting from './ModalDistributorUpsertSetting.vue'
 
 const modalDistributorUpsertSetting = ref<InstanceType<typeof ModalDistributorUpsertSetting>>()
 const inputOptionsAddress = ref<InstanceType<typeof InputOptions>>()
@@ -101,7 +99,7 @@ const clickDelete = () => {
             title: 'Không thể xóa nhà cung cấp khi đã có phiếu nhập hàng',
             content: [
               'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu nhập hàng của nhà cung cấp này',
-              `Phiếu nhập hàng liên quan: ${response.data.receiptList.map((i) => i.id).join(', ')}`,
+              `Phiếu nhập hàng liên quan: ${response.purchaseOrderList.map((i) => i.id).join(', ')}`,
             ],
             contentType: 'text',
           })

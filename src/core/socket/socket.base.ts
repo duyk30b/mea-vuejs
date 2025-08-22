@@ -87,32 +87,35 @@ export const socketInit = () => {
     SocketService.listenSocketTicketListChange(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_ATTRIBUTE_LIST_CHANGE, (data) => {
+  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_ATTRIBUTE, (data) => {
     SocketService.listenSocketTicketAttributeChange(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_USER_LIST_CHANGE, (data) => {
+  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_USER, (data) => {
     SocketService.listenSocketTicketUserListChange(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_PROCEDURE_LIST_CHANGE, (data) => {
+  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_PROCEDURE, (data) => {
     SocketService.listenSocketTicketProcedureListChange(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_RADIOLOGY_LIST_CHANGE, (data) => {
+  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_RADIOLOGY, (data) => {
     SocketService.listenSocketTicketRadiologyListChange(data)
   })
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_LABORATORY_LIST_CHANGE, (data) => {
+  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_LABORATORY, (data) => {
     SocketService.listenSocketTicketLaboratoryListChange(data)
   })
-
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_PRESCRIPTION_CHANGE, (data) => {
-    SocketService.listenSocketTicketPrescriptionChange(data)
+  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_PRODUCT, (data) => {
+    SocketService.listenSocketTicketProductChange(data)
   })
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CONSUMABLE_CHANGE, (data) => {
+  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_CONSUMABLE, (data) => {
     SocketService.listenSocketTicketConsumableChange(data)
   })
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_BATCH_LIST_CHANGE, (data) => {
+  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_PRESCRIPTION, (data) => {
+    SocketService.listenSocketTicketPrescriptionChange(data)
+  })
+
+  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_BATCH, (data) => {
     SocketService.listenTicketBatchListChange(data)
   })
 }

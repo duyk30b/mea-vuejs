@@ -5,6 +5,7 @@ import { Batch } from '../batch'
 import { Customer } from '../customer'
 import { CustomerSource } from '../customer-source'
 import { DeliveryStatus, DiscountType } from '../enum'
+import { Expense } from '../expense'
 import { Image } from '../image/image.model'
 import { LaboratoryService } from '../laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../laboratory-group'
@@ -16,6 +17,7 @@ import { RadiologyService } from '../radiology'
 import { RadiologyGroupService } from '../radiology-group'
 import { RoleService } from '../role'
 import { RoomService } from '../room'
+import { Surcharge } from '../surcharge'
 import { TicketAttribute, type TicketAttributeMap } from '../ticket-attribute'
 import { TicketBatch } from '../ticket-batch'
 import { TicketExpense } from '../ticket-expense/ticket-expense.model'
@@ -39,21 +41,11 @@ export enum TicketStatus {
   Cancelled = 7,
 }
 
-export enum TicketType {
-  Order = 2,
-  Clinic = 3,
-  Spa = 4,
-  Eye = 5,
-  Obstetric = 6,
-}
-
 export class Ticket {
   id: number
   customerId: number
   roomId: number
   customerSourceId: number
-  ticketType: TicketType
-  customType: number
   status: TicketStatus
   deliveryStatus: DeliveryStatus
 
@@ -120,7 +112,6 @@ export class Ticket {
     const ins = new Ticket()
     ins.id = 0
     ins.roomId = 0
-    ins.customType = 0
     ins.status = TicketStatus.Draft
     ins.itemsCostAmount = 0
     ins.procedureMoney = 0
@@ -136,6 +127,7 @@ export class Ticket {
     ins.profit = 0
     ins.paid = 0
     ins.debt = 0
+    ins.note = ''
     return ins
   }
 
@@ -227,7 +219,7 @@ export class Ticket {
   }
 
   async refreshUserAndRole() {
-    if (!MeService.organizationPermission.value[PermissionId.POSITION]) {
+    if (!MeService.organizationPermission.value[PermissionId.MASTER_DATA_POSITION]) {
       return
     }
     if (!this.ticketUserList || !this.ticketUserList.length) {
@@ -426,9 +418,15 @@ export class Ticket {
 
     if (source.ticketSurchargeList) {
       target.ticketSurchargeList = TicketSurcharge.basicList(source.ticketSurchargeList)
+      target.ticketSurchargeList.forEach((i) => {
+        i.surcharge = Surcharge.basic(i.surcharge!)
+      })
     }
     if (source.ticketExpenseList) {
       target.ticketExpenseList = TicketExpense.basicList(source.ticketExpenseList)
+      target.ticketExpenseList.forEach((i) => {
+        i.expense = Expense.basic(i.expense!)
+      })
     }
 
     if (source.imageList) {
@@ -445,9 +443,7 @@ export class Ticket {
     if (a.id != b.id) return false
     if (a.customerId != b.customerId) return false
     if (a.roomId != b.roomId) return false
-    if (a.customType != b.customType) return false
     if (a.customerSourceId != b.customerSourceId) return false
-    if (a.ticketType != b.ticketType) return false
     if (a.status != b.status) return false
     if (a.deliveryStatus != b.deliveryStatus) return false
 

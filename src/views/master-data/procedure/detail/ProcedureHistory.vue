@@ -1,12 +1,12 @@
 <script setup lang="ts">
+import VuePagination from '@/common/VuePagination.vue'
+import VueTag from '@/common/VueTag.vue'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Procedure } from '@/modules/procedure'
+import { TicketProcedure, TicketProcedureApi } from '@/modules/ticket-procedure'
+import { timeToText } from '@/utils'
+import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
 import { ref, watch } from 'vue'
-import VuePagination from '../../../../common/VuePagination.vue'
-import VueTag from '../../../../common/VueTag.vue'
-import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { Procedure } from '../../../../modules/procedure'
-import { TicketProcedure, TicketProcedureApi } from '../../../../modules/ticket-procedure'
-import { timeToText } from '../../../../utils'
-import LinkAndStatusTicket from '../../../ticket-base/LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ procedure: Procedure }>(), {
   procedure: () => Procedure.blank(),
@@ -22,7 +22,7 @@ const ticketProcedureList = ref<TicketProcedure[]>([])
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await TicketProcedureApi.pagination({
+    const paginationResponse = await TicketProcedureApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -31,8 +31,8 @@ const startFetchData = async () => {
       relation: { ticket: true, customer: true },
       sort: { id: 'DESC' },
     })
-    ticketProcedureList.value = data
-    total.value = meta.total
+    ticketProcedureList.value = paginationResponse.ticketProcedureList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: ProcedureInvoice.vue:40 ~ startFetchData ~ error:', error)
   }

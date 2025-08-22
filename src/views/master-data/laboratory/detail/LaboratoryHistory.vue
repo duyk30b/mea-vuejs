@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import VuePagination from '@/common/VuePagination.vue'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Laboratory } from '@/modules/laboratory'
+import { TicketLaboratory, TicketLaboratoryApi } from '@/modules/ticket-laboratory'
+import { timeToText } from '@/utils'
+import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
 import { ref, watch } from 'vue'
-import VuePagination from '../../../../common/VuePagination.vue'
-import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { Laboratory } from '../../../../modules/laboratory'
-import { TicketLaboratory, TicketLaboratoryApi } from '../../../../modules/ticket-laboratory'
-import { timeToText } from '../../../../utils'
-import LinkAndStatusTicket from '../../../ticket-base/LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ laboratory: Laboratory }>(), {
   laboratory: () => Laboratory.blank(),
@@ -21,7 +21,7 @@ const ticketLaboratoryList = ref<TicketLaboratory[]>([])
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await TicketLaboratoryApi.pagination({
+    const paginationResponse = await TicketLaboratoryApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -30,8 +30,8 @@ const startFetchData = async () => {
       relation: { ticket: true, customer: true },
       sort: { id: 'DESC' },
     })
-    ticketLaboratoryList.value = data
-    total.value = meta.total
+    ticketLaboratoryList.value = paginationResponse.ticketLaboratoryList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: LaboratoryInvoice.vue:40 ~ startFetchData ~ error:', error)
   }

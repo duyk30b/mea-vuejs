@@ -14,21 +14,14 @@ export class PaymentMethodApi {
 
     const response = await AxiosInstance.get('/payment-method/pagination', { params })
     const { data, meta } = response.data as BaseResponse
-    return {
-      meta,
-      data: PaymentMethod.fromList(data),
-    }
   }
 
   static async list(options: PaymentMethodListQuery) {
     const params = PaymentMethodGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/payment-method/list', { params })
-    const { data, time } = response.data as BaseResponse
-    return {
-      time: new Date(time),
-      data: PaymentMethod.fromList(data),
-    }
+    const { data, time } = response.data as BaseResponse<{ paymentMethodList: any[] }>
+    return PaymentMethod.fromList(data.paymentMethodList)
   }
 
   static async detail(id: number, options: PaymentMethodDetailQuery = {}): Promise<PaymentMethod> {
@@ -40,7 +33,7 @@ export class PaymentMethodApi {
 
   static async createOne(paymentMethod: PaymentMethod) {
     const response = await AxiosInstance.post('/payment-method/create', {
-      priority: paymentMethod.priority,
+      code: paymentMethod.code,
       name: paymentMethod.name,
       isActive: paymentMethod.isActive,
     })
@@ -50,7 +43,7 @@ export class PaymentMethodApi {
 
   static async updateOne(id: number, paymentMethod: Partial<PaymentMethod>) {
     const response = await AxiosInstance.patch(`/payment-method/update/${id}`, {
-      priority: paymentMethod.priority,
+      code: paymentMethod.code,
       name: paymentMethod.name,
       isActive: paymentMethod.isActive,
     })

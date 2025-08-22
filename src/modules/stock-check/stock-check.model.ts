@@ -85,27 +85,27 @@ export class StockCheck {
     }
     if (source.stockCheckItemList) {
       target.stockCheckItemList = source.stockCheckItemList.map((i) => {
-        const receiptItem = new StockCheckItem()
-        Object.assign(receiptItem, i)
+        const stockCheckItem = new StockCheckItem()
+        Object.assign(stockCheckItem, i)
         if (Object.prototype.hasOwnProperty.call(source, 'batch')) {
           if (!i.batch) {
-            receiptItem.batch = i.batch
+            stockCheckItem.batch = i.batch
           } else {
             const batch = new Batch()
             Object.assign(batch, i.batch)
-            receiptItem.batch = batch
+            stockCheckItem.batch = batch
           }
         }
         if (Object.prototype.hasOwnProperty.call(i, 'product')) {
           if (!i.product) {
-            receiptItem.product = i.product
+            stockCheckItem.product = i.product
           } else {
             const product = new Product()
             Object.assign(product, i.product)
-            receiptItem.product = product
+            stockCheckItem.product = product
           }
         }
-        return receiptItem
+        return stockCheckItem
       })
     }
     return target

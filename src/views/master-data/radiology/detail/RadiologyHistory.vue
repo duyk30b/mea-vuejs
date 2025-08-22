@@ -7,9 +7,9 @@ import { Radiology } from '@/modules/radiology'
 import { TicketRadiology, TicketRadiologyApi } from '@/modules/ticket-radiology'
 import { timeToText } from '@/utils'
 import ModalTicketRadiologyResult from '@/views/room/room-radiology/ModalTicketRadiologyResult.vue'
+import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import LinkAndStatusTicket from '../../../ticket-base/LinkAndStatusTicket.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 const props = withDefaults(defineProps<{ radiology: Radiology }>(), {
@@ -28,7 +28,7 @@ const ticketRadiologyList = ref<TicketRadiology[]>([])
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await TicketRadiologyApi.pagination({
+    const paginationResponse = await TicketRadiologyApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -37,8 +37,8 @@ const startFetchData = async () => {
       relation: { ticket: true, customer: true },
       sort: { id: 'DESC' },
     })
-    ticketRadiologyList.value = data
-    total.value = meta.total
+    ticketRadiologyList.value = paginationResponse.ticketRadiologyList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: RadiologyInvoice.vue:40 ~ startFetchData ~ error:', error)
   }

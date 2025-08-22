@@ -1,13 +1,13 @@
 export class PaymentMethod {
   id: number
-  priority: number
+  code: string
   name: string
   isActive: 0 | 1
 
   static init(): PaymentMethod {
     const ins = new PaymentMethod()
     ins.id = 0
-    ins.priority = 1
+    ins.code = ''
     ins.isActive = 1
 
     return ins

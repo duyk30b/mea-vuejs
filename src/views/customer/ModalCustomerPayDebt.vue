@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import VueButton from '../../common/VueButton.vue'
-import { IconClose } from '../../common/icon-antd'
-import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { InputMoney, InputSelect, InputText } from '../../common/vue-form'
-import VueModal from '../../common/vue-modal/VueModal.vue'
-import { MeService } from '../../modules/_me/me.service'
-import { useSettingStore } from '../../modules/_me/setting.store'
-import { Customer, CustomerService } from '../../modules/customer'
-import { PaymentMethodService } from '../../modules/payment-method'
-import { TicketQueryApi, TicketStatus, type Ticket } from '../../modules/ticket'
-import { ESTimer } from '../../utils'
-import LinkAndStatusTicket from '../ticket-base/LinkAndStatusTicket.vue'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputMoney, InputSelect, InputText } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Customer, CustomerService } from '@/modules/customer'
 import { PaymentApi } from '@/modules/payment'
+import { PaymentMethodService } from '@/modules/payment-method'
+import { TicketMoneyApi, TicketQueryApi, TicketStatus, type Ticket } from '@/modules/ticket'
+import { ESTimer } from '@/utils'
+import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -86,16 +86,14 @@ const handleSave = async () => {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
 
-    const data = await PaymentApi.customerPayDebt({
-      body: {
-        customerId: customer.value.id,
-        paymentMethodId: paymentMethodId.value,
-        paidAmount: money.value,
-        note: '',
-        dataList: ticketPaymentList.value
-          .map((i) => ({ ticketId: i.ticket.id, paidAmount: i.money }))
-          .filter((i) => i.paidAmount > 0),
-      },
+    const data = await TicketMoneyApi.payDebt({
+      customerId: customer.value.id,
+      paymentMethodId: paymentMethodId.value,
+      paidAmount: money.value,
+      note: '',
+      dataList: ticketPaymentList.value
+        .map((i) => ({ ticketId: i.ticket.id, paidAmount: i.money }))
+        .filter((i) => i.paidAmount > 0),
     })
     AlertStore.addSuccess(`Trả nợ cho KH ${customer.value.fullName} thành công`)
     emit('success', { customer: data.customerModified })

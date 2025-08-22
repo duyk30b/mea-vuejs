@@ -46,7 +46,7 @@ const { formatMoney } = settingStore
         </td>
       </tr>
       <tr v-if="distributor.debt < 0">
-        <td class="px-2 py-1 whitespace-nowrap">Quỹ</td>
+        <td class="px-2 py-1 whitespace-nowrap">Ví</td>
         <td class="px-2 font-bold text-xl" style="color: var(--text-green)">
           {{ formatMoney(-distributor.debt) }}
         </td>

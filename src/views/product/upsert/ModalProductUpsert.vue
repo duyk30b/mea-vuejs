@@ -29,13 +29,13 @@ import {
 import { PermissionId } from '@/modules/permission/permission.enum.ts'
 import { Position, PositionInteractType } from '@/modules/position'
 import { Product, ProductService } from '@/modules/product'
-import { ProductGroup, ProductGroupService } from '@/modules/product-group'
+import { ProductGroupService } from '@/modules/product-group'
 import { Role, RoleService } from '@/modules/role'
 import type { Warehouse } from '@/modules/warehouse'
 import { WarehouseService } from '@/modules/warehouse/warehouse.service.ts'
 import { customFilter, ESTimer } from '@/utils'
 import DiscountTableAction from '@/views/master-data/discount/common/DiscountTableAction.vue'
-import PositionTableAction from '@/views/user/position/common/PositionTableAction.vue'
+import PositionTableAction from '@/views/master-data/position/common/PositionTableAction.vue'
 import { computed, onMounted, ref } from 'vue'
 import ModalDataProduct from '../list/ModalDataProduct.vue'
 import ModalProductUpsertSettingScreen from './ModalProductUpsertSettingScreen.vue'
@@ -348,10 +348,10 @@ const clickDelete = () => {
             title: 'Không thể xóa sản phầm khi đã được nhập hàng hoặc bán hàng',
             content: [
               'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu nhập hàng và phiếu bán hàng trước',
-              `- Phiếu nhập hàng liên quan ${response.data.receiptItemList
-                .map((i) => i.receiptId)
+              `- Phiếu nhập hàng liên quan ${response.purchaseOrderItemList
+                .map((i) => i.purchaseOrderId)
                 .join(', ')}`,
-              `- Phiếu bán hàng liên quan ${response.data.ticketProductList
+              `- Phiếu bán hàng liên quan ${response.ticketProductList
                 .map((i) => i.ticketId)
                 .join(', ')}`,
             ],
@@ -780,7 +780,7 @@ defineExpose({ openModal })
                   v-model:positionList="product.positionList!"
                   :positionType="PositionInteractType.Product"
                   :positionInteractId="product.id"
-                  :editable="userPermission[PermissionId.POSITION]"
+                  :editable="userPermission[PermissionId.MASTER_DATA_POSITION]"
                 />
               </div>
             </VueTabPanel>

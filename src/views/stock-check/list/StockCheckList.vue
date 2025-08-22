@@ -70,7 +70,7 @@ const startFetchData = async () => {
     total.value = meta.total
     dataLoading.value = false
   } catch (error) {
-    console.log('🚀 ~ file: ReceiptList.vue:52 ~ error:', error)
+    console.log('🚀 ~ StockCheckList.vue:73 ~ startFetchData ~ error:', error)
   }
 }
 

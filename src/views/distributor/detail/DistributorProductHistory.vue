@@ -1,12 +1,12 @@
 <script setup lang="ts">
+import VuePagination from '@/common/VuePagination.vue'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Distributor } from '@/modules/distributor'
+import { PurchaseOrderItem, PurchaseOrderItemApi } from '@/modules/purchase-order-item'
+import { ESTimer, formatPhone } from '@/utils'
+import PurchaseOrderStatusTag from '@/views/purchase-order/PurchaseOrderStatusTag.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import VuePagination from '../../../common/VuePagination.vue'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Distributor } from '../../../modules/distributor'
-import { ReceiptItem, ReceiptItemApi } from '../../../modules/receipt-item'
-import { ESTimer, formatPhone } from '../../../utils'
-import ReceiptStatusTag from '../../receipt/ReceiptStatusTag.vue'
 
 const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
   distributor: () => Distributor.blank(),
@@ -17,14 +17,14 @@ const router = useRouter()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
-const receiptItemList = ref<ReceiptItem[]>([])
+const purchaseOrderItemList = ref<PurchaseOrderItem[]>([])
 const page = ref(1)
 const limit = ref(10)
 const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await ReceiptItemApi.pagination({
+    const paginationResponse = await PurchaseOrderItemApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -32,12 +32,12 @@ const startFetchData = async () => {
       },
       relation: {
         product: true,
-        receipt: { distributor: false },
+        purchaseOrder: { distributor: false },
       },
       sort: { id: 'DESC' },
     })
-    receiptItemList.value = data
-    total.value = meta.total
+    purchaseOrderItemList.value = paginationResponse.purchaseOrderItemList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: DistributorProductHistory copy.vue:37 ~ error:', error)
   }
@@ -55,15 +55,15 @@ watch(
   () => props.distributor.id,
   async (newValue) => {
     if (newValue) await startFetchData()
-    else receiptItemList.value = []
+    else purchaseOrderItemList.value = []
   },
   { immediate: true },
 )
 
-const openBlankReceiptDetail = (receiptId: number) => {
+const openBlankPurchaseOrderDetail = (purchaseOrderId: number) => {
   const route = router.resolve({
-    name: 'ReceiptDetail',
-    params: { id: receiptId },
+    name: 'PurchaseOrderDetailContainer',
+    params: { id: purchaseOrderId },
   })
   window.open(route.href, '_blank')
 }
@@ -90,32 +90,34 @@ const openBlankReceiptDetail = (receiptId: number) => {
           </tr>
         </thead>
         <tbody>
-          <tr v-if="receiptItemList.length === 0">
+          <tr v-if="purchaseOrderItemList.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr v-for="(receiptItem, index) in receiptItemList" :key="index">
+          <tr v-for="(purchaseOrderItem, index) in purchaseOrderItemList" :key="index">
             <td>
               <div class="font-medium">
-                {{ receiptItem.product!.brandName }}
+                {{ purchaseOrderItem.product!.brandName }}
               </div>
               <div>
-                <a @click="openBlankReceiptDetail(receiptItem.receiptId)">
-                  NH{{ receiptItem.receiptId }}
+                <a @click="openBlankPurchaseOrderDetail(purchaseOrderItem.purchaseOrderId)">
+                  NH{{ purchaseOrderItem.purchaseOrderId }}
                 </a>
                 <span class="ml-2">
-                  <ReceiptStatusTag :receipt="receiptItem.receipt" />
+                  <PurchaseOrderStatusTag :purchaseOrder="purchaseOrderItem.purchaseOrder" />
                 </span>
               </div>
               <div style="font-size: 0.8rem">
-                {{ ESTimer.timeToText(receiptItem.receipt?.startedAt, 'DD/MM/YYYY hh:mm') }}
+                {{
+                  ESTimer.timeToText(purchaseOrderItem.purchaseOrder?.startedAt, 'DD/MM/YYYY hh:mm')
+                }}
               </div>
             </td>
             <td class="text-center">
-              {{ receiptItem.unitQuantity }}
+              {{ purchaseOrderItem.unitQuantity }}
             </td>
             <td class="text-right">
               <div style="white-space: nowrap">
-                {{ formatMoney(receiptItem.unitCostPrice) }}
+                {{ formatMoney(purchaseOrderItem.unitCostPrice) }}
               </div>
             </td>
           </tr>
@@ -134,37 +136,39 @@ const openBlankReceiptDetail = (receiptId: number) => {
           </tr>
         </thead>
         <tbody>
-          <tr v-if="receiptItemList.length === 0">
+          <tr v-if="purchaseOrderItemList.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="(receiptItem, index) in receiptItemList" :key="index">
+          <tr v-for="(purchaseOrderItem, index) in purchaseOrderItemList" :key="index">
             <td>
               <div>
-                <a @click="openBlankReceiptDetail(receiptItem.receiptId)">
-                  NH{{ receiptItem.receiptId }}
+                <a @click="openBlankPurchaseOrderDetail(purchaseOrderItem.purchaseOrderId)">
+                  NH{{ purchaseOrderItem.purchaseOrderId }}
                 </a>
                 <span class="ml-2">
-                  <ReceiptStatusTag :receipt="receiptItem.receipt" />
+                  <PurchaseOrderStatusTag :purchaseOrder="purchaseOrderItem.purchaseOrder" />
                 </span>
               </div>
               <div style="font-size: 0.8rem">
-                {{ ESTimer.timeToText(receiptItem.receipt?.startedAt, 'hh:mm DD/MM/YYYY') }}
+                {{
+                  ESTimer.timeToText(purchaseOrderItem.purchaseOrder?.startedAt, 'hh:mm DD/MM/YYYY')
+                }}
               </div>
             </td>
             <td>
               <div class="font-medium">
-                {{ receiptItem.product!.brandName }}
+                {{ purchaseOrderItem.product!.brandName }}
               </div>
             </td>
             <td class="text-center">
-              {{ receiptItem.unitName }}
+              {{ purchaseOrderItem.unitName }}
             </td>
             <td class="text-center">
-              {{ receiptItem.unitQuantity }}
+              {{ purchaseOrderItem.unitQuantity }}
             </td>
             <td class="text-right">
               <div style="white-space: nowrap">
-                {{ formatMoney(receiptItem.unitCostPrice) }}
+                {{ formatMoney(purchaseOrderItem.unitCostPrice) }}
               </div>
             </td>
           </tr>

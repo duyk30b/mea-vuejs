@@ -1,13 +1,12 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
-import { IconClose } from '../../../../common/icon-antd'
-import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { Ticket, TicketQueryApi, TicketType } from '../../../../modules/ticket'
-import { ESTimer } from '../../../../utils'
-import VuePagination from '../../../../common/VuePagination.vue'
-import { InputSelect } from '../../../../common/vue-form'
-import { Payment, PaymentApi } from '@/modules/payment'
 import { useSettingStore } from '@/modules/_me/setting.store'
+import { Payment, PaymentApi } from '@/modules/payment'
+import { ref } from 'vue'
+import VuePagination from '../../../../common/VuePagination.vue'
+import { IconClose } from '../../../../common/icon-antd'
+import { InputSelect } from '../../../../common/vue-form'
+import VueModal from '../../../../common/vue-modal/VueModal.vue'
+import { ESTimer } from '../../../../utils'
 
 const emit = defineEmits<{
   (e: 'select', payment: Payment): void

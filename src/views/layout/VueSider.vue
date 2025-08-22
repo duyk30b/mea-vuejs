@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { IconDoorOpen } from '@/common/icon-google'
-import { RoomInteractType, RoomService } from '@/modules/room'
+import { RoomInteractType, RoomService, RoomTicketStyle } from '@/modules/room'
 import { onMounted, ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   IconApartment,
   IconAppstore,
   IconAreaChart,
+  IconCalendar,
   IconContacts,
   IconControl,
   IconDollar,
@@ -65,77 +66,85 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
     @click="handleMenuClick"
   >
     <a-menu-item key="AppHome">
-      <template #icon>
-        <IconHome />
-      </template>
-      <span>
-        <router-link :to="{ name: 'AppHome' }">Home</router-link>
-      </span>
+      <template #icon><IconHome /></template>
+      <span><router-link :to="{ name: 'AppHome' }">Home</router-link></span>
     </a-menu-item>
-    <a-sub-menu v-if="userPermission[PermissionId.RECEPTION_MENU]" key="Reception">
-      <template #icon>
-        <IconDoorOpen />
-      </template>
-      <template #title>Tiếp đón</template>
-      <a-menu-item key="ReceptionTicketList">
-        <router-link :to="{ name: 'ReceptionTicketList' }">Tiếp đón</router-link>
-      </a-menu-item>
-      <a-menu-item v-if="userPermission[PermissionId.APPOINTMENT_MENU]" key="AppointmentList">
-        <router-link :to="{ name: 'AppointmentList' }">Danh sách Hẹn</router-link>
-      </a-menu-item>
-    </a-sub-menu>
 
-    <a-sub-menu key="Room">
-      <template #icon>
-        <IconApartment />
-      </template>
-      <template #title>Danh mục phòng</template>
-      <template v-for="room in roomList" :key="room.id">
-        <a-menu-item
-          v-if="roomIdMap[room.id] && room.roomInteractType === RoomInteractType.Ticket"
-          :key="'RoomTicket_' + room.id"
-        >
-          <router-link :to="{ name: 'RoomTicket', params: { roomId: room.id } }">
-            {{ room.name }}
-          </router-link>
-        </a-menu-item>
-        <a-menu-item
-          v-if="roomIdMap[room.id] && room.roomInteractType === RoomInteractType.Laboratory"
-          :key="'RoomLaboratory_' + room.id"
-        >
-          <router-link :to="{ name: 'RoomLaboratory', params: { roomId: room.id } }">
-            {{ room.name }}
-          </router-link>
-        </a-menu-item>
-        <a-menu-item
-          v-if="roomIdMap[room.id] && room.roomInteractType === RoomInteractType.Radiology"
-          :key="'RoomRadiology_' + room.id"
-        >
-          <router-link :to="{ name: 'RoomRadiology', params: { roomId: room.id } }">
-            {{ room.name }}
-          </router-link>
-        </a-menu-item>
-      </template>
-    </a-sub-menu>
+    <a-menu-item key="AppointmentList">
+      <template #icon><IconCalendar /></template>
+      <span><router-link :to="{ name: 'AppointmentList' }">Lịch hẹn</router-link></span>
+    </a-menu-item>
 
-    <a-sub-menu v-if="userPermission[PermissionId.TICKET_ORDER_MENU]" key="TicketOrder">
-      <template #icon>
-        <IconShop />
-      </template>
-      <template #title>Bán hàng</template>
+    <template v-for="room in roomList" :key="room.id">
       <a-menu-item
         v-if="
-          userPermission[PermissionId.TICKET_ORDER_DRAFT_CRUD] ||
-          userPermission[PermissionId.TICKET_ORDER_DEBT_SUCCESS_CRUD]
+          roomIdMap[room.id] &&
+          room.roomInteractType === RoomInteractType.Ticket &&
+          [RoomTicketStyle.TicketOrder].includes(room.roomStyle)
         "
-        key="TicketOrderUpsert"
+        :key="'RoomTicketOrder' + '_' + room.id"
       >
-        <router-link :to="{ name: 'TicketOrderUpsert' }">Tạo hóa đơn</router-link>
+        <template #icon><IconShop /></template>
+        <span>
+          <router-link :to="{ name: 'RoomTicketOrder', params: { roomId: room.id } }">
+            {{ room.name }}
+          </router-link>
+        </span>
       </a-menu-item>
-      <a-menu-item v-if="userPermission[PermissionId.TICKET_ORDER_MENU]" key="TicketOrderList">
-        <router-link :to="{ name: 'TicketOrderList' }">Danh sách hóa đơn</router-link>
+
+      <a-menu-item
+        v-if="
+          roomIdMap[room.id] &&
+          room.roomInteractType === RoomInteractType.Ticket &&
+          [RoomTicketStyle.TicketReception].includes(room.roomStyle)
+        "
+        :key="'RoomTicketReception' + '_' + room.id"
+      >
+        <template #icon><IconDoorOpen /></template>
+        <span>
+          <router-link :to="{ name: 'RoomTicketReception', params: { roomId: room.id } }">
+            {{ room.name }}
+          </router-link>
+        </span>
       </a-menu-item>
-    </a-sub-menu>
+
+      <a-menu-item
+        v-if="
+          roomIdMap[room.id] &&
+          room.roomInteractType === RoomInteractType.Ticket &&
+          [
+            RoomTicketStyle.TicketClinicGeneral,
+            RoomTicketStyle.TicketClinicObstetric,
+            RoomTicketStyle.TicketClinicEye,
+          ].includes(room.roomStyle)
+        "
+        :key="'RoomTicketClinic' + '_' + room.id"
+      >
+        <template #icon><IconApartment /></template>
+        <span>
+          <router-link :to="{ name: 'RoomTicketClinic', params: { roomId: room.id } }">
+            {{ room.name }}
+          </router-link>
+        </span>
+      </a-menu-item>
+
+      <a-menu-item
+        v-if="
+          roomIdMap[room.id] &&
+          room.roomInteractType === RoomInteractType.Ticket &&
+          [RoomTicketStyle.TicketSpa].includes(room.roomStyle)
+        "
+        :key="'RoomTicketSpa' + '_' + room.id"
+      >
+        <template #icon><IconApartment /></template>
+        <span>
+          <router-link :to="{ name: 'RoomTicketSpa', params: { roomId: room.id } }">
+            {{ room.name }}
+          </router-link>
+        </span>
+      </a-menu-item>
+    </template>
+
     <a-menu-item v-if="userPermission[PermissionId.CUSTOMER_MENU]" key="Customer">
       <template #icon>
         <IconContacts />
@@ -147,7 +156,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
     <a-sub-menu
       v-if="
         userPermission[PermissionId.PRODUCT_MENU] ||
-        userPermission[PermissionId.RECEIPT_MENU] ||
+        userPermission[PermissionId.PURCHASE_ORDER_MENU] ||
         userPermission[PermissionId.STOCK_CHECK_MENU] ||
         userPermission[PermissionId.DISTRIBUTOR_MENU]
       "
@@ -160,8 +169,8 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item v-if="userPermission[PermissionId.PRODUCT_MENU]" key="ProductList">
         <router-link :to="{ name: 'ProductList' }">Sản phẩm</router-link>
       </a-menu-item>
-      <a-menu-item v-if="userPermission[PermissionId.RECEIPT_MENU]" key="Receipt">
-        <router-link :to="{ name: 'Receipt' }">Nhập hàng</router-link>
+      <a-menu-item v-if="userPermission[PermissionId.PURCHASE_ORDER_MENU]" key="PurchaseOrder">
+        <router-link :to="{ name: 'PurchaseOrder' }">Nhập hàng</router-link>
       </a-menu-item>
       <a-menu-item v-if="userPermission[PermissionId.PRODUCT_MENU]" key="DeliveryTicketList">
         <router-link :to="{ name: 'DeliveryTicketList' }">Chờ xuất hàng</router-link>
@@ -196,7 +205,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
     <a-sub-menu
       v-if="
         userPermission[PermissionId.STATISTIC_TICKET] ||
-        userPermission[PermissionId.STATISTIC_RECEIPT] ||
+        userPermission[PermissionId.STATISTIC_PURCHASE_ORDER] ||
         userPermission[PermissionId.STATISTIC_CUSTOMER] ||
         userPermission[PermissionId.STATISTIC_PRODUCT] ||
         userPermission[PermissionId.STATISTIC_PROCEDURE] ||
@@ -210,7 +219,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       </template>
       <template #title>Thống kê</template>
       <a-menu-item v-if="userPermission[PermissionId.STATISTIC_TICKET]" key="StatisticTicket">
-        <router-link :to="{ name: 'StatisticTicket' }">Lượt tiếp đón</router-link>
+        <router-link :to="{ name: 'StatisticTicket' }">Doanh Thu</router-link>
       </a-menu-item>
       <a-menu-item v-if="userPermission[PermissionId.STATISTIC_CUSTOMER]" key="StatisticCustomer">
         <router-link :to="{ name: 'StatisticCustomer' }">Báo cáo khách hàng</router-link>
@@ -249,8 +258,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
     <a-sub-menu
       v-if="
         userPermission[PermissionId.USER_ACCOUNT_MENU] ||
-        userPermission[PermissionId.USER_ROLE_MENU] ||
-        userPermission[PermissionId.POSITION_MENU]
+        userPermission[PermissionId.USER_ROLE_MENU]
       "
       key="User"
     >
@@ -263,9 +271,6 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       </a-menu-item>
       <a-menu-item v-if="userPermission[PermissionId.USER_ACCOUNT_MENU]" key="Account">
         <router-link :to="{ name: 'Account' }">Tài khoản</router-link>
-      </a-menu-item>
-      <a-menu-item v-if="userPermission[PermissionId.POSITION_MENU]" key="Position">
-        <router-link :to="{ name: 'Position' }">Vị trí</router-link>
       </a-menu-item>
     </a-sub-menu>
     <a-sub-menu key="Systems">

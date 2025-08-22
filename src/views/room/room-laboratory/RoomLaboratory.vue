@@ -21,10 +21,10 @@ import { onBeforeMount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalTicketLaboratoryResult from './ModalTicketLaboratoryGroupResult.vue'
 import TicketLaboratoryStatusTag from './TicketLaboratoryStatusTag.vue'
-import { fromTime, toTime } from './ticket-laboratory-group-list.ref'
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import { PaymentMoneyStatus } from '@/modules/enum'
+import { fromTime, toTime } from '../room-ticket-base/room-ticket.ref'
 
 const router = useRouter()
 const route = useRoute()
@@ -63,7 +63,7 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
       dataLoading.value = true
     }
 
-    const { data, meta } = await TicketLaboratoryGroupApi.pagination({
+    const paginationResponse = await TicketLaboratoryGroupApi.pagination({
       page: page.value,
       limit: limit.value,
       relation: {
@@ -92,8 +92,8 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
         : { registeredAt: 'DESC' },
     })
 
-    ticketLaboratoryGroupList.value = data
-    total.value = meta.total
+    ticketLaboratoryGroupList.value = paginationResponse.ticketLaboratoryGroupList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: TicketClinicList.vue:84 ~ startFetchData ~ error:', error)
   } finally {
@@ -430,7 +430,7 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
             </td>
             <td class="text-center">
               <a
-                v-if="userPermission[PermissionId.LABORATORY_UPDATE_RESULT]"
+                v-if="userPermission[PermissionId.TICKET_CHANGE_LABORATORY_RESULT]"
                 class="text-orange-500"
                 @click="modalTicketLaboratoryResult?.openModal(tlg.id)"
               >

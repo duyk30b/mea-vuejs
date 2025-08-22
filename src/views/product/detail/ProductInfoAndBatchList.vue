@@ -15,6 +15,7 @@ import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { ESTimer } from '../../../utils'
 import ModalBatchMerge from './ModalBatchMerge.vue'
 import ModalBatchUpdate from './ModalBatchUpdate.vue'
+import { CONFIG } from '@/config'
 
 const modalBatchUpdate = ref<InstanceType<typeof ModalBatchUpdate>>()
 const modalBatchMerge = ref<InstanceType<typeof ModalBatchMerge>>()
@@ -118,10 +119,16 @@ const closeExpiryDate = computed(() => {
   />
   <div class="mt-4 flex flex-wrap">
     <div style="flex-basis: 45%; flex: 1; min-width: 300px">
-      <div class="my-2 flex gap-4">
-        <div style="width: 100px; flex-shrink: 0">ID sản phẩm</div>
+      <div v-if="CONFIG.MODE === 'development'" class="my-2 flex gap-4" style="color: violet;">
+        <div style="width: 100px; flex-shrink: 0">ID</div>
         <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0" class="font-medium">
           {{ product.id }}
+        </div>
+      </div>
+      <div class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">Mã sản phẩm</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0" class="font-medium">
+          {{ product.productCode }}
         </div>
       </div>
       <div class="my-2 flex gap-4">

@@ -1,5 +1,4 @@
 import { ESArray } from '@/utils'
-import { MeService } from '../_me/me.service'
 import { Batch } from '../batch'
 import type { Customer } from '../customer'
 import { DeliveryStatus, DiscountType, PaymentMoneyStatus, PickupStrategy } from '../enum'
@@ -8,6 +7,7 @@ import { TicketBatch } from '../ticket-batch'
 import type { Ticket } from '../ticket/ticket.model'
 
 export enum TicketProductType {
+  Other = 0,
   Prescription = 1,
   Consumable = 2,
 }

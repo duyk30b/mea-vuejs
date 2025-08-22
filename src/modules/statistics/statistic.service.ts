@@ -1,10 +1,9 @@
-import { AxiosInstance } from '../../core/axios.instance'
-import type { ConditionEnum } from '../_base/base-condition'
+import { AxiosInstance } from '@/core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import { Customer } from '../customer'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
-import { TicketGetQuery, type TicketFilterQuery, type TicketType } from '../ticket'
+import { TicketGetQuery, type TicketFilterQuery } from '../ticket'
 
 export class StatisticService {
   static async sumWarehouse() {
@@ -104,12 +103,12 @@ export class StatisticService {
     return data.customerSumDebt as number
   }
 
-  static async statisticReceipt(params: {
+  static async statisticPurchaseOrder(params: {
     fromTime: string
     toTime: string
     timeType: 'date' | 'month'
   }) {
-    const response = await AxiosInstance.get('/statistic/statistic-receipt', { params })
+    const response = await AxiosInstance.get('/statistic/statistic-purchase-order', { params })
     const { data } = response.data as BaseResponse<
       Record<
         string,
@@ -117,7 +116,7 @@ export class StatisticService {
           sumDiscountMoney: number
           sumTotalMoney: number
           sumDebt: number
-          countReceipt: number
+          countPurchaseOrder: number
         }
       >
     >

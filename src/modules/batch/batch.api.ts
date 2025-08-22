@@ -1,7 +1,7 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import { Product } from '../product'
-import { ReceiptItem } from '../receipt-item/receipt-item.model'
+import { PurchaseOrderItem } from '../purchase-order-item/purchase-order-item.model'
 import { TicketBatch } from '../ticket-batch'
 import { TicketProduct } from '../ticket-product'
 import { BatchDetailQuery, BatchGetQuery, BatchListQuery, BatchPaginationQuery } from './batch.dto'
@@ -14,8 +14,10 @@ export class BatchApi {
     const response = await AxiosInstance.get('/batch/pagination', { params })
     const { data, meta } = response.data as BaseResponse
     return {
-      meta,
-      data: Batch.fromList(data),
+      page: data.page,
+      total: data.total,
+      limit: data.limit,
+      batchList: Batch.fromList(data.batchList),
     }
   }
 
@@ -86,15 +88,17 @@ export class BatchApi {
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/batch/destroy/${id}`)
-    const result = response.data as BaseResponse<{
+    const { data } = response.data as BaseResponse<{
+      success: boolean
       batchId: number
-      receiptItemList: ReceiptItem[]
+      product?: Product
+      purchaseOrderItemList: PurchaseOrderItem[]
       ticketBatchList: TicketBatch[]
       ticketProductList: TicketProduct[]
     }>
-    result.data.receiptItemList = ReceiptItem.fromList(result.data.receiptItemList)
-    result.data.ticketBatchList = TicketBatch.fromList(result.data.ticketBatchList)
-    result.data.ticketProductList = TicketProduct.fromList(result.data.ticketProductList)
-    return result
+    data.purchaseOrderItemList = PurchaseOrderItem.fromList(data.purchaseOrderItemList)
+    data.ticketBatchList = TicketBatch.fromList(data.ticketBatchList)
+    data.ticketProductList = TicketProduct.fromList(data.ticketProductList)
+    return data
   }
 }

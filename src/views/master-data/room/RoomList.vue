@@ -6,7 +6,7 @@ import { IconEditSquare } from '../../../common/icon-google'
 import { InputSelect } from '../../../common/vue-form'
 import { MeService } from '../../../modules/_me/me.service'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { RoomInteractTypeText, type Room } from '../../../modules/room'
+import { RoomInteractTypeText, RoomTicketStyleText, type Room } from '../../../modules/room'
 import { RoomService } from '../../../modules/room/room.service'
 import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalRoomUpsert from './ModalRoomUpsert.vue'
@@ -34,7 +34,7 @@ const startFetchData = async (options?: { refetch?: boolean }) => {
         limit: limit.value,
         relation: { userRoomList: { user: true } },
         filter: {},
-        sort: { id: 'ASC' },
+        sort: { code: 'ASC' },
       },
       { refetch: options?.refetch },
     )
@@ -98,6 +98,7 @@ const handleModalRoomUpsertSuccess = async (data: Room, type: 'CREATE' | 'UPDATE
             <th>Mã</th>
             <th>Tên</th>
             <th>Loại phòng</th>
+            <th>Kiểu phòng</th>
             <th>Chức năng</th>
             <th>Tài khoản truy cập</th>
             <th>#</th>
@@ -129,9 +130,10 @@ const handleModalRoomUpsertSuccess = async (data: Room, type: 'CREATE' | 'UPDATE
             >
               {{ room.id }}
             </td>
-            <td class="text-center">{{ room.roomCode }}</td>
+            <td class="text-center">{{ room.code }}</td>
             <td>{{ room.name }}</td>
             <td>{{ RoomInteractTypeText[room.roomInteractType] }}</td>
+            <td>{{ RoomTicketStyleText[room.roomStyle] }}</td>
             <td>{{ room.isCommon ? 'Phòng chung' : 'Phòng lẻ' }}</td>
             <td>{{ room.userRoomList?.map((i) => i.user?.fullName).join(', ') }}</td>
             <td

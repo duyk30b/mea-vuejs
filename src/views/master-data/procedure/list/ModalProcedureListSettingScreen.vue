@@ -13,7 +13,7 @@ const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
 const settingDisplay = ref<typeof store.SCREEN_PROCEDURE_LIST>(
-  JSON.parse(JSON.stringify(store.SCREEN_PROCEDURE_LIST))
+  JSON.parse(JSON.stringify(store.SCREEN_PROCEDURE_LIST)),
 )
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -63,43 +63,12 @@ defineExpose({ openModal })
               <th>Màn hình danh sách dịch vụ</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td>
-                <InputCheckbox v-model:value="settingDisplay.table.detail">
-                  Hiển thị nút xem chi tiết (
-                  <IconFileSearch />
-                  )
-                </InputCheckbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <InputCheckbox v-model:value="settingDisplay.table.group">
-                  Hiển thị nhóm
-                </InputCheckbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <InputCheckbox v-model:value="settingDisplay.table.status">
-                  Hiển thị trạng thái
-                </InputCheckbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <InputCheckbox v-model:value="settingDisplay.table.action">
-                  Hiển thị nút sửa
-                </InputCheckbox>
-              </td>
-            </tr>
-          </tbody>
+          <tbody></tbody>
         </table>
       </div>
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left: auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

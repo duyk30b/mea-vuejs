@@ -113,6 +113,12 @@ export const masterDataRouter: RouteRecordRaw = {
       ],
     },
     {
+      path: 'position',
+      meta: { title: 'Vị trí' },
+      name: 'Position',
+      component: () => import('../views/master-data/position/list/PositionList.vue'),
+    },
+    {
       path: 'discount',
       name: 'Discount',
       meta: { title: 'Khuyến mại' },
@@ -138,6 +144,33 @@ export const masterDataRouter: RouteRecordRaw = {
         },
       ],
     },
+    {
+      path: 'surcharge',
+      name: 'Surcharge',
+      meta: { title: 'Phụ phí' },
+      redirect: () => ({ name: 'SurchargeList' }),
+      children: [
+        {
+          path: 'list',
+          name: 'SurchargeList',
+          component: () => import('../views/master-data/surcharge/SurchargeList.vue'),
+        },
+      ],
+    },
+    {
+      path: 'expense',
+      name: 'Expense',
+      meta: { title: 'Chi phí' },
+      redirect: () => ({ name: 'ExpenseList' }),
+      children: [
+        {
+          path: 'list',
+          name: 'ExpenseList',
+          component: () => import('../views/master-data/expense/ExpenseList.vue'),
+        },
+      ],
+    },
+
     {
       path: 'customer-source',
       name: 'CustomerSource',

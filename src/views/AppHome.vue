@@ -28,7 +28,7 @@ const { userPermission, organizationPermission, user, roomIdMap } = MeService
         </div>
 
         <div
-          v-if="userPermission[PermissionId.TICKET_ORDER_MENU]"
+          v-if="userPermission[PermissionId.TICKET_DRAFT_CRUD]"
           style="flex-grow: 1; flex-basis: 22%; min-width: 300px"
           class="p-4"
         >
@@ -57,21 +57,6 @@ const { userPermission, organizationPermission, user, roomIdMap } = MeService
             </div>
             <div class="text-6xl mt-2" style="opacity: 0.3">
               <TeamOutlined />
-            </div>
-          </div>
-        </div> -->
-
-        <!-- <div style="flex-grow: 1; flex-basis: 22%; min-width: 300px;" class="p-4">
-          <div
-            class="bg-[#ff7f50] h-full p-4 gap-4 flex justify-between items-start rounded text-white cursor-pointer"
-            @click="$router.push({ name: 'Receipt' })"
-          >
-            <div>
-              <div class="text-xl uppercase" style="font-weight: 500">Nhập hàng</div>
-              <div class="mt-4">Nhập hàng vào kho</div>
-            </div>
-            <div class="text-6xl mt-2" style="opacity: 0.3">
-              <ScheduleOutlined />
             </div>
           </div>
         </div> -->

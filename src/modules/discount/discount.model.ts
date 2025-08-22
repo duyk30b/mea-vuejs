@@ -10,6 +10,7 @@ export enum DiscountInteractType {
   Procedure = 2,
   Laboratory = 3,
   Radiology = 4,
+  Regimen = 5,
 }
 
 export const DiscountInteractTypeText = {
@@ -17,6 +18,7 @@ export const DiscountInteractTypeText = {
   [DiscountInteractType.Procedure]: 'Dịch vụ',
   [DiscountInteractType.Laboratory]: 'Xét nghiệm',
   [DiscountInteractType.Radiology]: 'Phiếu CĐHA',
+  [DiscountInteractType.Regimen]: 'Liệu trình',
 }
 
 export enum DiscountRepeatType {

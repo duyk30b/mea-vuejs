@@ -4,24 +4,44 @@ import { ProcedureGroup } from '../procedure-group'
 
 export enum ProcedureType {
   Basic = 1,
-  Regimen = 2, // Liệu trình
-  Remedy = 3, // Bài thuốc
+  SingleProcess = 2,
+  Regimen = 3, // Liệu trình
+}
+
+export const ProcedureTypeText = {
+  [ProcedureType.Basic]: 'Cơ bản',
+  [ProcedureType.SingleProcess]: 'Thủ thuật',
+  [ProcedureType.Regimen]: 'Liệu trình',
+}
+
+export enum GapHoursType {
+  Hour = 1,
+  Day = 24,
+  Week = 24 * 7,
+  Month = 24 * 30,
+}
+
+export const GapHoursTypeText = {
+  [GapHoursType.Hour]: 'Giờ',
+  [GapHoursType.Day]: 'Ngày',
+  [GapHoursType.Week]: 'Tuần',
+  [GapHoursType.Month]: 'Tháng',
 }
 
 export class Procedure {
   id: number
-  procedureCode: string
+  code: string
   name: string // Tên dịch vụ
-  procedureType: ProcedureType
-  quantityDefault: number
-  gapHours: number
   procedureGroupId: number
-  price: number // Giá mặc định
+  procedureType: ProcedureType
 
-  consumablesHint: string
+  totalSessions: number
+  gapHours: number
+  gapHoursType: GapHoursType
 
-  isActive: 1 | 0 // Trạng thái
-  updatedAt: number
+  price: number
+
+  isActive: 0 | 1
 
   procedureGroup?: ProcedureGroup
 
@@ -44,15 +64,17 @@ export class Procedure {
   static init() {
     const ins = new Procedure()
     ins.id = 0
-    ins.procedureCode = ''
-    ins.procedureType = ProcedureType.Basic
-    ins.quantityDefault = 1
+    ins.code = ''
+    ins.name = ''
     ins.procedureGroupId = 0
+    ins.procedureType = ProcedureType.Basic
+
+    ins.totalSessions = 0
     ins.gapHours = 0
+    ins.gapHoursType = 24
 
     ins.price = 0
 
-    ins.consumablesHint = JSON.stringify([])
     ins.isActive = 1
     return ins
   }
@@ -105,17 +127,17 @@ export class Procedure {
 
   static equal(a: Procedure, b: Procedure) {
     if (a.id != b.id) return false
-    if (a.procedureCode != b.procedureCode) return false
+    if (a.code != b.code) return false
     if (a.name != b.name) return false
-    if (a.procedureType != b.procedureType) return false
-    if (a.quantityDefault != b.quantityDefault) return false
-    if (a.gapHours != b.gapHours) return false
     if (a.procedureGroupId != b.procedureGroupId) return false
-    if (a.price != b.price) return false
+    if (a.procedureType != b.procedureType) return false
 
-    if (a.consumablesHint != b.consumablesHint) return false
+    if (a.totalSessions != b.totalSessions) return false
+    if (a.gapHours != b.gapHours) return false
+    if (a.gapHoursType != b.gapHoursType) return false
+
+    if (a.price != b.price) return false
     if (a.isActive != b.isActive) return false
-    if (a.updatedAt != b.updatedAt) return false
 
     return true
   }

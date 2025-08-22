@@ -191,7 +191,7 @@ const clickDelete = (discountId: number) => {
     </div>
     <div class="">
       <VueButton
-        v-if="userPermission[PermissionId.POSITION_CREATE]"
+        v-if="userPermission[PermissionId.MASTER_DATA_DISCOUNT]"
         color="blue"
         icon="plus"
         @click="modalDiscountUpsert?.openModal({ mode: 'CREATE' })"

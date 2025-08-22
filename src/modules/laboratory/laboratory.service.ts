@@ -6,10 +6,10 @@ import { LaboratoryGroup, LaboratoryGroupService } from '../laboratory-group'
 import { PositionInteractType, PositionService, type Position } from '../position'
 import { LaboratoryApi } from './laboratory.api'
 import type {
-    LaboratoryDetailQuery,
-    LaboratoryGetQuery,
-    LaboratoryListQuery,
-    LaboratoryPaginationQuery,
+  LaboratoryDetailQuery,
+  LaboratoryGetQuery,
+  LaboratoryListQuery,
+  LaboratoryPaginationQuery,
 } from './laboratory.dto'
 import { Laboratory } from './laboratory.model'
 
@@ -179,6 +179,7 @@ export class LaboratoryService {
     positionList?: Position[]
   }) {
     const result = await LaboratoryApi.create(body)
+    LaboratoryService.loadedAll = false
     return result
   }
 
@@ -192,11 +193,13 @@ export class LaboratoryService {
     },
   ) {
     const result = await LaboratoryApi.update(id, body)
+    LaboratoryService.loadedAll = false
     return result
   }
 
   static async destroyOne(id: number) {
     const result = await LaboratoryApi.destroyOne(id)
+    LaboratoryService.loadedAll = false
     return result
   }
 

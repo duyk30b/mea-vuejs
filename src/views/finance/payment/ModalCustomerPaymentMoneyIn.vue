@@ -15,7 +15,7 @@ import { Ticket, TicketQueryApi, TicketStatus } from '@/modules/ticket'
 import { ESString, ESTimer } from '@/utils'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '@/views/customer/upsert/ModalCustomerUpsert.vue'
-import LinkAndStatusTicket from '@/views/ticket-base/LinkAndStatusTicket.vue'
+import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
 import { onMounted, ref } from 'vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
@@ -214,7 +214,6 @@ const startPrintPayment = async () => {
   // tempPayment.createdAt = Date.now()
   // tempPayment.reason = reason.value
   // tempPayment.moneyDirection = MoneyDirection.In
-
   // await PrintHtmlAction.startPrintCustomerPayment({
   //   customer: customer.value,
   //   payment: tempPayment,
@@ -246,7 +245,7 @@ defineExpose({ openModal })
               )
             </span>
             <span v-if="customer.debt < 0">
-              (Quỹ:
+              (Ví:
               <b style="color: var(--text-green)">{{ formatMoney(-customer.debt) }}</b>
               )
             </span>
@@ -287,7 +286,7 @@ defineExpose({ openModal })
                   <strong style="color: var(--text-red)">{{ formatMoney(data.debt) }}</strong>
                 </span>
                 <span v-if="data.debt < 0">
-                  Quỹ:
+                  Ví:
                   <strong style="color: var(--text-green)">{{ formatMoney(-data.debt) }}</strong>
                 </span>
               </div>

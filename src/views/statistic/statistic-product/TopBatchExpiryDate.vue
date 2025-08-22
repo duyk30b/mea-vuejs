@@ -22,7 +22,7 @@ const total = ref(0)
 const startFetchData = async () => {
   try {
     loaded.value = false
-    const { data, meta } = await BatchApi.pagination({
+    const paginationResponse = await BatchApi.pagination({
       page: page.value,
       limit: limit.value,
       relation: { product: true },
@@ -32,8 +32,8 @@ const startFetchData = async () => {
       },
       sort: { expiryDate: 'ASC' },
     })
-    batchList.value = data
-    total.value = meta.total
+    batchList.value = paginationResponse.batchList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: TopBatchExpiryDate.vue:36 ~ startFetchData ~ error:', error)
   } finally {

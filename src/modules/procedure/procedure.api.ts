@@ -19,8 +19,10 @@ export class ProcedureApi {
     const response = await AxiosInstance.get('/procedure/pagination', { params })
     const { data, meta } = response.data as BaseResponse
     return {
-      meta,
-      data: Procedure.fromList(data),
+      page: data.page,
+      limit: data.limit,
+      total: data.total,
+      procedureList: Procedure.fromList(data.procedureList),
     }
   }
 
@@ -28,8 +30,8 @@ export class ProcedureApi {
     const params = ProcedureGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/procedure/list', { params })
-    const { data, time } = response.data as BaseResponse
-    return Procedure.fromList(data)
+    const { data, time } = response.data as BaseResponse<{ procedureList: any[] }>
+    return Procedure.fromList(data.procedureList)
   }
 
   static search: (params: ProcedureListQuery) => Promise<Procedure[]> = debounceAsync(
@@ -57,16 +59,14 @@ export class ProcedureApi {
     const { procedure, discountList, positionList } = body
     const response = await AxiosInstance.post('/procedure/create', {
       procedure: {
-        procedureCode: procedure.procedureCode,
+        code: procedure.code,
         name: procedure.name,
         procedureGroupId: procedure.procedureGroupId,
-
         procedureType: procedure.procedureType,
-        quantityDefault: procedure.quantityDefault,
+        price: procedure.price,
+        totalSessions: procedure.totalSessions,
         gapHours: procedure.gapHours,
-        price: procedure.price, // Giá mặc định
-
-        consumablesHint: procedure.consumablesHint,
+        gapHoursType: procedure.gapHoursType,
         isActive: procedure.isActive,
       },
       positionList: positionList
@@ -109,16 +109,14 @@ export class ProcedureApi {
     const { procedure, discountList, positionList } = body
     const response = await AxiosInstance.patch(`/procedure/update/${id}`, {
       procedure: {
-        procedureCode: procedure.procedureCode,
+        code: procedure.code,
         name: procedure.name,
         procedureGroupId: procedure.procedureGroupId,
-
         procedureType: procedure.procedureType,
-        quantityDefault: procedure.quantityDefault,
+        price: procedure.price,
+        totalSessions: procedure.totalSessions,
         gapHours: procedure.gapHours,
-        price: procedure.price, // Giá mặc định
-
-        consumablesHint: procedure.consumablesHint,
+        gapHoursType: procedure.gapHoursType,
         isActive: procedure.isActive,
       },
       positionList: positionList

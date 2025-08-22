@@ -50,7 +50,7 @@ const startFetchData = async (stockCheckId: number) => {
       },
     })
   } catch (error) {
-    console.log('🚀 ~ file: ReceiptDetail.vue:58 ~ startFetchData ~ error:', error)
+    console.log("🚀 ~ StockCheckDetail.vue:53 ~ startFetchData ~ error:", error)
   }
 }
 

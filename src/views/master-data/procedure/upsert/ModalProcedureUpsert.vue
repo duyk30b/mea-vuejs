@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
-import { IconClose } from '@/common/icon-antd'
-import { InputMoney, InputText, VueSelect, VueSwitch } from '@/common/vue-form'
+import { IconClose, IconDoubleRight } from '@/common/icon-antd'
+import { InputMoney, InputNumber, InputSelect, InputText, VueSwitch } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
@@ -10,14 +10,22 @@ import { useSettingStore } from '@/modules/_me/setting.store'
 import { Discount, DiscountInteractType, DiscountService } from '@/modules/discount'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { Position, PositionInteractType } from '@/modules/position'
-import { Procedure, ProcedureService, ProcedureType } from '@/modules/procedure'
+import {
+  GapHoursType,
+  GapHoursTypeText,
+  Procedure,
+  ProcedureService,
+  ProcedureType,
+  ProcedureTypeText,
+} from '@/modules/procedure'
 import { ProcedureGroup, ProcedureGroupService } from '@/modules/procedure-group'
 import { Product } from '@/modules/product'
 import { Role, RoleService } from '@/modules/role'
-import PositionTableAction from '@/views/user/position/common/PositionTableAction.vue'
+import PositionTableAction from '@/views/master-data/position/common/PositionTableAction.vue'
 import { computed, ref } from 'vue'
 import DiscountTableAction from '../../discount/common/DiscountTableAction.vue'
 import ModalDiscountUpsert from '../../discount/upsert/ModalDiscountUpsert.vue'
+import { ESTypescript } from '@/utils'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
@@ -34,13 +42,15 @@ const { userPermission } = MeService
 
 const procedureOrigin = ref<Procedure>(Procedure.blank())
 const procedure = ref(Procedure.blank())
-const procedureGroupOptions = ref<{ text: string; value: number; data: ProcedureGroup }[]>([])
-const consumableOptions = ref<{ value: number; text: string; data: Product }[]>([])
-const consumableList = ref<{ product?: Product; quantity: number }[]>([])
+const procedureGroupOptions = ref<{ value: number; label: string; data: ProcedureGroup }[]>([])
 
 const roleOptions = ref<{ value: number; text: string; data: Role }[]>([])
 
-const gapHoursType = ref(24)
+const gapHoursTypeOptions = ESTypescript.keysEnum(GapHoursType).map((key) => ({
+  value: GapHoursType[key],
+  label: GapHoursTypeText[GapHoursType[key]],
+}))
+
 const activeTab = ref(TABS_KEY.BASIC)
 
 const showModal = ref(false)
@@ -95,30 +105,6 @@ const openModal = async (procedureId?: number) => {
     )
     procedureOrigin.value = procedureResponse
     procedure.value = Procedure.from(procedureResponse)
-    if (procedure.value?.consumablesHint) {
-      // const consumableHint = JSON.parse(procedure.value.consumablesHint) as {
-      //   productId: number
-      //   quantity: number
-      // }[]
-      // if (Array.isArray(consumableHint)) {
-      //   if (!consumableHint.length) {
-      //     consumableList.value = []
-      //   }
-      //   if (consumableHint.length) {
-      //     const productIdList = consumableHint.map((i) => i.productId)
-      //     const productListResponse = await productStore.list({
-      //       filter: { id: { IN: productIdList } },
-      //     })
-      //     consumableList.value = consumableHint.map((i) => {
-      //       const productFind = productListResponse.find((j) => j.id === i.productId)
-      //       return {
-      //         product: productFind,
-      //         quantity: i.quantity,
-      //       }
-      //     })
-      //   }
-      // }
-    }
   } else {
     procedure.value = Procedure.blank()
     procedure.value.discountListExtra = await DiscountService.list({
@@ -131,7 +117,7 @@ const openModal = async (procedureId?: number) => {
 
   ProcedureGroupService.list({})
     .then((result) => {
-      procedureGroupOptions.value = result.map((i) => ({ value: i.id, text: i.name, data: i }))
+      procedureGroupOptions.value = result.map((i) => ({ value: i.id, label: i.name, data: i }))
     })
     .catch((e) => {
       console.log('🚀 ~ file: ModalProcedureUpsert.vue:105 ~ ProcedureGroupService ~ e:', e)
@@ -151,9 +137,6 @@ const closeModal = () => {
 
   procedure.value = Procedure.blank()
   procedureOrigin.value = Procedure.blank()
-
-  consumableList.value = []
-  consumableOptions.value = []
 }
 
 const clickDestroy = () => {
@@ -184,24 +167,9 @@ const clickDestroy = () => {
   })
 }
 
-const handleChangeProcedureType = (e: Event) => {
-  const target = e.target as HTMLInputElement
-  if (target.checked) {
-    procedure.value.procedureType = ProcedureType.Regimen
-  } else {
-    procedure.value.procedureType = ProcedureType.Basic
-    procedure.value.quantityDefault = 1
-    procedure.value.gapHours = 0
-  }
-}
-
 const handleSave = async () => {
   saveLoading.value = true
-  const consumablesHint = consumableList.value.map((i) => ({
-    productId: i.product!.id,
-    quantity: i.quantity,
-  }))
-  procedure.value.consumablesHint = JSON.stringify(consumablesHint)
+
   try {
     if (!procedure.value.id) {
       await ProcedureService.createOne({
@@ -252,6 +220,17 @@ const clickUpsertDiscount = (options: { discount?: Discount; mode: 'CREATE' | 'U
   })
 }
 
+const handleChangeProcedureType = (value: ProcedureType) => {
+  if (value === ProcedureType.Basic) {
+    procedure.value.totalSessions = 0
+    procedure.value.gapHours = 0
+  }
+  if (value === ProcedureType.SingleProcess) {
+    procedure.value.totalSessions = 1
+    procedure.value.gapHours = 0
+  }
+}
+
 defineExpose({ openModal })
 </script>
 
@@ -278,28 +257,20 @@ defineExpose({ openModal })
           <template #panel>
             <VueTabPanel :tabKey="TABS_KEY.BASIC">
               <div class="mt-4 flex flex-wrap gap-4">
-                <div style="flex-grow: 1; flex-basis: 400px">
+                <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
                   <div class="">Tên dịch vụ</div>
                   <div class="">
                     <InputText v-model:value="procedure.name" required />
                   </div>
                 </div>
-                <div style="flex-grow: 1; flex-basis: 150px">
+                <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
                   <div class="">Mã dịch vụ</div>
                   <div class="">
-                    <InputText v-model:value="procedure.procedureCode" placeholder="Tạo tự động" />
+                    <InputText v-model:value="procedure.code" placeholder="Tạo tự động" />
                   </div>
                 </div>
-                <div style="flex-grow: 1; flex-basis: 90%">
-                  <div class="">Nhóm</div>
-                  <div>
-                    <VueSelect
-                      v-model:value="procedure.procedureGroupId"
-                      :options="procedureGroupOptions"
-                    />
-                  </div>
-                </div>
-                <div style="flex-grow: 1; flex-basis: 90%">
+
+                <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
                   <div>Giá dịch vụ</div>
                   <div>
                     <InputMoney
@@ -311,7 +282,64 @@ defineExpose({ openModal })
                   </div>
                 </div>
 
-                <div style="flex-grow: 1; flex-basis: 90%" class="flex flex-wrap gap-4 mb-4">
+                <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+                  <div class="">Nhóm</div>
+                  <div>
+                    <InputSelect
+                      v-model:value="procedure.procedureGroupId"
+                      :options="procedureGroupOptions"
+                    />
+                  </div>
+                </div>
+
+                <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
+                  <div class="">Loại dịch vụ</div>
+                  <div>
+                    <InputSelect
+                      v-model:value="procedure.procedureType"
+                      :options="[
+                        { value: ProcedureType.Basic, label: 'Cơ bản' },
+                        { value: ProcedureType.SingleProcess, label: 'Thủ thuật (chỉ 1 buổi)' },
+                        { value: ProcedureType.Regimen, label: 'Liệu trình (nhiều buổi)' },
+                      ]"
+                      @update:value="(v) => handleChangeProcedureType(v as any)"
+                    />
+                  </div>
+                </div>
+
+                <div style="flex-grow: 1; flex-basis: 90%">
+                  <div
+                    class="flex flex-wrap items-center gap-3"
+                    v-if="procedure.procedureType === ProcedureType.Regimen"
+                  >
+                    <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
+                      <div>Số buổi làm</div>
+                      <div>
+                        <InputNumber v-model:value="procedure.totalSessions" :min="1" />
+                      </div>
+                    </div>
+                    <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+                      <div>Khoảng cách mỗi buổi</div>
+                      <div>
+                        <InputNumber
+                          :value="procedure.gapHours / procedure.gapHoursType"
+                          @update:value="(v) => (procedure.gapHours = v * procedure.gapHoursType)"
+                        />
+                      </div>
+                    </div>
+                    <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+                      <div>Khoảng cách tính theo</div>
+                      <div>
+                        <InputSelect
+                          v-model:value="procedure.gapHoursType"
+                          :options="gapHoursTypeOptions"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="flex-grow: 1; flex-basis: 90%" class="flex flex-wrap gap-4">
                   <div style="width: 100px">Trạng thái:</div>
                   <div class="w-[60px] flex-none">
                     <VueSwitch v-model="procedure.isActive" type-parser="number" />
@@ -321,123 +349,6 @@ defineExpose({ openModal })
                     <span v-else>Inactive (Ngừng sử dụng)</span>
                   </div>
                 </div>
-
-                <!-- <div style="flex-grow: 1; flex-basis: 90%">
-                  <div class="mt-10 font-bold">
-                    <DoubleRightOutlined />
-                    Vật tư tiêu hao khi sử dụng dịch vụ
-                  </div>
-                  <div class="mt-4">
-                    <div class="flex items-center">
-                      <div class="flex-auto">
-                        <InputOptions
-                          ref="inputOptionsProduct"
-                          :options="consumableOptions"
-                          :maxHeight="260"
-                          placeholder="Tìm kiếm bằng tên hoặc hoạt chất của sản phẩm"
-                          clear-after-selected
-                          @selectItem="({ data }) => selectProduct(data)"
-                          @update:text="searchingProduct">
-                          <template #option="{ item: { data } }">
-                            <div>
-                              <b>{{ data.brandName }}</b>
-                              <span v-if="data.pickupStrategy">
-                                - Tồn
-                                <span
-                                  style="font-weight: 700"
-                                  :class="data.unitQuantity <= 0 ? 'text-red-500' : ''">
-                                  {{ data.unitQuantity }}
-                                </span>
-                                {{ data.unitDefaultName }}
-                              </span>
-                              - Giá {{ formatMoney(data.unitRetailPrice) }}
-                            </div>
-                            <div>{{ data.substance }}</div>
-                          </template>
-                        </InputOptions>
-                      </div>
-                    </div>
-                    <div class="table-wrapper mt-4">
-                      <table class="screen-setting">
-                        <thead>
-                          <tr>
-                            <th>#</th>
-                            <th>Tên hàng hóa</th>
-                            <th>Số lượng</th>
-                            <th>ĐV</th>
-                            <th></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr v-if="consumableList.length === 0">
-                            <td colspan="20" class="text-center">No data</td>
-                          </tr>
-                          <tr v-for="(p, i) in consumableList" :key="i">
-                            <td class="text-center">{{ i + 1 }}</td>
-                            <td>{{ p.product!.brandName }}</td>
-                            <td class="text-right">
-                              <input
-                                v-model="consumableList[i].quantity"
-                                style="width: 100px"
-                                type="number"
-                                min="0" />
-                            </td>
-                            <td class="text-center">
-                              {{ consumableList[i].product?.unitDefaultName }}
-                            </td>
-                            <td class="text-center">
-                              <a class="text-red-500" @click="consumableList.splice(i, 1)">
-                                <IconDelete />
-                              </a>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-
-                <div style="flex-grow: 1; flex-basis: 90%">
-                  <div class="mt-10 font-bold">
-                    <DoubleRightOutlined />
-                    <label class="mx-2 cursor-pointer" for="isRegimen">
-                      Là liệu trình ? Dịch vụ này có nhiều buổi không ?
-                    </label>
-                    <input
-                      id="isRegimen"
-                      :checked="procedure.procedureType === ProcedureType.Regimen"
-                      type="checkbox"
-                      name="isRegimen"
-                      @change="handleChangeProcedureType" />
-                    <br />
-                  </div>
-                  <div v-if="procedure.procedureType === ProcedureType.Regimen">
-                    <div class="mt-3">
-                      <div>Số buổi làm</div>
-                      <div>
-                        <InputNumber v-model:value="procedure.quantityDefault" :min="1" />
-                      </div>
-                    </div>
-                    <div class="mt-3">
-                      <div>Khoảng cách mỗi buổi</div>
-                      <div class="flex">
-                        <VueSelect
-                          v-model:value="gapHoursType"
-                          style="width: 120px"
-                          :options="[
-                            { value: 24, text: 'Ngày' },
-                            { value: 24 * 7, text: 'Tuần' },
-                            { value: 24 * 30, text: 'Tháng' },
-                          ]" />
-                        <div style="width: calc(100% - 120px)">
-                          <InputNumber
-                            :value="procedure.gapHours / gapHoursType"
-                            @update:value="(v) => (procedure.gapHours = v * gapHoursType)" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div> -->
               </div>
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.DISCOUNT">
@@ -457,14 +368,14 @@ defineExpose({ openModal })
                   v-model:positionList="procedure.positionList!"
                   :positionType="PositionInteractType.Procedure"
                   :positionInteractId="procedure.id"
-                  :editable="userPermission[PermissionId.POSITION]"
+                  :editable="userPermission[PermissionId.MASTER_DATA_POSITION]"
                 />
               </div>
             </VueTabPanel>
           </template>
         </VueTabs>
       </div>
-      <div class="p-4 mt-2">
+      <div class="p-4">
         <div class="flex gap-4">
           <VueButton
             v-if="userPermission[PermissionId.PROCEDURE_DELETE] && procedure.id"
