@@ -6,7 +6,7 @@ import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
 import { PrintHtmlService } from '../../../../modules/print-html'
-import { RoomInteractType, RoomService } from '@/modules/room'
+import { RoomType, RoomService } from '@/modules/room'
 
 const emit = defineEmits<{
   (e: 'success'): void
@@ -28,7 +28,7 @@ const startFetchPrintHtml = async () => {
 
 const startFetchRoom = async () => {
   const romList = await RoomService.list({
-    filter: { roomInteractType: RoomInteractType.Laboratory },
+    filter: { roomType: RoomType.Laboratory },
     sort: { id: 'ASC' },
   })
   roomOptions.value = [

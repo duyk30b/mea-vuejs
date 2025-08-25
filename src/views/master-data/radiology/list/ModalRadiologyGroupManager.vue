@@ -4,7 +4,7 @@ import { InputText, VueSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import VueButton from '@/common/VueButton.vue'
 import { RadiologyGroup, RadiologyGroupService } from '@/modules/radiology-group'
-import { RoomInteractType, RoomService } from '@/modules/room'
+import { RoomType, RoomService } from '@/modules/room'
 import { ref } from 'vue'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
@@ -17,7 +17,7 @@ const saveLoading = ref(false)
 
 const startFetchRoom = async () => {
   const romList = await RoomService.list({
-    filter: { roomInteractType: RoomInteractType.Radiology },
+    filter: { roomType: RoomType.Radiology },
     sort: { id: 'ASC' },
   })
   roomOptions.value = [

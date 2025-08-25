@@ -4,8 +4,21 @@ import { PermissionId } from '@/modules/permission/permission.enum'
 import { IconAreaChart, IconMedicalBox, IconShop, IconShoppingCart } from '../common/icon-antd'
 import AppHomeStatistic from './AppHomeStatistic.vue'
 import { MeService } from '@/modules/_me/me.service'
+import { Room, RoomType, RoomService, RoomTicketStyle } from '@/modules/room'
+import { onMounted, ref } from 'vue'
 
 const { userPermission, organizationPermission, user, roomIdMap } = MeService
+
+const roomOrder = ref<Room>()
+
+onMounted(async () => {
+  const roomList = await RoomService.getAll()
+  roomOrder.value = roomList.find((i) => {
+    return (
+      i.roomType === RoomType.Ticket && i.roomStyle === RoomTicketStyle.TicketOrder
+    )
+  })
+})
 </script>
 
 <template>
@@ -27,14 +40,10 @@ const { userPermission, organizationPermission, user, roomIdMap } = MeService
           </div>
         </div>
 
-        <div
-          v-if="userPermission[PermissionId.TICKET_DRAFT_CRUD]"
-          style="flex-grow: 1; flex-basis: 22%; min-width: 300px"
-          class="p-4"
-        >
+        <div v-if="roomOrder" style="flex-grow: 1; flex-basis: 22%; min-width: 300px" class="p-4">
           <div
             class="bg-[#0094ff] h-full p-4 gap-4 flex justify-between items-start rounded text-white cursor-pointer"
-            @click="$router.push({ name: 'TicketOrderList' })"
+            @click="$router.push({ name: 'TicketOrderList', params: { roomId: roomOrder.id } })"
           >
             <div>
               <div class="text-xl uppercase" style="font-weight: 500">BÁN HÀNG</div>

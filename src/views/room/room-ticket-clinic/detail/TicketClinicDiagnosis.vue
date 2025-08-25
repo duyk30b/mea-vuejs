@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Room, RoomInteractType, RoomService, RoomTicketStyle } from '@/modules/room'
+import { Room, RoomType, RoomService, RoomTicketStyle } from '@/modules/room'
 import TicketDiagnosisGeneral from '@/views/room/room-ticket-base/diagnosis/TicketDiagnosisGeneral.vue'
 import TicketClinicDiagnosisObstetric from './diagnosis/TicketClinicDiagnosisObstetric.vue'
 import TicketClinicDiagnosisEyeBasic from './diagnosis/TicketClinicDiagnosisEyeBasic.vue'
@@ -21,7 +21,7 @@ watch(
     if (!currentRoom.value) {
       currentRoom.value = Room.blank()
       currentRoom.value.isCommon = 1
-      currentRoom.value.roomInteractType = RoomInteractType.Ticket
+      currentRoom.value.roomType = RoomType.Ticket
     }
   },
   { immediate: true },

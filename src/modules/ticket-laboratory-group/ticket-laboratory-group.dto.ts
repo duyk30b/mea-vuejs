@@ -23,13 +23,13 @@ export class TicketLaboratoryGroupGetQuery {
     roomId?: number | ConditionNumber
     ticketId?: number
     registeredAt?: ConditionDate
-    startedAt?: ConditionDate
+    createdAt?: ConditionDate
   }
 
   sort?: {
     id?: 'ASC' | 'DESC'
     registeredAt?: 'ASC' | 'DESC'
-    startedAt?: 'ASC' | 'DESC'
+    createdAt?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<TicketLaboratoryGroupGetQuery>) {

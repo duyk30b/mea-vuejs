@@ -4,7 +4,7 @@ import Breadcrumb from '@/views/component/Breadcrumb.vue'
 import { ref } from 'vue'
 import TopBatchExpiryDate from './TopBatchExpiryDate.vue'
 import TopProductHighMoney from './TopProductHighMoney.vue'
-import TopTicketProduct from './TopTicketProduct.vue'
+import StatisticTicketProduct from './StatisticTicketProduct.vue'
 import TotalProductMoney from './TotalProductMoney.vue'
 
 const TABS_KEY = {
@@ -42,7 +42,7 @@ const activeTab = ref<any>(TABS_KEY.INVENTORY)
           <TopBatchExpiryDate />
         </VueTabPanel>
         <VueTabPanel :tabKey="TABS_KEY.TICKET_PRODUCT">
-          <TopTicketProduct />
+          <StatisticTicketProduct />
         </VueTabPanel>
       </template>
     </VueTabs>

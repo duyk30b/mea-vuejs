@@ -32,9 +32,9 @@ import { Customer } from '@/modules/customer/customer.model'
 import { DiscountType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PositionInteractType } from '@/modules/position'
-import { ProcedureService, type Procedure } from '@/modules/procedure'
+import { ProcedureService, ProcedureType, type Procedure } from '@/modules/procedure'
 import { RoleService } from '@/modules/role'
-import { Room, RoomInteractType, RoomService, RoomTicketStyle } from '@/modules/room'
+import { Room, RoomType, RoomService, RoomTicketStyle } from '@/modules/room'
 import {
   Ticket,
   TicketActionApi,
@@ -43,7 +43,7 @@ import {
   TicketStatus,
 } from '@/modules/ticket'
 import type { TicketAttributeKeyGeneralType, TicketAttributeMap } from '@/modules/ticket-attribute'
-import { TicketProcedure } from '@/modules/ticket-procedure'
+import { TicketProcedure, TicketProcedureStatus } from '@/modules/ticket-procedure'
 import { TicketUser } from '@/modules/ticket-user'
 import { User, UserService } from '@/modules/user'
 import { UserRoleService } from '@/modules/user-role'
@@ -479,29 +479,34 @@ const handleSubmitFormTicketClinic = async () => {
   }
 }
 
-const selectProcedure = async (procedureProp?: Procedure) => {
-  if (procedureProp) {
+const selectProcedure = async (procedureData?: Procedure) => {
+  if (procedureData) {
     const temp = TicketProcedure.blank()
 
     temp.ticketId = 0
     temp.priority = ticketProcedureListRequest.value.length + 1
     temp.customerId = 0
-    temp.procedureId = procedureProp.id
-    temp.procedure = procedureProp
+    temp.procedureId = procedureData.id
+    temp.procedure = procedureData
 
     temp.paymentMoneyStatus = settingStore.TICKET_CLINIC_DETAIL.procedure.paymentMoneyStatus
+    if (procedureData.procedureType === ProcedureType.Basic) {
+      temp.status = TicketProcedureStatus.Completed
+    } else {
+      temp.status = TicketProcedureStatus.Pending
+    }
 
-    temp.expectedPrice = procedureProp.price
+    temp.expectedPrice = procedureData.price
     temp.discountMoney = 0
     temp.discountPercent = 0
     temp.discountType = DiscountType.Percent
-    temp.expectedPrice = procedureProp.price
-    temp.actualPrice = procedureProp.price
+    temp.expectedPrice = procedureData.price
+    temp.actualPrice = procedureData.price
     temp.quantity = 1
-    temp.startedAt = Date.now()
+    temp.createdAt = Date.now()
 
-    await ProcedureService.executeRelation([procedureProp], { discountList: true })
-    const discountApply = procedureProp?.discountApply
+    await ProcedureService.executeRelation([procedureData], { discountList: true })
+    const discountApply = procedureData?.discountApply
     if (discountApply) {
       let { discountType, discountPercent, discountMoney } = discountApply
       const expectedPrice = temp.expectedPrice || 0
@@ -967,7 +972,7 @@ defineExpose({ openModal })
           <div>
             <InputSelectRoom
               v-model:roomId="ticket.roomId"
-              :roomInteractType="RoomInteractType.Ticket"
+              :roomType="RoomType.Ticket"
               removeLabelWrapper
             />
           </div>

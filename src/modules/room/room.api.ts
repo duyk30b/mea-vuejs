@@ -1,6 +1,7 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import { debounceAsync } from '../../utils/helpers'
 import type { BaseResponse } from '../_base/base-dto'
+import { Ticket } from '../ticket'
 import { RoomDetailQuery, RoomGetQuery, RoomListQuery, type RoomPaginationQuery } from './room.dto'
 import { Room } from './room.model'
 
@@ -54,7 +55,7 @@ export class RoomApi {
       room: {
         code: room.code,
         name: room.name,
-        roomInteractType: room.roomInteractType,
+        roomType: room.roomType,
         roomStyle: room.roomStyle,
         isCommon: room.isCommon,
       },
@@ -70,7 +71,7 @@ export class RoomApi {
       room: {
         code: room.code,
         name: room.name,
-        roomInteractType: room.roomInteractType,
+        // roomType: room.roomType,
         roomStyle: room.roomStyle,
         isCommon: room.isCommon,
       },
@@ -82,7 +83,21 @@ export class RoomApi {
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/room/destroy/${id}`)
-    const result = response.data as BaseResponse<{ roomDestroyed: any }>
-    return result
+    const { data } = response.data as BaseResponse<{
+      roomId: number
+      ticketList: Ticket[]
+      success: boolean
+    }>
+    data.ticketList = Ticket.fromList(data.ticketList)
+    return data
+  }
+
+  static async mergeRoom(options: { roomIdSourceList: number[]; roomIdTarget: number }) {
+    const response = await AxiosInstance.post(`/room/merge-room`, {
+      roomIdSourceList: options.roomIdSourceList,
+      roomIdTarget: options.roomIdTarget,
+    })
+    const { data } = response.data as BaseResponse<boolean>
+    return data
   }
 }

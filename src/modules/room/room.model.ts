@@ -1,7 +1,7 @@
 import { User } from '../user'
 import { UserRoom } from '../user-room'
 
-export enum RoomInteractType {
+export enum RoomType {
   Ticket = 1,
   Product = 2,
   Procedure = 3,
@@ -9,12 +9,12 @@ export enum RoomInteractType {
   Radiology = 5,
 }
 
-export const RoomInteractTypeText = {
-  [RoomInteractType.Ticket]: 'Phòng Chính',
-  [RoomInteractType.Product]: 'Phòng Sản phẩm',
-  [RoomInteractType.Procedure]: 'Phòng Dịch vụ',
-  [RoomInteractType.Laboratory]: 'Phòng Xét nghiệm',
-  [RoomInteractType.Radiology]: 'Phòng CĐHA',
+export const RoomTypeText = {
+  [RoomType.Ticket]: 'Phòng Chính',
+  [RoomType.Product]: 'Phòng Sản phẩm',
+  [RoomType.Procedure]: 'Phòng Dịch vụ',
+  [RoomType.Laboratory]: 'Phòng Xét nghiệm',
+  [RoomType.Radiology]: 'Phòng CĐHA',
 }
 
 export enum RoomTicketStyle {
@@ -39,7 +39,7 @@ export class Room {
   id: number
   code: string
   name: string
-  roomInteractType: RoomInteractType
+  roomType: RoomType
   roomStyle: RoomTicketStyle
 
   isCommon: 1 | 0 // Trạng thái
@@ -50,7 +50,7 @@ export class Room {
     ins.id = 0
     ins.code = ''
     ins.name = ''
-    ins.roomInteractType = RoomInteractType.Ticket
+    ins.roomType = RoomType.Ticket
     ins.roomStyle = RoomTicketStyle.TicketClinicGeneral
     ins.isCommon = 0
 
@@ -99,7 +99,7 @@ export class Room {
     if (a.id != b.id) return false
     if (a.code != b.code) return false
     if (a.name != b.name) return false
-    if (a.roomInteractType != b.roomInteractType) return false
+    if (a.roomType != b.roomType) return false
     if (a.roomStyle != b.roomStyle) return false
     if (a.isCommon != b.isCommon) return false
 

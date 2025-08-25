@@ -29,7 +29,9 @@ export class TicketLaboratory {
 
   status: TicketLaboratoryStatus
   paymentMoneyStatus: PaymentMoneyStatus
-  startedAt: number | null
+
+  createdAt: number
+  completedAt: number | null
 
   customer?: Customer
   ticket?: Ticket
@@ -115,7 +117,8 @@ export class TicketLaboratory {
 
     if (a.status != b.status) return false
 
-    if (a.startedAt != b.startedAt) return false
+    if (a.createdAt != b.createdAt) return false
+    if (a.completedAt != b.completedAt) return false
     return true
   }
 

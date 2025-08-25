@@ -55,8 +55,8 @@ watch(
   () => props.ticketRadiologyProp,
   async (newValue) => {
     ticketRadiologyOrigin.value = TicketRadiology.from(newValue)
-    if (!ticketRadiologyOrigin.value.startedAt) {
-      ticketRadiologyOrigin.value.startedAt = Date.now()
+    if (!ticketRadiologyOrigin.value.completedAt) {
+      ticketRadiologyOrigin.value.completedAt = Date.now()
     }
 
     ticketRadiology.value = TicketRadiology.from(ticketRadiologyOrigin.value)
@@ -172,8 +172,8 @@ onMounted(async () => {
 const updateResult = async (options: { print: boolean }) => {
   try {
     saveLoading.value = true
-    if (!ticketRadiology.value.startedAt) {
-      ticketRadiology.value.startedAt = Date.now()
+    if (!ticketRadiology.value.completedAt) {
+      ticketRadiology.value.completedAt = Date.now()
     }
     const { filesPosition, imageIdsKeep, files, imageUrls, imageIdsWait } =
       imageUploadMultipleRef.value?.getData() || {
@@ -224,7 +224,7 @@ const resetResult = () => {
   ticketRadiology.value.result = radiologyDefault.resultDefault || ''
   ticketRadiology.value.customStyles = radiologyDefault.customStyles || ''
   ticketRadiology.value.customVariables = radiologyDefault.customVariables || ''
-  ticketRadiology.value.startedAt = null as any
+  ticketRadiology.value.completedAt = null as any
 }
 
 const clickCancelResult = async () => {
@@ -334,7 +334,7 @@ const startPrintDemo = async () => {
           </div>
           <div>
             <InputDate
-              v-model:value="ticketRadiology.startedAt"
+              v-model:value="ticketRadiology.completedAt"
               :disabled="!editable"
               defaultType="date"
               showTime

@@ -6,13 +6,16 @@ import { IconEditSquare } from '../../../common/icon-google'
 import { InputSelect } from '../../../common/vue-form'
 import { MeService } from '../../../modules/_me/me.service'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { RoomInteractTypeText, RoomTicketStyleText, type Room } from '../../../modules/room'
+import { RoomTypeText, RoomTicketStyleText, type Room } from '../../../modules/room'
 import { RoomService } from '../../../modules/room/room.service'
 import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalRoomUpsert from './ModalRoomUpsert.vue'
 import { CONFIG } from '@/config'
+import { IconMergeCells } from '@/common/icon-antd'
+import ModalRoomMerge from './ModalRoomMerge.vue'
 
 const modalRoomUpsert = ref<InstanceType<typeof ModalRoomUpsert>>()
+const modalRoomMerge = ref<InstanceType<typeof ModalRoomMerge>>()
 
 const { userPermission } = MeService
 
@@ -68,9 +71,14 @@ const handleModalRoomUpsertSuccess = async (data: Room, type: 'CREATE' | 'UPDATE
   await startFetchData({ refetch: true })
   await MeService.reloadRoomId()
 }
+
+const handleModalRoomMergeSuccess = async () => {
+  await startFetchData({ refetch: true })
+}
 </script>
 
 <template>
+  <ModalRoomMerge ref="modalRoomMerge" @success="handleModalRoomMergeSuccess" />
   <ModalRoomUpsert ref="modalRoomUpsert" @success="handleModalRoomUpsertSuccess" />
   <div class="mx-4 mt-4 gap-4 flex items-center">
     <div class="hidden md:block">
@@ -86,7 +94,12 @@ const handleModalRoomUpsertSuccess = async (data: Room, type: 'CREATE' | 'UPDATE
         Thêm mới
       </VueButton>
     </div>
-    <div class="ml-auto flex items-center gap-8"></div>
+    <div class="ml-auto flex items-center gap-8">
+      <VueButton @click="modalRoomMerge?.openModal()">
+        <IconMergeCells />
+        Gộp phòng
+      </VueButton>
+    </div>
   </div>
 
   <div class="mt-4 md:mx-4 p-4 bg-white">
@@ -132,7 +145,7 @@ const handleModalRoomUpsertSuccess = async (data: Room, type: 'CREATE' | 'UPDATE
             </td>
             <td class="text-center">{{ room.code }}</td>
             <td>{{ room.name }}</td>
-            <td>{{ RoomInteractTypeText[room.roomInteractType] }}</td>
+            <td>{{ RoomTypeText[room.roomType] }}</td>
             <td>{{ RoomTicketStyleText[room.roomStyle] }}</td>
             <td>{{ room.isCommon ? 'Phòng chung' : 'Phòng lẻ' }}</td>
             <td>{{ room.userRoomList?.map((i) => i.user?.fullName).join(', ') }}</td>

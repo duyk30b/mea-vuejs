@@ -5,7 +5,7 @@ import { InputDate } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Appointment, AppointmentApi } from '@/modules/appointment'
-import { RoomInteractType, RoomService } from '@/modules/room'
+import { RoomType, RoomService } from '@/modules/room'
 import InputSelectRoom from '@/views/component/InputSelectRoom.vue'
 import { ref } from 'vue'
 
@@ -27,7 +27,7 @@ const openModal = async (appointmentProp: Appointment) => {
   appointment.value = Appointment.from(appointmentProp)
   registeredAt.value = Date.now()
 
-  const roomList = await RoomService.list({ filter: { roomInteractType: RoomInteractType.Ticket } })
+  const roomList = await RoomService.list({ filter: { roomType: RoomType.Ticket } })
   roomId.value = roomList[0].id
 }
 
@@ -83,7 +83,7 @@ defineExpose({ openModal })
           <InputSelectRoom
             label="Chọn phòng tiếp đón"
             v-model:roomId="roomId"
-            :roomInteractType="RoomInteractType.Ticket"
+            :roomType="RoomType.Ticket"
           />
         </div>
       </div>

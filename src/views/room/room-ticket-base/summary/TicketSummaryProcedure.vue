@@ -14,6 +14,7 @@ import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatu
 import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalTicketProcedureUpdate from '@/views/room/room-ticket-base/procedure/ModalTicketProcedureUpdate.vue'
 import { computed, onMounted, ref } from 'vue'
+import TicketProcedureStatusTooltip from '../../room-procedure/TicketProcedureStatusTooltip.vue'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalTicketProcedureUpdate = ref<InstanceType<typeof ModalTicketProcedureUpdate>>()
@@ -65,7 +66,9 @@ const procedureDiscount = computed(() => {
         <td>
           <PaymentMoneyStatusTooltip :paymentMoneyStatus="ticketProcedure.paymentMoneyStatus" />
         </td>
-        <td></td>
+        <td class="text-center">
+          <TicketProcedureStatusTooltip :status="ticketProcedure.status" />
+        </td>
         <td :colspan="ticketProcedure.procedure?.procedureType !== ProcedureType.Basic ? 4 : 3">
           <div class="flex items-center gap-1">
             <span>{{ ticketProcedure.procedure?.name }}</span>

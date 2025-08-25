@@ -21,14 +21,14 @@ export class TicketRadiologyGetQuery {
     roomId?: number | ConditionNumber
     customerId?: number
     ticketId?: number
-    startedAt?: ConditionDate
-    registeredAt?: ConditionDate
+    completedAt?: ConditionDate
+    createdAt?: ConditionDate
   }
 
   sort?: {
     id?: 'ASC' | 'DESC'
-    startedAt?: 'ASC' | 'DESC'
-    registeredAt?: 'ASC' | 'DESC'
+    completedAt?: 'ASC' | 'DESC'
+    createdAt?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<TicketRadiologyGetQuery>) {

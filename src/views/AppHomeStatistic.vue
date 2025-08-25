@@ -34,7 +34,7 @@ const { userPermission } = MeService
 </script>
 
 <template>
-  <div class="flex flex-wrap bg-white p-4 gap-8">
+  <div class="flex flex-wrap bg-white px-4 gap-8">
     <div
       v-if="userPermission[PermissionId.STATISTIC_PRODUCT]"
       style="flex-grow: 1; flex-basis: 400px; max-width: 100%; overflow: auto"

@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import { StatisticProductApi } from '@/modules/statistics'
 import type { ChartData, ChartOptions } from 'chart.js'
 import { onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { VueSelect } from '../../../common/vue-form'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { StatisticService } from '../../../modules/statistics'
 
 const settingStore = useSettingStore()
 const moneyDivision = settingStore.SYSTEM_SETTING.moneyDivisionFormat
@@ -47,7 +47,7 @@ const typeHighMoney = ref<'quantity' | 'costAmount' | 'retailAmount'>('costAmoun
 const startFetchData = async () => {
   try {
     loaded.value = false
-    const data = await StatisticService.topProductHightMoney({
+    const data = await StatisticProductApi.topProductHightMoney({
       limit: isMobile ? 10 : 20,
       orderBy: typeHighMoney.value,
     })

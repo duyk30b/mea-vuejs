@@ -161,8 +161,10 @@ export class RoomService {
   }
 
   static async destroyOne(id: number) {
-    const result = await RoomApi.destroyOne(id)
-    RoomService.loadedAll = false
-    return result
+    const response = await RoomApi.destroyOne(id)
+    if (response.success) {
+      RoomService.loadedAll = false
+    }
+    return response
   }
 }

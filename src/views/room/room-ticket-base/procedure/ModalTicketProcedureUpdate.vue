@@ -21,7 +21,7 @@ import { User, UserService } from '@/modules/user'
 import { UserRoleService } from '@/modules/user-role'
 import { ESString } from '@/utils'
 import { computed, onMounted, ref } from 'vue'
-import TicketProcedureStatusTag from '../TicketProcedureStatusTag.vue'
+import TicketProcedureStatusTag from '../../room-procedure/TicketProcedureStatusTag.vue'
 
 const emit = defineEmits<{
   (e: 'success', value: TicketProcedure, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void

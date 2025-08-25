@@ -86,7 +86,7 @@ export class TicketReceptionApi {
 
             status: tp.status,
             paymentMoneyStatus: tp.paymentMoneyStatus,
-            startedAt: tp.startedAt,
+            createdAt: tp.createdAt,
           },
         }
       }),

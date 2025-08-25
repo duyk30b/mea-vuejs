@@ -9,7 +9,7 @@ import type { TicketRadiologyListQuery } from '../ticket-radiology'
 import type { TicketStatus } from './ticket.model'
 
 export class TicketGetQuery {
-  page: number
+  page?: number
   limit?: number
   relation?: {
     customer?: boolean

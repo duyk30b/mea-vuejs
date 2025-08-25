@@ -32,7 +32,7 @@ import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer } from '@/modules/customer'
 import { DeliveryStatus, PaymentViewType, PickupStrategy } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Room, RoomInteractType, RoomService, RoomTicketStyle, ticketRoomRef } from '@/modules/room'
+import { Room, RoomType, RoomService, RoomTicketStyle, ticketRoomRef } from '@/modules/room'
 import { Ticket, TicketActionApi, TicketService, TicketStatus } from '@/modules/ticket'
 import { TicketRadiologyStatus } from '@/modules/ticket-radiology'
 import { UserRoleService } from '@/modules/user-role'
@@ -80,7 +80,7 @@ watch(
     if (!currentRoom.value) {
       currentRoom.value = Room.blank()
       currentRoom.value.isCommon = 1
-      currentRoom.value.roomInteractType = RoomInteractType.Ticket
+      currentRoom.value.roomType = RoomType.Ticket
       currentRoom.value.roomStyle = RoomTicketStyle.TicketClinicGeneral
     }
     startFetchData()

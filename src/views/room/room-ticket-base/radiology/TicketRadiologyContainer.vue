@@ -14,7 +14,7 @@ import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import { Radiology, RadiologyService } from '@/modules/radiology'
 import { RadiologyGroupService } from '@/modules/radiology-group'
-import { RoomInteractType, RoomService, ticketRoomRef } from '@/modules/room'
+import { RoomType, RoomService, ticketRoomRef } from '@/modules/room'
 import { TicketChangeRadiologyApi, TicketStatus } from '@/modules/ticket'
 import {
   TicketRadiology,
@@ -94,7 +94,7 @@ const selectRadiology = async (radiologyData?: Radiology) => {
   temp.customStyles = radiologyData.customStyles
   temp.customVariables = radiologyData.customVariables
 
-  temp.registeredAt = Date.now()
+  temp.createdAt = Date.now()
   temp.costPrice = radiologyData.costPrice
   temp.expectedPrice = radiologyData.price
   temp.discountMoney = 0

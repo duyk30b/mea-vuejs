@@ -25,7 +25,7 @@ const ticketLaboratoryResultTree = ref<Record<string, TicketLaboratoryResult>>({
 
 const ticketLaboratoryGroupId = ref<number>(0)
 const ticketLaboratoryGroup = ref<TicketLaboratoryGroup>(TicketLaboratoryGroup.blank())
-const startedAt = ref<number>(Date.now())
+const completedAt = ref<number>(Date.now())
 
 const saveLoading = ref(false)
 
@@ -104,7 +104,7 @@ const updateResult = async (options: { print: boolean }) => {
     const ticketLaboratoryGroupUpdate = await TicketChangeLaboratoryApi.updateResult({
       ticketId: ticketLaboratoryGroup.value.ticketId,
       ticketLaboratoryGroupId: ticketLaboratoryGroupId.value,
-      startedAt: startedAt.value,
+      completedAt: completedAt.value,
       ticketLaboratoryResultUpdateList: Object.values(ticketLaboratoryResultTree.value),
       response: {
         ticketLaboratoryGroup: options.print
@@ -332,7 +332,7 @@ defineExpose({ openModal })
 
         <div class="mt-6">
           <div>Thời gian trả kết quả:</div>
-          <div><InputDate v-model:value="startedAt" show-time typeParser="number" /></div>
+          <div><InputDate v-model:value="completedAt" show-time typeParser="number" /></div>
         </div>
 
         <div class="mt-6 flex justify-end gap-4">

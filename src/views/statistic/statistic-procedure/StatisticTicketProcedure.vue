@@ -1,13 +1,16 @@
 <script setup lang="ts">
+import { VuePagination } from '@/common'
 import { CONFIG } from '@/config'
-import { TicketProductApi, type TicketProductStatisticResponseType } from '@/modules/ticket-product'
+import {
+  StatisticProcedureApi,
+  type StatisticTicketProcedureResponseType,
+} from '@/modules/statistics/statistic-procedure.api'
 import type { ChartData, ChartOptions } from 'chart.js'
 import { onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
-import { InputDate, InputSelect, VueSelect } from '../../../common/vue-form'
+import { InputDate, InputSelect } from '../../../common/vue-form'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { ESTimer } from '../../../utils'
-import { VuePagination } from '@/common'
 
 const settingStore = useSettingStore()
 const moneyDivision = settingStore.SYSTEM_SETTING.moneyDivisionFormat
@@ -16,21 +19,20 @@ const { isMobile, formatMoney } = settingStore
 const fromTime = ref<number>(ESTimer.startOfMonth(new Date()).getTime())
 const toTime = ref<number>(ESTimer.endOfMonth(new Date()).getTime())
 
-const dataStatistic = ref<TicketProductStatisticResponseType[]>([])
-const barKeyTopType = ref<keyof TicketProductStatisticResponseType>('count')
-const barKeyTopOptions = [
-  { text: 'Lượt bán', value: 'count' },
-  { text: 'Số lượng', value: 'sumQuantity' },
-  { text: 'Tiền vốn', value: 'sumCostAmount' },
-  { text: 'Tiền bán', value: 'sumActualAmount' },
-  { text: 'Tiền lãi', value: 'sumProfitAmount' },
+const dataStatistic = ref<StatisticTicketProcedureResponseType[]>([])
+const sortKey = ref<keyof StatisticTicketProcedureResponseType>('count')
+const sortKeyOptions = [
+  { label: 'Lượt bán', value: 'count' },
+  { label: 'Số lượng', value: 'sumQuantity' },
+  { label: 'Tiền bán', value: 'sumActualAmount' },
 ]
+
 const barData = reactive<ChartData<'bar', (number | [number, number] | null)[], unknown>>({
   labels: [],
   datasets: [],
 })
 
-const options: ChartOptions = {
+const barOptions: ChartOptions = {
   responsive: true,
   maintainAspectRatio: false,
   scales: {
@@ -62,54 +64,53 @@ const limit = ref(isMobile ? 10 : 20)
 const total = ref(0)
 const loaded = ref(false)
 
-const startFetchTicketProductStatistic = async () => {
-  const fetchResponse = await TicketProductApi.statisticProduct({
-    filter: {
-      createdAt:
-        fromTime.value || toTime.value
-          ? {
-              GTE: fromTime.value ? fromTime.value : undefined,
-              LTE: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
-            }
-          : undefined,
-    },
-    sortStatistic: { [barKeyTopType.value]: 'DESC' },
-    limit: limit.value,
-    page: page.value,
-  })
-  dataStatistic.value = fetchResponse.dataStatistic
-  total.value = fetchResponse.total
-
-  barData.labels = Array.from({ length: limit.value }, (_, i) => '')
-  barData.datasets = [
-    {
-      type: 'bar',
-      label: barKeyTopOptions.find((i) => i.value === barKeyTopType.value)?.text || '',
-      data: Array.from({ length: limit.value }, (_, i) => 0),
-      borderWidth: 1,
-      stack: 'Stack 0',
-    },
-  ]
-  barData.labels.splice(
-    0,
-    dataStatistic.value.length,
-    ...dataStatistic.value.map((i) => i.product.brandName),
-  )
-  barData.datasets[0].data.splice(
-    0,
-    dataStatistic.value.length,
-    ...dataStatistic.value.map((i) => {
-      const val = i[barKeyTopType.value]
-      return val as any
-    }),
-  )
-}
-
 const startFetchData = async () => {
   try {
     loaded.value = false
-    await startFetchTicketProductStatistic()
+
+    const fetchResponse = await StatisticProcedureApi.statisticTicketProcedure({
+      filter: {
+        createdAt:
+          fromTime.value || toTime.value
+            ? {
+                GTE: fromTime.value ? fromTime.value : undefined,
+                LTE: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
+              }
+            : undefined,
+      },
+      sortStatistic: { [sortKey.value]: 'DESC' },
+      limit: limit.value,
+      page: page.value,
+    })
+    dataStatistic.value = fetchResponse.statisticPagination
+    total.value = fetchResponse.statisticTotal.count
+
+    barData.labels = Array.from({ length: limit.value }, (_, i) => '')
+    barData.labels.splice(
+      0,
+      dataStatistic.value.length,
+      ...dataStatistic.value.map((i) => i.procedure?.name),
+    )
+
+    barData.datasets = [
+      {
+        type: 'bar',
+        label: sortKeyOptions.find((i) => i.value === sortKey.value)?.label || '',
+        data: Array.from({ length: limit.value }, (_, i) => 0),
+        borderWidth: 1,
+        stack: 'Stack 0',
+      },
+    ]
+    barData.datasets[0].data.splice(
+      0,
+      dataStatistic.value.length,
+      ...dataStatistic.value.map((i) => {
+        const val = i[sortKey.value]
+        return val as any
+      }),
+    )
   } catch (error) {
+    console.log('🚀 ~ StatisticTicketProcedure.vue:112 ~ startFetchData ~ error:', error)
   } finally {
     loaded.value = true
   }
@@ -119,7 +120,7 @@ const handleChangeTime = async (value: any) => {
   await startFetchData()
 }
 
-const handleChangeOptionBar = async (option: { text?: string; value?: any }) => {
+const handleChangeKeyTopOption = async (option: { label: string; value: any }) => {
   await startFetchData()
 }
 
@@ -157,18 +158,20 @@ onBeforeMount(async () => await startFetchData())
         </div>
       </div>
     </div>
+
     <div class="mt-4 flex items-center gap-4">
       <span style="font-size: 18px; font-weight: 500">Chọn biểu đồ:</span>
       <div style="width: 150px">
-        <VueSelect
-          v-model:value="barKeyTopType"
-          :options="barKeyTopOptions"
-          @selectItem="handleChangeOptionBar"
+        <InputSelect
+          v-model:value="sortKey"
+          :options="sortKeyOptions"
+          @selectItem="handleChangeKeyTopOption"
         />
       </div>
     </div>
+
     <div style="height: 500px">
-      <Bar v-if="loaded" :data="barData" :options="options as any" />
+      <Bar v-if="loaded" :data="barData" :options="barOptions as any" />
     </div>
 
     <div class="mt-4 table-wrapper">
@@ -178,26 +181,22 @@ onBeforeMount(async () => await startFetchData())
           <tr>
             <th v-if="CONFIG.MODE === 'development'">ID</th>
             <th>#</th>
-            <th>Sản phẩm</th>
+            <th>Dịch vụ</th>
             <th>Lượt bán</th>
             <th>Số lượng</th>
-            <th>Tổng vốn</th>
-            <th>Tổng tiền bán</th>
-            <th>Tổng lãi</th>
+            <th>Tổng tiền</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(item, index) in dataStatistic" :key="index">
             <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
-              {{ item.productId }}
+              {{ item.procedureId }}
             </td>
             <td class="text-center">{{ (page - 1) * limit + index + 1 }}</td>
-            <td>{{ item.product?.brandName }}</td>
+            <td>{{ item.procedure?.name }}</td>
             <td class="text-center">{{ item.count }}</td>
             <td class="text-center">{{ item.sumQuantity }}</td>
-            <td class="text-right">{{ formatMoney(item.sumCostAmount) }}</td>
             <td class="text-right">{{ formatMoney(item.sumActualAmount) }}</td>
-            <td class="text-right">{{ formatMoney(item.sumProfitAmount) }}</td>
           </tr>
         </tbody>
       </table>

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { InputSelect, type InputSelectOption } from '@/common/vue-form'
 import { CONFIG } from '@/config'
-import { Room, RoomInteractType, RoomService, RoomTicketStyle } from '@/modules/room'
+import { Room, RoomType, RoomService, RoomTicketStyle } from '@/modules/room'
 import { onMounted, ref } from 'vue'
 
 const emit = defineEmits<{
@@ -12,13 +12,14 @@ const emit = defineEmits<{
 const props = withDefaults(
   defineProps<{
     roomId: number
-    roomInteractType?: RoomInteractType
+    roomType?: RoomType
     roomTicketStyle?: RoomTicketStyle
     disabled?: boolean
     required?: boolean
     label?: string
     removeLabelWrapper?: boolean
     autoSelectFirstValue?: boolean
+    optionZero?: boolean
   }>(),
   {
     roomId: 0,
@@ -27,6 +28,7 @@ const props = withDefaults(
     label: 'Chọn phòng',
     removeLabelWrapper: false,
     autoSelectFirstValue: false,
+    optionZero: false,
   },
 )
 
@@ -35,13 +37,16 @@ const roomOptions = ref<InputSelectOption<Room>[]>([])
 onMounted(async () => {
   const roomList = await RoomService.list({
     filter: {
-      roomInteractType: props.roomInteractType ? props.roomInteractType : undefined,
+      roomType: props.roomType ? props.roomType : undefined,
       roomStyle: props.roomTicketStyle ? props.roomTicketStyle : undefined,
     },
   })
   roomOptions.value = roomList.map((i) => {
     return { value: i.id, label: i.name, data: i }
   })
+  if (props.optionZero) {
+    roomOptions.value.unshift({ label: 'Tất cả', value: 0 })
+  }
 
   if (props.roomId == 0 && props.autoSelectFirstValue && roomList.length) {
     const firstValue = roomList[0]

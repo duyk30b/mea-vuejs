@@ -17,12 +17,12 @@ export class TicketLaboratoryGetQuery {
     laboratoryId?: number
     customerId?: number
     ticketId?: number
-    startedAt?: ConditionDate
+    createdAt?: ConditionDate
   }
 
   sort?: {
     id?: 'ASC' | 'DESC'
-    startedAt?: 'ASC' | 'DESC'
+    createdAt?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<TicketLaboratoryGetQuery>) {

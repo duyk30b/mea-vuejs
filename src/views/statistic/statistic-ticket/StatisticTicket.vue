@@ -1,23 +1,24 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import { IconBarChart, IconSetting } from '@/common/icon-antd'
 import { IconDownload } from '@/common/icon-google'
+import VueDropdown from '@/common/popover/VueDropdown.vue'
+import { VueSelect } from '@/common/vue-form'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
 import { FileTicketApi } from '@/modules/file-excel/file-ticket.api'
-import { RoomInteractType } from '@/modules/room'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { RoomType } from '@/modules/room'
+import { StatisticTicketApi } from '@/modules/statistics/statistic-ticket.api'
+import { TicketStatus } from '@/modules/ticket'
+import { ESTimer } from '@/utils'
 import InputSelectRoom from '@/views/component/InputSelectRoom.vue'
 import type { ChartData } from 'chart.js'
 import dayjs, { type Dayjs } from 'dayjs'
 import { nextTick, onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
-import VueButton from '../../../common/VueButton.vue'
-import { IconBarChart, IconSetting } from '../../../common/icon-antd'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
-import { VueSelect } from '../../../common/vue-form'
-import { MeService } from '../../../modules/_me/me.service'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { StatisticService } from '../../../modules/statistics'
-import { TicketStatus } from '../../../modules/ticket'
-import { ESTimer } from '../../../utils'
+import { useRoute, useRouter } from 'vue-router'
 import ModalStatisticTicketSetting from './ModalStatisticTicketSetting.vue'
 
 type DataResponseType = {
@@ -42,6 +43,9 @@ const options = {
 }
 
 const modalStatisticTicketSetting = ref<InstanceType<typeof ModalStatisticTicketSetting>>()
+
+const router = useRouter()
+const route = useRoute()
 
 const settingStore = useSettingStore()
 const moneyDivision = settingStore.SYSTEM_SETTING.moneyDivisionFormat
@@ -78,7 +82,7 @@ const startFetchData = async () => {
       fromTime = ESTimer.startOfMonth(timeRanger.value?.[0].toISOString())
       toTime = ESTimer.endOfMonth(timeRanger.value?.[1].toISOString())
     }
-    data.value = await StatisticService.statisticTicket({
+    data.value = await StatisticTicketApi.statisticTicket({
       fromTime: fromTime.toISOString(),
       toTime: toTime.toISOString(),
       groupTimeType: timeType.value,
@@ -207,8 +211,9 @@ const downloadTicketList = (menu: { key: string }) => {
         <div>
           <InputSelectRoom
             v-model:roomId="roomId"
-            :roomInteractType="RoomInteractType.Ticket"
+            :roomType="RoomType.Ticket"
             removeLabelWrapper
+            optionZero
             @update:roomId="startFetchData"
           />
         </div>
@@ -281,13 +286,21 @@ const downloadTicketList = (menu: { key: string }) => {
           {{ formatMoney(data.reduce((acc, item) => acc + item.sumTotalCostAmount, 0)) }}
         </div>
       </div>
-      <div v-if="settingStore.TICKET_STATISTIC.sumProcedureMoney" class="card">
+      <div
+        v-if="settingStore.TICKET_STATISTIC.sumProcedureMoney"
+        class="card cursor-pointer"
+        @click="router.push({ name: 'StatisticProcedure' })"
+      >
         <div class="card-title">Tổng tiền dịch vụ</div>
         <div class="card-number" style="font-weight: 500">
           {{ formatMoney(data.reduce((acc, item) => acc + item.sumProcedureMoney, 0)) }}
         </div>
       </div>
-      <div v-if="settingStore.TICKET_STATISTIC.sumProductMoney" class="card">
+      <div
+        v-if="settingStore.TICKET_STATISTIC.sumProductMoney"
+        class="card cursor-pointer"
+        @click="router.push({ name: 'StatisticProduct' })"
+      >
         <div class="card-title">Tổng tiền sản phẩm</div>
         <div class="card-number" style="font-weight: 500">
           {{ formatMoney(data.reduce((acc, item) => acc + item.sumProductMoney, 0)) }}

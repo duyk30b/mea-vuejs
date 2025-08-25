@@ -12,7 +12,7 @@ export class TicketChangeLaboratoryApi {
     ticketLaboratoryGroupAddList?: {
       roomId: number
       laboratoryGroupId: number
-      registeredAt: number | null
+      createdAt: number | null
       paymentMoneyStatus: PaymentMoneyStatus
       ticketLaboratoryList: TicketLaboratory[]
     }[]
@@ -20,7 +20,7 @@ export class TicketChangeLaboratoryApi {
       roomId: number
       id: number
       laboratoryGroupId: number
-      registeredAt: number | null
+      createdAt: number | null
       ticketLaboratoryList: TicketLaboratory[]
     }
   }) {
@@ -29,7 +29,7 @@ export class TicketChangeLaboratoryApi {
       ticketLaboratoryGroupAddList: ticketLaboratoryGroupAddList
         ? ticketLaboratoryGroupAddList.map((tlg) => ({
           laboratoryGroupId: tlg.laboratoryGroupId,
-          registeredAt: tlg.registeredAt,
+          createdAt: tlg.createdAt,
           roomId: tlg.roomId,
           paymentMoneyStatus: tlg.paymentMoneyStatus,
           ticketLaboratoryList: tlg.ticketLaboratoryList.map((tl) => ({
@@ -42,6 +42,7 @@ export class TicketChangeLaboratoryApi {
             discountPercent: tl.discountPercent,
             discountType: tl.discountType,
             actualPrice: tl.actualPrice,
+            createdAt: tlg.createdAt,
             paymentMoneyStatus: tl.paymentMoneyStatus,
           })),
         }))
@@ -50,7 +51,7 @@ export class TicketChangeLaboratoryApi {
         ? {
           id: ticketLaboratoryGroupUpdate.id,
           laboratoryGroupId: ticketLaboratoryGroupUpdate.laboratoryGroupId,
-          registeredAt: ticketLaboratoryGroupUpdate.registeredAt,
+          createdAt: ticketLaboratoryGroupUpdate.createdAt,
           roomId: ticketLaboratoryGroupUpdate.roomId,
           ticketLaboratoryList: ticketLaboratoryGroupUpdate.ticketLaboratoryList.map((tl) => ({
             priority: tl.priority,
@@ -62,6 +63,7 @@ export class TicketChangeLaboratoryApi {
             discountPercent: tl.discountPercent,
             discountType: tl.discountType,
             actualPrice: tl.actualPrice,
+            createdAt: ticketLaboratoryGroupUpdate.createdAt,
           })),
         }
         : undefined,
@@ -121,7 +123,7 @@ export class TicketChangeLaboratoryApi {
   static async updateResult(options: {
     ticketId: number
     ticketLaboratoryGroupId: number
-    startedAt: number
+    completedAt: number
     ticketLaboratoryResultUpdateList: TicketLaboratoryResult[]
     response: {
       ticketLaboratoryGroup: {
@@ -138,7 +140,7 @@ export class TicketChangeLaboratoryApi {
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/laboratory/update-result/${ticketLaboratoryGroupId}`,
       {
-        startedAt: options.startedAt,
+        completedAt: options.completedAt,
         ticketLaboratoryResultUpdateList: options.ticketLaboratoryResultUpdateList.map((i) => {
           return {
             id: i.id,

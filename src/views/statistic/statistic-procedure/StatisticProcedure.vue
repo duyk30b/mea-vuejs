@@ -1,23 +1,21 @@
 <script setup lang="ts">
-import { IconBarChart } from '../../../common/icon-antd'
-import TopProcedureBestSelling from './TopProcedureBestSelling.vue'
+import Breadcrumb from '@/views/component/Breadcrumb.vue'
+import StatisticTicketProcedure from './StatisticTicketProcedure.vue'
 </script>
 
 <template>
-  <div class="page-header">
-    <div class="page-header-content">
-      <div class="md:block">
-        <IconBarChart />
-        <span class="ml-2">Báo cáo dịch vụ</span>
-      </div>
+  <div class="mx-4 mt-4 gap-4 flex items-center">
+    <div class="hidden md:block">
+      <Breadcrumb />
     </div>
+    <div class="ml-auto flex items-center gap-8"></div>
   </div>
 
   <div class="page-main">
     <div class="p-4">
       <div class="flex flex-wrap items-stretch gap-20">
         <div style="flex: 1; min-height: 500px">
-          <TopProcedureBestSelling />
+          <StatisticTicketProcedure />
         </div>
       </div>
     </div>

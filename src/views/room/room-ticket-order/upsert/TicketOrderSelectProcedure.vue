@@ -6,12 +6,13 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DiscountType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Procedure, ProcedureService } from '@/modules/procedure'
-import { TicketProcedure } from '@/modules/ticket-procedure'
+import { Procedure, ProcedureService, ProcedureType } from '@/modules/procedure'
+import { TicketProcedure, TicketProcedureStatus } from '@/modules/ticket-procedure'
 import { ESString } from '@/utils'
 import ModalProcedureUpsert from '@/views/master-data/procedure/upsert/ModalProcedureUpsert.vue'
 import { ref } from 'vue'
 import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
+import TicketProcedureStatusTag from '../../room-procedure/TicketProcedureStatusTag.vue'
 
 const inputOptionsProcedure = ref<InstanceType<typeof InputOptions>>()
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
@@ -43,37 +44,45 @@ const selectProcedure = async (procedure: Procedure) => {
   await createTicketProcedure(procedure)
 }
 
-const createTicketProcedure = async (procedureProp?: Procedure) => {
-  const tpItem = TicketProcedure.blank()
-  if (procedureProp) {
-    tpItem.procedureId = procedureProp.id
-    tpItem.procedure = Procedure.from(procedureProp)
-    tpItem.quantity = 1
+const createTicketProcedure = async (procedureData?: Procedure) => {
+  const temp = TicketProcedure.blank()
+  if (procedureData) {
+    temp.procedureId = procedureData.id
+    temp.procedure = Procedure.from(procedureData)
 
-    tpItem.expectedPrice = procedureProp.price
-    tpItem.discountType = DiscountType.Percent
-    tpItem.discountMoney = 0
-    tpItem.discountPercent = 0
-    tpItem.actualPrice = procedureProp.price
+    temp.quantity = 1
+    if (procedureData.procedureType === ProcedureType.Basic) {
+      temp.status = TicketProcedureStatus.Completed
+    } else {
+      temp.status = TicketProcedureStatus.Pending
+    }
+    temp.totalSessions = procedureData.totalSessions
+    temp.createdAt = Date.now()
 
-    await ProcedureService.executeRelation([procedureProp], { discountList: true })
-    const discountApply = procedureProp?.discountApply
+    temp.expectedPrice = procedureData.price
+    temp.discountType = DiscountType.Percent
+    temp.discountMoney = 0
+    temp.discountPercent = 0
+    temp.actualPrice = procedureData.price
+
+    await ProcedureService.executeRelation([procedureData], { discountList: true })
+    const discountApply = procedureData?.discountApply
     if (discountApply) {
       let { discountType, discountPercent, discountMoney } = discountApply
-      const expectedPrice = tpItem.expectedPrice || 0
+      const expectedPrice = temp.expectedPrice || 0
       if (discountType === DiscountType.Percent) {
         discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
       }
       if (discountType === DiscountType.VND) {
         discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
       }
-      tpItem.discountType = discountType
-      tpItem.discountPercent = discountPercent
-      tpItem.discountMoney = discountMoney
-      tpItem.actualPrice = expectedPrice - discountMoney
+      temp.discountType = discountType
+      temp.discountPercent = discountPercent
+      temp.discountMoney = discountMoney
+      temp.actualPrice = expectedPrice - discountMoney
     }
   }
-  ticketProcedure.value = tpItem
+  ticketProcedure.value = temp
 }
 
 const handleChangeUnitDiscountMoney = (data: number) => {

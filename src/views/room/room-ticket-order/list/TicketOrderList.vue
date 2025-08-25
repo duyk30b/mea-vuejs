@@ -11,7 +11,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer, CustomerService } from '@/modules/customer'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Room, RoomInteractType, RoomService, roomTicketPagination } from '@/modules/room'
+import { Room, RoomType, RoomService, roomTicketPagination } from '@/modules/room'
 import { TicketStatus } from '@/modules/ticket'
 import { TicketQueryApi } from '@/modules/ticket/api/ticket-query.api'
 import { ESString, ESTimer } from '@/utils'
@@ -62,7 +62,7 @@ watch(
     if (!currentRoom.value) {
       currentRoom.value = Room.blank()
       currentRoom.value.isCommon = 1
-      currentRoom.value.roomInteractType = RoomInteractType.Ticket
+      currentRoom.value.roomType = RoomType.Ticket
     }
     startFetchData()
   },

@@ -16,7 +16,7 @@ export class TicketChangeRadiologyApi {
 
         paymentMoneyStatus: ticketRadiology.paymentMoneyStatus,
 
-        registeredAt: ticketRadiology.registeredAt,
+        createdAt: ticketRadiology.createdAt,
         costPrice: ticketRadiology.costPrice,
         expectedPrice: ticketRadiology.expectedPrice,
         discountMoney: ticketRadiology.discountMoney,
@@ -123,7 +123,7 @@ export class TicketChangeRadiologyApi {
     formData.append(
       'ticketRadiology',
       JSON.stringify({
-        startedAt: ticketRadiology.startedAt,
+        completedAt: ticketRadiology.completedAt,
         printHtmlId: ticketRadiology.printHtmlId,
         description: ticketRadiology.description,
         result: ticketRadiology.result,

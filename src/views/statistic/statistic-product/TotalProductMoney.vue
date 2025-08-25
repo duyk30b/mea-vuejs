@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { StatisticProductApi } from '@/modules/statistics'
 import { onBeforeMount, ref } from 'vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { StatisticService } from '../../../modules/statistics'
 import type { Warehouse } from '../../../modules/warehouse'
 import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 
@@ -21,7 +21,7 @@ const statisticWarehouse = ref<
 const startFetchData = async () => {
   try {
     loaded.value = false
-    statisticWarehouse.value = await StatisticService.sumWarehouse()
+    statisticWarehouse.value = await StatisticProductApi.sumWarehouse()
   } catch (error) {
     console.log('🚀 ~ TotalProductMoney.vue:26 ~ startFetchData ~ error:', error)
   } finally {

@@ -11,7 +11,7 @@ import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer, CustomerService } from '@/modules/customer'
 import { PrintHtmlService } from '@/modules/print-html'
 import { Radiology, RadiologyService } from '@/modules/radiology'
-import { Room, RoomInteractType, roomRadiology, RoomService } from '@/modules/room'
+import { Room, RoomType, roomRadiology, RoomService } from '@/modules/room'
 import { Ticket } from '@/modules/ticket'
 import {
   TicketRadiology,
@@ -47,7 +47,7 @@ const currentRoom = ref<Room>(Room.blank())
 const customerId = ref<number>()
 const status = ref<TicketRadiologyStatus | null>(null)
 
-const sortColumn = ref<'registeredAt' | 'id' | ''>('')
+const sortColumn = ref<'createdAt' | 'id' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const page = ref(1)
@@ -81,7 +81,7 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
         customerId: customerId.value ? customerId.value : undefined,
         status: status.value ? status.value : undefined,
         paymentMoneyStatus: paymentMoneyStatus.value ? paymentMoneyStatus.value : undefined,
-        registeredAt:
+        createdAt:
           fromTime.value || toTime.value
             ? {
                 GTE: fromTime.value ? fromTime.value : undefined,
@@ -92,9 +92,9 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
       sort: sortValue.value
         ? {
             id: sortColumn.value === 'id' ? sortValue.value : undefined,
-            registeredAt: sortColumn.value === 'registeredAt' ? sortValue.value : undefined,
+            createdAt: sortColumn.value === 'createdAt' ? sortValue.value : undefined,
           }
-        : { registeredAt: 'DESC' },
+        : { createdAt: 'DESC' },
     })
 
     ticketRadiologyList.value = paginationResponse.ticketRadiologyList
@@ -123,7 +123,7 @@ watch(
     if (!currentRoom.value) {
       currentRoom.value = Room.blank()
       currentRoom.value.isCommon = 1
-      currentRoom.value.roomInteractType = RoomInteractType.Laboratory
+      currentRoom.value.roomType = RoomType.Laboratory
     }
     startFetchData()
   },
@@ -170,7 +170,7 @@ const startFilter = async () => {
   await startFetchData()
 }
 
-const changeSort = async (column: 'id' | 'registeredAt') => {
+const changeSort = async (column: 'id' | 'createdAt') => {
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
     sortValue.value = ''
@@ -326,16 +326,16 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
             <th style="min-width: 150px">Khách hàng</th>
             <th>Tên phiếu</th>
             <th class="">Kết quả</th>
-            <th class="cursor-pointer" @click="changeSort('registeredAt')">
+            <th class="cursor-pointer" @click="changeSort('createdAt')">
               <div class="flex items-center gap-1 justify-center">
                 <span>TG Chỉ định</span>
-                <IconSort v-if="sortColumn !== 'registeredAt'" style="opacity: 0.4" />
+                <IconSort v-if="sortColumn !== 'createdAt'" style="opacity: 0.4" />
                 <IconSortUp
-                  v-if="sortColumn === 'registeredAt' && sortValue === 'ASC'"
+                  v-if="sortColumn === 'createdAt' && sortValue === 'ASC'"
                   style="opacity: 0.4"
                 />
                 <IconSortDown
-                  v-if="sortColumn === 'registeredAt' && sortValue === 'DESC'"
+                  v-if="sortColumn === 'createdAt' && sortValue === 'DESC'"
                   style="opacity: 0.4"
                 />
               </div>
@@ -413,7 +413,7 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
               <TicketRadiologyStatusTag :status="ticketRadiology.status" />
             </td>
             <td class="text-center">
-              {{ ESTimer.timeToText(ticketRadiology.registeredAt, 'hh:mm DD/MM/YYYY') }}
+              {{ ESTimer.timeToText(ticketRadiology.createdAt, 'hh:mm DD/MM/YYYY') }}
             </td>
 
             <td class="text-center">
@@ -435,7 +435,7 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
 
             <td class="text-center">
               <a
-                v-if="ticketRadiology.startedAt != null"
+                v-if="ticketRadiology.completedAt != null"
                 @click="startPrintResult(ticketRadiology)"
               >
                 <IconPrint width="18" height="18" />

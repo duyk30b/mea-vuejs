@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IconDoorOpen } from '@/common/icon-google'
-import { RoomInteractType, RoomService, RoomTicketStyle } from '@/modules/room'
+import { RoomType, RoomService, RoomTicketStyle } from '@/modules/room'
 import { onMounted, ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import {
@@ -79,7 +79,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item
         v-if="
           roomIdMap[room.id] &&
-          room.roomInteractType === RoomInteractType.Ticket &&
+          room.roomType === RoomType.Ticket &&
           [RoomTicketStyle.TicketOrder].includes(room.roomStyle)
         "
         :key="'RoomTicketOrder' + '_' + room.id"
@@ -95,7 +95,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item
         v-if="
           roomIdMap[room.id] &&
-          room.roomInteractType === RoomInteractType.Ticket &&
+          room.roomType === RoomType.Ticket &&
           [RoomTicketStyle.TicketReception].includes(room.roomStyle)
         "
         :key="'RoomTicketReception' + '_' + room.id"
@@ -111,7 +111,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item
         v-if="
           roomIdMap[room.id] &&
-          room.roomInteractType === RoomInteractType.Ticket &&
+          room.roomType === RoomType.Ticket &&
           [
             RoomTicketStyle.TicketClinicGeneral,
             RoomTicketStyle.TicketClinicObstetric,
@@ -131,7 +131,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item
         v-if="
           roomIdMap[room.id] &&
-          room.roomInteractType === RoomInteractType.Ticket &&
+          room.roomType === RoomType.Ticket &&
           [RoomTicketStyle.TicketSpa].includes(room.roomStyle)
         "
         :key="'RoomTicketSpa' + '_' + room.id"

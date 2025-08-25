@@ -12,7 +12,7 @@ import { Laboratory, LaboratoryService } from '@/modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '@/modules/laboratory-group'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtmlService } from '@/modules/print-html'
-import { Room, RoomInteractType, roomLaboratory, RoomService } from '@/modules/room'
+import { Room, RoomType, roomLaboratory, RoomService } from '@/modules/room'
 import { TicketLaboratoryStatus } from '@/modules/ticket-laboratory'
 import { TicketLaboratoryGroup, TicketLaboratoryGroupApi } from '@/modules/ticket-laboratory-group'
 import { ESString, ESTimer } from '@/utils'
@@ -110,7 +110,7 @@ watch(
     if (!currentRoom.value) {
       currentRoom.value = Room.blank()
       currentRoom.value.isCommon = 1
-      currentRoom.value.roomInteractType = RoomInteractType.Laboratory
+      currentRoom.value.roomType = RoomType.Laboratory
     }
     startFetchData()
   },
@@ -426,7 +426,7 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
               <TicketLaboratoryStatusTag :status="tlg.status" />
             </td>
             <td class="text-center">
-              {{ ESTimer.timeToText(tlg.registeredAt, 'hh:mm DD/MM/YYYY') }}
+              {{ ESTimer.timeToText(tlg.createdAt, 'hh:mm DD/MM/YYYY') }}
             </td>
             <td class="text-center">
               <a
@@ -441,7 +441,7 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
               </a>
             </td>
             <td class="text-center">
-              <a v-if="tlg.startedAt != null" @click="startPrint(tlg)">
+              <a v-if="tlg.completedAt != null" @click="startPrint(tlg)">
                 <IconPrint width="18" height="18" />
               </a>
             </td>

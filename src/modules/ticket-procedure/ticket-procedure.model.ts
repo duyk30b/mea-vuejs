@@ -33,7 +33,7 @@ export class TicketProcedure extends BaseModel {
 
   paymentMoneyStatus: PaymentMoneyStatus
   status: TicketProcedureStatus
-  startedAt?: number
+  createdAt: number
 
   customer?: Customer
   ticket?: Ticket
@@ -133,7 +133,7 @@ export class TicketProcedure extends BaseModel {
 
     if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
     if (a.status != b.status) return false
-    if (a.startedAt != b.startedAt) return false
+    if (a.createdAt != b.createdAt) return false
 
     return true
   }

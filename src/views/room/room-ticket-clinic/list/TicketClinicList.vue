@@ -12,7 +12,7 @@ import { CustomerService, type Customer } from '@/modules/customer'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PositionInteractType } from '@/modules/position'
 import { RoleService } from '@/modules/role'
-import { Room, RoomInteractType, RoomService } from '@/modules/room'
+import { Room, RoomType, RoomService } from '@/modules/room'
 import { roomTicketPagination } from '@/modules/room/room.ref'
 import { TicketQueryApi, TicketStatus } from '@/modules/ticket'
 import type { TicketUser } from '@/modules/ticket-user'
@@ -107,7 +107,7 @@ watch(
     if (!currentRoom.value) {
       currentRoom.value = Room.blank()
       currentRoom.value.isCommon = 1
-      currentRoom.value.roomInteractType = RoomInteractType.Ticket
+      currentRoom.value.roomType = RoomType.Ticket
     }
     startFetchData()
   },

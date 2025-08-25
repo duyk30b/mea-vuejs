@@ -21,6 +21,7 @@ import ModalTicketProcedureUpdate from './ModalTicketProcedureUpdate.vue'
 import TicketProcedureSelectItem from './TicketProcedureSelectItem.vue'
 import ModalProcessTicketProcedureRegimen from './ModalProcessTicketProcedureRegimen.vue'
 import ModalShowTicketProcedureRegimen from './ModalShowTicketProcedureRegimen.vue'
+import TicketProcedureStatusTooltip from '../../room-procedure/TicketProcedureStatusTooltip.vue'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalProcessTicketProcedureRegimen =
@@ -114,6 +115,7 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
             <th v-if="CONFIG.MODE === 'development'" style="width: 50px">ID</th>
             <th>#</th>
             <th></th>
+            <th></th>
             <th>Dịch vụ</th>
             <th>SL</th>
             <th>Giá NY</th>
@@ -167,6 +169,7 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
               </div>
             </td>
             <td><PaymentMoneyStatusTooltip :paymentMoneyStatus="tpItem.paymentMoneyStatus" /></td>
+            <td><TicketProcedureStatusTooltip :status="tpItem.status" /></td>
             <td :colspan="tpItem.procedure?.procedureType !== ProcedureType.Basic ? 2 : 1">
               <div class="flex flex-wrap items-center gap-2">
                 <span>{{ tpItem.procedure?.name }}</span>
@@ -261,7 +264,7 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
           </tr>
           <tr>
             <td v-if="CONFIG.MODE === 'development'"></td>
-            <td colspan="7" class="text-right uppercase">
+            <td colspan="8" class="text-right uppercase">
               <b>Tổng tiền</b>
             </td>
             <td class="text-right">

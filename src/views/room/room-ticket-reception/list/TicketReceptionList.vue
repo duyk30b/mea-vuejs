@@ -25,7 +25,7 @@ import { FileTicketApi } from '@/modules/file-excel/file-ticket.api'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtmlAction } from '@/modules/print-html'
 import { RoleService } from '@/modules/role'
-import { Room, RoomInteractType, RoomService, roomTicketPagination } from '@/modules/room'
+import { Room, RoomType, RoomService, roomTicketPagination } from '@/modules/room'
 import {
   Ticket,
   TicketActionApi,
@@ -136,7 +136,7 @@ watch(
     if (!currentRoom.value) {
       currentRoom.value = Room.blank()
       currentRoom.value.isCommon = 1
-      currentRoom.value.roomInteractType = RoomInteractType.Ticket
+      currentRoom.value.roomType = RoomType.Ticket
     }
     startFetchData()
   },
@@ -409,7 +409,7 @@ const startPrintAllMoney = async (options: { ticketId: number }) => {
       <div style="flex: 1; flex-basis: 150px">
         <InputSelectRoom
           v-model:roomId="filter.roomId"
-          :roomInteractType="RoomInteractType.Ticket"
+          :roomType="RoomType.Ticket"
           @update:roomId="startFilter"
         />
       </div>

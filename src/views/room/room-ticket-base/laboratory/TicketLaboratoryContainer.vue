@@ -47,7 +47,7 @@ const laboratoryIdCheckbox = ref<Record<string, boolean>>({})
 const laboratorySampleIdCheckbox = ref<
   Record<string, { checked: boolean; indeterminate: boolean }>
 >({})
-const registeredAt = ref<number | null>(null)
+const createdAt = ref<number | null>(null)
 
 const laboratoryMap = LaboratoryService.laboratoryMap
 const laboratoryGroupAll = LaboratoryGroupService.laboratoryGroupAll
@@ -186,7 +186,7 @@ const reloadCheckboxLaboratory = async (checked: boolean, laboratory: Laboratory
 }
 
 const handleChangeCheckboxLaboratory = async (checked: boolean, laboratory: Laboratory) => {
-  registeredAt.value = Date.now()
+  createdAt.value = Date.now()
   reloadCheckboxLaboratory(checked, laboratory)
   reloadIndeterminateCheckbox()
 }
@@ -195,7 +195,7 @@ const handleChangeCheckboxLaboratorySample = async (
   checked: boolean,
   laboratorySample: LaboratorySample,
 ) => {
-  registeredAt.value = Date.now()
+  createdAt.value = Date.now()
   laboratorySample.laboratoryList?.forEach((laboratory) => {
     handleChangeCheckboxLaboratory(checked, laboratory)
   })
@@ -229,7 +229,7 @@ const clear = () => {
   laboratoryGroupSelects.value = {}
   laboratoryIdCheckbox.value = {}
   laboratorySampleIdCheckbox.value = {}
-  registeredAt.value = null
+  createdAt.value = null
 }
 
 const saveLaboratorySelected = async () => {
@@ -246,7 +246,7 @@ const saveLaboratorySelected = async () => {
       .map((i) => {
         return {
           laboratoryGroupId: Number(i),
-          registeredAt: registeredAt.value,
+          createdAt: createdAt.value,
           roomId: laboratoryGroupSelects.value[i].laboratoryGroup.roomId,
           paymentMoneyStatus: settingStore.TICKET_CLINIC_DETAIL.laboratory.paymentMoneyStatus,
           ticketLaboratoryList: laboratoryGroupSelects.value[i].laboratoryList.map((i, index) => {
@@ -299,7 +299,7 @@ const saveLaboratorySelected = async () => {
       ticketLaboratoryGroupUpdate: tlgEdit.value.id
         ? {
             id: tlgEdit.value.id,
-            registeredAt: registeredAt.value,
+            createdAt: createdAt.value,
             laboratoryGroupId: tlgEdit.value.laboratoryGroupId,
             roomId: tlgEdit.value.roomId,
             ticketLaboratoryList: laboratoryGroupSelects.value[
@@ -332,7 +332,7 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
 
   tlgEdit.value = tlgFind
 
-  registeredAt.value = tlgFind.registeredAt
+  createdAt.value = tlgFind.createdAt
   const currentLaboratoryList = (tlgFind.ticketLaboratoryList || []).map((tl) => {
     return tl.laboratory || Laboratory.blank()
   })
@@ -556,7 +556,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
       </div>
       <div class="mt-4 flex-0">
         <div>Thời gian chỉ định</div>
-        <div><InputDate v-model:value="registeredAt" show-time /></div>
+        <div><InputDate v-model:value="createdAt" show-time /></div>
       </div>
       <div class="mt-4 flex justify-center flex-0 gap-4">
         <VueButton v-if="tlgEdit.id" @click="clear">Hủy bỏ</VueButton>

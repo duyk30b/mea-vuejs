@@ -1,6 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionString } from '../_base/base-condition'
-import type { RoomInteractType, RoomTicketStyle } from './room.model'
+import type { RoomTicketStyle, RoomType } from './room.model'
 
 export class RoomGetQuery {
   page?: number
@@ -11,7 +11,7 @@ export class RoomGetQuery {
 
   filter?: {
     name?: ConditionString
-    roomInteractType?: RoomInteractType
+    roomType?: RoomType
     roomStyle?: RoomTicketStyle
     showMenu?: 1 | 0
     isCommon?: 1 | 0

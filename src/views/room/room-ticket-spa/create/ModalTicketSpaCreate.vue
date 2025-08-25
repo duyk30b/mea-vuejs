@@ -12,7 +12,7 @@ import { Appointment } from '@/modules/appointment'
 import { Customer } from '@/modules/customer/customer.model'
 import { DiscountType } from '@/modules/enum'
 import { ProcedureService, ProcedureType, type Procedure } from '@/modules/procedure'
-import { RoomInteractType, RoomTicketStyle } from '@/modules/room'
+import { RoomType, RoomTicketStyle } from '@/modules/room'
 import {
   Ticket,
   TicketActionApi,
@@ -213,7 +213,11 @@ const selectProcedure = async (procedureData?: Procedure) => {
     temp.procedure = procedureData
 
     temp.paymentMoneyStatus = settingStore.TICKET_CLINIC_DETAIL.procedure.paymentMoneyStatus
-    temp.status = TicketProcedureStatus.Pending
+    if (procedureData.procedureType === ProcedureType.Basic) {
+      temp.status = TicketProcedureStatus.Completed
+    } else {
+      temp.status = TicketProcedureStatus.Pending
+    }
 
     temp.expectedPrice = procedureData.price
     temp.discountMoney = 0
@@ -224,7 +228,7 @@ const selectProcedure = async (procedureData?: Procedure) => {
 
     temp.quantity = 1
     temp.totalSessions = procedureData.totalSessions
-    temp.startedAt = Date.now()
+    temp.createdAt = Date.now()
 
     await ProcedureService.executeRelation([procedureData], { discountList: true })
     const discountApply = procedureData?.discountApply
@@ -378,7 +382,7 @@ defineExpose({ openModal })
           <div>
             <InputSelectRoom
               v-model:roomId="ticket.roomId"
-              :roomInteractType="RoomInteractType.Ticket"
+              :roomType="RoomType.Ticket"
               :roomTicketStyle="RoomTicketStyle.TicketSpa"
               removeLabelWrapper
               autoSelectFirstValue

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { CONFIG } from '@/config'
-import { PaymentActionTypeText } from '@/modules/payment'
-import { onMounted } from 'vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
+import { PaymentActionTypeText } from '@/modules/payment'
 import { PaymentMethodService } from '@/modules/payment-method'
 import { Ticket } from '@/modules/ticket'
 import { timeToText } from '@/utils'
+import { onMounted } from 'vue'
 
 defineProps<{
   ticket: Ticket
@@ -42,7 +42,6 @@ onMounted(async () => {
             <th v-if="CONFIG.MODE === 'development'">ID</th>
             <th>#</th>
             <th>Thời gian</th>
-            <th>PT Thanh toán</th>
             <th>Note</th>
             <th>Số tiền</th>
             <th v-if="CONFIG.MODE === 'development'">Ghi nợ</th>
@@ -55,11 +54,9 @@ onMounted(async () => {
               {{ payment.id }}
             </td>
             <td class="text-center">{{ index + 1 }}</td>
-            <td class="text-center">
-              {{ timeToText(payment.createdAt, 'DD/MM/YY hh:mm') }}
-            </td>
-            <td class="text-center">
-              {{ paymentMethodMap[payment.paymentMethodId]?.name }}
+            <td class="">
+              <div>{{ timeToText(payment.createdAt, 'DD/MM/YY hh:mm') }}</div>
+              <div>{{ paymentMethodMap[payment.paymentMethodId]?.name }}</div>
             </td>
             <td>
               <div>{{ PaymentActionTypeText[payment.paymentActionType] }}</div>
@@ -80,21 +77,21 @@ onMounted(async () => {
           </tr>
           <tr>
             <td v-if="CONFIG.MODE === 'development'"></td>
-            <td colspan="4" class="text-right">Tổng đã thanh toán :</td>
+            <td colspan="3" class="text-right">Tổng đã thanh toán :</td>
             <td class="text-right font-bold">{{ formatMoney(ticket.paid) }}</td>
             <td v-if="CONFIG.MODE === 'development'"></td>
             <td v-if="CONFIG.MODE === 'development'"></td>
           </tr>
           <tr v-if="ticket.debt >= 0">
             <td v-if="CONFIG.MODE === 'development'"></td>
-            <td colspan="4" class="text-right font-bold">Đang thiếu :</td>
+            <td colspan="3" class="text-right font-bold">Đang thiếu :</td>
             <td class="text-right font-bold">{{ formatMoney(ticket.debt) }}</td>
             <td v-if="CONFIG.MODE === 'development'"></td>
             <td v-if="CONFIG.MODE === 'development'"></td>
           </tr>
           <tr v-else style="color: var(--text-green)">
             <td v-if="CONFIG.MODE === 'development'"></td>
-            <td colspan="4" class="text-right font-bold">Đang thừa</td>
+            <td colspan="3" class="text-right font-bold">Đang thừa</td>
             <td class="text-right font-bold">{{ formatMoney(-ticket.debt) }}</td>
             <td v-if="CONFIG.MODE === 'development'"></td>
             <td v-if="CONFIG.MODE === 'development'"></td>

@@ -18,8 +18,8 @@ export class TicketLaboratoryGroup {
 
   status: TicketLaboratoryStatus
   paymentMoneyStatus: PaymentMoneyStatus
-  registeredAt: number | null
-  startedAt: number | null
+  createdAt: number | null
+  completedAt: number | null
   result: string
 
   customer?: Customer
@@ -99,11 +99,14 @@ export class TicketLaboratoryGroup {
   static equal(a: TicketLaboratoryGroup, b: TicketLaboratoryGroup) {
     if (a.id != b.id) return false
     if (a.ticketId != b.ticketId) return false
+    if (a.roomId != b.roomId) return false
     if (a.customerId != b.customerId) return false
     if (a.laboratoryGroupId != b.laboratoryGroupId) return false
 
     if (a.status != b.status) return false
-    if (a.startedAt != b.startedAt) return false
+    if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
+    if (a.createdAt != b.createdAt) return false
+    if (a.completedAt != b.completedAt) return false
     if (a.result != b.result) return false
 
     return true

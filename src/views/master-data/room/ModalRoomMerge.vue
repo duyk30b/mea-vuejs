@@ -1,0 +1,112 @@
+<script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import { IconClose, IconMergeCells } from '@/common/icon-antd'
+import { InputText } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { MeService } from '@/modules/_me/me.service'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { RoomApi } from '@/modules/room'
+import { ref } from 'vue'
+
+const emit = defineEmits<{ (e: 'success'): void }>()
+
+const { userPermission } = MeService
+
+let roomId: number = 0
+const roomIdSource = ref('')
+const roomIdTarget = ref('')
+
+const showModal = ref(false)
+const saveLoading = ref(false)
+
+const openModal = async () => {
+  showModal.value = true
+}
+
+const handleSave = async () => {
+  saveLoading.value = true
+  try {
+    await RoomApi.mergeRoom({
+      roomIdSourceList: roomIdSource.value.split(',').map((i) => Number(i)),
+      roomIdTarget: Number(roomIdTarget.value),
+    })
+    emit('success')
+    closeModal()
+  } catch (error) {
+    console.log('🚀 ~ ModalProductMerge.vue:40 ~ handleSave ~ error:', error)
+  } finally {
+    saveLoading.value = false
+  }
+}
+
+const closeModal = () => {
+  roomId = 0
+  roomIdSource.value = ''
+  roomIdTarget.value = ''
+  showModal.value = false
+}
+
+defineExpose({ openModal })
+</script>
+
+<template>
+  <VueModal v-model:show="showModal" style="width: 600px">
+    <form class="bg-white" @submit.prevent="handleSave">
+      <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
+        <div class="flex-1 text-lg font-medium">
+          <span>Gộp phòng</span>
+        </div>
+
+        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
+          <IconClose />
+        </div>
+      </div>
+
+      <div class="my-4 px-4">
+        <div class="italic underline">Lưu ý:</div>
+        <div>- Tất cả phiếu tiếp đón của phòng nguồn đều chuyển sang phòng đích</div>
+        <div>
+          - Thao tác này
+          <b style="color: red">KHÔNG THỂ</b>
+          hoàn lại, cần cân nhắc kỹ với thao tác này
+        </div>
+      </div>
+
+      <div class="my-4 px-4 flex flex-wrap gap-2">
+        <div style="flex-basis: 40%; flex-grow: 1; min-width: 250px">
+          <div>ID phòng nguồn</div>
+          <div>
+            <InputText
+              v-model:value="roomIdSource"
+              required
+              placeholder="Các ID cách nhau bởi dấu phẩy"
+            />
+          </div>
+        </div>
+        <div style="flex-basis: 40%; flex-grow: 1; min-width: 250px">
+          <div>ID phòng đích</div>
+          <div>
+            <InputText v-model:value="roomIdTarget" required />
+          </div>
+        </div>
+      </div>
+
+      <div class="pb-6 pt-6 px-4">
+        <div class="flex gap-4">
+          <VueButton style="margin-left: auto" type="reset" icon="close" @click="closeModal">
+            Hủy bỏ
+          </VueButton>
+          <VueButton
+            color="blue"
+            type="submit"
+            :loading="saveLoading"
+            :disabled="!userPermission[PermissionId.PRODUCT_MERGE]"
+          >
+            <IconMergeCells />
+            Gộp phòng
+          </VueButton>
+        </div>
+      </div>
+    </form>
+  </VueModal>
+</template>

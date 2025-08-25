@@ -1,5 +1,5 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { ConditionEnum, ConditionNumber } from '../_base/base-condition'
+import type { ConditionDate, ConditionEnum, ConditionNumber } from '../_base/base-condition'
 import type { PaymentMoneyStatus } from '../enum'
 
 export class TicketProcedureGetQuery {
@@ -17,6 +17,7 @@ export class TicketProcedureGetQuery {
     procedureId?: number
     customerId?: number
     ticketId?: number | ConditionNumber
+    createdAt?: ConditionDate
   }
 
   sort?: { id?: 'ASC' | 'DESC' }

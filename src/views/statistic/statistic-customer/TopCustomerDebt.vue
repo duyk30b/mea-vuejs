@@ -1,21 +1,38 @@
 <script setup lang="ts">
-import { onBeforeMount, ref } from 'vue'
-import { Customer, CustomerApi } from '../../../modules/customer'
-import { StatisticService } from '../../../modules/statistics'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { formatPhone } from '../../../utils'
-import VuePagination from '../../../common/VuePagination.vue'
-import { InputSelect } from '../../../common/vue-form'
+import VuePagination from '@/common/VuePagination.vue'
+import { InputSelect } from '@/common/vue-form'
+import { CONFIG } from '@/config'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Customer, CustomerApi } from '@/modules/customer'
+import { StatisticCustomerApi } from '@/modules/statistics/statistic-customer.api'
+import { formatPhone } from '@/utils'
+import type { ChartData } from 'chart.js'
+import { onBeforeMount, reactive, ref } from 'vue'
+import { Bar } from 'vue-chartjs'
+
+const props = withDefaults(defineProps<{ limit?: number }>(), {
+  limit: 10,
+})
 
 const settingStore = useSettingStore()
+const moneyDivision = settingStore.SYSTEM_SETTING.moneyDivisionFormat
 const { formatMoney, isMobile } = settingStore
+
+const barData = reactive<ChartData<'bar', (number | [number, number] | null)[], unknown>>({
+  labels: [],
+  datasets: [],
+})
+const barOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+}
 
 const loaded = ref(false)
 const customerList = ref<Customer[]>([])
 const sumDebt = ref(0)
 
 const page = ref(1)
-const limit = ref(10)
+const limit = ref(props.limit)
 const total = ref(0)
 
 const startFetchData = async () => {
@@ -28,12 +45,37 @@ const startFetchData = async () => {
         filter: { debt: { NOT: 0 } },
         sort: { debt: 'DESC' },
       }),
-      StatisticService.sumCustomerDebt(),
+      StatisticCustomerApi.sumCustomerDebt(),
     ])
 
     customerList.value = customerPagination.customerList
     total.value = customerPagination.total
     sumDebt.value = sumCustomerDebt
+
+    barData.labels = Array.from({ length: limit.value }, (_, i) => '')
+    barData.labels.splice(
+      0,
+      customerList.value.length,
+      ...customerList.value.map((i) => i.fullName),
+    )
+    barData.datasets = [
+      {
+        type: 'bar',
+        label: 'Số nợ',
+        data: Array.from({ length: limit.value }, (_, i) => 0),
+        borderWidth: 1,
+        stack: 'Stack 0',
+      },
+    ]
+    barData.datasets[0].data.splice(
+      0,
+      customerList.value.length,
+      ...customerList.value.map((i) => i.debt / moneyDivision),
+    )
+    console.log(
+      '🚀 ~ TopCustomerDebt.vue:66 ~ startFetchData ~ barData.datasets[0]:',
+      barData.datasets[0],
+    )
   } catch (error) {
     console.log('🚀 ~ TopCustomerDebt.vue:38 ~ startFetchData ~ error:', error)
   } finally {
@@ -52,16 +94,23 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 </script>
 
 <template>
-  <div class="flex flex-col" style="height: 100%">
+  <div class="mt-4 flex flex-col" style="height: 100%">
     <div class="flex justify-between items-center">
       <span style="font-size: 18px; font-weight: 500">
         Danh sách khách nợ: (Tổng nợ {{ formatMoney(sumDebt) }})
       </span>
     </div>
+
+    <div style="height: 500px">
+      <Bar v-if="loaded" :data="barData" :options="barOptions" />
+    </div>
+
     <div class="mt-2 table-wrapper">
+      <div class="text-lg" style="font-weight: 500">Thông số chi tiết</div>
       <table class="">
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE === 'development'">ID</th>
             <th>#</th>
             <th>Tên KH</th>
             <th>SĐT</th>
@@ -73,6 +122,9 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             <td colspan="20" class="text-center">Không có khách hàng nợ</td>
           </tr>
           <tr v-for="(customer, index) in customerList" :key="index">
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              {{ customer.id }}
+            </td>
             <td class="text-center" style="white-space: nowrap">
               {{ index + 1 }}
             </td>

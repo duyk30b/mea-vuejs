@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { IconDoorOpen } from '@/common/icon-google'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { RoomInteractType, RoomService } from '@/modules/room'
+import { RoomType, RoomService, RoomTicketStyle } from '@/modules/room'
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { IconApartment } from '../../common/icon-antd'
@@ -26,15 +26,6 @@ onMounted(async () => {
   </div>
   <div class="mt-4 mx-4 bg-white">
     <div class="p-4 flex flex-wrap gap-4">
-      <div class="card" @click="router.push({ name: 'ReceptionTicketList' })">
-        <div class="card-icon">
-          <IconDoorOpen />
-        </div>
-        <div class="card-content">
-          <div class="card-title">Tiếp đón</div>
-          <div class="card-description"></div>
-        </div>
-      </div>
       <div
         v-if="userPermission[PermissionId.APPOINTMENT_MENU]"
         class="card"
@@ -50,9 +41,13 @@ onMounted(async () => {
       </div>
       <template v-for="room in roomList" :key="room.id">
         <div
-          v-if="roomIdMap[room.id] && room.roomInteractType === RoomInteractType.Ticket"
+          v-if="
+            roomIdMap[room.id] &&
+            room.roomType === RoomType.Ticket &&
+            [RoomTicketStyle.TicketReception].includes(room.roomStyle)
+          "
           class="card"
-          @click="router.push({ name: 'RoomTicket', params: { roomId: room.id } })"
+          @click="router.push({ name: 'RoomTicketReception', params: { roomId: room.id } })"
         >
           <div class="card-icon">
             <IconApartment />
@@ -63,22 +58,17 @@ onMounted(async () => {
           </div>
         </div>
         <div
-          v-if="roomIdMap[room.id] && room.roomInteractType === RoomInteractType.Laboratory"
+          v-if="
+            roomIdMap[room.id] &&
+            room.roomType === RoomType.Ticket &&
+            [
+              RoomTicketStyle.TicketClinicGeneral,
+              RoomTicketStyle.TicketClinicObstetric,
+              RoomTicketStyle.TicketClinicEye,
+            ].includes(room.roomStyle)
+          "
           class="card"
-          @click="router.push({ name: 'RoomLaboratory', params: { roomId: room.id } })"
-        >
-          <div class="card-icon">
-            <IconApartment />
-          </div>
-          <div class="card-content">
-            <div class="card-title">{{ room.name }}</div>
-            <div class="card-description"></div>
-          </div>
-        </div>
-        <div
-          v-if="roomIdMap[room.id] && room.roomInteractType === RoomInteractType.Radiology"
-          class="card"
-          @click="router.push({ name: 'RoomRadiology', params: { roomId: room.id } })"
+          @click="router.push({ name: 'RoomTicketClinic', params: { roomId: room.id } })"
         >
           <div class="card-icon">
             <IconApartment />

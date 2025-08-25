@@ -57,6 +57,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:value', value: string | number | null): void
+  (e: 'selectItem', value: { value: any; label: string; data?: any }): void
 }>()
 
 const wrapperRef = ref<HTMLElement | null>(null)
@@ -108,6 +109,7 @@ function updateDropdownPosition() {
 
 function selectOption(option: InputSelectOption<any>) {
   emit('update:value', option.value)
+  emit('selectItem', option)
   isOpen.value = false
 }
 

@@ -61,8 +61,8 @@ const closeExpiryDate = computed(() => {
 
 <template>
   <ModalProductDetail ref="modalProductDetail" />
-  <div class="mt-4">
-    <div class="flex justify-between items-center">
+  <div>
+    <div class="mt-4 flex justify-between items-center">
       <span style="font-size: 18px; font-weight: 500">Hàng cận date:</span>
     </div>
     <div class="mt-2 table-wrapper">

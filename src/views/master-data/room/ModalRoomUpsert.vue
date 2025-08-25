@@ -8,8 +8,8 @@ import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import {
   Room,
-  RoomInteractType,
-  RoomInteractTypeText,
+  RoomType,
+  RoomTypeText,
   RoomTicketStyle,
   RoomTicketStyleText,
 } from '../../../modules/room'
@@ -87,7 +87,7 @@ const handleUpdateRoomStyle = (v: any) => {
 }
 
 const handleSave = async () => {
-  if (!room.value.roomInteractType) {
+  if (!room.value.roomType) {
     return AlertStore.addError('Lỗi: Chưa chọn loại phòng')
   }
   try {
@@ -116,16 +116,25 @@ const handleSave = async () => {
 const clickDelete = () => {
   ModalStore.confirm({
     title: 'Bạn có chắc chắn muốn xóa kho hàng này',
-    content: 'Kho hàng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    content: 'Phòng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
     async onOk() {
       try {
         const response = await RoomService.destroyOne(room.value.id)
         if (response.success) {
           emit('success', room.value, 'DESTROY')
           closeModal()
+        } else {
+          ModalStore.alert({
+            title: 'Không thể xóa phòng có chứa các phiếu tiếp đón',
+            content: [
+              'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu tiếp đón này trước',
+              `Các phiếu liên quan: ${response.ticketList.map((i) => i.id).join(', ')} ...`,
+              'Bạn có thể dùng chức năng "Gộp phòng" để chuyển tất cả các phiếu của phòng này sang phòng khác',
+            ],
+          })
         }
       } catch (error) {
-        console.log('🚀 ~ file: ModalRoomUpsert.vue:76 ~ clickDelete ~ error:', error)
+        console.log("🚀 ~ ModalRoomUpsert.vue:137 ~ clickDelete ~ error:", error)
       }
     },
   })
@@ -165,39 +174,39 @@ defineExpose({ openModal })
           <div>Loại phòng</div>
           <div>
             <InputSelect
-              v-model:value="room.roomInteractType"
+              v-model:value="room.roomType"
               required
               :disabled="!!room.id"
               :options="[
                 {
-                  value: RoomInteractType.Ticket,
-                  label: RoomInteractTypeText[RoomInteractType.Ticket],
+                  value: RoomType.Ticket,
+                  label: RoomTypeText[RoomType.Ticket],
                 },
                 {
-                  value: RoomInteractType.Product,
-                  label: RoomInteractTypeText[RoomInteractType.Product],
+                  value: RoomType.Product,
+                  label: RoomTypeText[RoomType.Product],
                 },
                 ...(organizationPermission[PermissionId.PROCEDURE]
                   ? [
                       {
-                        value: RoomInteractType.Procedure,
-                        label: RoomInteractTypeText[RoomInteractType.Procedure],
+                        value: RoomType.Procedure,
+                        label: RoomTypeText[RoomType.Procedure],
                       },
                     ]
                   : []),
                 ...(organizationPermission[PermissionId.LABORATORY]
                   ? [
                       {
-                        value: RoomInteractType.Laboratory,
-                        label: RoomInteractTypeText[RoomInteractType.Laboratory],
+                        value: RoomType.Laboratory,
+                        label: RoomTypeText[RoomType.Laboratory],
                       },
                     ]
                   : []),
                 ...(organizationPermission[PermissionId.RADIOLOGY]
                   ? [
                       {
-                        value: RoomInteractType.Radiology,
-                        label: RoomInteractTypeText[RoomInteractType.Radiology],
+                        value: RoomType.Radiology,
+                        label: RoomTypeText[RoomType.Radiology],
                       },
                     ]
                   : []),
@@ -208,7 +217,7 @@ defineExpose({ openModal })
 
         <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
           <div>Kiểu phòng</div>
-          <div v-if="room.roomInteractType === RoomInteractType.Ticket">
+          <div v-if="room.roomType === RoomType.Ticket">
             <InputSelect
               v-model:value="room.roomStyle"
               required

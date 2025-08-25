@@ -75,7 +75,11 @@ const handleChangeCheckboxProcedure = async (checked: boolean, procedureData: Pr
       temp.procedure = procedureData
 
       temp.paymentMoneyStatus = settingStore.TICKET_CLINIC_DETAIL.procedure.paymentMoneyStatus
-      temp.status = TicketProcedureStatus.Pending
+      if (procedureData.procedureType === ProcedureType.Basic) {
+        temp.status = TicketProcedureStatus.Completed
+      } else {
+        temp.status = TicketProcedureStatus.Pending
+      }
 
       temp.expectedPrice = procedureData.price
       temp.discountMoney = 0
@@ -87,7 +91,7 @@ const handleChangeCheckboxProcedure = async (checked: boolean, procedureData: Pr
       temp.quantity = 1
       temp.totalSessions = procedureData.totalSessions
 
-      temp.startedAt = Date.now()
+      temp.createdAt = Date.now()
 
       await ProcedureService.executeRelation([procedureData], { discountList: true })
       const discountApply = procedureData?.discountApply

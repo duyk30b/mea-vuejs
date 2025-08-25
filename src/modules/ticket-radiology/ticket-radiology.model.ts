@@ -33,8 +33,8 @@ export class TicketRadiology {
   discountType: DiscountType
   actualPrice: number
 
-  registeredAt: number
-  startedAt: number
+  createdAt: number
+  completedAt: number
   status: TicketRadiologyStatus
   paymentMoneyStatus: PaymentMoneyStatus
   imageIds: string
@@ -139,8 +139,8 @@ export class TicketRadiology {
     if (a.discountType != b.discountType) return false
     if (a.actualPrice != b.actualPrice) return false
 
-    if (a.registeredAt != b.registeredAt) return false
-    if (a.startedAt != b.startedAt) return false
+    if (a.createdAt != b.createdAt) return false
+    if (a.completedAt != b.completedAt) return false
     if (a.status != b.status) return false
     if (a.imageIds != b.imageIds) return false
     return true

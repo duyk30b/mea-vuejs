@@ -69,162 +69,166 @@ const handleClickModalRegisterAppointment = () => {
 <template>
   <ModalTicketChangeDiscount ref="modalTicketChangeDiscount" />
   <ModalTicketRegisterAppointment ref="modalTicketRegisterAppointment" />
-  <div class="mt-4 flex flex-wrap" style="column-gap: 100px">
-    <table class="table-information">
-      <tbody>
-        <tr>
-          <td><IconUser /></td>
-          <td>Tên Khách Hàng</td>
-          <td>:</td>
-          <td style="font-weight: 500">{{ ticketRoomRef.customer?.fullName }}</td>
-        </tr>
-        <tr>
-          <td><IconPhone /></td>
-          <td>Số điện thoại:</td>
-          <td>:</td>
-          <td style="font-weight: 500">
-            {{ ESString.formatPhone(ticketRoomRef.customer?.phone) }}
-          </td>
-        </tr>
-        <tr>
-          <td><IconContainer /></td>
-          <td>Địa chỉ</td>
-          <td>:</td>
-          <td style="font-weight: 500">{{ ESString.formatAddress(ticketRoomRef.customer!) }}</td>
-        </tr>
-        <tr>
-          <td><IconWarning /></td>
-          <td>Chẩn đoán</td>
-          <td>:</td>
-          <td style="font-weight: 500">{{ ticketRoomRef.note }}</td>
-        </tr>
-      </tbody>
-    </table>
-    <table class="table-information">
-      <tbody>
-        <tr>
-          <td><IconClockCircle /></td>
-          <td>Thời gian</td>
-          <td>:</td>
-          <td style="font-style: italic">
-            {{ ESTimer.timeToText(ticketRoomRef.registeredAt, 'hh:mm DD/MM/YYYY') }}
-          </td>
-        </tr>
-        <tr>
-          <td><IconClockCircle /></td>
-          <td>Trạng thái phiếu</td>
-          <td>:</td>
-          <td><TicketStatusTag :ticket="ticketRoomRef" /></td>
-        </tr>
-        <tr>
-          <td><IconSend /></td>
-          <td>Sản phẩm</td>
-          <td>:</td>
-          <td><TicketDeliveryStatusTag :deliveryStatus="ticketRoomRef.deliveryStatus" /></td>
-        </tr>
-        <tr>
-          <td><IconCalendar /></td>
-          <td>Hẹn</td>
-          <td>:</td>
-          <td>
-            <div v-if="!ticketRoomRef.toAppointment">
-              <VueButton size="small" color="blue" @click="handleClickModalRegisterAppointment">
-                <IconCalendar />
-                Tạo lịch hẹn
-              </VueButton>
-            </div>
-            <div v-else class="flex gap-2 items-center flex-wrap">
-              <VueButton size="small" @click="handleClickModalRegisterAppointment">Sửa</VueButton>
-              {{ ESTimer.timeToText(ticketRoomRef.toAppointment.registeredAt, 'hh:mm DD/MM/YYYY') }}
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <div class="flex flex-wrap gap-4">
+    <div style="flex-grow: 5; flex-basis: 400px">
+      <div class="mt-4 table-wrapper">
+        <table>
+          <TicketSummaryProcedure v-if="organizationPermission[PermissionId.PROCEDURE]" />
+          <TicketSummaryProduct />
+          <TicketSummaryLaboratory v-if="organizationPermission[PermissionId.LABORATORY]" />
+          <TicketSummaryRadiology v-if="organizationPermission[PermissionId.RADIOLOGY]" />
+          <tbody>
+            <tr>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td class="text-right" colspan="9">
+                <div class="flex items-center justify-end gap-2">
+                  <span>Tổng thành phần</span>
+                  <span v-if="ticketRoomRef.itemsDiscount" class="italic" style="font-size: 13px">
+                    (CK: {{ formatMoney(ticketRoomRef.itemsDiscount) }})
+                  </span>
+                </div>
+              </td>
+              <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
+                {{ formatMoney(ticketRoomRef.itemsCostAmount) }}
+              </td>
+              <td class="font-bold text-right whitespace-nowrap">
+                {{ formatMoney(ticketRoomRef.itemsActualMoney) }}
+              </td>
+              <td></td>
+            </tr>
+            <tr>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td class="text-right" colspan="9">Chiết khấu</td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td class="text-center" style="width: 40px">
+                <VueTag v-if="ticketRoomRef.discountType === 'VNĐ'" color="green">
+                  {{ formatMoney(ticketRoomRef.discountMoney) }}
+                </VueTag>
+                <VueTag v-if="ticketRoomRef.discountType === '%'" color="green">
+                  {{ ticketRoomRef.discountPercent || 0 }}%
+                </VueTag>
+              </td>
+              <td class="text-center">
+                <a
+                  v-if="
+                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                    userPermission[PermissionId.TICKET_CHANGE_DISCOUNT]
+                  "
+                  class="text-orange-500"
+                  @click="modalTicketChangeDiscount?.openModal()"
+                >
+                  <IconEditSquare width="20" height="20" />
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td class="uppercase text-right font-bold" colspan="9">Tổng tiền</td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td class="font-bold text-right whitespace-nowrap">
+                {{ formatMoney(ticketRoomRef.totalMoney) }}
+              </td>
+              <td></td>
+            </tr>
+            <tr>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td class="uppercase text-right font-bold" colspan="9">Đã thanh toán</td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td class="font-bold text-right whitespace-nowrap">
+                {{ formatMoney(ticketRoomRef.paid) }}
+              </td>
+              <td></td>
+            </tr>
+            <tr>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td class="uppercase text-right font-bold" colspan="9">Còn thiếu</td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td class="font-bold text-right whitespace-nowrap">
+                {{ formatMoney(ticketRoomRef.debt) }}
+              </td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-8 flex gap-4">
+        <VueButton color="blue" icon="print" @click="startPrintAllMoney">
+          In bảng kê chi phí
+        </VueButton>
+      </div>
+    </div>
 
-  <div class="mt-4 table-wrapper">
-    <table>
-      <TicketSummaryProcedure v-if="organizationPermission[PermissionId.PROCEDURE]" />
-      <TicketSummaryProduct />
-      <TicketSummaryLaboratory v-if="organizationPermission[PermissionId.LABORATORY]" />
-      <TicketSummaryRadiology v-if="organizationPermission[PermissionId.RADIOLOGY]" />
-      <tbody>
-        <tr>
-          <td v-if="CONFIG.MODE === 'development'"></td>
-          <td class="text-right" colspan="9">
-            <div class="flex items-center justify-end gap-2">
-              <span>Tổng thành phần</span>
-              <span v-if="ticketRoomRef.itemsDiscount" class="italic" style="font-size: 13px">
-                (CK: {{ formatMoney(ticketRoomRef.itemsDiscount) }})
-              </span>
-            </div>
-          </td>
-          <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
-            {{ formatMoney(ticketRoomRef.itemsCostAmount) }}
-          </td>
-          <td class="font-bold text-right whitespace-nowrap">
-            {{ formatMoney(ticketRoomRef.itemsActualMoney) }}
-          </td>
-          <td></td>
-        </tr>
-        <tr>
-          <td v-if="CONFIG.MODE === 'development'"></td>
-          <td class="text-right" colspan="9">Chiết khấu</td>
-          <td v-if="CONFIG.MODE === 'development'"></td>
-          <td class="text-center" style="width: 40px">
-            <VueTag v-if="ticketRoomRef.discountType === 'VNĐ'" color="green">
-              {{ formatMoney(ticketRoomRef.discountMoney) }}
-            </VueTag>
-            <VueTag v-if="ticketRoomRef.discountType === '%'" color="green">
-              {{ ticketRoomRef.discountPercent || 0 }}%
-            </VueTag>
-          </td>
-          <td class="text-center">
-            <a
-              v-if="
-                ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                userPermission[PermissionId.TICKET_CHANGE_DISCOUNT]
-              "
-              class="text-orange-500"
-              @click="modalTicketChangeDiscount?.openModal()"
-            >
-              <IconEditSquare width="20" height="20" />
-            </a>
-          </td>
-        </tr>
-        <tr>
-          <td v-if="CONFIG.MODE === 'development'"></td>
-          <td class="uppercase text-right font-bold" colspan="9">Tổng tiền</td>
-          <td v-if="CONFIG.MODE === 'development'"></td>
-          <td class="font-bold text-right whitespace-nowrap">
-            {{ formatMoney(ticketRoomRef.totalMoney) }}
-          </td>
-          <td></td>
-        </tr>
-        <tr>
-          <td v-if="CONFIG.MODE === 'development'"></td>
-          <td class="uppercase text-right font-bold" colspan="9">Đã thanh toán</td>
-          <td v-if="CONFIG.MODE === 'development'"></td>
-          <td class="font-bold text-right whitespace-nowrap">
-            {{ formatMoney(ticketRoomRef.paid) }}
-          </td>
-          <td></td>
-        </tr>
-        <tr>
-          <td v-if="CONFIG.MODE === 'development'"></td>
-          <td class="uppercase text-right font-bold" colspan="9">Còn thiếu</td>
-          <td v-if="CONFIG.MODE === 'development'"></td>
-          <td class="font-bold text-right whitespace-nowrap">
-            {{ formatMoney(ticketRoomRef.debt) }}
-          </td>
-          <td></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="mt-8 flex gap-4">
-    <VueButton color="blue" icon="print" @click="startPrintAllMoney">In bảng kê chi phí</VueButton>
+    <div class="pl-2" style="flex-grow: 1; flex-basis: 260px; border-left: 1px solid #ddd;">
+      <table class="mt-4 table-information">
+        <tbody>
+          <tr>
+            <td><IconUser /></td>
+            <td>Tên Khách Hàng</td>
+            <td>:</td>
+            <td style="font-weight: 500">{{ ticketRoomRef.customer?.fullName }}</td>
+          </tr>
+          <tr>
+            <td><IconPhone /></td>
+            <td>Số điện thoại:</td>
+            <td>:</td>
+            <td style="font-weight: 500">
+              {{ ESString.formatPhone(ticketRoomRef.customer?.phone) }}
+            </td>
+          </tr>
+          <tr>
+            <td><IconContainer /></td>
+            <td>Địa chỉ</td>
+            <td>:</td>
+            <td style="font-weight: 500">{{ ESString.formatAddress(ticketRoomRef.customer!) }}</td>
+          </tr>
+          <tr>
+            <td><IconWarning /></td>
+            <td>Chẩn đoán</td>
+            <td>:</td>
+            <td style="font-weight: 500">{{ ticketRoomRef.note }}</td>
+          </tr>
+          <tr>
+            <td><IconClockCircle /></td>
+            <td>Thời gian</td>
+            <td>:</td>
+            <td style="font-style: italic">
+              {{ ESTimer.timeToText(ticketRoomRef.registeredAt, 'hh:mm DD/MM/YYYY') }}
+            </td>
+          </tr>
+          <tr>
+            <td><IconClockCircle /></td>
+            <td>Trạng thái phiếu</td>
+            <td>:</td>
+            <td><TicketStatusTag :ticket="ticketRoomRef" /></td>
+          </tr>
+          <tr>
+            <td><IconSend /></td>
+            <td>Sản phẩm</td>
+            <td>:</td>
+            <td><TicketDeliveryStatusTag :deliveryStatus="ticketRoomRef.deliveryStatus" /></td>
+          </tr>
+          <tr>
+            <td><IconCalendar /></td>
+            <td>Hẹn</td>
+            <td>:</td>
+            <td>
+              <div v-if="!ticketRoomRef.toAppointment">
+                <VueButton size="small" color="blue" @click="handleClickModalRegisterAppointment">
+                  <IconCalendar />
+                  Tạo lịch hẹn
+                </VueButton>
+              </div>
+              <div v-else class="flex gap-2 items-center flex-wrap">
+                <VueButton size="small" @click="handleClickModalRegisterAppointment">Sửa</VueButton>
+                {{
+                  ESTimer.timeToText(ticketRoomRef.toAppointment.registeredAt, 'hh:mm DD/MM/YYYY')
+                }}
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -236,7 +240,7 @@ input[type='number']::-webkit-outer-spin-button {
 
 .table-information {
   td {
-    padding: 4px 8px;
+    padding: 8px 8px;
   }
 }
 </style>
