@@ -6,26 +6,43 @@ import { IconEditSquare } from '@/common/icon-google'
 import VueDropdown from '@/common/popover/VueDropdown.vue'
 import { InputDate, InputOptions, InputSelect, VueSelect } from '@/common/vue-form'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { Appointment, AppointmentApi, AppointmentStatus } from '@/modules/appointment'
+import {
+  Appointment,
+  AppointmentApi,
+  AppointmentService,
+  AppointmentStatus,
+  AppointmentType,
+} from '@/modules/appointment'
 import { CustomerService, type Customer } from '@/modules/customer'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { ESTimer, formatPhone } from '@/utils'
+import { ProcedureService, ProcedureType } from '@/modules/procedure'
+import { TicketProcedure, TicketProcedureStatus } from '@/modules/ticket-procedure'
+import type { TicketUser } from '@/modules/ticket-user'
+import { ESString, ESTimer } from '@/utils'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
+import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import { onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import ModalProcessTicketProcedureRegimen from '../../room-procedure/ModalProcessTicketProcedureRegimen.vue'
+import ModalShowTicketProcedureRegimen from '../../room-procedure/ModalShowTicketProcedureRegimen.vue'
+import TicketLink from '../../room-ticket-base/TicketLink.vue'
 import AppointmentStatusTag from '../AppointmentStatusTag.vue'
 import ModalAppointmentUpsert from '../upsert/ModalAppointmentUpsert.vue'
 import ModalAppointmentListSetting from './ModalAppointmentListSetting.vue'
 import ModalAppointmentRegisterTicketClinic from './ModalAppointmentRegisterTicketClinic.vue'
-import { CONFIG } from '@/config'
 
 const modalAppointmentUpsert = ref<InstanceType<typeof ModalAppointmentUpsert>>()
 const modalAppointmentRegisterTicketClinic =
   ref<InstanceType<typeof ModalAppointmentRegisterTicketClinic>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalAppointmentListSetting = ref<InstanceType<typeof ModalAppointmentListSetting>>()
+const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
+const modalShowTicketProcedureRegimen = ref<InstanceType<typeof ModalShowTicketProcedureRegimen>>()
+const modalProcessTicketProcedureRegimen =
+  ref<InstanceType<typeof ModalProcessTicketProcedureRegimen>>()
 
 const router = useRouter()
 const route = useRoute()
@@ -38,7 +55,7 @@ const appointmentList = ref<Appointment[]>([])
 const customerList = ref<Customer[]>([])
 const customerId = ref<number>()
 
-const appointmentStatusList = ref<AppointmentStatus[]>([])
+const statusList = ref<AppointmentStatus[]>([])
 
 const startTime = ESTimer.startOfDate(new Date()).getTime()
 let toTime: number | null = 0
@@ -61,28 +78,51 @@ const startFetchData = async () => {
   try {
     dataLoading.value = true
 
-    const { data, meta } = await AppointmentApi.pagination({
+    const paginationResponse = await AppointmentApi.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { customer: true },
+      relation: {
+        toTicket: true,
+        customer: true,
+        ticketProcedure: settingStore.APPOINTMENT_LIST.procedure
+          ? {
+              relation: {
+                ticketProcedureItemList: { imageList: true, ticketUserResultList: true },
+                ticketUserRequestList: true,
+              },
+            }
+          : undefined,
+        // ticketProcedureItem: true,
+      },
       filter: {
         registeredAt:
           fromDate.value || toDate.value
             ? {
-                GTE: fromDate.value ? fromDate.value : undefined,
-                LT: toDate.value ? toDate.value + 24 * 60 * 60 * 1000 : undefined,
+                GTE: fromDate.value ? new Date(fromDate.value).toISOString() : undefined,
+                LT: toDate.value
+                  ? new Date(toDate.value + 24 * 60 * 60 * 1000).toISOString()
+                  : undefined,
               }
             : undefined,
         customerId: customerId.value ? customerId.value : undefined,
-        appointmentStatus: appointmentStatusList.value.length
-          ? { IN: appointmentStatusList.value }
-          : undefined,
+        status: statusList.value.length ? { IN: statusList.value } : undefined,
       },
       sort: { registeredAt: 'ASC' },
     })
 
-    appointmentList.value = data
-    total.value = meta.total
+    paginationResponse.appointmentList.forEach((apm) => {
+      if (apm.ticketProcedure?.type === ProcedureType.Regimen) {
+        apm.ticketProcedureItem = (apm.ticketProcedure?.ticketProcedureItemList || []).find(
+          (tpi) => {
+            return tpi.id === apm.ticketProcedureItemId
+          },
+        )
+      }
+    })
+    appointmentList.value = paginationResponse.appointmentList
+
+    await AppointmentService.refreshProcedure(appointmentList.value)
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: VisitList.vue:72 ~ startFetchData ~ error:', error)
   } finally {
@@ -148,20 +188,26 @@ const handleClickDeleteAppointment = async (appointmentId: number) => {
   })
 }
 
-const openBlankTicketClinicDetail = async (ticketId: number) => {
-  const route = router.resolve({
-    name: 'TicketClinicDetailContainer',
-    params: { ticketId, roomId: 0 },
-  })
-  window.open(route.href, '_blank')
-}
-
 const handleFocusFirstSearchCustomer = async () => {
   await CustomerService.refreshDB()
+}
+
+const handleUpdateTicketProcedure = async (data: { ticketProcedure: TicketProcedure }) => {
+  const procedureMap = await ProcedureService.getMap()
+  appointmentList.value.forEach(async (i) => {
+    if (i.ticketProcedureId === data.ticketProcedure.id) {
+      i.ticketProcedure = TicketProcedure.from(data.ticketProcedure)
+      i.ticketProcedureItem = (i.ticketProcedure?.ticketProcedureItemList || []).find((tpi) => {
+        return tpi.id === i.ticketProcedureItemId
+      })
+      i.ticketProcedure.procedure = procedureMap[i.ticketProcedure.procedureId]
+    }
+  })
 }
 </script>
 
 <template>
+  <ModalProcedureDetail ref="modalProcedureDetail" />
   <ModalAppointmentUpsert ref="modalAppointmentUpsert" @success="startFetchData" />
   <ModalAppointmentRegisterTicketClinic
     ref="modalAppointmentRegisterTicketClinic"
@@ -171,6 +217,14 @@ const handleFocusFirstSearchCustomer = async () => {
   <ModalAppointmentListSetting
     v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalAppointmentListSetting"
+  />
+  <ModalShowTicketProcedureRegimen
+    ref="modalShowTicketProcedureRegimen"
+    @success="handleUpdateTicketProcedure"
+  />
+  <ModalProcessTicketProcedureRegimen
+    ref="modalProcessTicketProcedureRegimen"
+    @success="handleUpdateTicketProcedure"
   />
   <div class="page-header">
     <div class="flex items-center gap-4">
@@ -259,7 +313,7 @@ const handleFocusFirstSearchCustomer = async () => {
         <div>Chọn trạng thái</div>
         <div>
           <VueSelect
-            v-model:value="appointmentStatusList"
+            v-model:value="statusList"
             :options="[
               { value: [], text: 'Tất cả' },
               {
@@ -291,11 +345,10 @@ const handleFocusFirstSearchCustomer = async () => {
             <th v-if="CONFIG.MODE === 'development'">ID</th>
             <th>#</th>
             <th>Trạng thái</th>
-            <th>Phiếu khám</th>
-            <th>Thời gian hẹn</th>
             <th>Khách hàng</th>
-            <th>SĐT</th>
-            <th>Ngày sinh</th>
+            <th>Liên hệ</th>
+            <th>Phiếu khám</th>
+            <th v-if="settingStore.APPOINTMENT_LIST.procedure" style="">Dịch vụ</th>
             <th>Lý do</th>
             <th></th>
           </tr>
@@ -325,7 +378,12 @@ const handleFocusFirstSearchCustomer = async () => {
             <td>
               <div class="flex justify-between items-center gap-4">
                 <div>HK{{ appointment.id }}</div>
-                <div v-if="userPermission[PermissionId.APPOINTMENT_UPDATE]">
+                <div
+                  v-if="
+                    userPermission[PermissionId.APPOINTMENT_UPDATE] &&
+                    appointment.type === AppointmentType.Ticket
+                  "
+                >
                   <a
                     style="color: #eca52b"
                     class="text-xl"
@@ -336,36 +394,13 @@ const handleFocusFirstSearchCustomer = async () => {
                 </div>
               </div>
             </td>
-            <td style="text-align: center">
-              <AppointmentStatusTag :appointmentStatus="appointment.appointmentStatus" />
-            </td>
-            <td class="text-center">
-              <div
-                v-if="
-                  [AppointmentStatus.Waiting, AppointmentStatus.Confirm].includes(
-                    appointment.appointmentStatus,
-                  )
-                "
-                class="flex items-center justify-center"
-              >
-                <VueButton
-                  size="small"
-                  @click="modalAppointmentRegisterTicketClinic?.openModal(appointment)"
-                >
-                  Đăng ký tiếp đón
-                </VueButton>
+            <td>
+              <div>
+                <AppointmentStatusTag :status="appointment.status" />
               </div>
-              <div v-if="[AppointmentStatus.Completed].includes(appointment.appointmentStatus)">
-                <a @click="openBlankTicketClinicDetail(appointment.toTicketId)">
-                  KB{{ appointment.toTicketId }}
-                </a>
+              <div class="text-xs italic whitespace-nowrap">
+                {{ ESTimer.timeToText(appointment.registeredAt, 'hh:mm DD/MM/YYYY') }}
               </div>
-              <div v-if="[AppointmentStatus.Cancelled].includes(appointment.appointmentStatus)">
-                {{ appointment.cancelReason }}
-              </div>
-            </td>
-            <td class="text-center">
-              {{ ESTimer.timeToText(appointment.registeredAt, 'DD/MM/YYYY hh:mm') }}
             </td>
             <td>
               <div>
@@ -374,30 +409,165 @@ const handleFocusFirstSearchCustomer = async () => {
                   <IconFileSearch />
                 </a>
               </div>
+              <div class="text-xs italic">
+                {{
+                  ESTimer.timeToText(appointment.customer?.birthday, 'DD/MM/YYYY') ||
+                  appointment.customer?.yearOfBirth ||
+                  ''
+                }}
+                - {{ appointment.customer?.getAge ? appointment.customer?.getAge + ' Tuổi' : '' }}
+              </div>
               <div v-if="appointment.customer?.note" class="text-xs italic">
                 {{ appointment.customer?.note }}
               </div>
             </td>
-            <td class="text-center" style="width: 200px; white-space: nowrap">
-              <a
-                v-if="appointment.customer?.phone"
-                :href="'tel:' + appointment.customer?.phone || ''"
-              >
-                {{ formatPhone(appointment.customer?.phone || '') }}
-              </a>
+            <td>
+              <div v-if="appointment.customer?.phone">
+                <a :href="'tel:' + appointment.customer?.phone || ''">
+                  {{ ESString.formatPhone(appointment.customer?.phone || '') }}
+                </a>
+              </div>
+              <div class="text-xs italic">
+                {{ ESString.formatAddress(appointment.customer!) }}
+              </div>
             </td>
             <td class="text-center">
-              {{
-                ESTimer.timeToText(appointment.customer?.birthday) ||
-                appointment.customer?.yearOfBirth ||
-                ''
-              }}
+              <template v-if="appointment.type === AppointmentType.Ticket">
+                <div
+                  v-if="
+                    [AppointmentStatus.Waiting, AppointmentStatus.Confirm].includes(
+                      appointment.status,
+                    )
+                  "
+                  class="flex items-center justify-center"
+                >
+                  <VueButton
+                    size="small"
+                    @click="modalAppointmentRegisterTicketClinic?.openModal(appointment)"
+                  >
+                    Đăng ký khám
+                  </VueButton>
+                </div>
+                <div v-if="[AppointmentStatus.Completed].includes(appointment.status)">
+                  <div v-if="appointment.toTicket">
+                    <TicketLink :ticket="appointment.toTicket" />
+                  </div>
+                </div>
+              </template>
+              <template v-if="appointment.type === AppointmentType.TicketProcedure">
+                <div v-if="appointment.toTicket">
+                  <TicketLink :ticket="appointment.toTicket" />
+                </div>
+              </template>
             </td>
-            <td>{{ appointment.reason }}</td>
+            <td v-if="settingStore.APPOINTMENT_LIST.procedure">
+              <template v-if="appointment.type === AppointmentType.TicketProcedure">
+                <div class="flex flex-wrap gap-1 items-center">
+                  <div class="flex items-center gap-1" style="white-space: nowrap">
+                    <span>{{ appointment.ticketProcedure?.procedure?.name }}</span>
+                    <a
+                      style="line-height: 0"
+                      @click="
+                        modalProcedureDetail?.openModal(appointment.ticketProcedure!.procedureId)
+                      "
+                    >
+                      <IconFileSearch />
+                    </a>
+                  </div>
+
+                  <span
+                    v-if="
+                      appointment.ticketProcedure?.procedure?.procedureType ===
+                      ProcedureType.Regimen
+                    "
+                    class="font-bold"
+                  >
+                    ({{ appointment.ticketProcedure?.finishedSessions }}/{{
+                      appointment.ticketProcedure?.totalSessions
+                    }}
+                    buổi)
+                  </span>
+                  <div
+                    v-if="
+                      appointment.ticketProcedure?.procedure?.procedureType ===
+                      ProcedureType.Regimen
+                    "
+                    @click="
+                      modalShowTicketProcedureRegimen?.openModal({
+                        ticketProcedure: appointment.ticketProcedure,
+                      })
+                    "
+                    class="font-bold italic underline cursor-pointer"
+                    style="color: var(--text-green)"
+                  >
+                    XEM KQ
+                  </div>
+                </div>
+
+                <div
+                  v-if="
+                    appointment.ticketProcedure?.procedure?.procedureType === ProcedureType.Regimen
+                  "
+                >
+                  <div
+                    v-if="appointment.ticketProcedureItem!.status === TicketProcedureStatus.Pending"
+                  >
+                    <VueButton
+                      v-if="
+                        appointment.ticketProcedure.finishedSessions ===
+                        appointment.ticketProcedureItem?.indexSession
+                      "
+                      size="small"
+                      @click="
+                        modalProcessTicketProcedureRegimen?.openModal({
+                          ticketProcedure: appointment.ticketProcedure,
+                          ticketProcedureItem: appointment.ticketProcedureItem!,
+                        })
+                      "
+                    >
+                      Thực hiện buổi {{ (appointment.ticketProcedureItem?.indexSession || 0) + 1 }}
+                      <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                        ({{ appointment.ticketProcedureItemId }})
+                      </span>
+                    </VueButton>
+                  </div>
+                  <div
+                    v-else-if="
+                      appointment.ticketProcedureItem!.status === TicketProcedureStatus.Completed
+                    "
+                    class="font-bold italic"
+                    style="color: var(--text-blue)"
+                  >
+                    ĐÃ HOÀN THÀNH BUỔI
+                    {{ (appointment.ticketProcedureItem?.indexSession || 0) + 1 }}
+                  </div>
+                  <div
+                    v-else-if="
+                      appointment.ticketProcedureItem!.status === TicketProcedureStatus.Cancelled
+                    "
+                    class="font-bold italic"
+                  >
+                    HỦY BUỔI {{ (appointment.ticketProcedureItem?.indexSession || 0) + 1 }}
+                  </div>
+                </div>
+              </template>
+            </td>
+            <td>
+              <div>{{ appointment.reason }}</div>
+              <div v-if="[AppointmentStatus.Cancelled].includes(appointment.status)">
+                {{ appointment.cancelReason }}
+              </div>
+            </td>
             <td class="text-center">
               <a
-                v-if="[AppointmentStatus.Cancelled].includes(appointment.appointmentStatus)"
-                class="text-red-500"
+                v-if="
+                  userPermission[PermissionId.APPOINTMENT_DELETE] &&
+                  appointment.type === AppointmentType.Ticket &&
+                  [(AppointmentStatus.Waiting, AppointmentStatus.Cancelled)].includes(
+                    appointment.status,
+                  )
+                "
+                style="color: var(--text-red)"
                 @click="handleClickDeleteAppointment(appointment.id)"
               >
                 <IconDelete width="18" height="18" />

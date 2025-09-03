@@ -1,32 +1,35 @@
 import { BaseModel } from '../_base/base.model'
 import { Laboratory } from '../laboratory'
+import { LaboratoryGroup } from '../laboratory-group'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
 import { Radiology } from '../radiology'
 import { Role } from '../role/role.model'
 
-export enum PositionInteractType {
+export enum PositionType {
   Ticket = 1,
-  Product = 2, // chỉ tương tác với sản phẩm
-  Procedure = 3, // chỉ tương tác với thủ thuật
-  Radiology = 4, // chỉ tương tác với phiếu CĐHA (1 phiếu 1 CHA)
-  Laboratory = 5, // chỉ tương tác với 1 xét nghiệm
-  Regimen = 6, // chỉ tương tác với 1 xét nghiệm
-  ConsumableList = 7, // tương tác với tất cả sản phẩm trong cả tiêu hao
-  PrescriptionList = 8, // tương tác với tất cả sản phẩm trong cả toa thuốc
-  LaboratoryGroup = 9, // chỉ tương tác với phiếu xét nghiệm (1 phiếu nhiều xét nghiệm)
+  ProductRequest = 2,
+  TicketPrescriptionRequest = 3,
+  ProcedureRequest = 4,
+  ProcedureResult = 5,
+  LaboratoryRequest = 6,
+  LaboratoryGroupRequest = 7,
+  LaboratoryGroupResult = 8,
+  RadiologyRequest = 9,
+  RadiologyResult = 10,
 }
 
-export const PositionInteractTypeText = {
-  [PositionInteractType.Ticket]: 'Phòng khám',
-  [PositionInteractType.Product]: 'Sản phẩm',
-  [PositionInteractType.Procedure]: 'Dịch vụ',
-  [PositionInteractType.Radiology]: 'Phiếu CĐHA',
-  [PositionInteractType.Laboratory]: 'Xét nghiệm',
-  [PositionInteractType.Regimen]: 'Liệu trình',
-  [PositionInteractType.ConsumableList]: 'Phiếu Vật tư',
-  [PositionInteractType.PrescriptionList]: 'Đơn thuốc',
-  [PositionInteractType.LaboratoryGroup]: 'Phiếu xét nghiệm',
+export const PositionTypeText = {
+  [PositionType.Ticket]: 'Phòng khám',
+  [PositionType.ProductRequest]: 'Chỉ định sản phẩm',
+  [PositionType.TicketPrescriptionRequest]: 'Kê đơn thuốc',
+  [PositionType.ProcedureRequest]: 'Chỉ định dịch vụ',
+  [PositionType.ProcedureResult]: 'Thực hiện dịch vụ',
+  [PositionType.LaboratoryRequest]: 'Chỉ định xét nghiệm',
+  [PositionType.LaboratoryGroupRequest]: 'Chỉ định nhóm phiếu xét nghiệm',
+  [PositionType.LaboratoryGroupResult]: 'Trả kết quả nhóm phiếu xét nghiệm',
+  [PositionType.RadiologyRequest]: 'Chỉ định CĐHA',
+  [PositionType.RadiologyResult]: 'Trả kết quả CĐHA',
 }
 
 export enum CommissionCalculatorType {
@@ -43,24 +46,30 @@ export const CommissionCalculatorTypeText = {
 
 export class Position extends BaseModel {
   id: number
+  priority: number
   roleId: number
-  positionType: PositionInteractType
+  positionType: PositionType
   positionInteractId: number
   commissionCalculatorType: CommissionCalculatorType
   commissionValue: number
 
   role?: Role
-  product?: Product
-  procedure?: Procedure
-  radiology?: Radiology
-  laboratory?: Laboratory
+  productRequest?: Product
+  procedureRequest?: Procedure
+  procedureResult?: Procedure
+  laboratoryRequest?: Laboratory
+  laboratoryGroupRequest?: LaboratoryGroup
+  laboratoryGroupResult?: LaboratoryGroup
+  radiologyRequest?: Radiology
+  radiologyResult?: Radiology
 
   static init(): Position {
     const ins = new Position()
-    ins._localId = Math.random()
+    ins._localId = Math.random().toString(36).substring(2)
     ins.id = 0
     ins.roleId = 0
-    ins.positionType = PositionInteractType.Ticket
+    ins.priority = 0
+    ins.positionType = PositionType.Ticket
     ins.positionInteractId = 0
     ins.commissionCalculatorType = CommissionCalculatorType.VND
     ins.commissionValue = 0
@@ -79,7 +88,9 @@ export class Position extends BaseModel {
       if (value === undefined) delete target[key as keyof typeof target]
     })
     Object.assign(target, source)
-    target._localId = source.id || source._localId || Math.random()
+    target._localId = String(
+      source.id || source._localId || Math.random().toString(36).substring(2),
+    )
     return target
   }
 
@@ -90,21 +101,42 @@ export class Position extends BaseModel {
   static from(source: Position) {
     const target = Position.basic(source)
     if (Object.prototype.hasOwnProperty.call(source, 'role')) {
-      target.role = target.role ? Role.basic(target.role) : target.role
+      target.role = source.role ? Role.basic(source.role) : source.role
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'product')) {
-      target.product = target.product ? Product.basic(target.product) : target.product
+    if (Object.prototype.hasOwnProperty.call(source, 'productRequest')) {
+      target.productRequest = source.productRequest
+        ? Product.basic(source.productRequest)
+        : source.productRequest
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'procedure')) {
-      target.procedure = target.procedure ? Procedure.basic(target.procedure) : target.procedure
+    if (Object.prototype.hasOwnProperty.call(source, 'procedureRequest')) {
+      target.procedureRequest = source.procedureRequest
+        ? Procedure.basic(source.procedureRequest)
+        : source.procedureRequest
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'radiology')) {
-      target.radiology = target.radiology ? Radiology.basic(target.radiology) : target.radiology
+    if (Object.prototype.hasOwnProperty.call(source, 'laboratoryRequest')) {
+      target.laboratoryRequest = source.laboratoryRequest
+        ? Laboratory.basic(source.laboratoryRequest)
+        : source.laboratoryRequest
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'laboratory')) {
-      target.laboratory = target.laboratory
-        ? Laboratory.basic(target.laboratory)
-        : target.laboratory
+    if (Object.prototype.hasOwnProperty.call(source, 'laboratoryGroupRequest')) {
+      target.laboratoryGroupRequest = source.laboratoryGroupRequest
+        ? LaboratoryGroup.basic(source.laboratoryGroupRequest)
+        : source.laboratoryGroupRequest
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'laboratoryGroupResult')) {
+      target.laboratoryGroupResult = source.laboratoryGroupResult
+        ? LaboratoryGroup.basic(source.laboratoryGroupResult)
+        : source.laboratoryGroupResult
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'radiologyRequest')) {
+      target.radiologyRequest = source.radiologyRequest
+        ? Radiology.basic(source.radiologyRequest)
+        : source.radiologyRequest
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'radiologyResult')) {
+      target.radiologyResult = source.radiologyResult
+        ? Radiology.basic(source.radiologyResult)
+        : source.radiologyResult
     }
     return target
   }
@@ -115,6 +147,7 @@ export class Position extends BaseModel {
 
   static equal(a: Position, b: Position) {
     if (a.id != b.id) return false
+    if (a.priority != b.priority) return false
     if (a.roleId != b.roleId) return false
     if (a.positionType != b.positionType) return false
     if (a.positionInteractId != b.positionInteractId) return false

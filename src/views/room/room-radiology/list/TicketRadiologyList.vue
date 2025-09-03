@@ -73,7 +73,6 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
       relation: {
         customer: true,
         ticket: true,
-        ticketUserList: false,
         radiology: false,
       },
       filter: {
@@ -197,7 +196,7 @@ const changeLimit = async (limitSelect: any) => {
 const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
   try {
     const ticketRadiologyData = await TicketRadiologyApi.detail(ticketRadiologySelect.id, {
-      relation: { imageList: true, ticketUserList: true },
+      relation: { imageList: true, ticketUserResultList: true, ticketUserRequestList: true },
     })
     ticketRadiologyData.radiology = await RadiologyService.detail(ticketRadiologyData.radiologyId, {
       relation: { radiologyGroup: true },

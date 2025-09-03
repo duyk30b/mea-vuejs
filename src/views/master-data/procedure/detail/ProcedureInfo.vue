@@ -6,7 +6,7 @@ import {
   Position,
   CommissionCalculatorType,
   PositionService,
-  PositionInteractType,
+  PositionType,
 } from '../../../../modules/position'
 import { Procedure, ProcedureApi } from '../../../../modules/procedure'
 import { Role, RoleService } from '../../../../modules/role'
@@ -31,7 +31,10 @@ const startFetchData = async () => {
         relation: { procedureGroup: true },
       }),
       PositionService.list({
-        filter: { positionType: PositionInteractType.Procedure, positionInteractId: props.procedureId },
+        filter: {
+          positionType: { IN: [PositionType.ProcedureRequest, PositionType.ProcedureResult] },
+          positionInteractId: props.procedureId,
+        },
       }),
       RoleService.getMap(),
     ])
@@ -52,8 +55,7 @@ watch(
   { immediate: true },
 )
 
-onMounted(() => {
-})
+onMounted(() => {})
 </script>
 
 <template>
@@ -94,9 +96,7 @@ onMounted(() => {
           <tr v-for="position in positionList" :key="position.id">
             <td>{{ roleMap[position.roleId]?.name || '' }}</td>
             <template
-              v-if="
-                position.commissionCalculatorType === CommissionCalculatorType.PercentExpected
-              "
+              v-if="position.commissionCalculatorType === CommissionCalculatorType.PercentExpected"
             >
               <td class="text-right">{{ position.commissionValue }}%</td>
               <td>Giá niêm yết</td>

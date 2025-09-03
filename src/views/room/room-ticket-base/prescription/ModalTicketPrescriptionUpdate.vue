@@ -14,7 +14,7 @@ import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus, DiscountType, PaymentMoneyStatus } from '@/modules/enum'
-import { PositionInteractType, PositionService } from '@/modules/position'
+import { PositionType, PositionService } from '@/modules/position'
 import { Role, RoleService } from '@/modules/role'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeProductApi, TicketStatus } from '@/modules/ticket'
@@ -29,92 +29,16 @@ import TicketDeliveryStatusTag from '../TicketDeliveryStatusTag.vue'
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
-const roleMap = ref<Record<string, Role>>({})
-const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: string; data: User }[]>>(
-  {},
-)
-
 let ticketProductOrigin = TicketProduct.blank()
 const ticketProduct = ref<TicketProduct>(TicketProduct.blank())
 
-let ticketUserListOrigin: TicketUser[] = []
-const ticketUserList = ref<TicketUser[]>([])
-
 const showModal = ref(false)
 const saveLoading = ref(false)
-
-const refreshTicketUserList = async () => {
-  ticketUserListOrigin = []
-  const ticketUserListRef =
-    ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.Product]?.[ticketProduct.value.id] ||
-    []
-
-  const positionList = await PositionService.list({
-    filter: {
-      positionType: PositionInteractType.Product,
-      positionInteractId: ticketProduct.value.productId,
-    },
-  })
-
-  // lấy tất cả role có trong commission trước
-  positionList.forEach((i) => {
-    const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
-    if (findExist) {
-      ticketUserListOrigin.push(TicketUser.from(findExist))
-    } else {
-      const ticketUserBlank = TicketUser.blank()
-      ticketUserBlank.roleId = i.roleId
-      ticketUserListOrigin.push(ticketUserBlank)
-    }
-  })
-
-  // lấy role còn thừa ra ở trong ticketUser vẫn phải hiển thị
-  ticketUserListRef.forEach((i) => {
-    const findExist = ticketUserListOrigin.find((j) => j.roleId === i.roleId)
-    if (findExist) {
-      return // nếu đã có rồi thì bỏ qua
-    } else {
-      ticketUserListOrigin.push(TicketUser.from(i))
-    }
-  })
-  ticketUserList.value = TicketUser.fromList(ticketUserListOrigin)
-}
-
-onMounted(async () => {
-  try {
-    const fetchPromise = await Promise.all([
-      RoleService.getMap(),
-      UserService.getMap(),
-      UserRoleService.list(),
-    ])
-
-    roleMap.value = fetchPromise[0]
-    const userMap = fetchPromise[1]
-    const userRoleList = fetchPromise[2]
-
-    userRoleList.forEach((i) => {
-      const key = i.roleId
-      if (!userRoleMapRoleIdOptions.value[key]) {
-        userRoleMapRoleIdOptions.value[key] = []
-      }
-      userRoleMapRoleIdOptions.value[key].push({
-        value: userMap[i.userId]?.id || 0,
-        text: userMap[i.userId]?.fullName || '',
-        data: userMap[i.userId],
-      })
-    })
-  } catch (error: any) {
-    console.log('🚀 ~ file: TicketClinicProductSelectItem.vue:51 ~ onMounted ~ error:', error)
-    AlertStore.add({ type: 'error', message: error.message })
-  }
-})
 
 const openModal = async (ticketProductProp: TicketProduct) => {
   showModal.value = true
   ticketProductOrigin = TicketProduct.from(ticketProductProp)
   ticketProduct.value = TicketProduct.from(ticketProductProp)
-
-  await refreshTicketUserList()
 }
 
 const hasChangeTicketProduct = computed(() => {
@@ -122,13 +46,8 @@ const hasChangeTicketProduct = computed(() => {
   return result
 })
 
-const hasChangeTicketUserList = computed(() => {
-  const result = !TicketUser.equalList(ticketUserListOrigin, ticketUserList.value)
-  return result
-})
-
 const hasChangeData = computed(() => {
-  const result = hasChangeTicketProduct.value || hasChangeTicketUserList.value
+  const result = hasChangeTicketProduct.value
   return result
 })
 
@@ -181,8 +100,6 @@ const closeModal = () => {
   showModal.value = false
   ticketProduct.value = TicketProduct.blank()
   ticketProductOrigin = TicketProduct.blank()
-  ticketUserList.value = []
-  ticketUserListOrigin = []
 }
 
 const clickDestroy = async () => {
@@ -233,14 +150,10 @@ const clickDestroy = async () => {
 const updateTicketProduct = async () => {
   saveLoading.value = true
   try {
-    const hasUpdateTicketUser =
-      ticketUserListOrigin.length || ticketUserList.value.filter((i) => !!i.userId).length
-
     await TicketChangeProductApi.updateTicketProductPrescription({
       ticketId: ticketRoomRef.value.id,
       ticketProductId: ticketProduct.value.id,
       ticketProduct: hasChangeTicketProduct.value ? ticketProduct.value : undefined,
-      ticketUserList: hasUpdateTicketUser ? ticketUserList.value : undefined,
     })
     closeModal()
   } catch (error) {
@@ -448,33 +361,6 @@ defineExpose({ openModal })
             ></InputHint>
           </div>
         </div>
-
-        <template v-if="ticketUserList.length">
-          <div
-            v-for="(ticketUser, index) in ticketUserList"
-            :key="index"
-            style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
-          >
-            <div>
-              {{ roleMap[ticketUser.roleId]?.name || '' }}
-            </div>
-            <div>
-              <InputFilter
-                v-model:value="ticketUserList[index].userId"
-                :options="userRoleMapRoleIdOptions[ticketUser.roleId] || []"
-                :maxHeight="200"
-                placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên"
-              >
-                <template #option="{ item: { data } }">
-                  <div>
-                    <b>{{ data.fullName }}</b>
-                    - {{ ESString.formatPhone(data.phone) }} -
-                  </div>
-                </template>
-              </InputFilter>
-            </div>
-          </div>
-        </template>
 
         <div style="flex-grow: 1; flex-basis: 80%" class="mt-6 flex gap-4">
           <VueButton color="red" icon="trash" @click="clickDestroy">Xóa</VueButton>

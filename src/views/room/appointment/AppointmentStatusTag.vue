@@ -1,22 +1,22 @@
 <script setup lang="ts">
 import VueTag from '@/common/VueTag.vue'
-import { AppointmentStatus } from '@/modules/appointment'
+import { AppointmentStatus, AppointmentStatusText } from '@/modules/appointment'
 
-const props = defineProps<{ appointmentStatus: AppointmentStatus }>()
+const props = defineProps<{ status: AppointmentStatus }>()
 </script>
 
 <template>
-  <VueTag v-if="appointmentStatus === AppointmentStatus.Waiting" color="orange" icon="clock">
-    Chờ xác nhận
+  <VueTag v-if="status === AppointmentStatus.Waiting" color="orange" icon="clock">
+    {{ AppointmentStatusText[status] }}
   </VueTag>
-  <VueTag v-if="appointmentStatus === AppointmentStatus.Confirm" color="blue" icon="exclamation">
-    Đã xác nhận
+  <VueTag v-if="status === AppointmentStatus.Confirm" color="blue" icon="exclamation">
+    {{ AppointmentStatusText[status] }}
   </VueTag>
-  <VueTag v-if="appointmentStatus === AppointmentStatus.Completed" color="green" icon="check">
-    Đã đến khám
+  <VueTag v-if="status === AppointmentStatus.Completed" color="green" icon="check">
+    {{ AppointmentStatusText[status] }}
   </VueTag>
-  <VueTag v-if="appointmentStatus === AppointmentStatus.Cancelled" color="default" icon="close">
-    Hủy hẹn
+  <VueTag v-if="status === AppointmentStatus.Cancelled" color="default" icon="close">
+    {{ AppointmentStatusText[status] }}
   </VueTag>
 </template>
 

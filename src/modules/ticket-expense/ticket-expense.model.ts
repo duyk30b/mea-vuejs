@@ -11,7 +11,7 @@ export class TicketExpense extends BaseModel {
 
   static init() {
     const ins = new TicketExpense()
-    ins._localId = Math.random()
+    ins._localId = Math.random().toString(36).substring(2)
     ins.id = 0
     ins.expenseId = 0
     ins.money = 0
@@ -32,7 +32,9 @@ export class TicketExpense extends BaseModel {
       if (value === undefined) delete target[key as keyof typeof target]
     })
     Object.assign(target, source)
-    target._localId = source.id || source._localId || Math.random()
+    target._localId = String(
+      source.id || source._localId || Math.random().toString(36).substring(2),
+    )
     return target
   }
 

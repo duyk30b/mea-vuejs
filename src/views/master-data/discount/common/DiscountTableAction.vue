@@ -66,7 +66,7 @@ const clickUpsertDiscount = (options: { discount?: Discount; mode: 'CREATE' | 'U
   })
 }
 
-const clickRemoveDiscount = (_localId: number) => {
+const clickRemoveDiscount = (_localId: string) => {
   const discountListAction = [...props.discountList]
   const findIndex = discountListAction.findIndex((i) => {
     return i._localId === _localId

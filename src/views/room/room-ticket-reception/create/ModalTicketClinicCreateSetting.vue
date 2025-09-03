@@ -8,7 +8,7 @@ import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { SettingKey } from '@/modules/_me/store.variable'
 import { OrganizationService } from '@/modules/organization'
-import { PositionInteractType, PositionService } from '@/modules/position'
+import { PositionType, PositionService } from '@/modules/position'
 import { RoleService } from '@/modules/role'
 import { ref } from 'vue'
 
@@ -35,7 +35,7 @@ const openModal = async () => {
   settingDisplay.value = JSON.parse(JSON.stringify(store.TICKET_CLINIC_CREATE))
   const fetchData = await Promise.all([
     RoleService.getMap(),
-    PositionService.list({ filter: { positionType: PositionInteractType.Ticket } }),
+    PositionService.list({ filter: { positionType: PositionType.Ticket } }),
   ])
   const roleMap = fetchData[0]
   roleOptions.value = fetchData[1].map((i) => ({ value: i.roleId, label: roleMap[i.roleId]?.name }))

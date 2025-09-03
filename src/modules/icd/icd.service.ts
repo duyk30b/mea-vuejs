@@ -41,7 +41,6 @@ export class ICDService {
 
   // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng loadedAll
   static fetchAll = (() => {
-    console.log('🚀 ~ icd.service.ts:42 ~ ICDService ~ fetchAll:')
     const start = async () => {
       try {
         await ICDService.refreshDB()

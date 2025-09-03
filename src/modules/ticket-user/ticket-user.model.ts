@@ -1,18 +1,24 @@
-import { CommissionCalculatorType, PositionInteractType } from '../position'
+import { BaseModel } from '../_base/base.model'
+import { CommissionCalculatorType, Position, PositionType } from '../position'
 import type { Role } from '../role'
+import type { TicketProcedure } from '../ticket-procedure'
+import type { TicketProcedureItem } from '../ticket-procedure/ticket-procedure-item.model'
 import { Ticket } from '../ticket/ticket.model'
 import { User } from '../user'
 
-export class TicketUser {
+export class TicketUser extends BaseModel {
   id: number
   ticketId: number
   roleId: number
   userId: number
+  positionId: number
 
-  positionType: PositionInteractType
+  positionType: PositionType
   positionInteractId: number // procedureId hoặc productId hoặc radiologyId
 
   ticketItemId: number // ticketProcedureId hoặc ticketProductId hoặc ticketRadiologyId
+  ticketItemChildId: number // ticketProcedureItemId
+
   ticketItemExpectedPrice: number
   ticketItemActualPrice: number
 
@@ -23,22 +29,29 @@ export class TicketUser {
   commissionPercentExpected: number
   commissionMoney: number
 
-  createdAt!: number
+  createdAt: number
 
   ticket?: Ticket
   user?: User
   role?: Role
+  position?: Position
+
+  ticketProcedure?: TicketProcedure // chỉ convert tại màn TicketUserContainer
+  ticketProcedureItem?: TicketProcedureItem // chỉ convert tại màn TicketUserContainer
 
   static init(): TicketUser {
     const ins = new TicketUser()
-    ins.id = 0
+    // ins.id = 0
+    ins._localId = Math.random().toString(36).substring(2)
+
     ins.ticketId = 0
     ins.userId = 0
     ins.roleId = 0
 
-    ins.positionType = PositionInteractType.Ticket
+    ins.positionType = PositionType.Ticket
     ins.positionInteractId = 0
     ins.ticketItemId = 0
+    ins.ticketItemChildId = 0
 
     ins.commissionCalculatorType = CommissionCalculatorType.VND
     ins.commissionMoney = 0
@@ -61,6 +74,9 @@ export class TicketUser {
       const value = target[key as keyof typeof target]
       if (value === undefined) delete target[key as keyof typeof target]
     })
+    target._localId = String(
+      source.id || source._localId || Math.random().toString(36).substring(2),
+    )
     Object.assign(target, source)
     return target
   }
@@ -86,10 +102,12 @@ export class TicketUser {
     if (a.ticketId != b.ticketId) return false
     if (a.roleId != b.roleId) return false
     if (a.userId != b.userId) return false
+    if (a.positionId != b.positionId) return false
 
     if (a.positionType != b.positionType) return false
     if (a.positionInteractId != b.positionInteractId) return false
     if (a.ticketItemId != b.ticketItemId) return false
+    if (a.ticketItemChildId != b.ticketItemChildId) return false
 
     if (a.quantity != b.quantity) return false
 

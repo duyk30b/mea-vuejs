@@ -16,8 +16,10 @@ export class AppointmentApi {
     const response = await AxiosInstance.get('/appointment/pagination', { params })
     const { data, meta } = response.data as BaseResponse
     return {
-      meta,
-      data: Appointment.fromList(data),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
+      appointmentList: Appointment.fromList(data.appointmentList),
     }
   }
 
@@ -25,8 +27,8 @@ export class AppointmentApi {
     const params = AppointmentGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/appointment/list', { params })
-    const { data } = response.data as BaseResponse<any[]>
-    return Appointment.fromList(data)
+    const { data } = response.data as BaseResponse<{ appointmentList: any[] }>
+    return Appointment.fromList(data.appointmentList)
   }
 
   static async detail(id: number, options: AppointmentDetailQuery): Promise<Appointment> {
@@ -41,7 +43,7 @@ export class AppointmentApi {
     const { appointment, newCustomer } = body
     const response = await AxiosInstance.post('/appointment/create', {
       customerId: appointment.customerId,
-      appointmentStatus: appointment.appointmentStatus,
+      status: appointment.status,
       customer:
         newCustomer && newCustomer.id === 0
           ? {
@@ -78,7 +80,7 @@ export class AppointmentApi {
       reason: body.appointment.reason,
       customerSourceId: body.appointment.customerSourceId,
       cancelReason: body.appointment.cancelReason,
-      appointmentStatus: body.appointment.appointmentStatus,
+      status: body.appointment.status,
     })
     const { data } = response.data as BaseResponse<{ appointment: any }>
     return Appointment.from(data.appointment)

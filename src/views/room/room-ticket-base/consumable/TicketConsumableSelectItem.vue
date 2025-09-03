@@ -261,7 +261,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
   <ModalProductDetail ref="modalProductDetail" />
   <ModalProductUpsert ref="modalProductUpsert" @success="handleModalProductUpsertSuccess" />
   <form class="mt-4 flex flex-wrap gap-4" @submit.prevent="(e) => addConsumableItem()">
-    <div style="flex-grow: 1; flex-basis: 80%">
+    <div style="flex-grow: 1; flex-basis: 90%">
       <div class="flex gap-1 flex-wrap">
         <span>Tên vật tư</span>
         <a
@@ -342,7 +342,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
 
     <div
       v-if="ticketProductConsumable.product?.productType === ProductType.SplitBatch"
-      style="flex-grow: 1; flex-basis: 80%"
+      style="flex-grow: 1; flex-basis: 90%"
     >
       <div>
         Lô hàng
@@ -396,7 +396,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
       </div>
     </div>
 
-    <div style="flex-grow: 1; flex-basis: 300px">
+    <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
       <div class="flex flex-wrap item-center gap-2">
         <span>Số lượng</span>
         <span v-if="ticketProductConsumable.unitRate !== 1">
@@ -430,7 +430,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
       </div>
     </div>
 
-    <div style="flex-grow: 1; flex-basis: 300px">
+    <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
       <div class="flex flex-wrap item-center gap-2">
         <span>Giá tiền</span>
         <span v-if="ticketProductConsumable.unitRate !== 1">
@@ -451,7 +451,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
       </div>
     </div>
 
-    <div class="mt-2 flex justify-center" style="flex-grow: 1; flex-basis: 80%">
+    <div class="mt-2 flex justify-center" style="flex-grow: 1; flex-basis: 90%">
       <VueButton
         :disabled="
           [TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.status) ||

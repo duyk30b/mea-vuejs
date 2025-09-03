@@ -36,7 +36,7 @@ export class TicketService {
             ? {}
             : undefined,
           ticketRadiologyList: MeService.organizationPermission.value[PermissionId.RADIOLOGY]
-            ? {}
+            ? { relation: { imageList: true } }
             : undefined,
           ticketLaboratoryList: MeService.organizationPermission.value[PermissionId.LABORATORY]
             ? {}
@@ -48,7 +48,7 @@ export class TicketService {
             PermissionId.LABORATORY
           ]
             ? true
-            : false,
+            : undefined,
         },
       })
       await ticketResponse.refreshAllData()

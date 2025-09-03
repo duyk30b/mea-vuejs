@@ -1,21 +1,18 @@
 <script lang="ts" setup>
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
-import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputFilter, InputMoney, InputNumber, VueSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
 import { Laboratory, LaboratoryService } from '@/modules/laboratory'
-import { PositionInteractType, PositionService } from '@/modules/position'
-import { Role, RoleService } from '@/modules/role'
+import { Role } from '@/modules/role'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeLaboratoryApi } from '@/modules/ticket'
 import { TicketLaboratory, TicketLaboratoryStatus } from '@/modules/ticket-laboratory'
 import { TicketUser } from '@/modules/ticket-user'
-import { User, UserService } from '@/modules/user'
-import { UserRoleService } from '@/modules/user-role'
+import { User } from '@/modules/user'
 import { ESString } from '@/utils'
 import { computed, onMounted, ref } from 'vue'
 
@@ -40,72 +37,11 @@ const ticketUserList = ref<TicketUser[]>([])
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-const refreshTicketUserList = async () => {
-  ticketUserListOrigin = []
-  const ticketUserListRef =
-    ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.Laboratory]?.[
-      ticketLaboratory.value.id
-    ] || []
-
-  const positionList = await PositionService.list({
-    filter: {
-      positionType: PositionInteractType.Laboratory,
-      positionInteractId: ticketLaboratory.value.laboratoryId,
-    },
-  })
-
-  // lấy tất cả role có trong commission trước
-  positionList.forEach((i) => {
-    const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
-    if (findExist) {
-      ticketUserListOrigin.push(TicketUser.from(findExist))
-    } else {
-      const ticketUserBlank = TicketUser.blank()
-      ticketUserBlank.roleId = i.roleId
-      ticketUserListOrigin.push(ticketUserBlank)
-    }
-  })
-
-  // lấy role còn thừa ra ở trong ticketUser vẫn phải hiển thị
-  ticketUserListRef.forEach((i) => {
-    const findExist = ticketUserListOrigin.find((j) => j.roleId === i.roleId)
-    if (findExist) {
-      return // nếu đã có rồi thì bỏ qua
-    } else {
-      ticketUserListOrigin.push(TicketUser.from(i))
-    }
-  })
-  ticketUserList.value = TicketUser.fromList(ticketUserListOrigin)
-}
-
 onMounted(async () => {
   try {
-    const fetchPromise = await Promise.all([
-      LaboratoryService.getMap(),
-      RoleService.getMap(),
-      UserService.getMap(),
-      UserRoleService.list(),
-    ])
-
-    laboratoryMap.value = fetchPromise[0]
-    roleMap.value = fetchPromise[1]
-    const userMap = fetchPromise[2]
-    const userRoleList = fetchPromise[3]
-
-    userRoleList.forEach((i) => {
-      const key = i.roleId
-      if (!userRoleMapRoleIdOptions.value[key]) {
-        userRoleMapRoleIdOptions.value[key] = []
-      }
-      userRoleMapRoleIdOptions.value[key].push({
-        value: userMap[i.userId]?.id || 0,
-        text: userMap[i.userId]?.fullName || '',
-        data: userMap[i.userId],
-      })
-    })
+    laboratoryMap.value = await LaboratoryService.getMap()
   } catch (error: any) {
     console.log('🚀 ~ file: ModalTicketLaboratoryUpdate.vue:105 ~ onMounted ~ error:', error)
-    AlertStore.add({ type: 'error', message: error.message })
   }
 })
 
@@ -113,8 +49,6 @@ const openModal = async (ticketLaboratoryProp: TicketLaboratory) => {
   showModal.value = true
   ticketLaboratoryOrigin.value = TicketLaboratory.from(ticketLaboratoryProp)
   ticketLaboratory.value = TicketLaboratory.from(ticketLaboratoryProp)
-
-  await refreshTicketUserList()
 }
 
 const hasChangeTicketLaboratory = computed(() => {

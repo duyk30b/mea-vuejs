@@ -47,7 +47,8 @@ export const roomRouter: RouteRecordRaw = {
           path: 'detail/:ticketId',
           name: 'TicketOrderDetailContainer',
           meta: { title: 'Thông tin đơn' },
-          component: () => import('../views/room/room-ticket-order/detail/TicketOrderDetailContainer.vue'),
+          component: () =>
+            import('../views/room/room-ticket-order/detail/TicketOrderDetailContainer.vue'),
         },
         {
           path: 'upsert/:ticketId?',
@@ -90,24 +91,8 @@ export const roomRouter: RouteRecordRaw = {
               path: 'diagnosis',
               name: 'TicketClinicDiagnosis',
               component: () =>
-                import('../views/room/room-ticket-clinic/detail/TicketClinicDiagnosis.vue'),
-              meta: { keepAlive: true, title: 'Khám' },
-            },
-            {
-              path: 'diagnosis-obstetrics',
-              name: 'TicketClinicDiagnosisObstetric',
-              component: () =>
                 import(
-                  '../views/room/room-ticket-clinic/detail/diagnosis/TicketClinicDiagnosisObstetric.vue'
-                ),
-              meta: { keepAlive: true, title: 'Khám' },
-            },
-            {
-              path: 'diagnosis-eye-basic',
-              name: 'TicketClinicDiagnosisEyeBasic',
-              component: () =>
-                import(
-                  '../views/room/room-ticket-clinic/detail/diagnosis/TicketClinicDiagnosisEyeBasic.vue'
+                  '../views/room/room-ticket-clinic/detail/diagnosis/TicketClinicDiagnosis.vue'
                 ),
               meta: { keepAlive: true, title: 'Khám' },
             },
@@ -154,6 +139,13 @@ export const roomRouter: RouteRecordRaw = {
               component: () =>
                 import('../views/room/room-ticket-clinic/detail/TicketClinicPrescription.vue'),
               meta: { keepAlive: true, title: 'Kê đơn thuốc' },
+            },
+            {
+              path: 'user',
+              name: 'TicketClinicUser',
+              component: () =>
+                import('../views/room/room-ticket-clinic/detail/TicketClinicUser.vue'),
+              meta: { keepAlive: true, title: 'Nhân viên' },
             },
             {
               path: 'summary',

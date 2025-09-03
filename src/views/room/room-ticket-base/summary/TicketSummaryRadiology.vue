@@ -13,10 +13,10 @@ import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatu
 import ModalRadiologyDetail from '@/views/master-data/radiology/detail/ModalRadiologyDetail.vue'
 import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadiologyStatusTooltip.vue'
 import { computed, onMounted, ref } from 'vue'
-import ModalTicketRadiologyUpdateMoney from '../radiology/ModalTicketRadiologyUpdateMoney.vue'
+import ModalTicketRadiologyUpdate from '../radiology/ModalTicketRadiologyUpdate.vue'
 
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
-const modalTicketRadiologyUpdateMoney = ref<InstanceType<typeof ModalTicketRadiologyUpdateMoney>>()
+const modalTicketRadiologyUpdate = ref<InstanceType<typeof ModalTicketRadiologyUpdate>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -41,7 +41,7 @@ const radiologyCostAmount = computed(() => {
 
 <template>
   <ModalRadiologyDetail ref="modalRadiologyDetail" />
-  <ModalTicketRadiologyUpdateMoney ref="modalTicketRadiologyUpdateMoney" />
+  <ModalTicketRadiologyUpdate ref="modalTicketRadiologyUpdate" />
   <template v-if="ticketRoomRef.ticketRadiologyList?.length">
     <thead>
       <tr>
@@ -122,7 +122,7 @@ const radiologyCostAmount = computed(() => {
               userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY]
             "
             class="text-orange-500"
-            @click="modalTicketRadiologyUpdateMoney?.openModal(ticketRadiology)"
+            @click="modalTicketRadiologyUpdate?.openModal({ ticketRadiology })"
           >
             <IconEditSquare width="20" height="20" />
           </a>

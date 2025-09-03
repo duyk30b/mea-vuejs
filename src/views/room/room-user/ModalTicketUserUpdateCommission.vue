@@ -8,8 +8,7 @@ import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Laboratory, LaboratoryService } from '@/modules/laboratory'
-import { PermissionId } from '@/modules/permission/permission.enum'
-import { CommissionCalculatorType, PositionInteractType } from '@/modules/position'
+import { CommissionCalculatorType, PositionType } from '@/modules/position'
 import { Procedure, ProcedureService } from '@/modules/procedure'
 import { Product, ProductService } from '@/modules/product'
 import { Radiology, RadiologyService } from '@/modules/radiology'
@@ -29,7 +28,7 @@ const { formatMoney, isMobile } = settingStore
 
 const { userPermission, organizationPermission } = MeService
 
-const ticketUserOrigin = ref<TicketUser>(TicketUser.blank())
+let ticketUserOrigin = TicketUser.blank()
 const ticketUser = ref<TicketUser>(TicketUser.blank())
 
 const userMap = ref<Record<string, User>>({})
@@ -48,9 +47,9 @@ onMounted(async () => {
     const fetchData = await Promise.all([
       UserService.getMap(),
       RoleService.getMap(),
-      organizationPermission.value[PermissionId.PROCEDURE] ? ProcedureService.getMap() : {},
-      organizationPermission.value[PermissionId.LABORATORY] ? LaboratoryService.getMap() : {},
-      organizationPermission.value[PermissionId.PROCEDURE] ? RadiologyService.getMap() : {},
+      ProcedureService.getMap(),
+      LaboratoryService.getMap(),
+      RadiologyService.getMap(),
     ])
     userMap.value = fetchData[0]
     roleMap.value = fetchData[1]
@@ -65,10 +64,10 @@ onMounted(async () => {
 
 const openModal = async (ticketUserProp: TicketUser) => {
   showModal.value = true
-  ticketUserOrigin.value = TicketUser.from(ticketUserProp)
+  ticketUserOrigin = TicketUser.from(ticketUserProp)
   ticketUser.value = TicketUser.from(ticketUserProp)
 
-  if (ticketUserProp.positionType === PositionInteractType.Product) {
+  if (ticketUserProp.positionType === PositionType.ProductRequest) {
     const productLocal = await ProductService.getOne(ticketUser.value.positionInteractId)
     if (productLocal) {
       product.value = productLocal
@@ -77,7 +76,7 @@ const openModal = async (ticketUserProp: TicketUser) => {
 }
 
 const hasChangeData = computed(() => {
-  const result = !TicketUser.equal(ticketUserOrigin.value, ticketUser.value)
+  const result = !TicketUser.equal(ticketUserOrigin, ticketUser.value)
   return result
 })
 
@@ -131,7 +130,7 @@ const handleChangeTotalCommissionMoney = (data: number) => {
 const closeModal = () => {
   showModal.value = false
   ticketUser.value = TicketUser.blank()
-  ticketUserOrigin.value = TicketUser.blank()
+  ticketUserOrigin = TicketUser.blank()
 }
 
 const clickDestroy = async () => {
@@ -150,7 +149,7 @@ const clickDestroy = async () => {
         emit('success', ticketUser.value, 'DESTROY')
         closeModal()
       } catch (error) {
-        console.log('🚀 ~ ModalTicketUserUpdate.vue:139 ~ destroyTicketUser: ~ error:', error)
+        console.log('🚀 ~ ModalTicketUserUpdateCommission.vue:153 ~ clickDestroy ~ error:', error)
       }
     },
   })
@@ -186,39 +185,51 @@ defineExpose({ openModal })
       </div>
       <form class="p-4 flex flex-wrap gap-4" @submit.prevent="(e) => updateTicketUser()">
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-          <div>{{ roleMap[ticketUser.roleId]?.name || '' }}</div>
+          <div>{{ ticketUser.role?.name || '' }}</div>
           <div>
-            <InputText :value="userMap[ticketUser.userId]?.fullName" disabled />
+            <InputText :value="ticketUser.user?.fullName" disabled />
           </div>
         </div>
 
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-          <template v-if="ticketUser.positionType === PositionInteractType.Ticket">
+          <template v-if="ticketUser.positionType === PositionType.Ticket">
             <div>Phiếu</div>
             <div>
               <InputText :value="'Phiếu khám'" disabled />
             </div>
           </template>
-          <template v-if="ticketUser.positionType === PositionInteractType.Product">
+          <template v-if="ticketUser.positionType === PositionType.ProductRequest">
             <div>Sản phẩm</div>
             <div>
               <InputText :value="product?.brandName" disabled />
             </div>
           </template>
-          <template v-if="ticketUser.positionType === PositionInteractType.Procedure">
+          <template v-if="ticketUser.positionType === PositionType.ProcedureRequest">
             <div>Dịch vụ</div>
             <div>
               <InputText :value="procedureMap[ticketUser.positionInteractId]?.name" disabled />
             </div>
           </template>
-          <template v-if="ticketUser.positionType === PositionInteractType.Laboratory">
+          <template v-if="ticketUser.positionType === PositionType.ProcedureResult">
+            <div>Dịch vụ</div>
+            <div>
+              <InputText :value="procedureMap[ticketUser.positionInteractId]?.name" disabled />
+            </div>
+          </template>
+          <template v-if="ticketUser.positionType === PositionType.LaboratoryRequest">
             <div>Xét nghiệm</div>
             <div>
               <InputText :value="laboratoryMap[ticketUser.positionInteractId]?.name" disabled />
             </div>
             {{ laboratoryMap[ticketUser.positionInteractId]?.name }}
           </template>
-          <template v-if="ticketUser.positionType === PositionInteractType.Radiology">
+          <template v-if="ticketUser.positionType === PositionType.RadiologyRequest">
+            <div>Phiếu CĐHA</div>
+            <div>
+              <InputText :value="radiologyMap[ticketUser.positionInteractId]?.name" disabled />
+            </div>
+          </template>
+          <template v-if="ticketUser.positionType === PositionType.RadiologyResult">
             <div>Phiếu CĐHA</div>
             <div>
               <InputText :value="radiologyMap[ticketUser.positionInteractId]?.name" disabled />
@@ -268,14 +279,14 @@ defineExpose({ openModal })
           <div class="flex">
             <VueSelect
               v-model:value="ticketUser.commissionCalculatorType"
-              style="width: 220px"
+              style="width: 250px"
               :options="[
                 { value: CommissionCalculatorType.PercentExpected, text: '% Giá niêm yết' },
                 { value: CommissionCalculatorType.PercentActual, text: '% Giá sau chiết khấu' },
                 { value: CommissionCalculatorType.VND, text: 'VNĐ' },
               ]"
             />
-            <div style="width: calc(100% - 120px)">
+            <div style="width: calc(100% - 250px)">
               <InputMoney
                 v-if="
                   ticketUser.commissionCalculatorType === CommissionCalculatorType.PercentExpected

@@ -2,136 +2,74 @@
 import VueButton from '@/common/VueButton.vue'
 import { IconClose, IconDoubleRight } from '@/common/icon-antd'
 import { IconDelete } from '@/common/icon-google'
-import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { InputDate, InputFilter, InputMoney, InputNumber, VueSelect } from '@/common/vue-form'
+import { InputDate, InputMoney, InputNumber, VueSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
-import { PositionInteractType, PositionService } from '@/modules/position'
+import { PositionType } from '@/modules/position'
 import { ProcedureType } from '@/modules/procedure'
-import { Role, RoleService } from '@/modules/role'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeProcedureApi } from '@/modules/ticket'
 import { TicketProcedure, TicketProcedureStatus } from '@/modules/ticket-procedure'
 import { TicketProcedureItem } from '@/modules/ticket-procedure/ticket-procedure-item.model'
 import { TicketUser } from '@/modules/ticket-user'
-import { User, UserService } from '@/modules/user'
-import { UserRoleService } from '@/modules/user-role'
-import { ESString } from '@/utils'
-import { computed, onMounted, ref } from 'vue'
-import TicketProcedureStatusTag from '../../room-procedure/TicketProcedureStatusTag.vue'
+import { ESTimer } from '@/utils'
+import { computed, ref } from 'vue'
+import TicketChangeTicketUserPosition from '../room-user/TicketChangeTicketUserPosition.vue'
+import TicketProcedureStatusTag from './TicketProcedureStatusTag.vue'
+
+const ticketChangeTicketUserPosition = ref<InstanceType<typeof TicketChangeTicketUserPosition>>()
 
 const emit = defineEmits<{
-  (e: 'success', value: TicketProcedure, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
+  (
+    e: 'success',
+    type: 'CREATE' | 'UPDATE' | 'DESTROY',
+    data: { ticketProcedure: TicketProcedure; ticketUserRequestList: TicketUser[] },
+  ): void
 }>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
-const roleMap = ref<Record<string, Role>>({})
-const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: string; data: User }[]>>(
-  {},
-)
-
-const ticketProcedureOrigin = ref<TicketProcedure>(TicketProcedure.blank())
-let ticketUserListOrigin: TicketUser[] = []
+let ticketProcedureOrigin = TicketProcedure.blank()
 const ticketProcedure = ref<TicketProcedure>(TicketProcedure.blank())
-const ticketUserList = ref<TicketUser[]>([])
+const ticketUserRequestOriginList = ref<TicketUser[]>([])
+const ticketUserRequestList = ref<TicketUser[]>([])
 
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-const refreshTicketUserList = async () => {
-  ticketUserListOrigin = []
-  const ticketUserListRef =
-    ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.Procedure]?.[
-      ticketProcedure.value.id
-    ] || []
+const openModal = async (data: {
+  ticketProcedure: TicketProcedure
+  ticketUserRequestList: TicketUser[]
+}) => {
+  ticketProcedureOrigin = data.ticketProcedure
+  ticketProcedure.value = TicketProcedure.from(data.ticketProcedure)
 
-  const positionList = await PositionService.list({
-    filter: {
-      positionType: PositionInteractType.Procedure,
-      positionInteractId: ticketProcedure.value.procedureId,
-    },
-  })
-
-  // lấy tất cả role có trong commission trước
-  positionList.forEach((i) => {
-    const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
-    if (findExist) {
-      ticketUserListOrigin.push(TicketUser.from(findExist))
-    } else {
-      const ticketUserBlank = TicketUser.blank()
-      ticketUserBlank.roleId = i.roleId
-      ticketUserListOrigin.push(ticketUserBlank)
-    }
-  })
-
-  // lấy role còn thừa ra ở trong ticketUser vẫn phải hiển thị
-  ticketUserListRef.forEach((i) => {
-    const findExist = ticketUserListOrigin.find((j) => j.roleId === i.roleId)
-    if (findExist) {
-      return // nếu đã có rồi thì bỏ qua
-    } else {
-      ticketUserListOrigin.push(TicketUser.from(i))
-    }
-  })
-  ticketUserList.value = TicketUser.fromList(ticketUserListOrigin)
-}
-
-onMounted(async () => {
-  try {
-    const fetchPromise = await Promise.all([
-      RoleService.getMap(),
-      UserService.getMap(),
-      UserRoleService.list(),
-    ])
-
-    roleMap.value = fetchPromise[0]
-    const userMap = fetchPromise[1]
-    const userRoleList = fetchPromise[2]
-
-    userRoleList.forEach((i) => {
-      const key = i.roleId
-      if (!userRoleMapRoleIdOptions.value[key]) {
-        userRoleMapRoleIdOptions.value[key] = []
-      }
-      userRoleMapRoleIdOptions.value[key].push({
-        value: userMap[i.userId]?.id || 0,
-        text: userMap[i.userId]?.fullName || '',
-        data: userMap[i.userId],
-      })
-    })
-  } catch (error: any) {
-    console.log('🚀 ~ file: ModalTicketProcedureUpdate.vue:105 ~ onMounted ~ error:', error)
-    AlertStore.add({ type: 'error', message: error.message })
-  }
-})
-
-const openModal = async (ticketProcedureProp: TicketProcedure) => {
+  ticketUserRequestOriginList.value = data.ticketUserRequestList
+  ticketUserRequestList.value = TicketUser.fromList(data.ticketUserRequestList)
   showModal.value = true
-  ticketProcedureOrigin.value = TicketProcedure.from(ticketProcedureProp)
-  ticketProcedure.value = TicketProcedure.from(ticketProcedureProp)
-
-  await refreshTicketUserList()
 }
 
 const hasChangeTicketProcedure = computed(() => {
-  const result = !TicketProcedure.equal(ticketProcedureOrigin.value, ticketProcedure.value)
-  return result
-})
-
-const hasChangeTicketUserList = computed(() => {
-  const result = !TicketUser.equalList(ticketUserListOrigin, ticketUserList.value)
+  const result = !TicketProcedure.equal(ticketProcedureOrigin, ticketProcedure.value)
   return result
 })
 
 const hasChangeTicketProcedureItemList = computed(() => {
   const result = !TicketProcedureItem.equalList(
-    ticketProcedureOrigin.value.ticketProcedureItemList || [],
+    ticketProcedureOrigin.ticketProcedureItemList || [],
     ticketProcedure.value.ticketProcedureItemList || [],
+  )
+  return result
+})
+
+const hasChangeTicketUserList = computed(() => {
+  const result = !TicketUser.equalList(
+    ticketUserRequestOriginList.value || [],
+    ticketUserRequestList.value || [],
   )
   return result
 })
@@ -175,9 +113,9 @@ const handleChangeActualPrice = (data: number) => {
 const closeModal = () => {
   showModal.value = false
   ticketProcedure.value = TicketProcedure.blank()
-  ticketProcedureOrigin.value = TicketProcedure.blank()
-  ticketUserList.value = []
-  ticketUserListOrigin = []
+  ticketProcedureOrigin = TicketProcedure.blank()
+  ticketUserRequestOriginList.value = []
+  ticketUserRequestList.value = []
 }
 
 const clickDestroy = async () => {
@@ -200,7 +138,10 @@ const clickDestroy = async () => {
           ticketId: ticketRoomRef.value.id,
           ticketProcedureId: ticketProcedure.value.id,
         })
-        emit('success', ticketProcedure.value, 'DESTROY')
+        emit('success', 'DESTROY', {
+          ticketProcedure: ticketProcedure.value,
+          ticketUserRequestList: ticketUserRequestList.value,
+        })
         closeModal()
       } catch (error) {
         console.log('🚀 ~ file: TicketClinicProcedure.vue:185 ~ onOk: ~ error:', error)
@@ -215,28 +156,59 @@ const submitChangeTicketProcedure = async () => {
   }
 
   if (ticketProcedure.value.id) {
-    await updateTicketProcedure()
+    await fetchUpdateTicketProcedure()
   } else {
-    emit('success', ticketProcedure.value, 'UPDATE')
+    emit('success', 'UPDATE', {
+      ticketProcedure: ticketProcedure.value,
+      ticketUserRequestList: ticketUserRequestList.value,
+    })
     closeModal()
   }
 }
 
-const updateTicketProcedure = async () => {
+const reCalculatorStatus = () => {
+  const tpiList = ticketProcedure.value.ticketProcedureItemList || []
+
+  ticketProcedure.value.finishedSessions = tpiList.filter((i) => {
+    return [TicketProcedureStatus.Completed, TicketProcedureStatus.Cancelled].includes(i.status)
+  }).length
+
+  if (!tpiList.length) {
+    ticketProcedure.value.status = TicketProcedureStatus.Empty
+  } else if (tpiList.some((i) => i.status === TicketProcedureStatus.Completed)) {
+    if (ticketProcedure.value.finishedSessions === ticketProcedure.value.totalSessions) {
+      ticketProcedure.value.status = TicketProcedureStatus.Completed
+    } else {
+      ticketProcedure.value.status = TicketProcedureStatus.Executing
+    }
+  }
+  if (tpiList.some((i) => i.status === TicketProcedureStatus.Pending)) {
+    ticketProcedure.value.status = TicketProcedureStatus.Pending
+  } else {
+    ticketProcedure.value.status = TicketProcedureStatus.Cancelled
+  }
+}
+
+const fetchUpdateTicketProcedure = async () => {
   saveLoading.value = true
+  reCalculatorStatus()
   try {
-    const hasUpdateTicketUser =
-      ticketUserListOrigin.length || ticketUserList.value.filter((i) => !!i.userId).length
     await TicketChangeProcedureApi.updateTicketProcedure({
       ticketId: ticketRoomRef.value.id,
       ticketProcedureId: ticketProcedure.value.id,
-      ticketProcedure: hasChangeTicketProcedure.value ? ticketProcedure.value : undefined,
+      ticketProcedure: ticketProcedure.value,
       ticketProcedureItemList: hasChangeTicketProcedureItemList.value
         ? ticketProcedure.value.ticketProcedureItemList
         : undefined,
-      ticketUserList: hasUpdateTicketUser ? ticketUserList.value : undefined,
+      ticketUserRequestList:
+        hasChangeTicketProcedure.value || hasChangeTicketUserList.value
+          ? ticketUserRequestList.value
+          : undefined,
     })
-    emit('success', ticketProcedure.value, 'UPDATE')
+    emit('success', 'UPDATE', {
+      ticketProcedure: ticketProcedure.value,
+      ticketUserRequestList: ticketUserRequestList.value,
+    })
     closeModal()
   } catch (error) {
     console.log('🚀: ModalTicketProcedureUpdate.vue:205 ~ updateTicketProcedure ~ error:', error)
@@ -256,16 +228,18 @@ const handleRemoveTicketProcedureItem = (tpItem: TicketProcedureItem) => {
 
 const handleAddTicketProcedureItem = () => {
   const length = ticketProcedure.value.ticketProcedureItemList?.length || 0
-  let lastTime = ticketProcedure.value.ticketProcedureItemList?.[length - 1]?.completedAt
+  let lastRegisteredAt = ticketProcedure.value.ticketProcedureItemList?.[length - 1]?.registeredAt
   const nowTime = new Date()
   nowTime.setMinutes(0, 0, 0)
 
-  const currentTime = lastTime
-    ? lastTime + ticketProcedure.value.procedure!.gapHours * 60 * 60 * 1000
+  const currentTime = lastRegisteredAt
+    ? lastRegisteredAt + ticketProcedure.value.procedure!.gapHours * 60 * 60 * 1000
     : nowTime.getTime()
 
   const ticketProcedureAdd = TicketProcedureItem.blank()
-  ticketProcedureAdd.completedAt = currentTime
+  if (ticketProcedure.value.procedure!.gapHours != 0) {
+    ticketProcedureAdd.registeredAt = currentTime
+  }
   ticketProcedure.value.ticketProcedureItemList?.push(ticketProcedureAdd)
 }
 
@@ -273,16 +247,20 @@ const handleUpdateTimeTicketProcedureItem = (time: any, index: number) => {
   for (let i = index + 1; i < ticketProcedure.value.ticketProcedureItemList!.length; i++) {
     const item = ticketProcedure.value.ticketProcedureItemList![i]
     if (!item || item.status === TicketProcedureStatus.Completed) return
-    if (!time) {
-      item.completedAt = null as any
+    if (!time || ticketProcedure.value.procedure!.gapHours === 0) {
+      item.registeredAt = null as any
     } else {
       let fixTime = new Date(time)
       fixTime.setMinutes(0, 0, 0)
       fixTime.setHours(fixTime.getHours() + 1)
-      item.completedAt =
+      item.registeredAt =
         fixTime.getTime() + ticketProcedure.value.procedure!.gapHours * 60 * 60 * 1000 * (i - index)
     }
   }
+}
+
+const handleFixTicketUserList = (tuListData: TicketUser[]) => {
+  ticketUserRequestOriginList.value = TicketUser.fromList(tuListData)
 }
 
 defineExpose({ openModal })
@@ -372,29 +350,15 @@ defineExpose({ openModal })
             </div>
           </div>
         </div>
-        <div class="mt-4 flex flex-wrap gap-4" v-if="ticketUserList.length">
-          <div
-            v-for="(ticketUser, index) in ticketUserList"
-            :key="index"
-            style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
-          >
-            <div>{{ roleMap[ticketUser.roleId]?.name || '' }}</div>
-            <div>
-              <InputFilter
-                v-model:value="ticketUserList[index].userId"
-                :options="userRoleMapRoleIdOptions[ticketUser.roleId] || []"
-                :maxHeight="200"
-                placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên"
-              >
-                <template #option="{ item: { data } }">
-                  <div>
-                    <b>{{ data.fullName }}</b>
-                    - {{ ESString.formatPhone(data.phone) }} -
-                  </div>
-                </template>
-              </InputFilter>
-            </div>
-          </div>
+        <div class="mt-4">
+          <TicketChangeTicketUserPosition
+            ref="ticketChangeTicketUserPosition"
+            v-model:ticketUserList="ticketUserRequestList!"
+            :positionType="PositionType.ProcedureRequest"
+            :positionInteractId="ticketProcedure.procedureId"
+            @fix:ticketUserList="handleFixTicketUserList"
+            title="Nhân viên tư vấn, chỉ định dịch vụ"
+          />
         </div>
 
         <div
@@ -439,19 +403,23 @@ defineExpose({ openModal })
                   </td>
                   <td class="text-center">Buổi {{ index + 1 }}</td>
                   <td>
+                    <div v-if="tpItem.status === TicketProcedureStatus.Completed">
+                      {{ ESTimer.timeToText(tpItem.completedAt, 'hh:mm DD/MM/YYYY') }}
+                    </div>
                     <InputDate
-                      v-model:value="tpItem.completedAt"
+                      v-else-if="tpItem.status === TicketProcedureStatus.Pending"
+                      v-model:value="tpItem.registeredAt"
                       show-time
                       typeParser="number"
-                      :disabled="tpItem.status === TicketProcedureStatus.Completed"
                       @update:value="(v) => handleUpdateTimeTicketProcedureItem(v, index)"
                     />
                   </td>
                   <td>
                     <div
                       v-if="
-                        tpItem.status === TicketProcedureStatus.Pending &&
-                        index === ticketProcedure.ticketProcedureItemList!.length - 1
+                        [TicketProcedureStatus.Pending, TicketProcedureStatus.Cancelled].includes(
+                          tpItem.status,
+                        )
                       "
                       class="flex justify-center cursor-pointer"
                       style="font-size: 20px"

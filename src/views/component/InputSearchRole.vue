@@ -1,11 +1,10 @@
 <script lang="ts" setup>
-import { InputOptionsValue } from '@/common/vue-form'
-import type { ItemOption } from '@/common/vue-form/InputOptionsValue.vue'
+import { InputSearch } from '@/common/vue-form'
+import type { ItemOption } from '@/common/vue-form/InputSearch.vue'
 import { CONFIG } from '@/config'
-import { useSettingStore } from '@/modules/_me/setting.store'
 import { Role, RoleService } from '@/modules/role'
 import { ESString } from '@/utils'
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref } from 'vue'
 
 const emit = defineEmits<{
   (e: 'selectRole', value: Role): void
@@ -25,11 +24,6 @@ const props = withDefaults(
   },
 )
 
-const inputOptionsRole = ref<InstanceType<typeof InputOptionsValue>>()
-
-const settingStore = useSettingStore()
-const { formatMoney, isMobile } = settingStore
-
 const roleOptions = ref<{ value: number; text: string; data: Role }[]>([])
 
 onMounted(async () => {
@@ -41,11 +35,13 @@ const handleUpdateValue = (v: any) => {
   emit('update:roleId', v)
 }
 
-const handleSelectItem = (item?: ItemOption) => {
-  emit('selectRole', item?.data)
+const handleSelectItem = (item?: ItemOption<Role>) => {
+  if (item?.data) {
+    emit('selectRole', item?.data)
+  }
 }
 
-const logicFilter = (item: ItemOption, text: string) => {
+const logicFilter = (item: ItemOption<Role>, text: string) => {
   return ESString.customFilter(item.text, text)
 }
 </script>
@@ -56,13 +52,13 @@ const logicFilter = (item: ItemOption, text: string) => {
   </div>
 
   <div>
-    <InputOptionsValue
-      ref="inputOptionsRole"
+    <InputSearch
+      ref="inputSearchProcedure"
       :value="roleId"
       :disabled="disabled"
-      :maxHeight="120"
+      :maxHeight="260"
       :options="roleOptions"
-      placeholder="Tìm kiếm bằng tên vai trò"
+      placeholder="Tìm kiếm bằng mã, tên vai trò"
       :required="required"
       @update:value="(v) => handleUpdateValue(v)"
       @selectItem="(item) => handleSelectItem(item)"
@@ -71,7 +67,7 @@ const logicFilter = (item: ItemOption, text: string) => {
       <template #option="{ item: { data } }">
         <div>{{ data.name }}</div>
       </template>
-    </InputOptionsValue>
+    </InputSearch>
   </div>
 </template>
 

@@ -18,9 +18,15 @@ const editable = ref(true)
 const openModal = async (ticketRadiologyId: number, options?: { noEdit: boolean }) => {
   showModal.value = true
   ticketRadiology.value = await TicketRadiologyApi.detail(ticketRadiologyId, {
-    relation: { imageList: true, ticketUserList: true, ticket: true, customer: true },
+    relation: { imageList: true, ticketUserRequestList: true, ticket: true, customer: true },
   })
   editable.value = !options?.noEdit
+}
+
+const openModalByData = async (data: { ticketRadiology: TicketRadiology; noEdit?: boolean }) => {
+  showModal.value = true
+  ticketRadiology.value = TicketRadiology.from(data.ticketRadiology)
+  editable.value = !data.noEdit
 }
 
 const closeModal = () => {
@@ -36,14 +42,14 @@ const updateResultSuccess = () => {
   closeModal()
 }
 
-defineExpose({ openModal })
+defineExpose({ openModal, openModalByData })
 </script>
 
 <template>
   <VueModal v-model:show="showModal" style="width: 1200px" @close="closeModal">
     <div class="bg-white">
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
-        <div class="flex-1 text-lg font-medium">
+        <div class="flex-1 text-lg font-medium flex items-center gap-2">
           {{ ticketRadiology.customer?.fullName }} -
           {{ radiologyMap[ticketRadiology.radiologyId]?.name }}
           <TicketRadiologyStatusTag :status="ticketRadiology.status" />

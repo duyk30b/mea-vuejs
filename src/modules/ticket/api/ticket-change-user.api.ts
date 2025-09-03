@@ -1,6 +1,6 @@
 import { AxiosInstance } from '../../../core/axios.instance'
 import type { BaseResponse } from '../../_base/base-dto'
-import type { TicketUser } from '../../ticket-user'
+import { TicketUser } from '../../ticket-user'
 
 export class TicketChangeUserApi {
   static async destroyTicketUser(body: { ticketId: number; ticketUserId: number }) {
@@ -8,8 +8,8 @@ export class TicketChangeUserApi {
     const response = await AxiosInstance.delete(
       `/ticket/${ticketId}/user/destroy-ticket-user/${ticketUserId}`,
     )
-    const { data } = response.data as BaseResponse<boolean>
-    return data
+    const { data } = response.data as BaseResponse<{ ticketUserDestroyed: any }>
+    return TicketUser.from(data.ticketUserDestroyed)
   }
 
   static async updateTicketUserCommission(body: {
@@ -27,7 +27,8 @@ export class TicketChangeUserApi {
         commissionPercentExpected: ticketUser.commissionPercentExpected,
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as BaseResponse<{ ticketUserModified: any }>
+    return TicketUser.from(data.ticketUserModified)
   }
 
   static async updateTicketUserPosition(body: {

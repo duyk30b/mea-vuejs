@@ -14,6 +14,7 @@ export type ConditionDate = {
   'IS_NULL'?: boolean
   'NOT_NULL'?: boolean
   'IN'?: Date[] | number[] | string[]
+  'NOT_IN'?: Date[] | number[] | string[]
   'BETWEEN'?: [Date, Date] | [number, number] | [string, string]
 }
 
@@ -33,6 +34,7 @@ export type ConditionNumber = {
   'IS_NULL'?: boolean
   'NOT_NULL'?: boolean
   'IN'?: number[]
+  'NOT_IN'?: number[]
   'BETWEEN'?: [number, number]
 }
 
@@ -44,6 +46,7 @@ export type ConditionEnum<T> = {
   'IS_NULL'?: boolean
   'NOT_NULL'?: boolean
   'IN'?: T[]
+  'NOT_IN'?: T[]
   'BETWEEN'?: [T, T]
 }
 
@@ -56,4 +59,5 @@ export class ConditionString {
   'NOT_NULL'?: boolean
   'LIKE'?: string
   'IN'?: string[]
+  'NOT_IN'?: string[]
 }

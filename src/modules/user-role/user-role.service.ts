@@ -6,7 +6,7 @@ export class UserRoleService {
   static loadedAll: boolean = false
 
   static userRoleAll: UserRole[] = []
-  static userRoleMapList = ref<Record<string, UserRole[]>>({})
+  static userRoleMapList = ref<Record<string, UserRole[]>>({}) // { roleId: userRole[] }
 
   // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng loadedAll
   static fetchAll = (() => {
@@ -15,7 +15,7 @@ export class UserRoleService {
         const userRoleAll = await UserRoleApi.list()
 
         const userRoleMapList: Record<string, UserRole[]> = {}
-        UserRoleService.userRoleAll.forEach((i) => {
+        userRoleAll.forEach((i) => {
           const key = i.roleId
           if (!userRoleMapList[key]) userRoleMapList[key] = []
           userRoleMapList[key].push(i)

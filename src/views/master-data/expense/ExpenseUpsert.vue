@@ -93,7 +93,7 @@ defineExpose({ openModal })
         <div class="">
           <div>Mã chi phí</div>
           <div>
-            <InputText v-model:value="expense.code" />
+            <InputText v-model:value="expense.code" placeholder="Tạo tự động" />
           </div>
         </div>
         <div class="mt-4">

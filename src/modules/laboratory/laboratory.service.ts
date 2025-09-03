@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { ESArray } from '../../utils'
 import { DiscountInteractType, DiscountService, type Discount } from '../discount'
 import { LaboratoryGroup, LaboratoryGroupService } from '../laboratory-group'
-import { PositionInteractType, PositionService, type Position } from '../position'
+import { PositionService, PositionType, type Position } from '../position'
 import { LaboratoryApi } from './laboratory.api'
 import type {
   LaboratoryDetailQuery,
@@ -106,11 +106,14 @@ export class LaboratoryService {
           })
         }
         if (relation?.positionList) {
-          laboratory.positionList = positionAll.filter((i) => {
+          laboratory.positionRequestList = positionAll.filter((i) => {
             return (
-              i.positionType === PositionInteractType.Laboratory &&
+              i.positionType === PositionType.LaboratoryRequest &&
               i.positionInteractId === laboratory.id
             )
+          })
+          laboratory.positionRequestListCommon = positionAll.filter((i) => {
+            return i.positionType === PositionType.LaboratoryRequest && i.positionInteractId === 0
           })
         }
       })
@@ -176,7 +179,7 @@ export class LaboratoryService {
     laboratory: Laboratory
     laboratoryChildren?: Laboratory[]
     discountList?: Discount[]
-    positionList?: Position[]
+    positionRequestList?: Position[]
   }) {
     const result = await LaboratoryApi.create(body)
     LaboratoryService.loadedAll = false
@@ -189,7 +192,7 @@ export class LaboratoryService {
       laboratory: Laboratory
       laboratoryChildren?: Laboratory[]
       discountList?: Discount[]
-      positionList?: Position[]
+      positionRequestList?: Position[]
     },
   ) {
     const result = await LaboratoryApi.update(id, body)

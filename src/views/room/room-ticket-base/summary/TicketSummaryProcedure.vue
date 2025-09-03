@@ -12,9 +12,10 @@ import { ticketRoomRef } from '@/modules/room'
 import { TicketStatus } from '@/modules/ticket'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProcedureDetail.vue'
-import ModalTicketProcedureUpdate from '@/views/room/room-ticket-base/procedure/ModalTicketProcedureUpdate.vue'
+import ModalTicketProcedureUpdate from '@/views/room/room-procedure/ModalTicketProcedureUpdate.vue'
 import { computed, onMounted, ref } from 'vue'
 import TicketProcedureStatusTooltip from '../../room-procedure/TicketProcedureStatusTooltip.vue'
+import { PositionType } from '@/modules/position'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalTicketProcedureUpdate = ref<InstanceType<typeof ModalTicketProcedureUpdate>>()
@@ -124,7 +125,15 @@ const procedureDiscount = computed(() => {
               userPermission[PermissionId.TICKET_CHANGE_PROCEDURE]
             "
             class="text-orange-500"
-            @click="modalTicketProcedureUpdate?.openModal(ticketProcedure)"
+            @click="
+              modalTicketProcedureUpdate?.openModal({
+                ticketProcedure: ticketProcedure,
+                ticketUserRequestList:
+                  ticketRoomRef.ticketUserTree?.[PositionType.ProcedureRequest]?.[
+                    ticketProcedure.id
+                  ]?.[0] || [],
+              })
+            "
           >
             <IconEditSquare width="20" height="20" />
           </a>

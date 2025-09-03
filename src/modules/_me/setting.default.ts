@@ -243,6 +243,7 @@ export const SETTING_DEFAULT = {
 
   APPOINTMENT_LIST: {
     fromDateToDateDistance: -1,
+    procedure: false,
   },
 
   APPOINTMENT_UPSERT: {
@@ -279,7 +280,13 @@ export const SETTING_DEFAULT = {
   },
 
   TICKET_CLINIC_LIST: {
+    includePendingStatus: false,
+    goRoomAfterReception: true,
+    procedure: false,
     roleIdList: [],
+    phoneAndAddress: true,
+    note: true,
+    payment: false,
   },
   TICKET_CLINIC_DETAIL: {
     diagnosis: { icd10: 0 },

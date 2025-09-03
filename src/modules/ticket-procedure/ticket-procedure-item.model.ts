@@ -1,22 +1,28 @@
 import { BaseModel } from '../_base/base.model'
+import { Appointment } from '../appointment'
 import { Image } from '../image/image.model'
+import { TicketUser } from '../ticket-user'
 import { TicketProcedureStatus } from './ticket-procedure.model'
 
 export class TicketProcedureItem extends BaseModel {
   id: number
   ticketId: number
   ticketProcedureId: number
+  indexSession: number
 
   status: TicketProcedureStatus
+  registeredAt: number
   completedAt: number
   result: string
   imageIds: string
 
+  appointment: Appointment
   imageList: Image[]
+  ticketUserResultList: TicketUser[]
 
   static init(): TicketProcedureItem {
     const ins = new TicketProcedureItem()
-    ins._localId = Math.random()
+    ins._localId = Math.random().toString(36).substring(2)
     ins.id = 0
     ins.ticketId = 0
     ins.ticketProcedureId = 0
@@ -40,7 +46,9 @@ export class TicketProcedureItem extends BaseModel {
       if (value === undefined) delete target[key as keyof typeof target]
     })
     Object.assign(target, source)
-    target._localId = source.id || source._localId || Math.random()
+    target._localId = String(
+      source.id || source._localId || Math.random().toString(36).substring(2),
+    )
     return target
   }
 
@@ -50,8 +58,16 @@ export class TicketProcedureItem extends BaseModel {
 
   static from(source: TicketProcedureItem) {
     const target = TicketProcedureItem.basic(source)
+    if (Object.prototype.hasOwnProperty.call(source, 'appointment')) {
+      target.appointment = source.appointment
+        ? Appointment.basic(source.appointment)
+        : source.appointment
+    }
     if (source.imageList) {
       target.imageList = Image.basicList(source.imageList)
+    }
+    if (source.ticketUserResultList) {
+      target.ticketUserResultList = TicketUser.basicList(source.ticketUserResultList)
     }
     return target
   }

@@ -10,7 +10,7 @@ import { RadiologyGroup } from './radiology-group.model'
 
 export class RadiologyGroupService {
   static loadedAll: boolean = false
-  static radiologyGroupAll: RadiologyGroup[] = []
+  static radiologyGroupAll = ref<RadiologyGroup[]>([])
   static radiologyGroupMap = ref<Record<string, RadiologyGroup>>({})
 
   // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng loadedAll
@@ -19,7 +19,7 @@ export class RadiologyGroupService {
       try {
         const { data } = await RadiologyGroupApi.list({ sort: { id: 'ASC' } })
         const radiologyGroupAll = data
-        RadiologyGroupService.radiologyGroupAll = radiologyGroupAll
+        RadiologyGroupService.radiologyGroupAll.value = radiologyGroupAll
         RadiologyGroupService.radiologyGroupMap.value = ESArray.arrayToKeyValue(
           radiologyGroupAll,
           'id',
@@ -40,7 +40,7 @@ export class RadiologyGroupService {
 
   static async getAll(options?: { refetch: boolean }) {
     await RadiologyGroupService.fetchAll({ refetch: !!options?.refetch })
-    return RadiologyGroupService.radiologyGroupAll
+    return RadiologyGroupService.radiologyGroupAll.value
   }
 
   static async getMap(options?: { refetch: boolean }) {
@@ -52,7 +52,7 @@ export class RadiologyGroupService {
     const page = query.page || 1
     const limit = query.limit || 10
     await RadiologyGroupService.fetchAll({ refetch: options?.refetch })
-    const dataQuery = RadiologyGroupService.radiologyGroupAll
+    const dataQuery = RadiologyGroupService.radiologyGroupAll.value
     const data = dataQuery.slice((page - 1) * limit, page * limit)
     return {
       data,
@@ -62,7 +62,7 @@ export class RadiologyGroupService {
 
   static async list(query: RadiologyGroupListQuery, options?: { refetch: boolean }) {
     await RadiologyGroupService.fetchAll({ refetch: options?.refetch })
-    let data = RadiologyGroupService.radiologyGroupAll
+    let data = RadiologyGroupService.radiologyGroupAll.value
     if (query.filter) {
       const filter = query.filter || {}
       data = data.filter((i) => {
@@ -82,7 +82,7 @@ export class RadiologyGroupService {
       await RadiologyGroupService.fetchAll({ refetch: true })
     } else {
       await RadiologyGroupService.fetchAll({})
-      radiologyGroup = RadiologyGroupService.radiologyGroupAll.find((i) => i.id === id)
+      radiologyGroup = RadiologyGroupService.radiologyGroupAll.value.find((i) => i.id === id)
     }
 
     return radiologyGroup ? RadiologyGroup.from(radiologyGroup) : RadiologyGroup.blank()

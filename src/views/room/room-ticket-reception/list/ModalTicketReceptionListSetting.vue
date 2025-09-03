@@ -7,7 +7,7 @@ import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { SettingKey } from '@/modules/_me/store.variable'
 import { OrganizationService } from '@/modules/organization'
-import { PositionInteractType, PositionService } from '@/modules/position'
+import { PositionType, PositionService } from '@/modules/position'
 import { RoleService } from '@/modules/role'
 import { ref } from 'vue'
 
@@ -28,7 +28,7 @@ const openModal = async () => {
 
   const fetchData = await Promise.all([
     RoleService.getMap(),
-    PositionService.list({ filter: { positionType: PositionInteractType.Ticket } }),
+    PositionService.list({ filter: { positionType: PositionType.Ticket } }),
   ])
   const roleMap = fetchData[0]
   roleOptions.value = fetchData[1].map((i) => ({ value: i.roleId, label: roleMap[i.roleId]?.name }))

@@ -2,7 +2,14 @@
 import VueButton from '@/common/VueButton.vue'
 import { IconFileSearch } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert'
-import { InputHint, InputMoney, InputNumber, InputOptions, VueSelect } from '@/common/vue-form'
+import {
+  InputHint,
+  InputMoney,
+  InputNumber,
+  InputOptions,
+  InputSelect,
+  VueSelect,
+} from '@/common/vue-form'
 import { MeService } from '@/modules/_me/me.service.ts'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Batch, BatchService } from '@/modules/batch'
@@ -324,6 +331,10 @@ const addTicketProduct = () => {
   }
 
   clear()
+
+  if (!settingStore.isMobile) {
+    focus()
+  }
 }
 
 const focus = () => {
@@ -476,20 +487,21 @@ defineExpose({ focus })
       </div>
       <div class="flex">
         <div style="width: 120px">
-          <VueSelect
+          <InputSelect
             v-model:value="productOutSellType"
             :options="[
               ...(userPermission[PermissionId.PRODUCT_READ_COST_PRICE] &&
               settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.costPrice
-                ? [{ value: 'costPrice', text: 'Giá nhập' }]
+                ? [{ value: 'costPrice', label: 'Giá nhập' }]
                 : []),
               ...(settingStore.SYSTEM_SETTING.wholesalePrice
-                ? [{ value: 'wholesalePrice', text: 'Giá bán sỉ' }]
+                ? [{ value: 'wholesalePrice', label: 'Giá bán sỉ' }]
                 : []),
-              { value: 'retailPrice', text: 'Giá bán lẻ' },
+              { value: 'retailPrice', label: 'Giá bán lẻ' },
             ]"
             @selectItem="({ value }) => handleChangeInvoiceProductSellType(value)"
-          ></VueSelect>
+            :tabindex="-1"
+          ></InputSelect>
         </div>
         <div class="flex-1">
           <InputMoney :value="ticketProduct.unitExpectedPrice" disabled />
@@ -511,16 +523,17 @@ defineExpose({ focus })
       </div>
       <div class="flex">
         <div style="width: 120px">
-          <VueSelect
+          <InputSelect
             v-model:value="ticketProduct.unitRate"
             :disabled="(ticketProduct.product?.unitObject.length || 0) <= 1"
             :options="
               (ticketProduct.product?.unitObject || []).map((i) => ({
                 value: i.rate,
-                text: i.name,
+                label: i.name,
                 data: i,
               }))
             "
+            :tabindex="-1"
             required
           />
         </div>
@@ -552,13 +565,14 @@ defineExpose({ focus })
         </span>
       </div>
       <div class="flex">
-        <VueSelect
+        <InputSelect
           v-model:value="ticketProduct.discountType"
           :options="[
-            { value: DiscountType.Percent, text: '%' },
-            { value: DiscountType.VND, text: 'VNĐ' },
+            { value: DiscountType.Percent, label: '%' },
+            { value: DiscountType.VND, label: 'VNĐ' },
           ]"
           style="width: 120px"
+          :tabindex="-1"
         />
         <div style="width: calc(100% - 120px)">
           <InputMoney

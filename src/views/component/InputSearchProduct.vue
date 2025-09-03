@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { IconFileSearch } from '@/common/icon-antd'
-import { InputOptionsValue } from '@/common/vue-form'
+import { InputOptionsValue, InputSearch } from '@/common/vue-form'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { PermissionId } from '@/modules/permission/permission.enum'
@@ -171,7 +171,7 @@ const handleModalProductUpsertSuccess = (productData?: Product) => {
   </div>
 
   <div>
-    <InputOptionsValue
+    <InputSearch
       ref="inputOptionsProduct"
       :value="product.id"
       :disabled="disabled"
@@ -199,7 +199,7 @@ const handleModalProductUpsertSuccess = (productData?: Product) => {
         </div>
         <div>{{ data.substance }}</div>
       </template>
-    </InputOptionsValue>
+    </InputSearch>
   </div>
 </template>
 

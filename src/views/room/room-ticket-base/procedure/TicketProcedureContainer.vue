@@ -10,6 +10,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { PaymentMoneyStatus } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
+import { PositionType } from '@/modules/position'
 import { ProcedureType } from '@/modules/procedure'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeProcedureApi, TicketStatus } from '@/modules/ticket'
@@ -17,11 +18,12 @@ import { TicketProcedure } from '@/modules/ticket-procedure'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import { computed, onMounted, ref, watch } from 'vue'
-import ModalTicketProcedureUpdate from './ModalTicketProcedureUpdate.vue'
-import TicketProcedureSelectItem from './TicketProcedureSelectItem.vue'
-import ModalProcessTicketProcedureRegimen from './ModalProcessTicketProcedureRegimen.vue'
-import ModalShowTicketProcedureRegimen from './ModalShowTicketProcedureRegimen.vue'
+import ModalProcessTicketProcedureRegimen from '../../room-procedure/ModalProcessTicketProcedureRegimen.vue'
+import ModalShowTicketProcedureRegimen from '../../room-procedure/ModalShowTicketProcedureRegimen.vue'
+import ModalTicketProcedureUpdate from '../../room-procedure/ModalTicketProcedureUpdate.vue'
 import TicketProcedureStatusTooltip from '../../room-procedure/TicketProcedureStatusTooltip.vue'
+import TicketProcedureSelectItem from './TicketProcedureSelectItem.vue'
+import type { TicketUser } from '@/modules/ticket-user'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalProcessTicketProcedureRegimen =
@@ -86,9 +88,9 @@ const handleAddTicketProcedureList = (value: TicketProcedure[]) => {
   ticketProcedureList.value = [...ticketProcedureList.value, ...value]
 }
 
-const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
+const handleUpdateTicketProcedure = (data: { ticketProcedure: TicketProcedure }) => {
   const findExist = ticketProcedureList.value.findIndex((i) => {
-    return i.id === data.id
+    return i.id === data.ticketProcedure.id
   })
   if (findExist !== -1) {
     Object.assign(ticketProcedureList.value[findExist], data)
@@ -99,9 +101,12 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
   <ModalProcedureDetail ref="modalProcedureDetail" />
   <ModalProcessTicketProcedureRegimen
     ref="modalProcessTicketProcedureRegimen"
-    @success="handleProcessTicketProcedureRegimenSuccess"
+    @success="handleUpdateTicketProcedure"
   />
-  <ModalShowTicketProcedureRegimen ref="modalShowTicketProcedureRegimen" />
+  <ModalShowTicketProcedureRegimen
+    ref="modalShowTicketProcedureRegimen"
+    @success="handleUpdateTicketProcedure"
+  />
   <ModalTicketProcedureUpdate ref="modalTicketProcedureUpdate" />
   <TicketProcedureSelectItem @addTicketProcedureList="handleAddTicketProcedureList" />
   <div class="mt-10">
@@ -112,7 +117,7 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
       <table>
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'" style="width: 50px">ID</th>
+            <th v-if="CONFIG.MODE === 'development'" style="width: 50px">ID-ProcedureId</th>
             <th>#</th>
             <th></th>
             <th></th>
@@ -122,6 +127,7 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
             <th>Chiết khấu</th>
             <th>Đơn giá</th>
             <th>T.Tiền</th>
+            <th>N.Viên</th>
             <th></th>
           </tr>
         </thead>
@@ -129,9 +135,9 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
           <tr v-if="ticketProcedureList!.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr v-for="(tpItem, index) in ticketProcedureList" :key="tpItem._localId">
+          <tr v-for="(tp, index) in ticketProcedureList" :key="tp._localId">
             <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
-              {{ tpItem.id }}
+              {{ tp.id }} - {{ tp.procedureId }}
             </td>
             <td>
               <div class="flex flex-col items-center">
@@ -168,49 +174,45 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
                 </button>
               </div>
             </td>
-            <td><PaymentMoneyStatusTooltip :paymentMoneyStatus="tpItem.paymentMoneyStatus" /></td>
-            <td><TicketProcedureStatusTooltip :status="tpItem.status" /></td>
-            <td :colspan="tpItem.procedure?.procedureType !== ProcedureType.Basic ? 2 : 1">
+            <td><PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" /></td>
+            <td><TicketProcedureStatusTooltip :status="tp.status" /></td>
+            <td :colspan="tp.procedure?.procedureType !== ProcedureType.Basic ? 2 : 1">
               <div class="flex flex-wrap items-center gap-2">
-                <span>{{ tpItem.procedure?.name }}</span>
-                <a
-                  style="line-height: 0"
-                  @click="modalProcedureDetail?.openModal(tpItem.procedureId)"
-                >
+                <span>{{ tp.procedure?.name }}</span>
+                <a style="line-height: 0" @click="modalProcedureDetail?.openModal(tp.procedureId)">
                   <IconFileSearch />
                 </a>
                 <span
-                  v-if="tpItem.procedure?.procedureType === ProcedureType.Regimen"
+                  v-if="tp.procedure?.procedureType === ProcedureType.Regimen"
                   class="font-bold"
                 >
-                  ({{ tpItem.completedSessions }}/{{ tpItem.totalSessions }} buổi)
+                  ({{ tp.finishedSessions }}/{{ tp.totalSessions }} buổi)
                 </span>
                 <div
-                  v-if="tpItem.procedure?.procedureType === ProcedureType.Regimen"
-                  @click="modalShowTicketProcedureRegimen?.openModal(tpItem)"
+                  v-if="tp.procedure?.procedureType === ProcedureType.Regimen"
+                  @click="modalShowTicketProcedureRegimen?.openModal({ ticketProcedure: tp })"
                   class="font-bold italic underline cursor-pointer"
                   style="color: var(--text-green)"
                 >
                   XEM
                 </div>
                 <div
-                  v-if="tpItem.procedure?.procedureType === ProcedureType.Regimen"
+                  v-if="tp.procedure?.procedureType === ProcedureType.Regimen"
                   style="margin-left: auto"
                 >
                   <VueButton
-                    v-if="tpItem.completedSessions < tpItem.totalSessions"
+                    v-if="tp.finishedSessions < tp.totalSessions"
                     size="small"
                     @click="
                       modalProcessTicketProcedureRegimen?.openModal({
-                        ticketProcedure: tpItem,
-                        ticketProcedureItem:
-                          tpItem.ticketProcedureItemList![tpItem.completedSessions],
+                        ticketProcedure: tp,
+                        ticketProcedureItem: tp.ticketProcedureItemList![tp.finishedSessions],
                       })
                     "
                   >
-                    Thực hiện buổi {{ tpItem.completedSessions + 1 }}
+                    Thực hiện buổi {{ tp.finishedSessions + 1 }}
                     <span v-if="CONFIG.MODE === 'development'" style="color: violet">
-                      ({{ tpItem.ticketProcedureItemList![tpItem.completedSessions].id }})
+                      ({{ tp.ticketProcedureItemList![tp.finishedSessions].id }})
                     </span>
                   </VueButton>
                   <span v-else class="font-bold italic" style="color: var(--text-green)">
@@ -219,43 +221,72 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
                 </div>
               </div>
             </td>
-            <td class="text-center" v-if="tpItem.procedure?.procedureType === ProcedureType.Basic">
+            <td class="text-center" v-if="tp.procedure?.procedureType === ProcedureType.Basic">
               <div>
-                {{ tpItem.quantity }}
+                {{ tp.quantity }}
               </div>
             </td>
             <td class="text-right">
-              {{ formatMoney(tpItem.expectedPrice) }}
+              {{ formatMoney(tp.expectedPrice) }}
             </td>
             <td>
               <div class="flex justify-between">
                 <span>
-                  <VueTag v-if="tpItem.discountPercent" color="green">
-                    {{ tpItem.discountPercent || 0 }}%
+                  <VueTag v-if="tp.discountPercent" color="green">
+                    {{ tp.discountPercent || 0 }}%
                   </VueTag>
                 </span>
-                {{ formatMoney(tpItem.discountMoney) }}
+                {{ formatMoney(tp.discountMoney) }}
               </div>
             </td>
             <td class="text-right">
-              {{ formatMoney(tpItem.actualPrice) }}
+              {{ formatMoney(tp.actualPrice) }}
             </td>
             <td class="text-right">
-              {{ formatMoney(tpItem.actualPrice * tpItem.quantity) }}
+              {{ formatMoney(tp.actualPrice * tp.quantity) }}
+            </td>
+            <td>
+              <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                ({{
+                  (
+                    ticketRoomRef.ticketUserTree?.[PositionType.ProcedureRequest]?.[tp.id]?.[0] ||
+                    []
+                  )
+                    .map((i) => i.userId || '')
+                    .join(',')
+                }})
+              </span>
+              <span>
+                {{
+                  (
+                    ticketRoomRef.ticketUserTree?.[PositionType.ProcedureRequest]?.[tp.id]?.[0] ||
+                    []
+                  )
+                    .map((i) => i.user?.fullName || '')
+                    .join(', ')
+                }}
+              </span>
             </td>
             <td class="text-center">
-              <a v-if="!tpItem.id">
+              <a v-if="!tp.id">
                 <IconSpin width="20" height="20" />
               </a>
               <a
                 v-else-if="
                   ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
                   [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
-                    tpItem.paymentMoneyStatus,
+                    tp.paymentMoneyStatus,
                   ) &&
                   userPermission[PermissionId.TICKET_CHANGE_PROCEDURE]
                 "
-                @click="modalTicketProcedureUpdate?.openModal(tpItem)"
+                @click="
+                  modalTicketProcedureUpdate?.openModal({
+                    ticketProcedure: tp,
+                    ticketUserRequestList:
+                      ticketRoomRef.ticketUserTree?.[PositionType.ProcedureRequest]?.[tp.id]?.[0] ||
+                      [],
+                  })
+                "
                 style="color: var(--text-orange)"
               >
                 <IconEditSquare width="20" height="20" />
@@ -267,6 +298,7 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
             <td colspan="8" class="text-right uppercase">
               <b>Tổng tiền</b>
             </td>
+
             <td class="text-right">
               <b>
                 {{
@@ -278,6 +310,7 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
                 }}
               </b>
             </td>
+            <td></td>
             <td></td>
           </tr>
         </tbody>

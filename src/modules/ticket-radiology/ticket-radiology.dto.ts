@@ -9,7 +9,8 @@ export class TicketRadiologyGetQuery {
   relation?: {
     ticket?: boolean
     customer?: boolean
-    ticketUserList?: boolean
+    ticketUserRequestList?: boolean
+    ticketUserResultList?: boolean
     radiology?: { radiologyGroup?: boolean; printHtml?: boolean } | false
     imageList?: boolean
   }

@@ -1,3 +1,4 @@
+import { BaseModel } from '../_base/base.model'
 import { Customer } from '../customer'
 import { PaymentMoneyStatus, type DiscountType } from '../enum'
 import { Image } from '../image/image.model'
@@ -12,7 +13,7 @@ export enum TicketRadiologyStatus {
   Completed = 3,
 }
 
-export class TicketRadiology {
+export class TicketRadiology extends BaseModel {
   id: number
   priority: number
   ticketId: number
@@ -43,12 +44,16 @@ export class TicketRadiology {
   radiology?: Radiology
   customer?: Customer
   ticket?: Ticket
-  ticketUserList: TicketUser[]
+  ticketUserRequestList: TicketUser[]
+  ticketUserResultList: TicketUser[]
   room: Room
 
   static init(): TicketRadiology {
     const ins = new TicketRadiology()
     ins.id = 0
+    ins._localId = Math.random().toString(36).substring(2)
+
+    ins.radiologyId = 0
     ins.paymentMoneyStatus = PaymentMoneyStatus.NoEffect
     ins.printHtmlId = 0
     ins.imageIds = '[]'
@@ -61,8 +66,10 @@ export class TicketRadiology {
 
   static blank(): TicketRadiology {
     const ins = TicketRadiology.init()
+
     ins.imageList = []
-    ins.radiologyId = 0
+    ins.ticketUserRequestList = []
+    ins.ticketUserResultList = []
     return ins
   }
 
@@ -73,6 +80,9 @@ export class TicketRadiology {
       if (value === undefined) delete target[key as keyof typeof target]
     })
     Object.assign(target, source)
+    target._localId = String(
+      source.id || source._localId || Math.random().toString(36).substring(2),
+    )
     return target
   }
 
@@ -98,8 +108,11 @@ export class TicketRadiology {
     if (source.imageList) {
       target.imageList = Image.basicList(source.imageList)
     }
-    if (target.ticketUserList) {
-      target.ticketUserList = TicketUser.basicList(target.ticketUserList)
+    if (target.ticketUserRequestList) {
+      target.ticketUserRequestList = TicketUser.basicList(target.ticketUserRequestList)
+    }
+    if (target.ticketUserResultList) {
+      target.ticketUserResultList = TicketUser.basicList(target.ticketUserResultList)
     }
     return target
   }

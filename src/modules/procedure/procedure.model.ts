@@ -45,7 +45,11 @@ export class Procedure {
 
   procedureGroup?: ProcedureGroup
 
-  positionList?: Position[]
+  positionRequestListCommon: Position[]
+  positionRequestList: Position[]
+  positionResultListCommon: Position[]
+  positionResultList: Position[]
+
   discountList?: Discount[]
   discountListExtra?: Discount[]
 
@@ -81,7 +85,10 @@ export class Procedure {
 
   static blank() {
     const ins = Procedure.init()
-    ins.positionList = []
+    ins.positionRequestList = []
+    ins.positionRequestListCommon = []
+    ins.positionResultList = []
+    ins.positionResultListCommon = []
     ins.discountList = []
     ins.discountListExtra = []
     return ins
@@ -109,8 +116,17 @@ export class Procedure {
         : target.procedureGroup
     }
 
-    if (target.positionList) {
-      target.positionList = Position.basicList(target.positionList)
+    if (target.positionRequestList) {
+      target.positionRequestList = Position.basicList(target.positionRequestList)
+    }
+    if (target.positionRequestListCommon) {
+      target.positionRequestListCommon = Position.basicList(target.positionRequestListCommon)
+    }
+    if (target.positionResultList) {
+      target.positionResultList = Position.basicList(target.positionResultList)
+    }
+    if (target.positionResultListCommon) {
+      target.positionResultListCommon = Position.basicList(target.positionResultListCommon)
     }
     if (target.discountList) {
       target.discountList = Discount.basicList(target.discountList)

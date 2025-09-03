@@ -2,6 +2,7 @@ import { Discount } from '../discount'
 import { Position } from '../position'
 import { PrintHtml } from '../print-html'
 import { RadiologyGroup } from '../radiology-group'
+import { TicketUser } from '../ticket-user'
 
 export class Radiology {
   id: number
@@ -24,10 +25,17 @@ export class Radiology {
 
   radiologyGroup?: RadiologyGroup
   printHtml?: PrintHtml
-  positionList?: Position[]
+
+  positionRequestListCommon: Position[]
+  positionRequestList: Position[]
+  positionResultListCommon: Position[]
+  positionResultList: Position[]
 
   discountList?: Discount[]
   discountListExtra?: Discount[]
+
+  ticketUserRequestList?: TicketUser[]
+  ticketUserResponseList?: TicketUser[]
 
   get discountApply() {
     const discountList = [...(this.discountList || []), ...(this.discountListExtra || [])]
@@ -63,7 +71,10 @@ export class Radiology {
   static blank() {
     const ins = Radiology.init()
     ins.printHtml = PrintHtml.init()
-    ins.positionList = []
+    ins.positionRequestList = []
+    ins.positionRequestListCommon = []
+    ins.positionResultList = []
+    ins.positionResultListCommon = []
     ins.discountList = []
     ins.discountListExtra = []
     return ins
@@ -93,14 +104,29 @@ export class Radiology {
     if (Object.prototype.hasOwnProperty.call(source, 'printHtml')) {
       target.printHtml = target.printHtml ? PrintHtml.basic(target.printHtml) : target.printHtml
     }
-    if (target.positionList) {
-      target.positionList = Position.basicList(target.positionList)
+    if (target.positionRequestList) {
+      target.positionRequestList = Position.basicList(target.positionRequestList)
+    }
+    if (target.positionRequestListCommon) {
+      target.positionRequestListCommon = Position.basicList(target.positionRequestListCommon)
+    }
+    if (target.positionResultList) {
+      target.positionResultList = Position.basicList(target.positionResultList)
+    }
+    if (target.positionResultListCommon) {
+      target.positionResultListCommon = Position.basicList(target.positionResultListCommon)
     }
     if (target.discountList) {
       target.discountList = Discount.basicList(target.discountList)
     }
     if (target.discountListExtra) {
       target.discountListExtra = Discount.basicList(target.discountListExtra)
+    }
+    if (target.ticketUserRequestList) {
+      target.ticketUserRequestList = TicketUser.basicList(target.ticketUserRequestList)
+    }
+    if (target.ticketUserResponseList) {
+      target.ticketUserResponseList = TicketUser.basicList(target.ticketUserResponseList)
     }
     return target
   }

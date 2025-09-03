@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { PaymentActionTypeText } from '@/modules/payment'
+import { MoneyDirection, PaymentActionTypeText } from '@/modules/payment'
 import { PaymentMethodService } from '@/modules/payment-method'
 import { Ticket } from '@/modules/ticket'
 import { timeToText } from '@/utils'
@@ -56,7 +56,9 @@ onMounted(async () => {
             <td class="text-center">{{ index + 1 }}</td>
             <td class="">
               <div>{{ timeToText(payment.createdAt, 'DD/MM/YY hh:mm') }}</div>
-              <div>{{ paymentMethodMap[payment.paymentMethodId]?.name }}</div>
+              <div style="font-size: 0.9em; font-style: italic">
+                {{ paymentMethodMap[payment.paymentMethodId]?.name }}
+              </div>
             </td>
             <td>
               <div>{{ PaymentActionTypeText[payment.paymentActionType] }}</div>
@@ -64,8 +66,13 @@ onMounted(async () => {
                 {{ payment.note }}
               </div>
             </td>
-            <td class="text-right">
-              <div>{{ formatMoney(payment.paidAmount) }}</div>
+            <td>
+              <div v-if="payment.moneyDirection === MoneyDirection.In" class="flex justify-end">
+                {{ formatMoney(payment.paidAmount) }}
+              </div>
+              <div v-else class="flex justify-start">
+                {{ formatMoney(payment.paidAmount) }}
+              </div>
             </td>
             <td class="text-right" v-if="CONFIG.MODE === 'development'" style="color: violet">
               {{ formatMoney(payment.debtAmount) }}

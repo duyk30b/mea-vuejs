@@ -127,7 +127,7 @@ export class Discount extends BaseModel {
 
   static init(): Discount {
     const ins = new Discount()
-    ins._localId = Math.random()
+    ins._localId = Math.random().toString(36).substring(2)
     ins.id = 0
     return ins
   }
@@ -157,7 +157,9 @@ export class Discount extends BaseModel {
       if (value === undefined) delete target[key as keyof typeof target]
     })
     Object.assign(target, source)
-    target._localId = source.id || source._localId || Math.random()
+    target._localId = String(
+      source.id || source._localId || Math.random().toString(36).substring(2),
+    )
     return target
   }
 

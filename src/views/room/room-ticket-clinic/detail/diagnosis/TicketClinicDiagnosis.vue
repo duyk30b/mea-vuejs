@@ -1,24 +1,49 @@
 <script lang="ts" setup>
-import ImageUploadCloudinary from '@/common/image-upload/ImageUploadCloudinary.vue'
-import type { ItemOption } from '@/common/vue-form/InputOptions.vue'
-import { useSettingStore } from '@/modules/_me/setting.store'
-import { ICD, ICDService } from '@/modules/icd'
-import { ticketRoomRef } from '@/modules/room'
-import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '@/common/VueButton.vue'
 import VueTinyMCE from '@/common/VueTinyMCE.vue'
+import ImageUploadCloudinary from '@/common/image-upload/ImageUploadCloudinary.vue'
 import { InputOptions, InputOptionsText, InputText } from '@/common/vue-form'
+import type { ItemOption } from '@/common/vue-form/InputOptions.vue'
 import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
 import { CustomerService } from '@/modules/customer'
+import { ICD, ICDService } from '@/modules/icd'
 import { PermissionId } from '@/modules/permission/permission.enum'
+import { Room, RoomService, RoomTicketStyle, RoomType, ticketRoomRef } from '@/modules/room'
+import { TicketChangeAttributeApi } from '@/modules/ticket'
 import {
   TicketAttributeKeyGeneralList,
   type TicketAttributeKeyGeneralType,
 } from '@/modules/ticket-attribute'
 import { ESImage } from '@/utils'
-import { TicketChangeAttributeApi } from '@/modules/ticket'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import DiagnosisEye from './DiagnosisEye.vue'
+import DiagnosisObstetric from './DiagnosisObstetric.vue'
+import DiagnosisVitalSigns from './DiagnosisVitalSigns.vue'
 
 const inputOptionsICD = ref<InstanceType<typeof InputOptions>>()
+
+const router = useRouter()
+const route = useRoute()
+
+const roomMap = RoomService.roomMap
+const currentRoom = ref<Room>(Room.blank())
+
+watch(
+  () => route.params.roomId,
+  async (newValue) => {
+    const roomId = Number(newValue) || 0
+    await RoomService.getMap()
+    currentRoom.value = roomMap.value[roomId]
+    if (!currentRoom.value) {
+      currentRoom.value = Room.blank()
+      currentRoom.value.isCommon = 1
+      currentRoom.value.roomType = RoomType.Ticket
+    }
+  },
+  { immediate: true },
+)
 
 const { userPermission, organization, user } = MeService
 const settingStore = useSettingStore()
@@ -184,84 +209,31 @@ defineExpose({ getDataTicketDiagnosis })
         <InputText v-model:value="ticketAttributeMap.reason" />
       </div>
     </div>
-    <div class="mt-4 flex flex-col md:flex-row flex-wrap gap-4">
-      <div class="flex-1">
+    <div class="mt-4 flex flex-wrap gap-4">
+      <div class="flex flex-col" style="flex-grow: 3; flex-basis: 200px; min-height: 200px">
         <div>Tiền sử</div>
-        <div class="healthHistory" style="height: 150px">
+        <div class="flex-1 healthHistory">
           <VueTinyMCE v-model="ticketAttributeMap.healthHistory" />
         </div>
-        <div class="mt-4">Tóm tắt</div>
-        <div class="summary" style="height: 150px">
+      </div>
+      <div class="flex flex-col" style="flex-grow: 3; flex-basis: 200px; min-height: 200px">
+        <div>Tóm tắt</div>
+        <div class="flex-1 summary">
           <VueTinyMCE v-model="ticketAttributeMap.summary" />
         </div>
       </div>
-      <div class="md:w-[320px] w-full flex flex-col">
-        <div>Chỉ số sinh tồn</div>
-        <div class="grow pb-4" style="border: 1px solid #d1d5db">
-          <table class="table-vital-signs">
-            <tbody>
-              <tr>
-                <td class="title-vital-signs">Mạch</td>
-                <td>:</td>
-                <td class="input-vital-signs">
-                  <input v-model="ticketAttributeMap.pulse" type="number" />
-                </td>
-                <td class="unit-vital-signs">l/p</td>
-              </tr>
-              <tr>
-                <td class="title-vital-signs">Nhiệt độ</td>
-                <td>:</td>
-                <td class="input-vital-signs">
-                  <input v-model="ticketAttributeMap.temperature" type="number" />
-                </td>
-                <td class="unit-vital-signs">°C</td>
-              </tr>
-              <tr>
-                <td class="title-vital-signs">Huyết áp</td>
-                <td>:</td>
-                <td class="input-vital-signs">
-                  <input v-model="ticketAttributeMap.bloodPressure" />
-                </td>
-                <td class="unit-vital-signs">mmHg</td>
-              </tr>
-              <tr>
-                <td class="title-vital-signs">TS Thở</td>
-                <td>:</td>
-                <td class="input-vital-signs">
-                  <input v-model="ticketAttributeMap.respiratoryRate" type="number" />
-                </td>
-                <td class="unit-vital-signs">l/p</td>
-              </tr>
-              <tr>
-                <td class="title-vital-signs">SpO2</td>
-                <td>:</td>
-                <td class="input-vital-signs">
-                  <input v-model="ticketAttributeMap.spO2" type="number" />
-                </td>
-                <td class="unit-vital-signs">%</td>
-              </tr>
-              <tr>
-                <td class="title-vital-signs">Chiều cao</td>
-                <td>:</td>
-                <td class="input-vital-signs">
-                  <input v-model="ticketAttributeMap.height" type="number" />
-                </td>
-                <td class="unit-vital-signs">cm</td>
-              </tr>
-              <tr>
-                <td class="title-vital-signs">Cân nặng</td>
-                <td>:</td>
-                <td class="input-vital-signs">
-                  <input v-model="ticketAttributeMap.weight" type="number" />
-                </td>
-                <td class="unit-vital-signs">kg</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div style="flex-grow: 1; flex-basis: 200px">
+        <DiagnosisVitalSigns :ticketAttributeMap="ticketAttributeMap" />
       </div>
     </div>
-    <div class="mt-4"></div>
+
+    <div v-if="currentRoom.roomStyle === RoomTicketStyle.TicketClinicObstetric" class="mt-4">
+      <DiagnosisObstetric :ticketAttributeMap="ticketAttributeMap" />
+    </div>
+
+    <div v-if="currentRoom.roomStyle === RoomTicketStyle.TicketClinicEye" class="mt-4">
+      <DiagnosisEye :ticketAttributeMap="ticketAttributeMap" />
+    </div>
     <div class="mt-4">
       <div>Hình ảnh</div>
       <ImageUploadCloudinary
@@ -304,9 +276,7 @@ defineExpose({ getDataTicketDiagnosis })
     <div class="mt-4 flex justify-between gap-4">
       <div></div>
       <VueButton
-        v-if="
-          ticketRoomRef.id && userPermission[PermissionId.TICKET_CHANGE_ATTRIBUTE]
-        "
+        v-if="ticketRoomRef.id && userPermission[PermissionId.TICKET_CHANGE_ATTRIBUTE]"
         color="blue"
         :disabled="!hasChangeData"
         :loading="saveLoading"

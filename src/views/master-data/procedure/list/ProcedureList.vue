@@ -86,12 +86,8 @@ const startFetchData = async (options?: { refetch?: boolean }) => {
 }
 
 onBeforeMount(async () => {
-  await startFetchData()
-  try {
-    procedureGroupAll.value = await ProcedureGroupService.list({})
-  } catch (error) {
-    console.log('🚀 ~ file: ProcedureList.vue:83 ~ onBeforeMount ~ error:', error)
-  }
+  await startFetchData({ refetch: true })
+  procedureGroupAll.value = await ProcedureGroupService.list({})
 })
 
 const startSearch = async () => {

@@ -4,34 +4,55 @@ import { TicketRadiology } from '../../ticket-radiology'
 import type { TicketUser } from '../../ticket-user'
 
 export class TicketChangeRadiologyApi {
-  static async addTicketRadiology(body: { ticketId: number; ticketRadiology: TicketRadiology }) {
-    const { ticketId, ticketRadiology } = body
+  static async addTicketRadiology(obj: {
+    ticketId: number
+    ticketRadiologyWrapList: {
+      ticketRadiology: TicketRadiology
+      ticketUserRequestList: TicketUser[]
+    }[]
+  }) {
+    const { ticketId, ticketRadiologyWrapList } = obj
     const response = await AxiosInstance.post(
-      `/ticket/${ticketId}/radiology/add-ticket-radiology`,
+      `/ticket/${ticketId}/radiology/add-ticket-radiology-list`,
+
       {
-        priority: ticketRadiology.priority,
-        roomId: ticketRadiology.roomId,
-        customerId: ticketRadiology.customerId,
-        radiologyId: ticketRadiology.radiologyId,
+        ticketRadiologyWrapList: ticketRadiologyWrapList.map((tp) => {
+          const { ticketRadiology, ticketUserRequestList } = tp
+          return {
+            ticketUserRequestList: (ticketUserRequestList || [])
+              .filter((i) => !!i.userId)
+              .map((i) => ({
+                positionId: i.positionId,
+                userId: i.userId,
+              })),
+            ticketRadiology: {
+              priority: ticketRadiology.priority,
+              radiologyId: ticketRadiology.radiologyId,
+              customerId: ticketRadiology.customerId,
+              roomId: ticketRadiology.roomId,
 
-        paymentMoneyStatus: ticketRadiology.paymentMoneyStatus,
+              paymentMoneyStatus: ticketRadiology.paymentMoneyStatus,
+              createdAt: ticketRadiology.createdAt,
 
-        createdAt: ticketRadiology.createdAt,
-        costPrice: ticketRadiology.costPrice,
-        expectedPrice: ticketRadiology.expectedPrice,
-        discountMoney: ticketRadiology.discountMoney,
-        discountPercent: ticketRadiology.discountPercent,
-        discountType: ticketRadiology.discountType,
-        actualPrice: ticketRadiology.actualPrice,
+              costPrice: ticketRadiology.costPrice,
+              expectedPrice: ticketRadiology.expectedPrice,
+              discountMoney: ticketRadiology.discountMoney,
+              discountPercent: ticketRadiology.discountPercent,
+              discountType: ticketRadiology.discountType,
+              actualPrice: ticketRadiology.actualPrice,
 
-        printHtmlId: ticketRadiology.printHtmlId,
-        result: ticketRadiology.result,
-        description: ticketRadiology.description,
-        customStyles: ticketRadiology.customStyles,
-        customVariables: ticketRadiology.customVariables,
+              printHtmlId: ticketRadiology.printHtmlId,
+              description: ticketRadiology.description,
+              result: ticketRadiology.result,
+              customStyles: ticketRadiology.customStyles,
+              customVariables: ticketRadiology.customVariables,
+            },
+          }
+        }),
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as BaseResponse<{ ticketRadiologyCreatedList: any[] }>
+    return TicketRadiology.fromList(data.ticketRadiologyCreatedList)
   }
 
   static async destroyTicketRadiology(body: { ticketId: number; ticketRadiologyId: number }) {
@@ -42,15 +63,15 @@ export class TicketChangeRadiologyApi {
     const { data } = response.data as BaseResponse<boolean>
   }
 
-  static async updateMoneyTicketRadiology(body: {
+  static async updateTicketRadiology(body: {
     ticketId: number
     ticketRadiologyId: number
     ticketRadiology?: TicketRadiology
-    ticketUserList?: TicketUser[]
+    ticketUserRequestList?: TicketUser[]
   }) {
-    const { ticketId, ticketRadiology, ticketRadiologyId, ticketUserList } = body
+    const { ticketId, ticketRadiology, ticketRadiologyId, ticketUserRequestList } = body
     const response = await AxiosInstance.post(
-      `/ticket/${ticketId}/radiology/update-money-ticket-radiology/${ticketRadiologyId}`,
+      `/ticket/${ticketId}/radiology/update-ticket-radiology/${ticketRadiologyId}`,
       {
         ticketRadiology: ticketRadiology
           ? {
@@ -61,16 +82,18 @@ export class TicketChangeRadiologyApi {
             actualPrice: ticketRadiology.actualPrice,
           }
           : undefined,
-        ticketUserList: ticketUserList
-          ? ticketUserList.map((i) => ({
-            id: i.id || 0,
-            roleId: i.roleId || 0,
-            userId: i.userId || 0,
-          }))
+        ticketUserRequestList: ticketUserRequestList
+          ? ticketUserRequestList
+            .filter((i) => !!i.userId)
+            .map((i) => ({
+              positionId: i.positionId,
+              userId: i.userId,
+            }))
           : undefined,
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as BaseResponse<{ ticketRadiologyModified: any }>
+    return TicketRadiology.from(data.ticketRadiologyModified)
   }
 
   static async updatePriorityTicketRadiology(body: {
@@ -94,19 +117,11 @@ export class TicketChangeRadiologyApi {
     ticketId: number
     ticketRadiologyId: number
     ticketRadiology: TicketRadiology
-    ticketUserList?: TicketUser[]
+    ticketUserResultList?: TicketUser[]
     imagesChange?: {
       files: File[]
       imageIdsWait: number[]
       externalUrlList: string[]
-    }
-    response: {
-      ticketRadiology: {
-        ticket?: boolean
-        customer?: boolean
-        ticketUserList?: boolean
-        imageList?: boolean
-      }
     }
   }) {
     const { ticketId, ticketRadiologyId, ticketRadiology, imagesChange } = options
@@ -131,15 +146,16 @@ export class TicketChangeRadiologyApi {
         customVariables: ticketRadiology.customVariables,
       }),
     )
-    if (options.ticketUserList) {
+    if (options.ticketUserResultList) {
       formData.append(
-        'ticketUserList',
+        'ticketUserResultList',
         JSON.stringify(
-          options.ticketUserList.map((i) => ({
-            id: i.id || 0,
-            roleId: i.roleId || 0,
-            userId: i.userId || 0,
-          })),
+          options.ticketUserResultList
+            .filter((i) => !!i.userId)
+            .map((i) => ({
+              positionId: i.positionId,
+              userId: i.userId,
+            })),
         ),
       )
     }
@@ -147,13 +163,10 @@ export class TicketChangeRadiologyApi {
     const response = await AxiosInstance.post(
       `ticket/${ticketId}/radiology/update-result/${ticketRadiologyId}`,
       formData,
-      {
-        params: { response: JSON.stringify(options.response) },
-        headers: { 'Content-Type': 'multipart/form-data' },
-      },
+      { headers: { 'Content-Type': 'multipart/form-data' } },
     )
-    const { data } = response.data as BaseResponse<{ ticketRadiology: any }>
-    return TicketRadiology.from(data.ticketRadiology)
+    const { data } = response.data as BaseResponse<{ ticketRadiologyModified: any }>
+    return TicketRadiology.from(data.ticketRadiologyModified)
   }
 
   static async cancelResult(object: {
@@ -172,7 +185,7 @@ export class TicketChangeRadiologyApi {
       `/ticket/${ticketId}/radiology/cancel-result/${ticketRadiologyId}`,
       body,
     )
-    const { data } = response.data as BaseResponse<{ ticketRadiology: any }>
-    return TicketRadiology.from(data.ticketRadiology)
+    const { data } = response.data as BaseResponse<{ ticketRadiologyModified: any }>
+    return TicketRadiology.from(data.ticketRadiologyModified)
   }
 }

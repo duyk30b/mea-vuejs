@@ -2,11 +2,12 @@
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputCheckbox } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { SettingKey } from '@/modules/_me/store.variable'
 import { OrganizationService } from '@/modules/organization'
-import { PositionInteractType, PositionService } from '@/modules/position'
+import { PositionType, PositionService } from '@/modules/position'
 import { RoleService } from '@/modules/role'
 import { ref } from 'vue'
 
@@ -27,7 +28,7 @@ const openModal = async () => {
 
   const fetchData = await Promise.all([
     RoleService.getMap(),
-    PositionService.list({ filter: { positionType: PositionInteractType.Ticket } }),
+    PositionService.list({ filter: { positionType: PositionType.Ticket } }),
   ])
   const roleMap = fetchData[0]
   roleOptions.value = fetchData[1].map((i) => ({ value: i.roleId, label: roleMap[i.roleId]?.name }))
@@ -86,6 +87,48 @@ defineExpose({ openModal })
                     :options="roleOptions"
                   ></a-select>
                 </div>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <InputCheckbox v-model:checked="settingDisplay.includePendingStatus">
+                  Hiển thị bao gồm các phiếu chưa hoàn thành
+                </InputCheckbox>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <InputCheckbox v-model:checked="settingDisplay.goRoomAfterReception">
+                  Vào phòng sau khi tiếp đón mới
+                </InputCheckbox>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <InputCheckbox v-model:checked="settingDisplay.procedure">
+                  Hiển thị dịch vụ
+                </InputCheckbox>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <InputCheckbox v-model:checked="settingDisplay.phoneAndAddress">
+                  Hiển thị SĐT và địa chỉ
+                </InputCheckbox>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <InputCheckbox v-model:checked="settingDisplay.note">
+                  Hiển thị lý do / chẩn đoán
+                </InputCheckbox>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <InputCheckbox v-model:checked="settingDisplay.payment">
+                  Hiển thị nút thanh toán
+                </InputCheckbox>
               </td>
             </tr>
           </tbody>

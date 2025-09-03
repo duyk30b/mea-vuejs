@@ -11,11 +11,11 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { CustomerService, type Customer } from '@/modules/customer'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PositionInteractType } from '@/modules/position'
+import { PositionType } from '@/modules/position'
 import { ProcedureType } from '@/modules/procedure'
 import { RoleService } from '@/modules/role'
 import { Room, RoomType, RoomService } from '@/modules/room'
-import { roomTicketPagination } from '@/modules/room/room.ref'
+import { roomTicketPaginationMapRoomId } from '@/modules/room/room.ref'
 import { TicketQueryApi, TicketStatus } from '@/modules/ticket'
 import type { TicketProcedure } from '@/modules/ticket-procedure'
 import type { TicketUser } from '@/modules/ticket-user'
@@ -28,14 +28,12 @@ import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
 import { onBeforeMount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import TicketLink from '../../room-ticket-base/TicketLink.vue'
-import ModalProcessTicketProcedureRegimen from '../../room-ticket-base/procedure/ModalProcessTicketProcedureRegimen.vue'
-import ModalShowTicketProcedureRegimen from '../../room-ticket-base/procedure/ModalShowTicketProcedureRegimen.vue'
+import ModalProcessTicketProcedureRegimen from '../../room-procedure/ModalProcessTicketProcedureRegimen.vue'
+import ModalShowTicketProcedureRegimen from '../../room-procedure/ModalShowTicketProcedureRegimen.vue'
 import { fromTime, toTime } from '../../room-ticket-base/room-ticket.ref'
-import ModalTicketSpaCreate from '../create/ModalTicketSpaCreate.vue'
 import ModalTicketSpaListSetting from './ModalTicketSpaListSetting.vue'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
-const modalTicketSpaCreate = ref<InstanceType<typeof ModalTicketSpaCreate>>()
 const modalTicketSpaListSetting = ref<InstanceType<typeof ModalTicketSpaListSetting>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalProcessTicketProcedureRegimen =
@@ -77,7 +75,7 @@ const startFetchData = async () => {
       relation: {
         customer: true,
         // ticketAttributeList: true,
-        ticketUserList: settingStore.TICKET_SPA_LIST.roleIdList.length ? {} : false,
+        ticketUserList: settingStore.TICKET_SPA_LIST.roleIdList.length ? {} : undefined,
         ticketProcedureList: { relation: { ticketProcedureItemList: { imageList: true } } },
       },
       filter: {
@@ -105,7 +103,7 @@ const startFetchData = async () => {
       await element.refreshProcedure()
     }
 
-    roomTicketPagination.value[currentRoom.value.id] = paginationResult.ticketList
+    roomTicketPaginationMapRoomId.value[currentRoom.value.id] = paginationResult.ticketList
     total.value = paginationResult.total
   } catch (error) {
     console.log('🚀 ~ file: TicketClinicList.vue:84 ~ startFetchData ~ error:', error)
@@ -197,7 +195,7 @@ const handleModalTicketSpaListSettingSuccess = async () => {
 }
 
 const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
-  const findTicket = roomTicketPagination.value[currentRoom.value.id]?.find((i) => {
+  const findTicket = roomTicketPaginationMapRoomId.value[currentRoom.value.id]?.find((i) => {
     return i.id === data.ticketId
   })
   if (!findTicket) return
@@ -216,10 +214,6 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
   <ModalShowTicketProcedureRegimen ref="modalShowTicketProcedureRegimen" />
   <ModalProcedureDetail ref="modalProcedureDetail" />
   <ModalCustomerDetail ref="modalCustomerDetail" />
-  <ModalProcessTicketProcedureRegimen
-    ref="modalProcessTicketProcedureRegimen"
-    @success="handleProcessTicketProcedureRegimenSuccess"
-  />
   <ModalTicketSpaListSetting
     v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalTicketSpaListSetting"
@@ -234,18 +228,7 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
         {{ currentRoom?.name || '' }}
       </div>
       <div>
-        <VueButton
-          color="blue"
-          icon="plus"
-          @click="
-            modalTicketSpaCreate?.openModal({
-              roomId: currentRoom.id,
-              ticketStatusRegister: TicketStatus.Executing,
-            })
-          "
-        >
-          Tiếp đón mới
-        </VueButton>
+        <VueButton color="blue">Tiếp đón mới</VueButton>
       </div>
     </div>
     <div class="mr-2 flex items-center gap-4 flex-wrap">
@@ -392,10 +375,10 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
           </tr>
         </tbody>
         <tbody v-else>
-          <tr v-if="roomTicketPagination[currentRoom.id]?.length === 0">
+          <tr v-if="roomTicketPaginationMapRoomId[currentRoom.id]?.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="ticket in roomTicketPagination[currentRoom.id]" :key="ticket.id">
+          <tr v-for="ticket in roomTicketPaginationMapRoomId[currentRoom.id]" :key="ticket.id">
             <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
               {{ ticket.id }} - {{ ticket.roomId }}
             </td>
@@ -413,9 +396,6 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
                   "
                   style="color: #eca52b"
                   class="text-xl"
-                  @click="
-                    modalTicketSpaCreate?.openModal({ roomId: ticket.roomId, ticketId: ticket.id })
-                  "
                 >
                   <IconEditSquare />
                 </a>
@@ -479,32 +459,24 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
                     v-if="tp.procedure?.procedureType === ProcedureType.Regimen"
                     class="font-bold"
                   >
-                    ({{ tp.completedSessions }}/{{ tp.totalSessions }} buổi)
+                    ({{ tp.finishedSessions }}/{{ tp.totalSessions }} buổi)
                   </span>
-                  <div
-                    v-if="tp.procedure?.procedureType === ProcedureType.Regimen"
-                    @click="modalShowTicketProcedureRegimen?.openModal(tp)"
-                    class="font-bold italic underline cursor-pointer"
-                    style="color: var(--text-green)"
-                  >
-                    XEM
-                  </div>
                 </div>
 
                 <div v-if="tp.procedure?.procedureType === ProcedureType.Regimen">
                   <VueButton
-                    v-if="tp.completedSessions < tp.totalSessions"
+                    v-if="tp.finishedSessions < tp.totalSessions"
                     size="small"
                     @click="
                       modalProcessTicketProcedureRegimen?.openModal({
                         ticketProcedure: tp,
-                        ticketProcedureItem: tp.ticketProcedureItemList![tp.completedSessions],
+                        ticketProcedureItem: tp.ticketProcedureItemList![tp.finishedSessions],
                       })
                     "
                   >
-                    Thực hiện buổi {{ tp.completedSessions + 1 }}
+                    Thực hiện buổi {{ tp.finishedSessions + 1 }}
                     <span v-if="CONFIG.MODE === 'development'" style="color: violet">
-                      ({{ tp.ticketProcedureItemList![tp.completedSessions]?.id }})
+                      ({{ tp.ticketProcedureItemList![tp.finishedSessions]?.id }})
                     </span>
                   </VueButton>
                   <span v-else class="font-bold italic" style="color: var(--text-blue)">
@@ -521,7 +493,7 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
               {{
                 userMap[
                   ticket.ticketUserList?.find((i: TicketUser) => {
-                    return i.positionType === PositionInteractType.Ticket && i.roleId === roleId
+                    return i.positionType === PositionType.Ticket && i.roleId === roleId
                   })?.userId || 0
                 ]?.fullName
               }}

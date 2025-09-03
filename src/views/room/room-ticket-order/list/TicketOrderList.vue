@@ -11,7 +11,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer, CustomerService } from '@/modules/customer'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Room, RoomType, RoomService, roomTicketPagination } from '@/modules/room'
+import { Room, RoomType, RoomService, roomTicketPaginationMapRoomId } from '@/modules/room'
 import { TicketStatus } from '@/modules/ticket'
 import { TicketQueryApi } from '@/modules/ticket/api/ticket-query.api'
 import { ESString, ESTimer } from '@/utils'
@@ -101,7 +101,7 @@ const startFetchData = async () => {
         : { id: 'DESC' },
     })
 
-    roomTicketPagination.value[currentRoom.value.id] = paginationResult.ticketList
+    roomTicketPaginationMapRoomId.value[currentRoom.value.id] = paginationResult.ticketList
     total.value = paginationResult.total
   } catch (error) {
     console.log('🚀 ~ file: InvoiceList.vue:50 ~ error:', error)
@@ -309,11 +309,11 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           </tr>
         </tbody>
         <tbody v-else>
-          <tr v-if="roomTicketPagination[currentRoom.id]?.length === 0">
+          <tr v-if="roomTicketPaginationMapRoomId[currentRoom.id]?.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr
-            v-for="ticket in roomTicketPagination[currentRoom.id]"
+            v-for="ticket in roomTicketPaginationMapRoomId[currentRoom.id]"
             :key="ticket.id"
             @dblclick="
               router.push({
@@ -400,10 +400,10 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           </tr>
         </tbody>
         <tbody v-if="!dataLoading">
-          <tr v-if="roomTicketPagination[currentRoom.id]?.length === 0">
+          <tr v-if="roomTicketPaginationMapRoomId[currentRoom.id]?.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="ticket in roomTicketPagination[currentRoom.id]" :key="ticket.id">
+          <tr v-for="ticket in roomTicketPaginationMapRoomId[currentRoom.id]" :key="ticket.id">
             <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
               {{ ticket.id }} - {{ ticket.roomId }}
             </td>

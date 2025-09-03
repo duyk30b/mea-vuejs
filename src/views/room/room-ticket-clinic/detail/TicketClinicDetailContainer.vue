@@ -11,8 +11,8 @@ import {
   IconMore,
   IconOneToOne,
   IconPicCenter,
-  IconSave,
   IconSetting,
+  IconUser,
 } from '@/common/icon-antd'
 import {
   IconEyeGlasses,
@@ -32,7 +32,7 @@ import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer } from '@/modules/customer'
 import { DeliveryStatus, PaymentViewType, PickupStrategy } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Room, RoomType, RoomService, RoomTicketStyle, ticketRoomRef } from '@/modules/room'
+import { Room, RoomService, RoomTicketStyle, ticketRoomRef } from '@/modules/room'
 import { Ticket, TicketActionApi, TicketService, TicketStatus } from '@/modules/ticket'
 import { TicketRadiologyStatus } from '@/modules/ticket-radiology'
 import { UserRoleService } from '@/modules/user-role'
@@ -42,18 +42,19 @@ import { useRoute, useRouter } from 'vue-router'
 import ModalTicketPayment from '../../room-ticket-base/ModalTicketPayment.vue'
 import ModalTicketReturnProduct from '../../room-ticket-base/ModalTicketReturnProduct.vue'
 import ModalTicketClinicHistory from '../history/ModalTicketClinicHistory.vue'
+import TicketClinicDiagnosis from './diagnosis/TicketClinicDiagnosis.vue'
+import TicketClinicDiagnosisEyeSpecial from './diagnosis/TicketClinicDiagnosisEyeSpecial.vue'
+import ModalTicketClinicDetailSetting from './modal/ModalTicketClinicDetailSetting.vue'
 import TicketClinicConsumable from './TicketClinicConsumable.vue'
-import TicketClinicDiagnosis from './TicketClinicDiagnosis.vue'
 import TicketClinicLaboratory from './TicketClinicLaboratory.vue'
 import TicketClinicPrescription from './TicketClinicPrescription.vue'
 import TicketClinicProcedure from './TicketClinicProcedure.vue'
 import TicketClinicRadiology from './TicketClinicRadiology.vue'
 import TicketClinicSummary from './TicketClinicSummary.vue'
-import TicketClinicDiagnosisEyeSpecial from './diagnosis/TicketClinicDiagnosisEyeSpecial.vue'
-import ModalTicketClinicDetailSetting from './modal/ModalTicketClinicDetailSetting.vue'
+import TicketClinicUser from './TicketClinicUser.vue'
 
-const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
+const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
 const modalTicketPayment = ref<InstanceType<typeof ModalTicketPayment>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -79,9 +80,7 @@ watch(
     currentRoom.value = roomMap.value[roomId]
     if (!currentRoom.value) {
       currentRoom.value = Room.blank()
-      currentRoom.value.isCommon = 1
-      currentRoom.value.roomType = RoomType.Ticket
-      currentRoom.value.roomStyle = RoomTicketStyle.TicketClinicGeneral
+      AlertStore.addError('Phòng khám không hợp lệ')
     }
     startFetchData()
   },
@@ -93,7 +92,6 @@ onBeforeMount(async () => {
   await startFetchData(ticketId)
 
   ticketLoaded.value = true
-  await Promise.all([UserRoleService.getMapList(), ticketRoomRef.value.refreshUserAndRole()])
 })
 
 onUnmounted(async () => {
@@ -130,12 +128,12 @@ const startFetchData = async (ticketId?: number) => {
           : undefined,
         ticketLaboratoryResultList: organizationPermission.value[PermissionId.LABORATORY]
           ? true
-          : false,
-        ticketRadiologyList: organizationPermission.value[PermissionId.RADIOLOGY] ? {} : undefined,
-        ticketUserList: organizationPermission.value[PermissionId.MASTER_DATA_POSITION]
-          ? {}
-          : false,
-        toAppointment: organizationPermission.value[PermissionId.APPOINTMENT] ? true : false,
+          : undefined,
+        ticketRadiologyList: organizationPermission.value[PermissionId.RADIOLOGY]
+          ? { relation: { imageList: true } }
+          : undefined,
+        ticketUserList: {},
+        toAppointment: organizationPermission.value[PermissionId.APPOINTMENT] ? true : undefined,
         imageList: true,
       },
     })
@@ -156,6 +154,7 @@ const startFetchData = async (ticketId?: number) => {
       ]
       ticketData.ticketAttributeMap = { healthHistory }
     }
+    ticketData.refreshUserAndRole()
     ticketRoomRef.value = ticketData
   } catch (error) {
     console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
@@ -365,7 +364,7 @@ const clickDestroyTicket = () => {
     okText: 'Xác nhận XÓA phiếu',
     async onOk() {
       await TicketActionApi.destroy(ticketRoomRef.value.id)
-      router.push({ name: 'RoomTicket', params: { roomId: route.params.roomId } })
+      router.push({ name: 'RoomTicketClinic', params: { roomId: route.params.roomId } })
     },
   })
 }
@@ -683,15 +682,14 @@ const clickReturnProduct = () => {
             <IconDisconnect />
             Đơn thuốc
           </VueTabMenu>
-          <!-- <VueTabMenu
-              v-if="organizationPermission[PermissionId.MASTER_DATA_POSITION]"
-              style="padding: 6px 12px"
-              :tabKey="TicketClinicUser.__name!"
-              @active="router.push({ name: TicketClinicUser.__name })"
-            >
-              <IconUser />
-              Nhân Viên
-            </VueTabMenu> -->
+          <VueTabMenu
+            style="padding: 6px 12px"
+            :tabKey="TicketClinicUser.__name!"
+            @active="router.push({ name: TicketClinicUser.__name })"
+          >
+            <IconUser />
+            Nhân Viên
+          </VueTabMenu>
           <VueTabMenu
             style="padding: 6px 12px"
             :tabKey="TicketClinicSummary.__name!"

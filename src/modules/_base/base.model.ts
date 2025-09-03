@@ -1,3 +1,3 @@
 export class BaseModel {
-  _localId: number
+  _localId: string
 }

@@ -1,60 +1,3 @@
-<template>
-  <div
-    v-click-outside="handleClickOutside"
-    :class="{ 'vue-input': true, disabled }"
-    ref="wrapperRef"
-  >
-    <div v-if="prepend" class="prepend">
-      <span>{{ prepend }}</span>
-    </div>
-    <div class="input-area">
-      <input
-        ref="inputRef"
-        :value="searchText"
-        type="text"
-        :placeholder="placeholder"
-        :disabled="disabled"
-        :required="required"
-        @input="handleInput"
-        @keydown="handleKeydown"
-        @focusin="onFocusin"
-      />
-    </div>
-    <div v-if="CONFIG.MODE === 'development'" class="development" style="color: violet">
-      {{ randomId }} - {{ currentValue }} - {{ optionsFilter.length }}/{{ options.length }}
-    </div>
-    <div class="icon-append">
-      <IconSearch class="icon-blur" />
-      <!-- đang có lỗi icon-clear trên iphone (click 2 lần mới focus được vào ô input) -->
-      <!-- <IconClearOutline class="icon-clear-hover" @click="handleClickClear" />
-      <IconClearCircle class="icon-clear-blur" @click="handleClickClear" /> -->
-    </div>
-    <teleport to="body">
-      <!-- <transition :name="dropdownDirection === 'up' ? 'slide-up' : 'slide-down'"> -->
-        <div v-if="showOptions" ref="dropdownRef" class="vue-input-dropdown" :style="dropdownStyle">
-          <div
-            v-for="(item, index) in optionsFilter"
-            :key="index"
-            :class="{ 'item-option': true, 'active': index == indexFocus }"
-            @click="handleSelectItem(index)"
-          >
-            <slot name="option" :item="item" :index="index">
-              <div class="item-text">{{ item.text }}</div>
-            </slot>
-          </div>
-          <div
-            v-if="!!messageNoResult && !optionsFilter.length && searchText"
-            class="item-option"
-            style="font-style: italic"
-          >
-            {{ messageNoResult }}
-          </div>
-        </div>
-      <!-- </transition> -->
-    </teleport>
-  </div>
-</template>
-
 <script lang="ts" setup>
 import { CONFIG } from '@/config'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
@@ -332,6 +275,63 @@ onBeforeUnmount(() => {
 
 defineExpose({ focus })
 </script>
+
+<template>
+  <div
+    v-click-outside="handleClickOutside"
+    :class="{ 'vue-input': true, disabled }"
+    ref="wrapperRef"
+  >
+    <div v-if="prepend" class="prepend">
+      <span>{{ prepend }}</span>
+    </div>
+    <div class="input-area">
+      <input
+        ref="inputRef"
+        :value="searchText"
+        type="text"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        :required="required"
+        @input="handleInput"
+        @keydown="handleKeydown"
+        @focusin="onFocusin"
+      />
+    </div>
+    <div v-if="CONFIG.MODE === 'development'" class="development" style="color: violet">
+      {{ randomId }} - {{ currentValue }} - {{ optionsFilter.length }}/{{ options.length }}
+    </div>
+    <div class="icon-append">
+      <IconSearch class="icon-blur" />
+      <!-- đang có lỗi icon-clear trên iphone (click 2 lần mới focus được vào ô input) -->
+      <!-- <IconClearOutline class="icon-clear-hover" @click="handleClickClear" />
+      <IconClearCircle class="icon-clear-blur" @click="handleClickClear" /> -->
+    </div>
+    <teleport to="body">
+      <!-- <transition :name="dropdownDirection === 'up' ? 'slide-up' : 'slide-down'"> -->
+      <div v-if="showOptions" ref="dropdownRef" class="vue-input-dropdown" :style="dropdownStyle">
+        <div
+          v-for="(item, index) in optionsFilter"
+          :key="index"
+          :class="{ 'item-option': true, 'active': index == indexFocus }"
+          @click="handleSelectItem(index)"
+        >
+          <slot name="option" :item="item" :index="index">
+            <div class="item-text">{{ item.text }}</div>
+          </slot>
+        </div>
+        <div
+          v-if="!!messageNoResult && !optionsFilter.length && searchText"
+          class="item-option"
+          style="font-style: italic"
+        >
+          {{ messageNoResult }}
+        </div>
+      </div>
+      <!-- </transition> -->
+    </teleport>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .vue-input {

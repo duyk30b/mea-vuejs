@@ -23,6 +23,7 @@ export type BaseCondition<T> = {
       } & {
         LIKE?: string
         IN?: T[P][]
+        NOT_IN?: T[P][]
         BETWEEN?: [T[P], T[P]]
         RAW_QUERY?: string
       })
@@ -85,6 +86,9 @@ export class IndexedDBQuery<T> {
             case 'IN':
               if (!expected || expected.length === 0) return recordValue == null
               return expected.includes(recordValue)
+            case 'NOT_IN':
+              if (!expected || expected.length === 0) return recordValue != null
+              return !expected.includes(recordValue)
             case 'LIKE':
               return customFilter(recordValue || '', expected, 2)
             default:

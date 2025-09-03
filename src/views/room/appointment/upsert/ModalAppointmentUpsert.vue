@@ -94,7 +94,7 @@ const closeModal = () => {
 const handleUpsertAppointment = async () => {
   saveLoading.value = true
 
-  if (appointment.value.appointmentStatus !== AppointmentStatus.Cancelled) {
+  if (appointment.value.status !== AppointmentStatus.Cancelled) {
     appointment.value.cancelReason = ''
   }
 
@@ -313,9 +313,9 @@ defineExpose({ openModalForCreate, openModalForUpdate })
 
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
           <div>Xác nhận</div>
-          <div v-if="appointment.appointmentStatus !== AppointmentStatus.Completed">
+          <div v-if="appointment.status !== AppointmentStatus.Completed">
             <VueSelect
-              v-model:value="appointment.appointmentStatus"
+              v-model:value="appointment.status"
               :options="[
                 { text: 'Chờ KH xác nhận', value: AppointmentStatus.Waiting },
                 { text: 'KH đã xác nhận', value: AppointmentStatus.Confirm },
@@ -325,9 +325,9 @@ defineExpose({ openModalForCreate, openModalForUpdate })
               ]"
             />
           </div>
-          <div v-if="appointment.appointmentStatus === AppointmentStatus.Completed">
+          <div v-if="appointment.status === AppointmentStatus.Completed">
             <VueSelect
-              :value="appointment.appointmentStatus"
+              :value="appointment.status"
               disabled
               :options="[
                 { text: 'KH đã đến khám', value: AppointmentStatus.Completed, disabled: true },
@@ -348,7 +348,7 @@ defineExpose({ openModalForCreate, openModalForUpdate })
         </div>
 
         <div
-          v-if="appointment.appointmentStatus == AppointmentStatus.Cancelled"
+          v-if="appointment.status == AppointmentStatus.Cancelled"
           style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
         >
           <div>Lý do hủy</div>
@@ -372,7 +372,7 @@ defineExpose({ openModalForCreate, openModalForUpdate })
             type="submit"
             icon="save"
             :loading="saveLoading"
-            :disabled="appointment.appointmentStatus === AppointmentStatus.Completed"
+            :disabled="appointment.status === AppointmentStatus.Completed"
           >
             <span v-if="!appointment.id">TẠO LỊCH HẸN</span>
             <span v-else>CẬP NHẬT LỊCH HẸN</span>

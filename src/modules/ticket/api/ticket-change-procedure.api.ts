@@ -1,44 +1,52 @@
-import type { TicketProcedureItem } from '@/modules/ticket-procedure/ticket-procedure-item.model'
+import { TicketProcedureItem } from '@/modules/ticket-procedure/ticket-procedure-item.model'
 import { AxiosInstance } from '../../../core/axios.instance'
 import type { BaseResponse } from '../../_base/base-dto'
 import { TicketProcedure } from '../../ticket-procedure'
-import type { TicketUser } from '../../ticket-user'
+import { TicketUser } from '../../ticket-user'
 
 export class TicketChangeProcedureApi {
-  static async addTicketProcedureList(body: {
+  static async addTicketProcedureList(obj: {
     ticketId: number
-    ticketProcedureList: TicketProcedure[]
+    ticketProcedureWrapList: {
+      ticketProcedure: TicketProcedure
+      ticketProcedureItemList: TicketProcedureItem[]
+      ticketUserRequestList: TicketUser[]
+    }[]
   }) {
-    const { ticketId, ticketProcedureList } = body
+    const { ticketId, ticketProcedureWrapList } = obj
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/procedure/add-ticket-procedure-list`,
       {
-        ticketProcedureList: ticketProcedureList.map((tp) => {
+        ticketProcedureWrapList: ticketProcedureWrapList.map((tp) => {
+          const { ticketProcedure, ticketProcedureItemList, ticketUserRequestList } = tp
           return {
-            ticketUserList: tp.ticketUserList.map((i) => ({
-              id: i.id || 0,
-              roleId: i.roleId || 0,
-              userId: i.userId || 0,
-            })),
-            ticketProcedureItemList: (tp.ticketProcedureItemList || []).map((i) => ({
-              completedAt: i.completedAt,
+            ticketUserRequestList: (ticketUserRequestList || [])
+              .filter((i) => !!i.userId)
+              .map((i) => ({
+                positionId: i.positionId || 0,
+                userId: i.userId || 0,
+              })),
+            ticketProcedureItemList: (ticketProcedureItemList || []).map((i, index) => ({
+              registeredAt: i.registeredAt,
+              indexSession: index,
             })),
             ticketProcedure: {
-              priority: tp.priority,
-              procedureId: tp.procedureId,
+              priority: ticketProcedure.priority,
+              procedureId: ticketProcedure.procedureId,
+              type: ticketProcedure.type,
 
-              quantity: tp.quantity,
-              totalSessions: tp.totalSessions,
+              quantity: ticketProcedure.quantity,
+              totalSessions: ticketProcedure.totalSessions,
 
-              expectedPrice: tp.expectedPrice,
-              discountMoney: tp.discountMoney,
-              discountPercent: tp.discountPercent,
-              discountType: tp.discountType,
-              actualPrice: tp.actualPrice,
+              expectedPrice: ticketProcedure.expectedPrice,
+              discountMoney: ticketProcedure.discountMoney,
+              discountPercent: ticketProcedure.discountPercent,
+              discountType: ticketProcedure.discountType,
+              actualPrice: ticketProcedure.actualPrice,
 
-              status: tp.status,
-              paymentMoneyStatus: tp.paymentMoneyStatus,
-              createdAt: tp.createdAt,
+              status: ticketProcedure.status,
+              paymentMoneyStatus: ticketProcedure.paymentMoneyStatus,
+              createdAt: ticketProcedure.createdAt,
             },
           }
         }),
@@ -60,22 +68,24 @@ export class TicketChangeProcedureApi {
     ticketProcedureId: number
     ticketProcedure?: TicketProcedure
     ticketProcedureItemList?: TicketProcedureItem[]
-    ticketUserList?: TicketUser[]
+    ticketUserRequestList?: TicketUser[]
   }) {
     const {
       ticketId,
       ticketProcedureId,
       ticketProcedure,
       ticketProcedureItemList,
-      ticketUserList,
+      ticketUserRequestList,
     } = body
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/procedure/update-ticket-procedure/${ticketProcedureId}`,
       {
         ticketProcedure: ticketProcedure
           ? {
+            status: ticketProcedure.status,
             quantity: ticketProcedure.quantity,
             totalSessions: ticketProcedure.totalSessions,
+            finishedSessions: ticketProcedure.finishedSessions,
             expectedPrice: ticketProcedure.expectedPrice,
             discountType: ticketProcedure.discountType,
             discountMoney: ticketProcedure.discountMoney,
@@ -84,17 +94,19 @@ export class TicketChangeProcedureApi {
           }
           : undefined,
         ticketProcedureItemList: ticketProcedureItemList
-          ? ticketProcedureItemList.map((i) => ({
+          ? ticketProcedureItemList.map((i, index) => ({
             id: i.id || 0,
-            completedAt: i.completedAt,
+            registeredAt: i.registeredAt,
+            indexSession: index,
           }))
           : undefined,
-        ticketUserList: ticketUserList
-          ? ticketUserList.map((i) => ({
-            id: i.id || 0,
-            roleId: i.roleId || 0,
-            userId: i.userId || 0,
-          }))
+        ticketUserRequestList: ticketUserRequestList
+          ? ticketUserRequestList
+            .filter((i) => !!i.userId)
+            .map((i) => ({
+              positionId: i.positionId,
+              userId: i.userId,
+            }))
           : undefined,
       },
     )
@@ -131,9 +143,9 @@ export class TicketChangeProcedureApi {
       imageIdsWait: number[]
       externalUrlList: string[]
     }
-    ticketUserList?: TicketUser[]
+    ticketUserResultList?: TicketUser[]
   }) {
-    const { ticketId, ticketProcedureItem, ticketUserList, imagesChange } = options
+    const { ticketId, ticketProcedureItem, ticketUserResultList, imagesChange } = options
 
     const formData = new FormData()
 
@@ -148,15 +160,16 @@ export class TicketChangeProcedureApi {
 
     formData.append('ticketProcedureItem', JSON.stringify(ticketProcedureItem))
 
-    if (options.ticketUserList) {
+    if (ticketUserResultList) {
       formData.append(
-        'ticketUserList',
+        'ticketUserResultList',
         JSON.stringify(
-          options.ticketUserList.map((i) => ({
-            id: i.id || 0,
-            roleId: i.roleId || 0,
-            userId: i.userId || 0,
-          })),
+          ticketUserResultList
+            .filter((i) => !!i.userId)
+            .map((i) => ({
+              positionId: i.positionId || 0,
+              userId: i.userId || 0,
+            })),
         ),
       )
     }
@@ -168,8 +181,27 @@ export class TicketChangeProcedureApi {
         headers: { 'Content-Type': 'multipart/form-data' },
       },
     )
-    const { data } = response.data as BaseResponse<{ ticketProcedure: any }>
+    const { data } = response.data as BaseResponse<{ ticketProcedureModified: any }>
 
-    return TicketProcedure.from(data.ticketProcedure)
+    return TicketProcedure.from(data.ticketProcedureModified)
+  }
+
+  static async cancelTicketProcedureItem(options: {
+    ticketId: number
+    ticketProcedureId: number
+    ticketProcedureItemId: number
+    cancelReason: string
+  }) {
+    const { ticketId } = options
+    const response = await AxiosInstance.post(
+      `/ticket/${ticketId}/procedure/cancel-ticket-procedure-item`,
+      {
+        ticketProcedureId: options.ticketProcedureId,
+        ticketProcedureItemId: options.ticketProcedureItemId,
+        cancelReason: options.cancelReason,
+      },
+    )
+    const { data } = response.data as BaseResponse<{ ticketProcedureModified: any }>
+    return TicketProcedure.from(data.ticketProcedureModified)
   }
 }

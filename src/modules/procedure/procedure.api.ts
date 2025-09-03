@@ -53,10 +53,11 @@ export class ProcedureApi {
 
   static async createOne(body: {
     procedure: Procedure
-    positionList?: Position[]
+    positionRequestList?: Position[]
+    positionResultList?: Position[]
     discountList?: Discount[]
   }) {
-    const { procedure, discountList, positionList } = body
+    const { procedure, discountList, positionRequestList, positionResultList } = body
     const response = await AxiosInstance.post('/procedure/create', {
       procedure: {
         code: procedure.code,
@@ -69,10 +70,21 @@ export class ProcedureApi {
         gapHoursType: procedure.gapHoursType,
         isActive: procedure.isActive,
       },
-      positionList: positionList
+      positionRequestList: positionRequestList
         ?.filter((i) => !!i.roleId)
         .map((i) => {
           return {
+            priority: i.priority,
+            roleId: i.roleId,
+            commissionValue: i.commissionValue,
+            commissionCalculatorType: i.commissionCalculatorType,
+          }
+        }),
+      positionResultList: positionResultList
+        ?.filter((i) => !!i.roleId)
+        .map((i) => {
+          return {
+            priority: i.priority,
             roleId: i.roleId,
             commissionValue: i.commissionValue,
             commissionCalculatorType: i.commissionCalculatorType,
@@ -102,11 +114,12 @@ export class ProcedureApi {
     id: number,
     body: {
       procedure: Procedure
-      positionList?: Position[]
+      positionRequestList?: Position[]
+      positionResultList?: Position[]
       discountList?: Discount[]
     },
   ) {
-    const { procedure, discountList, positionList } = body
+    const { procedure, discountList, positionRequestList, positionResultList } = body
     const response = await AxiosInstance.patch(`/procedure/update/${id}`, {
       procedure: {
         code: procedure.code,
@@ -119,10 +132,21 @@ export class ProcedureApi {
         gapHoursType: procedure.gapHoursType,
         isActive: procedure.isActive,
       },
-      positionList: positionList
+      positionRequestList: positionRequestList
         ?.filter((i) => !!i.roleId)
         .map((i) => {
           return {
+            priority: i.priority,
+            roleId: i.roleId,
+            commissionValue: i.commissionValue,
+            commissionCalculatorType: i.commissionCalculatorType,
+          }
+        }),
+      positionResultList: positionResultList
+        ?.filter((i) => !!i.roleId)
+        .map((i) => {
+          return {
+            priority: i.priority,
             roleId: i.roleId,
             commissionValue: i.commissionValue,
             commissionCalculatorType: i.commissionCalculatorType,
@@ -149,11 +173,12 @@ export class ProcedureApi {
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/procedure/destroy/${id}`)
-    const result = response.data as BaseResponse<{
+    const { data } = response.data as BaseResponse<{
       procedureId: number
       ticketProcedureList: TicketProcedure[]
+      success: boolean
     }>
-    result.data.ticketProcedureList = TicketProcedure.fromList(result.data.ticketProcedureList)
-    return result
+    data.ticketProcedureList = TicketProcedure.fromList(data.ticketProcedureList)
+    return data
   }
 }

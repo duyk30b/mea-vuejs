@@ -73,7 +73,19 @@ const startFetchData = async () => {
 }
 
 watch(
-  () => [props.product.id, props.product.quantity],
+  () => props.product.id,
+  async (newValue) => {
+    if (newValue) {
+      await startFetchData()
+    } else {
+      productMovementList.value = []
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => props.product.quantity,
   async (newValue) => {
     if (newValue) {
       await startFetchData()

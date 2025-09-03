@@ -9,7 +9,7 @@ import { MeService } from '../_me/me.service'
 import { AuthService } from '../auth/auth.service'
 import { Batch } from '../batch'
 import { DiscountInteractType, DiscountService, type Discount } from '../discount'
-import { Position, PositionInteractType, PositionService } from '../position'
+import { Position, PositionService, PositionType } from '../position'
 import { ProductGroup, ProductGroupService } from '../product-group'
 import { ProductApi } from './product.api'
 import type {
@@ -111,9 +111,12 @@ export class ProductService {
           })
         }
         if (relation?.positionList) {
-          product.positionList = positionAll.filter((i) => {
+          product.positionRequestListCommon = positionAll.filter((i) => {
+            return i.positionType === PositionType.ProductRequest && i.positionInteractId === 0
+          })
+          product.positionRequestList = positionAll.filter((i) => {
             return (
-              i.positionType === PositionInteractType.Product && i.positionInteractId === product.id
+              i.positionType === PositionType.ProductRequest && i.positionInteractId === product.id
             )
           })
         }
@@ -215,7 +218,7 @@ export class ProductService {
 
   static async createOne(body: {
     product: Product
-    positionList?: Position[]
+    positionRequestList?: Position[]
     discountList?: Discount[]
   }) {
     const response = await ProductApi.createOne(body)
@@ -228,7 +231,7 @@ export class ProductService {
     id: number,
     body: {
       product: Product
-      positionList?: Position[]
+      positionRequestList?: Position[]
       discountList?: Discount[]
     },
   ) {

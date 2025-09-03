@@ -9,7 +9,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Discount, DiscountInteractType, DiscountService } from '@/modules/discount'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Position, PositionInteractType } from '@/modules/position'
+import { Position, PositionType } from '@/modules/position'
 import {
   GapHoursType,
   GapHoursTypeText,
@@ -40,7 +40,7 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const { userPermission } = MeService
 
-const procedureOrigin = ref<Procedure>(Procedure.blank())
+let procedureOrigin = Procedure.blank()
 const procedure = ref(Procedure.blank())
 const procedureGroupOptions = ref<{ value: number; label: string; data: ProcedureGroup }[]>([])
 
@@ -57,24 +57,31 @@ const showModal = ref(false)
 const saveLoading = ref(false)
 
 const hasChangeDiscountList = computed(() => {
-  return !Discount.equalList(
-    procedure.value.discountList || [],
-    procedureOrigin.value.discountList || [],
+  return !Discount.equalList(procedure.value.discountList || [], procedureOrigin.discountList || [])
+})
+
+const hasChangePositionRequestList = computed(() => {
+  return !Position.equalList(
+    (procedure.value.positionRequestList || []).filter((i) => !!i.roleId),
+    procedureOrigin.positionRequestList || [],
   )
 })
 
-const hasChangePositionList = computed(() => {
+const hasChangePositionResultList = computed(() => {
   return !Position.equalList(
-    (procedure.value.positionList || []).filter((i) => !!i.roleId),
-    procedureOrigin.value.positionList || [],
+    (procedure.value.positionResultList || []).filter((i) => !!i.roleId),
+    procedureOrigin.positionResultList || [],
   )
 })
 
 const hasChangeData = computed(() => {
-  if (!Procedure.equal(procedure.value, procedureOrigin.value)) {
+  if (!Procedure.equal(procedure.value, procedureOrigin)) {
     return true
   }
-  if (hasChangePositionList.value) {
+  if (hasChangePositionRequestList.value) {
+    return true
+  }
+  if (hasChangePositionResultList.value) {
     return true
   }
   if (hasChangeDiscountList.value) {
@@ -83,36 +90,21 @@ const hasChangeData = computed(() => {
   return false
 })
 
-const handleAddPosition = () => {
-  const commissionBlank = Position.blank()
-  commissionBlank.positionType = PositionInteractType.Procedure
-  commissionBlank.positionInteractId = procedure.value.id
-
-  if (!procedure.value.positionList) {
-    procedure.value.positionList = []
-  }
-  procedure.value.positionList!.push(commissionBlank)
-}
-
 const openModal = async (procedureId?: number) => {
   showModal.value = true
 
   if (procedureId) {
-    const procedureResponse = await ProcedureService.detail(
+    procedureOrigin = await ProcedureService.detail(
       procedureId,
       { relation: { positionList: true, discountList: true } },
       { query: true },
     )
-    procedureOrigin.value = procedureResponse
-    procedure.value = Procedure.from(procedureResponse)
+    procedure.value = Procedure.from(procedureOrigin)
   } else {
     procedure.value = Procedure.blank()
     procedure.value.discountListExtra = await DiscountService.list({
       filter: { discountInteractId: 0, discountInteractType: DiscountInteractType.Procedure },
     })
-  }
-  if (procedure.value.positionList?.length == 0) {
-    handleAddPosition()
   }
 
   ProcedureGroupService.list({})
@@ -136,7 +128,7 @@ const closeModal = () => {
   showModal.value = false
 
   procedure.value = Procedure.blank()
-  procedureOrigin.value = Procedure.blank()
+  procedureOrigin = Procedure.blank()
 }
 
 const clickDestroy = () => {
@@ -154,7 +146,7 @@ const clickDestroy = () => {
             title: 'Không thể xóa dịch vụ khi đã được chỉ định',
             content: [
               'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu khám, hóa đơn liên quan trước',
-              `Các phiếu liên quan ${response.data.ticketProcedureList
+              `Các phiếu liên quan ${response.ticketProcedureList
                 .map((i) => i.ticketId)
                 .join(', ')} `,
             ],
@@ -175,13 +167,23 @@ const handleSave = async () => {
       await ProcedureService.createOne({
         procedure: procedure.value,
         discountList: hasChangeDiscountList.value ? procedure.value.discountList : undefined,
-        positionList: hasChangePositionList.value ? procedure.value.positionList : undefined,
+        positionRequestList: hasChangePositionRequestList.value
+          ? procedure.value.positionRequestList
+          : undefined,
+        positionResultList: hasChangePositionResultList.value
+          ? procedure.value.positionResultList
+          : undefined,
       })
     } else {
       await ProcedureService.updateOne(procedure.value.id, {
         procedure: procedure.value,
         discountList: hasChangeDiscountList.value ? procedure.value.discountList : undefined,
-        positionList: hasChangePositionList.value ? procedure.value.positionList : undefined,
+        positionRequestList: hasChangePositionRequestList.value
+          ? procedure.value.positionRequestList
+          : undefined,
+        positionResultList: hasChangePositionResultList.value
+          ? procedure.value.positionResultList
+          : undefined,
       })
     }
     emit('success')
@@ -206,18 +208,6 @@ const handleModalDiscountUpsertSuccess = async (
     })
     procedure.value.discountList![findIndex] = discountData
   }
-}
-
-const clickUpsertDiscount = (options: { discount?: Discount; mode: 'CREATE' | 'UPDATE' }) => {
-  const discount = options.discount || Discount.blank()
-  modalDiscountUpsert.value?.openModal({
-    discount,
-    requiredInteract: {
-      discountInteractType: DiscountInteractType.Procedure,
-      discountInteractId: procedure.value.id,
-    },
-    mode: options.mode,
-  })
 }
 
 const handleChangeProcedureType = (value: ProcedureType) => {
@@ -355,18 +345,30 @@ defineExpose({ openModal })
               <div class="mt-4">
                 <DiscountTableAction
                   v-model:discountList="procedure.discountList!"
+                  :discountListExtra="procedure.discountListExtra || []"
                   :discountInteractId="procedure.id"
                   :discountInteractType="DiscountInteractType.Procedure"
-                  :discountListExtra="procedure.discountListExtra || []"
                   :editable="userPermission[PermissionId.MASTER_DATA_DISCOUNT]"
                 />
               </div>
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.ROLE_AND_POSITION">
               <div class="mt-4">
+                <div style="font-weight: bold">1. Vai trò chỉ định dịch vụ</div>
                 <PositionTableAction
-                  v-model:positionList="procedure.positionList!"
-                  :positionType="PositionInteractType.Procedure"
+                  v-model:positionList="procedure.positionRequestList!"
+                  :positionListCommon="procedure.positionRequestListCommon || []"
+                  :positionType="PositionType.ProcedureRequest"
+                  :positionInteractId="procedure.id"
+                  :editable="userPermission[PermissionId.MASTER_DATA_POSITION]"
+                />
+              </div>
+              <div class="mt-10">
+                <div style="font-weight: bold">2. Vai trò thực hiện, trả kết quả dịch vụ</div>
+                <PositionTableAction
+                  v-model:positionList="procedure.positionResultList!"
+                  :positionListCommon="procedure.positionResultListCommon || []"
+                  :positionType="PositionType.ProcedureResult"
                   :positionInteractId="procedure.id"
                   :editable="userPermission[PermissionId.MASTER_DATA_POSITION]"
                 />

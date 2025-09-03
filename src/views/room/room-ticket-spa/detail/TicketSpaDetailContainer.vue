@@ -101,7 +101,7 @@ const startFetchData = async (ticketId?: number) => {
         ticketRadiologyList: organizationPermission.value[PermissionId.RADIOLOGY] ? {} : undefined,
         ticketUserList: organizationPermission.value[PermissionId.MASTER_DATA_POSITION]
           ? {}
-          : false,
+          : undefined,
         toAppointment: organizationPermission.value[PermissionId.APPOINTMENT] ? true : false,
         imageList: true,
       },

@@ -1,7 +1,5 @@
 <template>
-  <TicketProductContainer />
+  <div></div>
 </template>
 
-<script lang="ts" setup>
-import TicketProductContainer from '@/views/room/room-ticket-base/product/TicketProductContainer.vue'
-</script>
+<script lang="ts" setup></script>

@@ -43,7 +43,9 @@ export class Product {
 
   batchList?: Batch[]
   productGroup?: ProductGroup
-  positionList?: Position[]
+
+  positionRequestListCommon: Position[]
+  positionRequestList: Position[]
 
   discountList?: Discount[]
   discountListExtra?: Discount[]
@@ -156,7 +158,8 @@ export class Product {
   static blank(): Product {
     const ins = Product.init()
     ins.batchList = []
-    ins.positionList = []
+    ins.positionRequestList = []
+    ins.positionRequestListCommon = []
     ins.discountList = []
     ins.discountListExtra = []
 
@@ -187,8 +190,11 @@ export class Product {
     if (target.batchList) {
       target.batchList = Batch.basicList(target.batchList)
     }
-    if (target.positionList) {
-      target.positionList = Position.basicList(target.positionList)
+    if (target.positionRequestList) {
+      target.positionRequestList = Position.basicList(target.positionRequestList)
+    }
+    if (target.positionRequestListCommon) {
+      target.positionRequestListCommon = Position.basicList(target.positionRequestListCommon)
     }
     if (target.discountList) {
       target.discountList = Discount.basicList(target.discountList)

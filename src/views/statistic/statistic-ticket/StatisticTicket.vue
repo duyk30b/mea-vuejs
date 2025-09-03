@@ -10,7 +10,10 @@ import { useSettingStore } from '@/modules/_me/setting.store'
 import { FileTicketApi } from '@/modules/file-excel/file-ticket.api'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { RoomType } from '@/modules/room'
-import { StatisticTicketApi } from '@/modules/statistics/statistic-ticket.api'
+import {
+  StatisticTicketApi,
+  type StatisticTicketQueryTimeResponseType,
+} from '@/modules/statistics/statistic-ticket.api'
 import { TicketStatus } from '@/modules/ticket'
 import { ESTimer } from '@/utils'
 import InputSelectRoom from '@/views/component/InputSelectRoom.vue'
@@ -21,23 +24,7 @@ import { Bar } from 'vue-chartjs'
 import { useRoute, useRouter } from 'vue-router'
 import ModalStatisticTicketSetting from './ModalStatisticTicketSetting.vue'
 
-type DataResponseType = {
-  timeLabel: string
-  sumTotalCostAmount: number
-  sumProcedureMoney: number
-  sumProductMoney: number
-  sumRadiologyMoney: number
-  sumLaboratoryMoney: number
-  sumSurcharge: number
-  sumExpense: number
-  sumDiscountMoney: number
-  sumTotalMoney: number
-  sumProfit: number
-  sumDebt: number
-  countTicket: number
-}
-
-const options = {
+const barOptions = {
   responsive: true,
   maintainAspectRatio: false,
 }
@@ -61,13 +48,13 @@ const timeRanger = ref<[Dayjs, Dayjs]>([dayjs(startMonth), dayjs(endMonth)])
 const timeType = ref<'date' | 'month'>('date')
 const loaded = ref(false)
 
-const data = ref<DataResponseType[]>([])
+const data = ref<StatisticTicketQueryTimeResponseType[]>([])
 
-const visitBarData = reactive<ChartData<'bar', (number | [number, number] | null)[], unknown>>({
+const barData = reactive<ChartData<'bar', (number | [number, number] | null)[], unknown>>({
   labels: [],
   datasets: [],
 })
-const visitBarOption = ref<keyof DataResponseType>('sumTotalMoney')
+const sortKeyOption = ref<keyof StatisticTicketQueryTimeResponseType>('sumTotalMoney')
 
 onBeforeMount(async () => await startFetchData())
 
@@ -82,7 +69,7 @@ const startFetchData = async () => {
       fromTime = ESTimer.startOfMonth(timeRanger.value?.[0].toISOString())
       toTime = ESTimer.endOfMonth(timeRanger.value?.[1].toISOString())
     }
-    data.value = await StatisticTicketApi.statisticTicket({
+    data.value = await StatisticTicketApi.groupByTime({
       fromTime: fromTime.toISOString(),
       toTime: toTime.toISOString(),
       groupTimeType: timeType.value,
@@ -92,10 +79,10 @@ const startFetchData = async () => {
       },
     })
 
-    visitBarData.labels = data.value.map((i) =>
+    barData.labels = data.value.map((i) =>
       timeType.value === 'date' ? i.timeLabel.slice(0, 5) : i.timeLabel,
     )
-    visitBarData.datasets = [
+    barData.datasets = [
       {
         type: 'bar',
         label: 'Tổng tiền',
@@ -131,7 +118,7 @@ const handleChangeTimeType = async (data: 'date' | 'month') => {
 
 const handleChangeOptionBar = async (option: { text?: string; value?: any }) => {
   loaded.value = false
-  visitBarData.datasets = [
+  barData.datasets = [
     {
       type: 'bar',
       label: option.text!,
@@ -283,7 +270,7 @@ const downloadTicketList = (menu: { key: string }) => {
       <div v-if="settingStore.TICKET_STATISTIC.sumTotalCostAmount" class="card">
         <div class="card-title">Tổng vốn</div>
         <div class="card-number" style="font-weight: 500">
-          {{ formatMoney(data.reduce((acc, item) => acc + item.sumTotalCostAmount, 0)) }}
+          {{ formatMoney(data.reduce((acc, item) => acc + item.sumItemsCostAmount, 0)) }}
         </div>
       </div>
       <div
@@ -333,7 +320,11 @@ const downloadTicketList = (menu: { key: string }) => {
       <div v-if="settingStore.TICKET_STATISTIC.sumDiscountMoney" class="card">
         <div class="card-title">Tổng khuyến mại</div>
         <div class="card-number" style="font-weight: 500">
-          {{ formatMoney(data.reduce((acc, item) => acc + item.sumDiscountMoney, 0)) }}
+          {{
+            formatMoney(
+              data.reduce((acc, item) => acc + item.sumDiscountMoney + item.sumItemsDiscount, 0),
+            )
+          }}
         </div>
       </div>
       <div v-if="settingStore.TICKET_STATISTIC.sumProfit" class="card">
@@ -354,7 +345,7 @@ const downloadTicketList = (menu: { key: string }) => {
       <span style="font-size: 18px; font-weight: 500">Chọn biểu đồ:</span>
       <div style="width: 150px">
         <VueSelect
-          v-model:value="visitBarOption"
+          v-model:value="sortKeyOption"
           :options="[
             { text: 'Tổng tiền', value: 'sumTotalMoney' },
             { text: 'Tổng vốn', value: 'sumTotalCostAmount' },
@@ -369,7 +360,7 @@ const downloadTicketList = (menu: { key: string }) => {
       </div>
     </div>
     <div style="height: 500px">
-      <Bar v-if="loaded" :data="visitBarData" :options="options" />
+      <Bar v-if="loaded" :data="barData" :options="barOptions" />
     </div>
 
     <div class="mt-8 table-wrapper">
@@ -404,7 +395,7 @@ const downloadTicketList = (menu: { key: string }) => {
               {{ formatMoney(item.sumTotalMoney) }}
             </td>
             <td v-if="settingStore.TICKET_STATISTIC.sumTotalCostAmount" class="text-right">
-              {{ formatMoney(item.sumTotalCostAmount) }}
+              {{ formatMoney(item.sumItemsCostAmount) }}
             </td>
             <td v-if="settingStore.TICKET_STATISTIC.sumProductMoney" class="text-right">
               {{ formatMoney(item.sumProductMoney) }}
@@ -425,7 +416,7 @@ const downloadTicketList = (menu: { key: string }) => {
               {{ formatMoney(item.sumExpense) }}
             </td>
             <td v-if="settingStore.TICKET_STATISTIC.sumDiscountMoney" class="text-right">
-              {{ formatMoney(item.sumDiscountMoney) }}
+              {{ formatMoney(item.sumDiscountMoney + item.sumItemsDiscount) }}
             </td>
             <td v-if="settingStore.TICKET_STATISTIC.sumProfit" class="text-right">
               {{ formatMoney(item.sumProfit) }}

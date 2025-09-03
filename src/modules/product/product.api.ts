@@ -54,10 +54,10 @@ export class ProductApi {
 
   static async createOne(body: {
     product: Product
-    positionList?: Position[]
+    positionRequestList?: Position[]
     discountList?: Discount[]
   }) {
-    const { product, positionList, discountList } = body
+    const { product, positionRequestList, discountList } = body
 
     const response = await AxiosInstance.post('/product/create', {
       product: {
@@ -84,10 +84,11 @@ export class ProductApi {
         splitBatchByCostPrice: product.splitBatchByCostPrice,
       },
 
-      positionList: positionList
+      positionRequestList: positionRequestList
         ?.filter((i) => !!i.roleId)
         .map((i) => {
           return {
+            priority: i.priority,
             roleId: i.roleId,
             commissionValue: i.commissionValue,
             commissionCalculatorType: i.commissionCalculatorType,
@@ -116,11 +117,11 @@ export class ProductApi {
     id: number,
     body: {
       product: Product
-      positionList?: Position[]
+      positionRequestList?: Position[]
       discountList?: Discount[]
     },
   ) {
-    const { product, discountList, positionList } = body
+    const { product, discountList, positionRequestList } = body
     const response = await AxiosInstance.patch(`/product/update/${id}`, {
       product: {
         productCode: product.productCode,
@@ -145,10 +146,11 @@ export class ProductApi {
         splitBatchByCostPrice: product.splitBatchByCostPrice,
       },
 
-      positionList: positionList
+      positionRequestList: positionRequestList
         ?.filter((i) => !!i.roleId)
         .map((i) => {
           return {
+            priority: i.priority,
             roleId: i.roleId,
             commissionValue: i.commissionValue,
             commissionCalculatorType: i.commissionCalculatorType,

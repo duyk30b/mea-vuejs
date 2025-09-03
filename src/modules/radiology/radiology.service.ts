@@ -2,15 +2,15 @@ import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
 import { ref } from 'vue'
 import { ESArray } from '../../utils'
 import { DiscountInteractType, DiscountService, type Discount } from '../discount'
-import { Position, PositionInteractType, PositionService } from '../position'
+import { Position, PositionService, PositionType } from '../position'
 import { PrintHtml, PrintHtmlService } from '../print-html'
 import { RadiologyGroup, RadiologyGroupService } from '../radiology-group'
 import { RadiologyApi } from './radiology.api'
 import type {
-    RadiologyDetailQuery,
-    RadiologyGetQuery,
-    RadiologyListQuery,
-    RadiologyPaginationQuery,
+  RadiologyDetailQuery,
+  RadiologyGetQuery,
+  RadiologyListQuery,
+  RadiologyPaginationQuery,
 } from './radiology.dto'
 import { Radiology } from './radiology.model'
 
@@ -18,14 +18,14 @@ const RadiologyDBQuery = new IndexedDBQuery<Radiology>()
 
 export class RadiologyService {
   static loadedAll: boolean = false
-  static radiologyAll: Radiology[] = []
+  static radiologyAll = ref<Radiology[]>([])
   static radiologyMap = ref<Record<string, Radiology>>({})
 
   private static fetchAll = (() => {
     const start = async () => {
       try {
         const radiologyAll = await RadiologyApi.list({})
-        RadiologyService.radiologyAll = radiologyAll
+        RadiologyService.radiologyAll.value = radiologyAll
         RadiologyService.radiologyMap.value = ESArray.arrayToKeyValue(radiologyAll, 'id')
       } catch (error: any) {
         console.log('🚀 ~ radiology.service.ts:27 ~ RadiologyService ~ start ~ error:', error)
@@ -101,11 +101,23 @@ export class RadiologyService {
           })
         }
         if (relation?.positionList) {
-          radiology.positionList = positionAll.filter((i) => {
+          radiology.positionRequestList = positionAll.filter((i) => {
             return (
-              i.positionType === PositionInteractType.Radiology &&
+              i.positionType === PositionType.RadiologyRequest &&
               i.positionInteractId === radiology.id
             )
+          })
+          radiology.positionRequestListCommon = positionAll.filter((i) => {
+            return i.positionType === PositionType.RadiologyRequest && i.positionInteractId === 0
+          })
+          radiology.positionResultList = positionAll.filter((i) => {
+            return (
+              i.positionType === PositionType.RadiologyResult &&
+              i.positionInteractId === radiology.id
+            )
+          })
+          radiology.positionResultListCommon = positionAll.filter((i) => {
+            return i.positionType === PositionType.RadiologyResult && i.positionInteractId === 0
           })
         }
       })
@@ -116,7 +128,7 @@ export class RadiologyService {
 
   static async getAll(options?: { refetch: boolean }) {
     await RadiologyService.fetchAll({ refetch: !!options?.refetch })
-    return RadiologyService.radiologyAll
+    return RadiologyService.radiologyAll.value
   }
 
   static async getMap(options?: { refetch: boolean }) {
@@ -129,7 +141,10 @@ export class RadiologyService {
     const limit = query.limit || 10
     await RadiologyService.fetchAll({ refetch: !!options?.refetch })
 
-    const dataQuery = await RadiologyService.executeQuery(RadiologyService.radiologyAll, query)
+    const dataQuery = await RadiologyService.executeQuery(
+      RadiologyService.radiologyAll.value,
+      query,
+    )
     const data = dataQuery.slice((page - 1) * limit, page * limit)
 
     if (query.relation) {
@@ -143,7 +158,7 @@ export class RadiologyService {
 
   static async list(query: RadiologyListQuery, options?: { refetch: boolean }) {
     await RadiologyService.fetchAll({ refetch: !!options?.refetch })
-    const data = await RadiologyService.executeQuery(RadiologyService.radiologyAll, query)
+    const data = await RadiologyService.executeQuery(RadiologyService.radiologyAll.value, query)
     if (query.relation) {
       await RadiologyService.executeRelation(data, query.relation)
     }
@@ -158,12 +173,12 @@ export class RadiologyService {
     let radiology: Radiology | undefined
     if (options?.query) {
       radiology = await RadiologyApi.detail(id, query)
-      const findIndex = RadiologyService.radiologyAll.findIndex((i) => i.id === id)
-      if (findIndex !== -1) RadiologyService.radiologyAll[findIndex] = radiology
+      const findIndex = RadiologyService.radiologyAll.value.findIndex((i) => i.id === id)
+      if (findIndex !== -1) RadiologyService.radiologyAll.value[findIndex] = radiology
       RadiologyService.radiologyMap.value[radiology.id] = radiology
     } else {
       await RadiologyService.fetchAll({ refetch: !!options?.refetch })
-      radiology = RadiologyService.radiologyAll.find((i) => i.id === id)
+      radiology = RadiologyService.radiologyAll.value.find((i) => i.id === id)
     }
 
     if (query.relation) {
@@ -175,7 +190,8 @@ export class RadiologyService {
 
   static async createOne(body: {
     radiology: Radiology
-    positionList?: Position[]
+    positionRequestList?: Position[]
+    positionResultList?: Position[]
     discountList?: Discount[]
   }) {
     const result = await RadiologyApi.createOne(body)
@@ -186,7 +202,8 @@ export class RadiologyService {
     id: number,
     body: {
       radiology: Radiology
-      positionList?: Position[]
+      positionRequestList?: Position[]
+      positionResultList?: Position[]
       discountList?: Discount[]
     },
   ) {

@@ -33,7 +33,8 @@ export class Laboratory {
   laboratoryGroup?: LaboratoryGroup
   children?: Laboratory[]
 
-  positionList: Position[]
+  positionRequestList?: Position[]
+  positionRequestListCommon?: Position[]
   discountList: Discount[]
   discountListExtra: Discount[]
 
@@ -73,7 +74,7 @@ export class Laboratory {
 
   static blank() {
     const ins = Laboratory.init()
-    ins.positionList = []
+    ins.positionRequestList = []
     ins.discountList = []
     ins.discountListExtra = []
     return ins
@@ -103,8 +104,11 @@ export class Laboratory {
     if (target.children) {
       target.children = Laboratory.basicList(target.children)
     }
-    if (target.positionList) {
-      target.positionList = Position.basicList(target.positionList)
+    if (target.positionRequestList) {
+      target.positionRequestList = Position.basicList(target.positionRequestList)
+    }
+    if (target.positionRequestListCommon) {
+      target.positionRequestListCommon = Position.basicList(target.positionRequestListCommon)
     }
     if (target.discountList) {
       target.discountList = Discount.basicList(target.discountList)

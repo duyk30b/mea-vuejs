@@ -109,11 +109,13 @@ export class TicketChangeLaboratoryApi {
             actualPrice: ticketLaboratory.actualPrice,
           }
           : undefined,
-        ticketUserList: ticketUserList
-          ? ticketUserList.map((i) => ({
-            roleId: i.roleId || 0,
-            userId: i.userId || 0,
-          }))
+        ticketUserRequestList: ticketUserList
+          ? ticketUserList
+            .filter((i) => !!i.userId)
+            .map((i) => ({
+              positionId: i.positionId,
+              userId: i.userId,
+            }))
           : undefined,
       },
     )

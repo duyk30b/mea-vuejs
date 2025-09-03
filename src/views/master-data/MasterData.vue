@@ -40,7 +40,7 @@ const { organizationPermission, userPermission } = MeService
           <IconApartment />
         </div>
         <div class="card-content">
-          <div class="card-title">Danh sách phòng</div>
+          <div class="card-title">1. Danh sách phòng</div>
           <div class="card-description">Quản lý danh sách khoa, phòng</div>
         </div>
       </div>
@@ -54,7 +54,7 @@ const { organizationPermission, userPermission } = MeService
           <IconReconciliation />
         </div>
         <div class="card-content">
-          <div class="card-title">Dịch vụ</div>
+          <div class="card-title">2. Dịch vụ</div>
           <div class="card-description">Quản lý thông tin, giá dịch vụ</div>
         </div>
       </div>
@@ -68,7 +68,7 @@ const { organizationPermission, userPermission } = MeService
           <IconLabPanel />
         </div>
         <div class="card-content">
-          <div class="card-title">Xét nghiệm</div>
+          <div class="card-title">3. Xét nghiệm</div>
           <div class="card-description">Quản lý thông tin, giá xét nghiệm</div>
         </div>
       </div>
@@ -82,7 +82,7 @@ const { organizationPermission, userPermission } = MeService
           <IconPulmonology />
         </div>
         <div class="card-content">
-          <div class="card-title">Chẩn đoán hình ảnh</div>
+          <div class="card-title">4. Chẩn đoán hình ảnh</div>
           <div class="card-description">
             Quản lý thông tin, giá, nội dung phiếu chẩn đoán hình ảnh
           </div>
@@ -98,7 +98,7 @@ const { organizationPermission, userPermission } = MeService
           <IconPrint />
         </div>
         <div class="card-content">
-          <div class="card-title">Cài đặt mẫu in</div>
+          <div class="card-title">5. Cài đặt mẫu in</div>
           <div class="card-description">
             Quản lý cách hiển thị mẫu in cho phiếu xét nghiệm, CĐHA, hóa đơn, ...
           </div>
@@ -114,7 +114,7 @@ const { organizationPermission, userPermission } = MeService
           <IconWarehouse />
         </div>
         <div class="card-content">
-          <div class="card-title">Danh sách kho</div>
+          <div class="card-title">6. Danh sách kho</div>
           <div class="card-description">Quản lý thông tin, danh sách kho</div>
         </div>
       </div>
@@ -128,7 +128,7 @@ const { organizationPermission, userPermission } = MeService
           <IconTeam />
         </div>
         <div class="card-content">
-          <div class="card-title">Vị trí và Hoa hồng</div>
+          <div class="card-title">7. Vị trí và Quy tắc tính hoa hồng</div>
           <div class="card-description">
             Cài đặt các vị trí và vai trò làm việc, hoa hồng tính cho mỗi vị trí
           </div>
@@ -144,7 +144,7 @@ const { organizationPermission, userPermission } = MeService
           <IconDollar />
         </div>
         <div class="card-content">
-          <div class="card-title">Chương trình khuyến mại</div>
+          <div class="card-title">8. Chương trình khuyến mại</div>
           <div class="card-description">
             Cài đặt số tiền khuyến mại cho mỗi loại mặt hàng, thời gian khuyến mại ...
           </div>
@@ -160,7 +160,7 @@ const { organizationPermission, userPermission } = MeService
           <IconDollar />
         </div>
         <div class="card-content">
-          <div class="card-title">Phương thức thanh toán</div>
+          <div class="card-title">9. Phương thức thanh toán</div>
           <div class="card-description">
             Các phương thức thanh toán như: Tiền mặt, chuyển khoản, ...
           </div>
@@ -176,7 +176,7 @@ const { organizationPermission, userPermission } = MeService
           <IconUser />
         </div>
         <div class="card-content">
-          <div class="card-title">Nguồn khách hàng</div>
+          <div class="card-title">10. Nguồn khách hàng</div>
           <div class="card-description">Quản lý danh sách nguồn khách hàng</div>
         </div>
       </div>
@@ -190,7 +190,7 @@ const { organizationPermission, userPermission } = MeService
           <IconDollar />
         </div>
         <div class="card-content">
-          <div class="card-title">Phụ phí</div>
+          <div class="card-title">11. Phụ phí</div>
           <div class="card-description">
             Danh sách các phụ phí khách hàng cần trả thêm như: phí tư vấn, phí vận chuyển, ...
           </div>
@@ -206,7 +206,7 @@ const { organizationPermission, userPermission } = MeService
           <IconDollar />
         </div>
         <div class="card-content">
-          <div class="card-title">Chi phí</div>
+          <div class="card-title">12. Chi phí</div>
           <div class="card-description">
             Danh sách chi phí khi bán hàng mà người bán cần chịu: tiền hoa hồng, tiền bảo quản, ...
           </div>
@@ -229,7 +229,7 @@ const { organizationPermission, userPermission } = MeService
           <IconTool />
         </div>
         <div class="card-content">
-          <div class="card-title">Đơn thuốc mẫu</div>
+          <div class="card-title">13. Đơn thuốc mẫu</div>
           <div class="card-description">Quản lý danh sách các đơn thuốc mẫu đã tạo</div>
         </div>
       </div>
@@ -243,7 +243,7 @@ const { organizationPermission, userPermission } = MeService
           <IconLabPanel />
         </div>
         <div class="card-content">
-          <div class="card-title">Bộ chỉ định xét nghiệm mẫu</div>
+          <div class="card-title">14. Bộ chỉ định xét nghiệm mẫu</div>
           <div class="card-description">
             Quản lý danh sách các bộ xét nghiệm phục vụ chỉ định nhanh xét nghiệm
           </div>
@@ -259,7 +259,7 @@ const { organizationPermission, userPermission } = MeService
           <IconPulmonology />
         </div>
         <div class="card-content">
-          <div class="card-title">Mẫu kết quả phiếu CĐHA</div>
+          <div class="card-title">15. Mẫu kết quả phiếu CĐHA</div>
           <div class="card-description">
             Quản lý danh sách các bộ xét nghiệm phục vụ chỉ định nhanh xét nghiệm
           </div>

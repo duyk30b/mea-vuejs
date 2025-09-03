@@ -1,22 +1,26 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { ConditionEnum } from '../_base/base-condition'
-import type { PositionInteractType } from './position.model'
+import type { ConditionEnum, ConditionNumber } from '../_base/base-condition'
+import type { PositionType } from './position.model'
 
 export class PositionGetQuery {
   page?: number
   limit?: number
   relation?: {
     role?: boolean
-    product?: boolean
-    procedure?: boolean
-    radiology?: boolean
-    laboratory?: boolean
+    productRequest?: boolean
+    procedureRequest?: boolean
+    procedureResult?: boolean
+    laboratoryRequest?: boolean
+    laboratoryGroupRequest?: boolean
+    laboratoryGroupResult?: boolean
+    radiologyRequest?: boolean
+    radiologyResult?: boolean
   }
 
   filter?: {
     roleId?: number
-    positionType?: PositionInteractType | ConditionEnum<PositionInteractType>
-    positionInteractId?: number
+    positionType?: PositionType | ConditionEnum<PositionType>
+    positionInteractId?: number | ConditionNumber
   }
 
   sort?: {
@@ -36,6 +40,6 @@ export class PositionGetQuery {
   }
 }
 
-export class PositionPaginationQuery extends PositionGetQuery {}
-export class PositionListQuery extends OmitClass(PositionGetQuery, ['page']) {}
-export class PositionDetailQuery extends PickClass(PositionGetQuery, ['relation']) {}
+export class PositionPaginationQuery extends PositionGetQuery { }
+export class PositionListQuery extends OmitClass(PositionGetQuery, ['page']) { }
+export class PositionDetailQuery extends PickClass(PositionGetQuery, ['relation']) { }

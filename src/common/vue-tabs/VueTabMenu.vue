@@ -9,7 +9,7 @@ import { inject, type Ref } from 'vue'
 
 const emit = defineEmits<{ (e: 'active', value: string | number): void }>()
 
-const emitTabChange = inject<(value: string | number) => void>('eventTabChange')
+const handleTabMenuChange = inject<(value: string | number) => void>('eventTabMenuChange')
 const tabSelect = inject<Ref<string | number>>('tabSelect')
 
 const props = defineProps<{
@@ -17,8 +17,8 @@ const props = defineProps<{
 }>()
 
 const handleClick = (e: Event) => {
-  if (emitTabChange) {
-    emitTabChange(props.tabKey)
+  if (handleTabMenuChange) {
+    handleTabMenuChange(props.tabKey)
     emit('active', props.tabKey)
   }
 }

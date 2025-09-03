@@ -1,18 +1,13 @@
 <script lang="ts" setup>
-import VueButton from '@/common/VueButton.vue'
-import VueTinyMCE from '@/common/VueTinyMCE.vue'
 import ImageUploadCloudinary from '@/common/image-upload/ImageUploadCloudinary.vue'
-import { InputText } from '@/common/vue-form'
 import { MeService } from '@/modules/_me/me.service'
 import { CustomerService } from '@/modules/customer'
-import { PermissionId } from '@/modules/permission/permission.enum'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeAttributeApi } from '@/modules/ticket'
 import {
   TicketAttributeKeyEyeList,
   type TicketAttributeKeyEyeType,
 } from '@/modules/ticket-attribute'
-import { ESImage } from '@/utils'
 import { computed, onMounted, ref, watch } from 'vue'
 
 const { userPermission, organization } = MeService
@@ -138,114 +133,55 @@ const getDataTicketDiagnosis = () => {
 defineExpose({ getDataTicketDiagnosis })
 </script>
 <template>
-  <div>
-    <div class="mt-4">
-      <div>Lý do khám</div>
-      <div>
-        <InputText v-model:value="ticketAttributeMap.reason" />
-      </div>
-    </div>
-    <div class="mt-4 flex flex-wrap gap-4">
-      <div style="flex-basis: 300px; flex-grow: 1">
-        <div>Tiền sử</div>
-        <div style="height: 150px">
-          <VueTinyMCE v-model="ticketAttributeMap.healthHistory" />
-        </div>
-      </div>
-      <div style="flex-basis: 300px; flex-grow: 1">
-        <div>Toàn thân</div>
-        <div style="height: 150px">
-          <VueTinyMCE v-model="ticketAttributeMap.body" />
-        </div>
-      </div>
-    </div>
-
-    <div class="mt-4 w-full" style="overflow-x: scroll">
-      <div>Khám mắt</div>
-      <div class="w-full" style="min-width: 600px">
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 160px"></th>
-              <th>Mắt Phải</th>
-              <th>Mắt Trái</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="title">Thị lực</td>
-              <td><input v-model="ticketAttributeMap.ThiLuc_MP" /></td>
-              <td><input v-model="ticketAttributeMap.ThiLuc_MT" /></td>
-            </tr>
-            <tr>
-              <td class="title">Nhãn áp</td>
-              <td><input v-model="ticketAttributeMap.NhanAp_MP" /></td>
-              <td><input v-model="ticketAttributeMap.NhanAp_MT" /></td>
-            </tr>
-            <tr>
-              <td class="title">Mi mắt - kết mạc</td>
-              <td><input v-model="ticketAttributeMap.MiMatKetMac_MP" /></td>
-              <td><input v-model="ticketAttributeMap.MiMatKetMac_MT" /></td>
-            </tr>
-            <tr>
-              <td class="title">Giác mạc</td>
-              <td><input v-model="ticketAttributeMap.GiacMac_MP" /></td>
-              <td><input v-model="ticketAttributeMap.GiacMac_MT" /></td>
-            </tr>
-            <tr>
-              <td class="title">Tiền phòng, mống mắt</td>
-              <td><input v-model="ticketAttributeMap.TienPhongMongMat_MP" /></td>
-              <td><input v-model="ticketAttributeMap.TienPhongMongMat_MT" /></td>
-            </tr>
-            <tr>
-              <td class="title">Thủy tinh thể</td>
-              <td><input v-model="ticketAttributeMap.ThuyTinhThe_MP" /></td>
-              <td><input v-model="ticketAttributeMap.ThuyTinhThe_MT" /></td>
-            </tr>
-            <tr>
-              <td class="title">Đáy mắt</td>
-              <td><input v-model="ticketAttributeMap.DayMat_MP" /></td>
-              <td><input v-model="ticketAttributeMap.DayMat_MT" /></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="mt-4">
-      <div>Hình ảnh</div>
-      <ImageUploadCloudinary
-        ref="imageUploadMultipleRef"
-        :oid="organization.id"
-        :customerId="ticketRoomRef.customerId"
-        :height="100"
-        :rootImageList="
-          (ticketRoomRef?.imageList || []).map((i) => ({
-            thumbnail: ESImage.getImageLink(i, { size: 200 }),
-            enlarged: ESImage.getImageLink(i, { size: 1000 }),
-            id: i.id,
-          }))
-        "
-        @changeImage="hasChangeImage = true"
-      />
-    </div>
-    <div class="mt-4">
-      <div>Chẩn đoán</div>
-      <div>
-        <InputText v-model:value="note" />
-      </div>
-    </div>
-    <div class="mt-4 flex justify-between gap-4">
-      <div></div>
-      <VueButton
-        v-if="ticketRoomRef.id && userPermission[PermissionId.TICKET_CHANGE_ATTRIBUTE]"
-        color="blue"
-        :disabled="!hasChangeData"
-        :loading="saveLoading"
-        icon="save"
-        @click="saveTicketDiagnosis"
-      >
-        Lưu lại
-      </VueButton>
+  <div class="mt-4 w-full" style="overflow-x: scroll">
+    <div>Khám mắt</div>
+    <div class="w-full" style="min-width: 600px">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 160px"></th>
+            <th>Mắt Phải</th>
+            <th>Mắt Trái</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="title">Thị lực</td>
+            <td><input v-model="ticketAttributeMap.ThiLuc_MP" /></td>
+            <td><input v-model="ticketAttributeMap.ThiLuc_MT" /></td>
+          </tr>
+          <tr>
+            <td class="title">Nhãn áp</td>
+            <td><input v-model="ticketAttributeMap.NhanAp_MP" /></td>
+            <td><input v-model="ticketAttributeMap.NhanAp_MT" /></td>
+          </tr>
+          <tr>
+            <td class="title">Mi mắt - kết mạc</td>
+            <td><input v-model="ticketAttributeMap.MiMatKetMac_MP" /></td>
+            <td><input v-model="ticketAttributeMap.MiMatKetMac_MT" /></td>
+          </tr>
+          <tr>
+            <td class="title">Giác mạc</td>
+            <td><input v-model="ticketAttributeMap.GiacMac_MP" /></td>
+            <td><input v-model="ticketAttributeMap.GiacMac_MT" /></td>
+          </tr>
+          <tr>
+            <td class="title">Tiền phòng, mống mắt</td>
+            <td><input v-model="ticketAttributeMap.TienPhongMongMat_MP" /></td>
+            <td><input v-model="ticketAttributeMap.TienPhongMongMat_MT" /></td>
+          </tr>
+          <tr>
+            <td class="title">Thủy tinh thể</td>
+            <td><input v-model="ticketAttributeMap.ThuyTinhThe_MP" /></td>
+            <td><input v-model="ticketAttributeMap.ThuyTinhThe_MT" /></td>
+          </tr>
+          <tr>
+            <td class="title">Đáy mắt</td>
+            <td><input v-model="ticketAttributeMap.DayMat_MP" /></td>
+            <td><input v-model="ticketAttributeMap.DayMat_MT" /></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>

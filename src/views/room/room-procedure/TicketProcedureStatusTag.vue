@@ -19,5 +19,8 @@ const props = withDefaults(defineProps<{ status: TicketProcedureStatus }>(), {
     <VueTag v-else-if="status === TicketProcedureStatus.Completed" color="green" icon="check">
       Hoàn thành
     </VueTag>
+    <VueTag v-else-if="status === TicketProcedureStatus.Cancelled" color="red" icon="close">
+      Hủy hẹn
+    </VueTag>
   </div>
 </template>

@@ -42,7 +42,7 @@ const handleChangeProduct = (p: Product) => {
   product.value = Product.from(p)
 }
 
-const selectTabDiscount = async () => {
+const tabDiscountRender = async () => {
   try {
     const productData = await ProductService.detail(
       product.value.id,
@@ -78,7 +78,7 @@ defineExpose({ openModal })
               <IconInfoCircle />
               Thông tin
             </VueTabMenu>
-            <VueTabMenu @active="selectTabDiscount" :tabKey="TABS_KEY.DISCOUNT">
+            <VueTabMenu :tabKey="TABS_KEY.DISCOUNT">
               <IconDollar />
               Khuyến mãi
             </VueTabMenu>
@@ -97,7 +97,7 @@ defineExpose({ openModal })
                 @change-product="handleChangeProduct"
               />
             </VueTabPanel>
-            <VueTabPanel :tabKey="TABS_KEY.DISCOUNT">
+            <VueTabPanel :tabKey="TABS_KEY.DISCOUNT" @render="tabDiscountRender">
               <div class="mt-4">
                 <DiscountTableAction
                   v-model:discountList="product.discountList!"

@@ -1,34 +1,27 @@
 <script setup lang="ts">
 import ImageUploadCloudinary from '@/common/image-upload/ImageUploadCloudinary.vue'
-import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { InputDate, InputFilter } from '@/common/vue-form'
+import { InputDate } from '@/common/vue-form'
 import type { ItemOption } from '@/common/vue-form/InputOptionsValue.vue'
 import InputText from '@/common/vue-form/InputText.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import VueButton from '@/common/VueButton.vue'
 import VueTinyMCE from '@/common/VueTinyMCE.vue'
 import { MeService } from '@/modules/_me/me.service'
-import { Image, ImageHostType } from '@/modules/image/image.model'
-import { PositionInteractType, PositionService } from '@/modules/position'
+import { Image } from '@/modules/image/image.model'
+import { PositionType } from '@/modules/position'
 import { PrintHtml, PrintHtmlType } from '@/modules/print-html'
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import { RadiologyService } from '@/modules/radiology'
 import { RadiologySample } from '@/modules/radiology-sample'
-import { RoleService } from '@/modules/role'
-import {
-  TicketRadiology,
-  TicketRadiologyApi,
-  TicketRadiologyStatus,
-} from '@/modules/ticket-radiology'
+import { TicketChangeRadiologyApi } from '@/modules/ticket'
+import { TicketRadiology, TicketRadiologyStatus } from '@/modules/ticket-radiology'
 import { TicketUser } from '@/modules/ticket-user'
-import { User, UserService } from '@/modules/user'
-import { UserRoleService } from '@/modules/user-role'
 import { ESImage, ESString } from '@/utils'
 import InputSearchRadiologySample from '@/views/component/InputSearchRadiologySample.vue'
 import VueSelectPrintHtml from '@/views/component/VueSelectPrintHtml.vue'
 import { computed, onMounted, ref, watch } from 'vue'
+import TicketChangeTicketUserPosition from '../../room-user/TicketChangeTicketUserPosition.vue'
 import ModalSaveRadiologySample from '../modal/ModalSaveRadiologySample.vue'
-import { TicketChangeRadiologyApi } from '@/modules/ticket'
 
 const emit = defineEmits<{
   (e: 'updateResultSuccess', value: TicketRadiology): void
@@ -54,6 +47,7 @@ const hasChangeImageList = ref(false)
 watch(
   () => props.ticketRadiologyProp,
   async (newValue) => {
+    console.log('🚀 ~ TicketRadiologyFormResult.vue:50 ~ newValue:', newValue)
     ticketRadiologyOrigin.value = TicketRadiology.from(newValue)
     if (!ticketRadiologyOrigin.value.completedAt) {
       ticketRadiologyOrigin.value.completedAt = Date.now()
@@ -65,62 +59,23 @@ watch(
     ticketRadiology.value.radiology = await RadiologyService.detail(radiologyId, {
       relation: { radiologyGroup: true },
     })
-    await refreshTicketUserList()
   },
+  { immediate: true },
 )
 
-const roleMap = RoleService.roleMap
 const radiologyMap = RadiologyService.radiologyMap
 
-const ticketUserList = ref<TicketUser[]>([])
-const ticketUserListOrigin = ref<TicketUser[]>([])
-
-const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: string; data: User }[]>>(
-  {},
-)
 const saveLoading = ref(false)
-
-const refreshTicketUserList = async () => {
-  ticketUserListOrigin.value = []
-  const ticketUserListRef = ticketRadiology.value.ticketUserList || []
-
-  const positionList = await PositionService.list({
-    filter: {
-      positionType: PositionInteractType.Radiology,
-      positionInteractId: ticketRadiology.value.radiologyId,
-    },
-  })
-
-  // lấy tất cả role có trong commission trước
-  positionList.forEach((i) => {
-    const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
-    if (findExist) {
-      ticketUserListOrigin.value.push(TicketUser.from(findExist))
-    } else {
-      const ticketUserBlank = TicketUser.blank()
-      ticketUserBlank.roleId = i.roleId
-      ticketUserListOrigin.value.push(ticketUserBlank)
-    }
-  })
-
-  // lấy role còn thừa ra ở trong ticketUser vẫn phải hiển thị
-  ticketUserListRef.forEach((i) => {
-    const findExist = ticketUserListOrigin.value.find((j) => j.roleId === i.roleId)
-    if (findExist) {
-      return // nếu đã có rồi thì bỏ qua
-    } else {
-      ticketUserListOrigin.value.push(TicketUser.from(i))
-    }
-  })
-  ticketUserList.value = TicketUser.fromList(ticketUserListOrigin.value)
-}
 
 const hasChangeTicketRadiology = computed(() => {
   return !TicketRadiology.equal(ticketRadiologyOrigin.value, ticketRadiology.value)
 })
 
 const hasChangeTicketUserList = computed(() => {
-  const result = !TicketUser.equalList(ticketUserListOrigin.value, ticketUserList.value)
+  const result = !TicketUser.equalList(
+    ticketRadiologyOrigin.value.ticketUserResultList,
+    ticketRadiology.value.ticketUserResultList,
+  )
   return result
 })
 
@@ -142,30 +97,9 @@ const hasChangeDate = computed(() => {
 
 onMounted(async () => {
   try {
-    const fetchPromise = await Promise.all([
-      RadiologyService.getMap(),
-      RoleService.getMap(),
-      UserService.getMap(),
-      UserRoleService.list(),
-    ])
-
-    const userMap = fetchPromise[2]
-    const userRoleList = fetchPromise[3]
-
-    userRoleList.forEach((i) => {
-      const key = i.roleId
-      if (!userRoleMapRoleIdOptions.value[key]) {
-        userRoleMapRoleIdOptions.value[key] = []
-      }
-      userRoleMapRoleIdOptions.value[key].push({
-        value: userMap[i.userId]?.id || 0,
-        text: userMap[i.userId]?.fullName || '',
-        data: userMap[i.userId],
-      })
-    })
+    await RadiologyService.getMap()
   } catch (error: any) {
-    console.log('🚀 ~ file: ModalTicketRadiologyResult.vue:108 ~ onMounted ~ error:', error)
-    AlertStore.add({ type: 'error', message: error.message })
+    console.log('🚀 ~ TicketRadiologyFormResult.vue:107 ~ error:', error)
   }
 })
 
@@ -188,15 +122,10 @@ const updateResult = async (options: { print: boolean }) => {
       ticketId: ticketRadiology.value.ticketId,
       ticketRadiologyId: ticketRadiology.value.id,
       ticketRadiology: ticketRadiology.value,
-      ticketUserList: hasChangeTicketUserList.value ? ticketUserList.value : undefined,
+      ticketUserResultList: ticketRadiology.value.ticketUserResultList || [],
       imagesChange: hasChangeImageList.value
         ? { files, imageIdsWait, externalUrlList: imageUrls }
         : undefined,
-      response: {
-        ticketRadiology: options.print
-          ? { ticket: true, customer: true, imageList: true, ticketUserList: true }
-          : {},
-      },
     })
 
     if (options.print) {
@@ -303,11 +232,14 @@ const startPrintDemo = async () => {
     ticketRadiologyData: ticketRadiology.value,
   })
 }
+
+const handleFixTicketUserResultList = (tuListData: TicketUser[]) => {
+  ticketRadiologyOrigin.value.ticketUserResultList = TicketUser.fromList(tuListData)
+}
 </script>
 
 <template>
   <ModalSaveRadiologySample ref="modalSaveRadiologySample" />
-
   <form class="p-4" @submit.prevent="updateResult({ print: false })">
     <div class="flex flex-wrap gap-4">
       <div style="flex-grow: 5; flex-basis: 600px">
@@ -378,29 +310,16 @@ const startPrintDemo = async () => {
             "
           />
         </div>
-        <div v-if="ticketUserList.length" class="mt-4 flex flex-wrap gap-4">
-          <div
-            v-for="(ticketUser, index) in ticketUserList"
-            :key="index"
-            style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
-          >
-            <div>{{ roleMap[ticketUser.roleId]?.name || '' }}</div>
-            <div>
-              <InputFilter
-                v-model:value="ticketUserList[index].userId"
-                :options="userRoleMapRoleIdOptions[ticketUser.roleId] || []"
-                :maxHeight="200"
-                placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên"
-              >
-                <template #option="{ item: { data } }">
-                  <div>
-                    <b>{{ data.fullName }}</b>
-                    - {{ ESString.formatPhone(data.phone) }} -
-                  </div>
-                </template>
-              </InputFilter>
-            </div>
-          </div>
+
+        <div class="mt-3">
+          <TicketChangeTicketUserPosition
+            ref="ticketChangeTicketUserPosition"
+            v-model:ticketUserList="ticketRadiology.ticketUserResultList!"
+            :positionType="PositionType.RadiologyResult"
+            :positionInteractId="ticketRadiology.radiologyId"
+            @fix:ticketUserList="handleFixTicketUserResultList"
+            title="Nhân viên trả kết quả"
+          />
         </div>
       </div>
     </div>

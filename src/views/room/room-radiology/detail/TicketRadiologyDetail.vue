@@ -22,7 +22,13 @@ const radiologyMap = RadiologyService.radiologyMap
 onMounted(async () => {
   const ticketRadiologyId = Number(route.params.ticketRadiologyId)
   ticketRadiology.value = await TicketRadiologyApi.detail(ticketRadiologyId, {
-    relation: { ticket: true, customer: true, imageList: true, ticketUserList: true },
+    relation: {
+      ticket: true,
+      customer: true,
+      imageList: true,
+      ticketUserRequestList: true,
+      ticketUserResultList: true,
+    },
   })
 })
 

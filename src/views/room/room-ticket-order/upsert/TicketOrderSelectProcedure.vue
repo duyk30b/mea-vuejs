@@ -4,7 +4,7 @@ import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions, VueSelect } from '@/common/vue-form'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType } from '@/modules/enum'
+import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { Procedure, ProcedureService, ProcedureType } from '@/modules/procedure'
 import { TicketProcedure, TicketProcedureStatus } from '@/modules/ticket-procedure'
@@ -51,6 +51,7 @@ const createTicketProcedure = async (procedureData?: Procedure) => {
     temp.procedure = Procedure.from(procedureData)
 
     temp.quantity = 1
+    temp.paymentMoneyStatus = PaymentMoneyStatus.NoEffect
     if (procedureData.procedureType === ProcedureType.Basic) {
       temp.status = TicketProcedureStatus.Completed
     } else {

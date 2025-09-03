@@ -12,7 +12,7 @@ import { Discount, DiscountInteractType } from '@/modules/discount'
 import { Laboratory, LaboratoryService, LaboratoryValueType } from '@/modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '@/modules/laboratory-group'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Position, PositionInteractType } from '@/modules/position'
+import { Position, PositionType } from '@/modules/position'
 import PositionTableAction from '@/views/master-data/position/common/PositionTableAction.vue'
 import { computed, ref } from 'vue'
 import DiscountTableAction from '../../discount/common/DiscountTableAction.vue'
@@ -38,7 +38,7 @@ type LaboratoryUpsertType = Omit<Laboratory, 'children'> & {
 
 const activeTab = ref(TABS_KEY.BASIC)
 
-const laboratoryOrigin = ref<LaboratoryUpsertType>(Laboratory.blank())
+let laboratoryOrigin = Laboratory.blank()
 const laboratory = ref<LaboratoryUpsertType>(Laboratory.blank())
 
 const laboratoryGroupAll = ref<LaboratoryGroup[]>([])
@@ -50,14 +50,14 @@ const openModal = async (laboratoryId?: number) => {
   showModal.value = true
 
   if (!laboratoryId) {
-    laboratoryOrigin.value = Laboratory.blank()
+    laboratoryOrigin = Laboratory.blank()
     laboratory.value = Laboratory.blank()
     laboratory.value.optionsParse = ['Âm tính', 'Dương tính', 'Không xác định']
     laboratory.value.children = [Laboratory.blank()]
     const laboratoryAll = await LaboratoryService.list({})
     laboratory.value.priority = laboratoryAll.length + 1
   } else {
-    const laboratoryResponse = await LaboratoryService.detail(
+    laboratoryOrigin = await LaboratoryService.detail(
       laboratoryId,
       {
         relation: {
@@ -69,8 +69,7 @@ const openModal = async (laboratoryId?: number) => {
       },
       { query: true },
     )
-    laboratoryOrigin.value = laboratoryResponse
-    laboratory.value = Laboratory.from(laboratoryResponse)
+    laboratory.value = Laboratory.from(laboratoryOrigin)
 
     if (!laboratory.value.children) laboratory.value.children = []
     if (laboratory.value.valueType === LaboratoryValueType.Options) {
@@ -96,31 +95,31 @@ const openModal = async (laboratoryId?: number) => {
 const closeModal = () => {
   showModal.value = false
   laboratory.value = Laboratory.blank()
-  laboratoryOrigin.value = Laboratory.blank()
+  laboratoryOrigin = Laboratory.blank()
 }
 
 const hasChangeDiscountList = computed(() => {
   return !Discount.equalList(
     laboratory.value.discountList || [],
-    laboratoryOrigin.value.discountList || [],
+    laboratoryOrigin.discountList || [],
   )
 })
 
-const hasChangePositionList = computed(() => {
+const hasChangePositionRequestList = computed(() => {
   return !Position.equalList(
-    (laboratory.value.positionList || []).filter((i) => !!i.roleId),
-    laboratoryOrigin.value.positionList || [],
+    (laboratory.value.positionRequestList || []).filter((i) => !!i.roleId),
+    laboratoryOrigin.positionRequestList || [],
   )
 })
 
 const hasChangeData = computed(() => {
-  if (!Laboratory.equal(laboratory.value, laboratoryOrigin.value, { children: true })) {
+  if (!Laboratory.equal(laboratory.value, laboratoryOrigin, { children: true })) {
     return true
   }
   if (hasChangeDiscountList.value) {
     return true
   }
-  if (hasChangePositionList.value) {
+  if (hasChangePositionRequestList.value) {
     return true
   }
   return false
@@ -193,7 +192,9 @@ const handleSave = async () => {
         laboratory: laboratory.value,
         laboratoryChildren: laboratory.value.children,
         discountList: hasChangeDiscountList.value ? laboratory.value.discountList : undefined,
-        positionList: hasChangePositionList.value ? laboratory.value.positionList : undefined,
+        positionRequestList: hasChangePositionRequestList.value
+          ? laboratory.value.positionRequestList
+          : undefined,
       })
       AlertStore.addSuccess('Tạo mới thành công', 1000)
     } else {
@@ -201,7 +202,9 @@ const handleSave = async () => {
         laboratory: laboratory.value,
         laboratoryChildren: laboratory.value.children,
         discountList: hasChangeDiscountList.value ? laboratory.value.discountList : undefined,
-        positionList: hasChangePositionList.value ? laboratory.value.positionList : undefined,
+        positionRequestList: hasChangePositionRequestList.value
+          ? laboratory.value.positionRequestList
+          : undefined,
       })
       AlertStore.addSuccess('Cập nhật thành công', 1000)
     }
@@ -229,7 +232,7 @@ const clickDelete = () => {
             title: 'Không thể xóa xét nghiệm khi đã được chỉ định',
             content: [
               'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu khám liên quan trước',
-              `Phiếu khám liên quan: ${response.data.ticketLaboratoryList
+              `Phiếu khám liên quan: ${response.ticketLaboratoryList
                 .map((i) => i.ticketId)
                 .join(', ')}`,
             ],
@@ -535,8 +538,9 @@ defineExpose({ openModal })
             <VueTabPanel :tabKey="TABS_KEY.ROLE_AND_POSITION">
               <div class="mt-4">
                 <PositionTableAction
-                  v-model:positionList="laboratory.positionList!"
-                  :positionType="PositionInteractType.Laboratory"
+                  v-model:positionList="laboratory.positionRequestList!"
+                  :positionListCommon="laboratory.positionRequestListCommon || []"
+                  :positionType="PositionType.LaboratoryRequest"
                   :positionInteractId="laboratory.id"
                   :editable="userPermission[PermissionId.MASTER_DATA_POSITION]"
                 />

@@ -2,10 +2,9 @@ import { ESImage, ESString, ESTimer } from '../../utils'
 import type { Customer } from '../customer'
 import { LaboratoryValueType } from '../laboratory'
 import type { Organization } from '../organization'
-import { PositionInteractType } from '../position'
+import { PositionType } from '../position'
 import type { Ticket } from '../ticket'
 import type { User } from '../user'
-import type { PrintHtml } from './print-html.model'
 
 export class PrintHtmlCompile {
   static compileContentHtml(options: {
@@ -26,7 +25,7 @@ export class PrintHtmlCompile {
     const _SYSTEM_VARIABLE = {
       data: options.data || {},
       _UTILS: {
-        PositionInteractType,
+        PositionType,
         LaboratoryValueType,
         ESTimer,
         ESImage,

@@ -1,17 +1,23 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionEnum } from '../_base/base-condition'
-import type { AppointmentStatus } from './appointment.model'
+import type { TicketProcedureListQuery } from '../ticket-procedure'
+import type { AppointmentStatus, AppointmentType } from './appointment.model'
 
 export class AppointmentGetQuery {
   page: number
   limit?: number
   relation?: {
     customer?: boolean
+    customerSource?: boolean
+    ticketProcedure?: TicketProcedureListQuery
+    ticketProcedureItem?: boolean
+    toTicket?: boolean
   }
 
   filter?: {
     customerId?: number
-    appointmentStatus?: AppointmentStatus | ConditionEnum<AppointmentStatus>
+    type?: AppointmentType
+    status?: AppointmentStatus | ConditionEnum<AppointmentStatus>
     registeredAt?: ConditionDate
   }
 
@@ -31,7 +37,7 @@ export class AppointmentGetQuery {
   }
 }
 
-export class AppointmentPaginationQuery extends AppointmentGetQuery {}
-export class AppointmentListQuery extends OmitClass(AppointmentGetQuery, ['page']) {}
-export class AppointmentDetailQuery extends PickClass(AppointmentGetQuery, ['relation']) {}
-export class AppointmentSumDebtQuery extends PickClass(AppointmentGetQuery, ['filter']) {}
+export class AppointmentPaginationQuery extends AppointmentGetQuery { }
+export class AppointmentListQuery extends OmitClass(AppointmentGetQuery, ['page']) { }
+export class AppointmentDetailQuery extends PickClass(AppointmentGetQuery, ['relation']) { }
+export class AppointmentSumDebtQuery extends PickClass(AppointmentGetQuery, ['filter']) { }

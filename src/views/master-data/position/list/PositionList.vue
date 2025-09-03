@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { onBeforeMount, ref } from 'vue'
+import { CONFIG } from '@/config'
+import InputSearchRole from '@/views/component/InputSearchRole.vue'
+import { onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import VuePagination from '../../../../common/VuePagination.vue'
 import { IconSort } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
-import { InputFilter, InputSelect } from '../../../../common/vue-form'
+import { InputSelect } from '../../../../common/vue-form'
 import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Laboratory, LaboratoryService } from '../../../../modules/laboratory'
@@ -14,17 +16,15 @@ import {
   CommissionCalculatorTypeText,
   Position,
   PositionService,
-  PositionInteractType,
-  PositionInteractTypeText,
+  PositionType,
+  PositionTypeText,
 } from '../../../../modules/position'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
-import { ProductService } from '../../../../modules/product'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
 import { Role, RoleService } from '../../../../modules/role'
 import { ESArray, ESNumber, ESTypescript } from '../../../../utils'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalPositionUpsert from '../upsert/ModalPositionUpsert.vue'
-import { CONFIG } from '@/config'
 
 const modalPositionUpsert = ref<InstanceType<typeof ModalPositionUpsert>>()
 
@@ -33,17 +33,12 @@ const { formatMoney, isMobile } = settingStore
 const { userPermission, organizationPermission } = MeService
 
 const positionList = ref<Position[]>([])
-const roleMap = ref<Record<string, Role>>({})
-const roleOptions = ref<{ value: number; text: string; data: Role }[]>([])
-
-const procedureMap = ref<Record<string, Procedure>>({})
-const radiologyMap = ref<Record<string, Radiology>>({})
-const laboratoryMap = ref<Record<string, Laboratory>>({})
+const roleMap = RoleService.roleMap
 
 const dataLoading = ref(false)
 
-const positionType = ref<PositionInteractType | null>(null)
-const roleId = ref<number>()
+const positionType = ref<PositionType | null>(null)
+const roleId = ref<number>(0)
 
 const sortColumn = ref<'id' | 'positionType' | 'roleId' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
@@ -52,16 +47,29 @@ const page = ref(1)
 const limit = ref(10)
 const total = ref(0)
 
-const positionTypeOptions = ESTypescript.keysEnum(PositionInteractType).map((key) => ({
-  value: PositionInteractType[key],
-  label: PositionInteractTypeText[PositionInteractType[key]],
-}))
+const positionTypeOptions = [
+  { value: 0, label: 'Tất cả' },
+  ...ESTypescript.keysEnum(PositionType).map((key) => ({
+    value: PositionType[key],
+    label: PositionTypeText[PositionType[key]],
+  })),
+]
 
-const startFetchData = async () => {
+const startFetchData = async (options?: { refetch: boolean }) => {
   try {
     dataLoading.value = true
     const response = await PositionService.pagination(
       {
+        relation: {
+          productRequest: true,
+          procedureRequest: true,
+          procedureResult: true,
+          laboratoryRequest: true,
+          laboratoryGroupRequest: true,
+          laboratoryGroupResult: true,
+          radiologyRequest: true,
+          radiologyResult: true,
+        },
         page: page.value,
         limit: limit.value,
         filter: {
@@ -76,57 +84,20 @@ const startFetchData = async () => {
             }
           : { id: 'DESC' },
       },
-      { refetch: false },
+      { refetch: !!options?.refetch },
     )
     positionList.value = response.data
     total.value = response.meta.total
-
-    dataLoading.value = false
-
-    const productIdList = positionList.value
-      .filter((i) => i.positionType === PositionInteractType.Product)
-      .map((i) => i.positionInteractId)
-    const productList = await ProductService.list({ filter: { id: { IN: productIdList } } })
-
-    positionList.value.forEach((i) => {
-      if (i.positionType === PositionInteractType.Product) {
-        i.product = productList.find((p) => p.id === i.positionInteractId)
-      }
-      if (i.positionType === PositionInteractType.Procedure) {
-        i.procedure = procedureMap.value[i.positionInteractId]
-      }
-      if (i.positionType === PositionInteractType.Radiology) {
-        i.radiology = radiologyMap.value[i.positionInteractId]
-      }
-      if (i.positionType === PositionInteractType.Laboratory) {
-        i.laboratory = laboratoryMap.value[i.positionInteractId]
-      }
-    })
   } catch (error) {
     console.log('🚀 ~ file: CommissionList.vue:73 ~ error:', error)
+  } finally {
+    dataLoading.value = false
   }
 }
 
-onBeforeMount(async () => {
-  try {
-    const fetchData = await Promise.all([
-      RoleService.list({}),
-      organizationPermission.value[PermissionId.PROCEDURE] ? ProcedureService.getMap() : {},
-      organizationPermission.value[PermissionId.LABORATORY] ? LaboratoryService.getMap() : {},
-      organizationPermission.value[PermissionId.RADIOLOGY] ? RadiologyService.getMap() : {},
-    ])
-    const roleList = fetchData[0]
-    procedureMap.value = fetchData[1]
-    radiologyMap.value = fetchData[2]
-    laboratoryMap.value = fetchData[3]
-
-    roleOptions.value = roleList.map((i) => ({ value: i.id, text: i.name, data: i }))
-    roleMap.value = ESArray.arrayToKeyValue(roleList, 'id')
-  } catch (error) {
-    console.log('🚀 ~ CommissionList.vue:115 ~ onBeforeMount ~ error:', error)
-  }
-
-  startFetchData()
+onMounted(async () => {
+  RoleService.getMap()
+  startFetchData({ refetch: true })
 })
 
 const startSearch = async () => {
@@ -166,7 +137,7 @@ const handleUpdateTextFilterRole = (text: string) => {
   }
 }
 
-const handleSelectItemFilterRole = (item: any) => {
+const handleSelectItemFilterRole = (roleId: number) => {
   startSearch()
 }
 </script>
@@ -182,7 +153,7 @@ const handleSelectItemFilterRole = (item: any) => {
         v-if="userPermission[PermissionId.MASTER_DATA_POSITION]"
         color="blue"
         icon="plus"
-        @click="modalPositionUpsert?.openModal()"
+        @click="modalPositionUpsert?.openModal({ mode: 'CREATE_API' })"
       >
         Thêm mới
       </VueButton>
@@ -192,17 +163,10 @@ const handleSelectItemFilterRole = (item: any) => {
   <div class="page-main">
     <div class="page-main-options">
       <div style="flex: 1; flex-basis: 250px">
-        <div>Chọn vai trò</div>
-        <div>
-          <InputFilter
-            v-model:value="roleId"
-            :options="roleOptions"
-            :maxHeight="120"
-            @selectItem="handleSelectItemFilterRole"
-          >
-            <template #option="{ item: { data } }">{{ data.name }}</template>
-          </InputFilter>
-        </div>
+        <InputSearchRole
+          v-model:roleId="roleId"
+          @update:roleId="handleSelectItemFilterRole"
+        ></InputSearchRole>
       </div>
       <div style="flex: 1; flex-basis: 250px">
         <div>Chọn loại</div>
@@ -237,7 +201,7 @@ const handleSelectItemFilterRole = (item: any) => {
               <IconSort :sort="sortColumn === 'positionType' ? sortValue : ''" />
             </th>
             <th>Tên DV/SP/...</th>
-            <th>Giá</th>
+            <th>Độ ưu tiên</th>
             <th>Hoa hồng</th>
             <th>Thao tác</th>
           </tr>
@@ -251,37 +215,74 @@ const handleSelectItemFilterRole = (item: any) => {
               {{ position.id }}
             </td>
             <td class="text-center">{{ index + 1 }}</td>
-            <td>{{ roleMap[position.roleId]?.name }}</td>
             <td>
-              {{ PositionInteractTypeText[position.positionType] }}
+              <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                ({{ position.roleId }})
+              </span>
+              <span>{{ roleMap[position.roleId]?.name }}</span>
             </td>
-            <td>
-              <template v-if="position.positionType === PositionInteractType.Product">
-                {{ position.product?.brandName }}
+            <td
+              :colspan="
+                [PositionType.Ticket, PositionType.TicketPrescriptionRequest].includes(
+                  position.positionType,
+                )
+                  ? 2
+                  : 1
+              "
+            >
+              <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                ({{ position.positionType }})
+              </span>
+              <span>
+                {{ PositionTypeText[position.positionType] }}
+              </span>
+            </td>
+            <td
+              v-if="
+                ![PositionType.Ticket, PositionType.TicketPrescriptionRequest].includes(
+                  position.positionType,
+                )
+              "
+            >
+              <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                ({{ position.positionInteractId }})
+              </span>
+              <template v-if="position.positionInteractId === 0">
+                <span class="font-bold italic">Tất cả</span>
               </template>
-              <template v-if="position.positionType === PositionInteractType.Procedure">
-                {{ position.procedure?.name }}
+              <template v-else-if="position.positionType === PositionType.ProductRequest">
+                {{ position.productRequest?.brandName }} -
+                {{ formatMoney(position.productRequest?.retailPrice) }}
               </template>
-              <template v-if="position.positionType === PositionInteractType.Radiology">
-                {{ position.radiology?.name }}
+              <template v-else-if="position.positionType === PositionType.ProcedureRequest">
+                {{ position.procedureRequest?.name }} -
+                {{ formatMoney(position.procedureRequest?.price) }}
               </template>
-              <template v-if="position.positionType === PositionInteractType.Laboratory">
-                {{ position.laboratory?.name }}
+              <template v-else-if="position.positionType === PositionType.ProcedureResult">
+                {{ position.procedureResult?.name }} -
+                {{ formatMoney(position.procedureResult?.price) }}
+              </template>
+              <template v-else-if="position.positionType === PositionType.LaboratoryRequest">
+                {{ position.laboratoryRequest?.name }} -
+                {{ formatMoney(position.laboratoryRequest?.price) }}
+              </template>
+              <template v-else-if="position.positionType === PositionType.LaboratoryGroupRequest">
+                {{ position.laboratoryGroupRequest?.name }}
+              </template>
+              <template v-else-if="position.positionType === PositionType.LaboratoryGroupResult">
+                {{ position.laboratoryGroupResult?.name }}
+              </template>
+              <template v-else-if="position.positionType === PositionType.RadiologyRequest">
+                {{ position.radiologyRequest?.name }} -
+                {{ formatMoney(position.radiologyRequest?.price) }}
+              </template>
+              <template v-else-if="position.positionType === PositionType.RadiologyResult">
+                {{ position.radiologyResult?.name }} -
+                {{ formatMoney(position.radiologyResult?.price) }}
               </template>
             </td>
             <td class="text-center">
-              <template v-if="position.positionType === PositionInteractType.Product">
-                {{ formatMoney(position.product?.retailPrice) }}
-              </template>
-              <template v-if="position.positionType === PositionInteractType.Procedure">
-                {{ formatMoney(position.procedure?.price) }}
-              </template>
-              <template v-if="position.positionType === PositionInteractType.Radiology">
-                {{ formatMoney(position.radiology?.price) }}
-              </template>
-              <template v-if="position.positionType === PositionInteractType.Laboratory">
-                {{ formatMoney(position.laboratory?.price) }}
-              </template>
+              {{ position.priority }}
             </td>
             <td class="text-center">
               <template v-if="position.commissionCalculatorType === CommissionCalculatorType.VND">
@@ -296,7 +297,7 @@ const handleSelectItemFilterRole = (item: any) => {
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalPositionUpsert?.openModal(position.id)"
+                @click="modalPositionUpsert?.openModal({ mode: 'UPDATE_API', position })"
               >
                 <IconEditSquare />
               </a>

@@ -1,14 +1,20 @@
 import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
 import { ref } from 'vue'
 import { ESArray } from '../../utils'
+import { Laboratory, LaboratoryService } from '../laboratory'
+import { LaboratoryGroup, LaboratoryGroupService } from '../laboratory-group'
+import { Procedure, ProcedureService } from '../procedure'
+import { Product, ProductService } from '../product'
+import { Radiology, RadiologyService } from '../radiology'
 import { PositionApi } from './position.api'
 import type {
-    PositionDetailQuery,
-    PositionGetQuery,
-    PositionListQuery,
-    PositionPaginationQuery,
+  PositionDetailQuery,
+  PositionGetQuery,
+  PositionListQuery,
+  PositionPaginationQuery,
 } from './position.dto'
-import { Position } from './position.model'
+import { Position, PositionType } from './position.model'
+import { Role, RoleService } from '../role'
 
 const PositionDBQuery = new IndexedDBQuery<Position>()
 
@@ -21,12 +27,11 @@ export class PositionService {
   private static fetchAll = (() => {
     const start = async () => {
       try {
-        const { data } = await PositionApi.list({})
-        const positionAll = data
+        const positionAll = await PositionApi.list({})
         PositionService.positionAll = positionAll
         PositionService.positionMap.value = ESArray.arrayToKeyValue(positionAll, 'id')
       } catch (error: any) {
-        console.log('🚀 ~ position.service.ts:26 ~ PositionService ~ start ~ error:', error)
+        console.log('🚀 ~ position.service.ts:34 ~ PositionService ~ start ~ error:', error)
       }
     }
     let fetching: any = null
@@ -53,6 +58,80 @@ export class PositionService {
     return data
   }
 
+  static async executeRelation(positionList: Position[], relation: PositionGetQuery['relation']) {
+    try {
+      const productIdList = positionList
+        .filter((i) => i.positionType === PositionType.ProductRequest)
+        .map((i) => i.positionInteractId)
+
+      const [roleMap, productMap, procedureMap, laboratoryMap, laboratoryGroupMap, radiologyMap] =
+        await Promise.all([
+          relation?.role ? RoleService.getMap() : <Record<string, Role>>{},
+          relation?.productRequest
+            ? ProductService.map({ filter: { id: { IN: productIdList } } })
+            : <Record<string, Product>>{},
+          relation?.procedureRequest || relation?.procedureResult
+            ? ProcedureService.getMap()
+            : <Record<string, Procedure>>{},
+          relation?.laboratoryRequest ? LaboratoryService.getMap() : <Record<string, Laboratory>>{},
+          relation?.laboratoryGroupRequest || relation?.laboratoryGroupResult
+            ? LaboratoryGroupService.getMap()
+            : <Record<string, LaboratoryGroup>>{},
+          relation?.radiologyRequest || relation?.radiologyResult
+            ? RadiologyService.getMap()
+            : <Record<string, Radiology>>{},
+        ])
+
+      positionList.forEach((i) => {
+        if (relation?.role) {
+          i.role = roleMap[i.roleId] || Role.blank()
+        }
+        if (relation?.productRequest) {
+          if (i.positionType === PositionType.ProductRequest) {
+            i.productRequest = productMap[i.positionInteractId]
+          }
+        }
+        if (relation?.procedureRequest) {
+          if (i.positionType === PositionType.ProcedureRequest) {
+            i.procedureRequest = procedureMap[i.positionInteractId]
+          }
+        }
+        if (relation?.procedureResult) {
+          if (i.positionType === PositionType.ProcedureResult) {
+            i.procedureResult = procedureMap[i.positionInteractId]
+          }
+        }
+        if (relation?.laboratoryRequest) {
+          if (i.positionType === PositionType.LaboratoryRequest) {
+            i.laboratoryRequest = laboratoryMap[i.positionInteractId]
+          }
+        }
+        if (relation?.laboratoryGroupRequest) {
+          if (i.positionType === PositionType.LaboratoryGroupRequest) {
+            i.laboratoryGroupRequest = laboratoryGroupMap[i.positionInteractId]
+          }
+        }
+        if (relation?.laboratoryGroupResult) {
+          if (i.positionType === PositionType.LaboratoryGroupResult) {
+            i.laboratoryGroupResult = laboratoryGroupMap[i.positionInteractId]
+          }
+        }
+        if (relation?.radiologyRequest) {
+          if (i.positionType === PositionType.RadiologyRequest) {
+            i.radiologyRequest = radiologyMap[i.positionInteractId]
+          }
+        }
+        if (relation?.radiologyResult) {
+          if (i.positionType === PositionType.RadiologyResult) {
+            i.radiologyResult = radiologyMap[i.positionInteractId]
+          }
+        }
+      })
+    } catch (error) {
+      console.log('🚀 ~ position.service.ts:127 ~  ~ executeRelation ~ error:', error)
+    }
+  }
+
   static async getMap(options?: { refetch: boolean }) {
     await PositionService.fetchAll({ refetch: !!options?.refetch })
     return PositionService.positionMap.value
@@ -69,6 +148,9 @@ export class PositionService {
     await PositionService.fetchAll({ refetch: !!options?.refetch })
     const dataQuery = PositionService.executeQuery(PositionService.positionAll, query)
     const data = dataQuery.slice((page - 1) * limit, page * limit)
+    if (query.relation) {
+      await PositionService.executeRelation(data, query.relation)
+    }
     return {
       data: Position.fromList(data),
       meta: { total: dataQuery.length },
@@ -82,15 +164,17 @@ export class PositionService {
     return Position.fromList(data)
   }
 
-  static async detail(id: number, options: PositionDetailQuery = {}) {
-    const position = await PositionApi.detail(id, options)
-    if (position && options.relation) {
-      const findIndex = PositionService.positionAll.findIndex((i) => i.id === id)
-      if (findIndex !== -1) {
-        PositionService.positionAll[findIndex] = position
-      }
+  static async detail(
+    id: number,
+    query: PositionDetailQuery = {},
+    options?: { refetch?: boolean },
+  ) {
+    await PositionService.fetchAll({ refetch: !!options?.refetch })
+    const position = PositionService.positionMap.value[id]
+    if (position && query && query.relation) {
+      await PositionService.executeRelation([position], query.relation)
     }
-    return position
+    return position ? Position.from(position) : Position.blank()
   }
 
   static async createOne(position: Position) {

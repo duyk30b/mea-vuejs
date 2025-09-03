@@ -1,83 +1,109 @@
 <script setup lang="ts">
-import { onBeforeMount, ref } from 'vue'
+import InputSearchLaboratory from '@/views/component/InputSearchLaboratory.vue'
+import InputSearchLaboratoryGroup from '@/views/component/InputSearchLaboratoryGroup.vue'
+import InputSearchProcedure from '@/views/component/InputSearchProcedure.vue'
+import InputSearchProduct from '@/views/component/InputSearchProduct.vue'
+import InputSearchRadiology from '@/views/component/InputSearchRadiology.vue'
+import InputSearchRole from '@/views/component/InputSearchRole.vue'
+import { computed, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon-antd'
-import { InputFilter, InputMoney, InputSelect, InputText } from '../../../../common/vue-form'
+import { InputMoney, InputNumber, InputRadio, InputSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import {
-  Position,
   CommissionCalculatorType,
   CommissionCalculatorTypeText,
+  Position,
   PositionService,
-  PositionInteractType,
-  PositionInteractTypeText,
+  PositionType,
+  PositionTypeText,
 } from '../../../../modules/position'
-import { RoleService, type Role } from '../../../../modules/role'
-import { keysEnum } from '../../../../utils'
+import { ESTypescript } from '../../../../utils'
 
 const emit = defineEmits<{
-  (e: 'success', value: Position, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
+  (e: 'success', type: 'CREATE' | 'UPDATE' | 'DESTROY', value: Position): void
 }>()
 
-const roleOptions = ref<{ value: number; text: string; data: Role }[]>([])
-const positionTypeOptions = keysEnum(PositionInteractType).map((key) => ({
-  value: PositionInteractType[key],
-  label: PositionInteractTypeText[PositionInteractType[key]],
-}))
-const commissionCalculatorTypeOptions = keysEnum(CommissionCalculatorType).map((key) => ({
-  value: CommissionCalculatorType[key],
-  label: CommissionCalculatorTypeText[CommissionCalculatorType[key]],
-}))
+const mode = ref<'UPDATE' | 'CREATE' | 'UPDATE_API' | 'CREATE_API'>('CREATE_API')
 
+const positionTypeOptions = ESTypescript.keysEnum(PositionType).map((key) => ({
+  value: PositionType[key],
+  label: PositionTypeText[PositionType[key]],
+}))
+const commissionCalculatorTypeOptions = ESTypescript.keysEnum(CommissionCalculatorType).map(
+  (key) => ({
+    value: CommissionCalculatorType[key],
+    label: CommissionCalculatorTypeText[CommissionCalculatorType[key]],
+  }),
+)
+
+let positionOrigin = Position.blank()
 const position = ref(Position.blank())
+
+const checkAllInteract = ref(false)
+const requiredInteract = ref<{
+  positionType: PositionType
+  positionInteractId: number
+} | null>(null)
 
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-onBeforeMount(async () => {
-  try {
-    const fetchData = await Promise.all([RoleService.list({})])
-    const roleList = fetchData[0]
-
-    roleOptions.value = roleList.map((i) => ({ value: i.id, text: i.name, data: i }))
-  } catch (error) {
-    console.log('🚀 ~ ModalPositionUpsert.vue:45 ~ onBeforeMount ~ error:', error)
+const openModal = async (options: {
+  position?: Position
+  requiredInteract?: {
+    positionType: PositionType
+    positionInteractId: number
   }
-})
-
-const openModal = async (positionId?: number) => {
+  mode: 'UPDATE' | 'CREATE' | 'UPDATE_API' | 'CREATE_API'
+}) => {
   showModal.value = true
-  if (!positionId) {
-    position.value = Position.blank()
+  mode.value = options.mode
+  position.value = options.position ? Position.from(options.position) : Position.blank()
+
+  if (options.requiredInteract) {
+    position.value.positionType = options.requiredInteract.positionType
+    position.value.positionInteractId = options.requiredInteract.positionInteractId
+    requiredInteract.value = options.requiredInteract
   } else {
-    position.value = await PositionService.detail(positionId, {
-      relation: {
-        role: true,
-        procedure: true,
-        product: true,
-        laboratory: true,
-        radiology: true,
-      },
-    })
+    requiredInteract.value = null
   }
+  checkAllInteract.value = !position.value.positionInteractId
 }
 
 const closeModal = () => {
   showModal.value = false
+  positionOrigin = Position.blank()
   position.value = Position.blank()
+
+  requiredInteract.value = null
+  checkAllInteract.value = false
 }
+
+const hasChangeData = computed(() => {
+  return !Position.equal(positionOrigin, position.value)
+})
 
 const handleSave = async () => {
   saveLoading.value = true
   try {
-    if (!position.value.id) {
+    console.log("🚀 ~ ModalPositionUpsert.vue:91 ~ handleSave ~ mode.value:", mode.value)
+    if (mode.value === 'CREATE_API') {
       const response = await PositionService.createOne(position.value)
-      emit('success', response, 'UPDATE')
-    } else {
-      const response = await PositionService.updateOne(position.value.id, position.value)
-      emit('success', response, 'UPDATE')
+      emit('success', 'CREATE', response)
     }
+    if (mode.value === 'UPDATE_API') {
+      const response = await PositionService.updateOne(position.value.id, position.value)
+      emit('success', 'UPDATE', response)
+    }
+    if (mode.value === 'CREATE') {
+      emit('success', 'CREATE', position.value)
+    }
+    if (mode.value === 'UPDATE') {
+      emit('success', 'UPDATE', position.value)
+    }
+
     closeModal()
   } catch (error) {
     console.log('🚀 ~ ModalPositionUpsert.vue:83 ~ handleSave ~ error:', error)
@@ -94,7 +120,7 @@ const clickDelete = () => {
       try {
         const response = await PositionService.destroyOne(position.value.id)
         if (response.success) {
-          emit('success', position.value, 'DESTROY')
+          emit('success', 'DESTROY', position.value)
           closeModal()
         }
       } catch (error) {
@@ -102,6 +128,12 @@ const clickDelete = () => {
       }
     },
   })
+}
+
+const changeCheckboxAll = (v: any) => {
+  if (v) {
+    position.value.positionInteractId = 0
+  }
 }
 
 defineExpose({ openModal })
@@ -120,75 +152,104 @@ defineExpose({ openModal })
       </div>
 
       <div class="px-4 mt-4 gap-4 flex flex-wrap">
-        <div style="flex-basis: 90%; flex-grow: 1">
-          <div class="">Vai trò</div>
-          <div>
-            <InputFilter
-              v-model:value="position.roleId"
-              :options="roleOptions"
-              :disabled="!!position.id"
-              :maxHeight="120"
-            >
-              <template #option="{ item: { data } }">{{ data.name }}</template>
-            </InputFilter>
-          </div>
-        </div>
-
-        <div style="flex-grow: 1; flex-basis: 45%; min-width: 200px">
-          <div>Loại tương tác</div>
+        <div style="flex-grow: 1; flex-basis: 45%; min-width: 300px">
+          <div>Loại vị trí</div>
           <div>
             <InputSelect
               v-model:value="position.positionType"
-              :options="[
-                { value: PositionInteractType.Ticket, label: PositionInteractTypeText[PositionInteractType.Ticket] },
-                {
-                  value: PositionInteractType.ConsumableList,
-                  label: PositionInteractTypeText[PositionInteractType.ConsumableList],
-                },
-                {
-                  value: PositionInteractType.PrescriptionList,
-                  label: PositionInteractTypeText[PositionInteractType.PrescriptionList],
-                },
-              ]"
-              :disabled="!!position.id"
+              :options="positionTypeOptions"
+              :disabled="!!position.id || !!requiredInteract"
             ></InputSelect>
           </div>
         </div>
 
-        <div style="flex-basis: 45%; flex-grow: 1; min-width: 200px">
-          <template v-if="position.positionType === PositionInteractType.Product">
-            <div class="">Sản phẩm</div>
-            <div>
-              <InputText :value="position.product?.brandName || ''" disabled />
-            </div>
-          </template>
+        <div v-if="!requiredInteract" style="flex-grow: 1; flex-basis: 45%; min-width: 300px">
+          <div>Loại áp dụng</div>
+          <div class="flex items-center">
+            <InputRadio
+              v-model:value="checkAllInteract"
+              :disabled="!!position.id || !!requiredInteract"
+              @update:value="changeCheckboxAll"
+              :options="[
+                { key: true, label: 'Tất cả ' },
+                { key: false, label: 'Chọn lẻ' },
+              ]"
+            />
+          </div>
+        </div>
 
-          <template v-else-if="position.positionType === PositionInteractType.Procedure">
-            <div class="">Dịch vụ</div>
-            <div>
-              <InputText :value="position.procedure?.name || ''" disabled />
-            </div>
-          </template>
-
-          <template v-else-if="position.positionType === PositionInteractType.Radiology">
-            <div class="">Phiếu CĐHA</div>
-            <div>
-              <InputText :value="position.radiology?.name || ''" disabled />
-            </div>
-          </template>
-
-          <template v-else-if="position.positionType === PositionInteractType.Laboratory">
-            <div class="">Xét nghiệm</div>
-            <div>
-              <InputText :value="position.laboratory?.name || ''" disabled />
-            </div>
+        <div style="flex-basis: 95%; flex-grow: 1; min-width: 300px">
+          <template v-if="checkAllInteract">
+            <!-- <div><InputText :value="''" disabled /></div> -->
           </template>
           <template v-else>
-            <div class="">&nbsp;</div>
-            <div>
-              <InputText :value="position.laboratory?.name || ''" disabled />
-            </div>
+            <template v-if="position.positionType === PositionType.ProductRequest">
+              <InputSearchProduct
+                v-model:productId="position.positionInteractId"
+                required
+                :disabled="!!position.id || !!requiredInteract"
+                :showQuantity="false"
+                :showEditProduct="false"
+              />
+            </template>
+            <template
+              v-if="
+                [PositionType.ProcedureRequest, PositionType.ProcedureResult].includes(
+                  position.positionType,
+                )
+              "
+            >
+              <InputSearchProcedure
+                v-model:procedureId="position.positionInteractId"
+                required
+                :disabled="!!position.id || !!requiredInteract"
+              />
+            </template>
+            <template v-if="[PositionType.LaboratoryRequest].includes(position.positionType)">
+              <InputSearchLaboratory
+                v-model:laboratoryId="position.positionInteractId"
+                required
+                :disabled="!!position.id || !!requiredInteract"
+              />
+            </template>
+            <template
+              v-if="
+                [PositionType.LaboratoryGroupRequest, PositionType.LaboratoryGroupResult].includes(
+                  position.positionType,
+                )
+              "
+            >
+              <InputSearchLaboratoryGroup
+                v-model:laboratoryGroupId="position.positionInteractId"
+                required
+                :disabled="!!position.id || !!requiredInteract"
+              />
+            </template>
+            <template
+              v-if="
+                [PositionType.RadiologyRequest, PositionType.RadiologyResult].includes(
+                  position.positionType,
+                )
+              "
+            >
+              <InputSearchRadiology
+                v-model:radiologyId="position.positionInteractId"
+                required
+                :disabled="!!position.id || !!requiredInteract"
+              />
+            </template>
           </template>
+        </div>
+
+        <div style="flex-grow: 1; flex-basis: 45%; min-width: 300px">
+          <InputSearchRole v-model:roleId="position.roleId"></InputSearchRole>
+        </div>
+
+        <div style="flex-grow: 1; flex-basis: 45%; min-width: 300px">
+          <div>Độ ưu tiên</div>
+          <div>
+            <InputNumber v-model:value="position.priority" />
+          </div>
         </div>
 
         <div style="flex-basis: 90%; flex-grow: 1">
@@ -208,14 +269,24 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-10">
         <div class="flex gap-4">
-          <VueButton color="red" type="button" @click="clickDelete">Xóa</VueButton>
+          <div>
+            <VueButton v-if="mode === 'UPDATE_API'" color="red" type="button" @click="clickDelete">
+              Xóa
+            </VueButton>
+          </div>
           <VueButton style="margin-left: auto" type="reset" @click="closeModal">
             <template #icon>
               <IconClose />
             </template>
             Hủy bỏ
           </VueButton>
-          <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
+          <VueButton
+            color="blue"
+            type="submit"
+            :loading="saveLoading"
+            icon="save"
+            :disabled="!hasChangeData"
+          >
             Lưu lại
           </VueButton>
         </div>

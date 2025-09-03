@@ -8,7 +8,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus, PaymentMoneyStatus } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PositionInteractType, PositionService } from '@/modules/position'
+import { PositionType, PositionService } from '@/modules/position'
 import type { Product } from '@/modules/product'
 import { RoleService } from '@/modules/role'
 import { ticketRoomRef } from '@/modules/room'
@@ -36,52 +36,9 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
 const ticketProductConsumableList = ref<TicketProduct[]>([])
-const roleMap = RoleService.roleMap
-const userMap = UserService.userMap
-const userRoleMapList = UserRoleService.userRoleMapList
 
 let ticketUserListOrigin: TicketUser[] = []
 const ticketUserList = ref<TicketUser[]>([])
-
-const refreshTicketUserList = async () => {
-  if (!organizationPermission.value[PermissionId.MASTER_DATA_POSITION]) {
-    return
-  }
-  const tuListOrigin: TicketUser[] = []
-  const ticketUserListRef =
-    ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.ConsumableList]?.[0] || []
-
-  const positionList = await PositionService.list({
-    filter: {
-      positionType: PositionInteractType.ConsumableList,
-      positionInteractId: 0,
-    },
-  })
-
-  // lấy tất cả role có trong commission trước
-  positionList.forEach((i, index) => {
-    const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
-    if (findExist) {
-      tuListOrigin.push(TicketUser.from(findExist))
-    } else {
-      const ticketUserBlank = TicketUser.blank()
-      ticketUserBlank.roleId = i.roleId
-      tuListOrigin.push(ticketUserBlank)
-    }
-  })
-
-  // lấy role còn thừa ra ở trong ticketUser vẫn phải hiển thị
-  ticketUserListRef.forEach((i) => {
-    const findExist = tuListOrigin.find((j) => j.roleId === i.roleId)
-    if (findExist) {
-      return // nếu đã có rồi thì bỏ qua
-    } else {
-      tuListOrigin.push(TicketUser.from(i))
-    }
-  })
-  ticketUserListOrigin = tuListOrigin
-  ticketUserList.value = TicketUser.fromList(tuListOrigin)
-}
 
 watch(
   () => ticketRoomRef.value.ticketProductConsumableList,
@@ -91,16 +48,7 @@ watch(
   { immediate: true, deep: true },
 )
 
-watch(
-  () => ticketRoomRef.value.ticketUserGroup,
-  (newValue, oldValue) => {
-    refreshTicketUserList()
-  },
-  { immediate: true, deep: true },
-)
-
 onMounted(async () => {
-  refreshTicketUserList()
   await ticketRoomRef.value.refreshProduct()
 })
 
@@ -160,27 +108,9 @@ const savePriorityTicketProductConsumable = async () => {
   }
 }
 
-const saveTicketUserList = async () => {
-  try {
-    await TicketChangeUserApi.updateTicketUserPosition({
-      ticketId: ticketRoomRef.value.id,
-      positionType: PositionInteractType.ConsumableList,
-      positionInteractId: 0,
-      ticketItemId: 0,
-      quantity: 1,
-      ticketUserList: Object.values(ticketUserList.value),
-    })
-  } catch (e: any) {
-    console.log('🚀 ~ TicketClinicPrescription.vue:184 ~ e:', e)
-  }
-}
-
 const saveConsumable = async () => {
   if (hasChangePriority.value) {
     savePriorityTicketProductConsumable()
-  }
-  if (hasChangeTicketUserList.value) {
-    saveTicketUserList()
   }
 }
 
@@ -334,45 +264,6 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
         </tbody>
       </table>
     </div>
-  </div>
-  <div
-    v-if="organizationPermission[PermissionId.MASTER_DATA_POSITION]"
-    class="mt-4 flex flex-wrap items-center gap-4"
-  >
-    <template v-if="ticketUserList.length">
-      <div
-        v-for="(ticketUser, index) in ticketUserList"
-        :key="index"
-        style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
-      >
-        <div>
-          {{ roleMap[ticketUser.roleId]?.name || '' }}
-        </div>
-        <div>
-          <InputFilter
-            v-model:value="ticketUserList[index].userId"
-            :options="
-              (userRoleMapList[ticketUser.roleId] || []).map((i) => {
-                return {
-                  value: userMap[i.userId]?.id || 0,
-                  text: userMap[i.userId]?.fullName || '',
-                  data: userMap[i.userId],
-                }
-              })
-            "
-            :maxHeight="200"
-            placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên"
-          >
-            <template #option="{ item: { data } }">
-              <div>
-                <b>{{ data.fullName }}</b>
-                - {{ ESString.formatPhone(data.phone) }} -
-              </div>
-            </template>
-          </InputFilter>
-        </div>
-      </div>
-    </template>
   </div>
 
   <div class="mt-4 flex gap-4">

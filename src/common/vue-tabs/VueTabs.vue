@@ -30,12 +30,12 @@ watch(
   { immediate: true }
 )
 
-const listenTabChange = (value: string | number) => {
+const listenTabMenuChange = (value: string | number) => {
   tabSelect.value = value
   emit('update:tabShow', value)
 }
 
-provide('eventTabChange', listenTabChange)
+provide('eventTabMenuChange', listenTabMenuChange)
 provide('tabSelect', tabSelect)
 </script>
 

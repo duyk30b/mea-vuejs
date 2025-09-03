@@ -3,7 +3,7 @@
     <div
       :class="{ 'input-select-display': true, disabled }"
       @click="toggleDropdown"
-      :tabindex="0"
+      :tabindex="tabindex"
       @keydown="onKeyDown"
     >
       <div class="label">{{ selectedLabel }}</div>
@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import { CONFIG } from '@/config'
-import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 export type InputSelectOption<T> = {
   value: string | number | null
@@ -47,13 +47,24 @@ export type InputSelectOption<T> = {
   disabled?: boolean
 }
 
-const props = defineProps<{
-  options: InputSelectOption<any>[]
-  value: string | number | null | undefined
-  height?: string
-  disabled?: boolean
-  transitionSlide?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    options: InputSelectOption<any>[]
+    value: string | number | null | undefined
+    height?: string
+    disabled?: boolean
+    transitionSlide?: boolean
+    tabindex?: number
+  }>(),
+  {
+    options: () => [],
+    value: null,
+    height: '260px',
+    disabled: false,
+    transitionSlide: false,
+    tabindex: 0,
+  },
+)
 
 const emit = defineEmits<{
   (e: 'update:value', value: string | number | null): void
@@ -160,7 +171,7 @@ onBeforeUnmount(() => {
 
 <style lang="scss" scoped>
 .input-select {
-  // font-size: 16px;
+  font-size: 16px;
   position: relative;
   .input-select-display {
     padding: 5px 12px 5px 12px;

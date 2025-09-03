@@ -1,120 +1,35 @@
 <script lang="ts" setup>
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
-import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { InputFilter, InputMoney, InputNumber, VueSelect } from '@/common/vue-form'
+import { InputMoney, InputNumber, VueSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
-import { PositionInteractType, PositionService } from '@/modules/position'
-import { Radiology, RadiologyService } from '@/modules/radiology'
-import { Role, RoleService } from '@/modules/role'
-import { ticketRoomRef } from '@/modules/room'
+import { PositionType } from '@/modules/position'
 import { TicketChangeRadiologyApi } from '@/modules/ticket'
 import { TicketRadiology } from '@/modules/ticket-radiology'
 import { TicketUser } from '@/modules/ticket-user'
-import { User, UserService } from '@/modules/user'
-import { UserRoleService } from '@/modules/user-role'
-import { ESString } from '@/utils'
-import { computed, onMounted, ref } from 'vue'
+import TicketChangeTicketUserPosition from '@/views/room/room-user/TicketChangeTicketUserPosition.vue'
+import { computed, ref } from 'vue'
 
 const emit = defineEmits<{
-  (e: 'success', value: TicketRadiology, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
+  (e: 'success', type: 'CREATE' | 'UPDATE' | 'DESTROY', value: TicketRadiology): void
 }>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
-const radiologyMap = ref<Record<string, Radiology>>({})
-const roleMap = ref<Record<string, Role>>({})
-const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: string; data: User }[]>>(
-  {},
-)
-
 const ticketRadiologyOrigin = ref<TicketRadiology>(TicketRadiology.blank())
-let ticketUserListOrigin: TicketUser[] = []
 const ticketRadiology = ref<TicketRadiology>(TicketRadiology.blank())
-const ticketUserList = ref<TicketUser[]>([])
 
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-const refreshTicketUserList = async () => {
-  ticketUserListOrigin = []
-  const ticketUserListRef =
-    ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.Radiology]?.[
-      ticketRadiology.value.id
-    ] || []
-
-  const positionList = await PositionService.list({
-    filter: {
-      positionType: PositionInteractType.Radiology,
-      positionInteractId: ticketRadiology.value.radiologyId,
-    },
-  })
-
-  // lấy tất cả role có trong commission trước
-  positionList.forEach((i) => {
-    const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
-    if (findExist) {
-      ticketUserListOrigin.push(TicketUser.from(findExist))
-    } else {
-      const ticketUserBlank = TicketUser.blank()
-      ticketUserBlank.roleId = i.roleId
-      ticketUserListOrigin.push(ticketUserBlank)
-    }
-  })
-
-  // lấy role còn thừa ra ở trong ticketUser vẫn phải hiển thị
-  ticketUserListRef.forEach((i) => {
-    const findExist = ticketUserListOrigin.find((j) => j.roleId === i.roleId)
-    if (findExist) {
-      return // nếu đã có rồi thì bỏ qua
-    } else {
-      ticketUserListOrigin.push(TicketUser.from(i))
-    }
-  })
-  ticketUserList.value = TicketUser.fromList(ticketUserListOrigin)
-}
-
-onMounted(async () => {
-  try {
-    const fetchPromise = await Promise.all([
-      RadiologyService.getMap(),
-      RoleService.getMap(),
-      UserService.getMap(),
-      UserRoleService.list(),
-    ])
-
-    radiologyMap.value = fetchPromise[0]
-    roleMap.value = fetchPromise[1]
-    const userMap = fetchPromise[2]
-    const userRoleList = fetchPromise[3]
-
-    userRoleList.forEach((i) => {
-      const key = i.roleId
-      if (!userRoleMapRoleIdOptions.value[key]) {
-        userRoleMapRoleIdOptions.value[key] = []
-      }
-      userRoleMapRoleIdOptions.value[key].push({
-        value: userMap[i.userId]?.id || 0,
-        text: userMap[i.userId]?.fullName || '',
-        data: userMap[i.userId],
-      })
-    })
-  } catch (error: any) {
-    console.log('🚀 ~ file: ModalTicketRadiologyUpdate.vue:105 ~ onMounted ~ error:', error)
-    AlertStore.add({ type: 'error', message: error.message })
-  }
-})
-
-const openModal = async (ticketRadiologyProp: TicketRadiology) => {
+const openModal = async (data: { ticketRadiology: TicketRadiology }) => {
   showModal.value = true
-  ticketRadiologyOrigin.value = TicketRadiology.from(ticketRadiologyProp)
-  ticketRadiology.value = TicketRadiology.from(ticketRadiologyProp)
-
-  await refreshTicketUserList()
+  ticketRadiologyOrigin.value = TicketRadiology.from(data.ticketRadiology)
+  ticketRadiology.value = TicketRadiology.from(data.ticketRadiology)
 }
 
 const hasChangeTicketRadiology = computed(() => {
@@ -123,7 +38,10 @@ const hasChangeTicketRadiology = computed(() => {
 })
 
 const hasChangeTicketUserList = computed(() => {
-  const result = !TicketUser.equalList(ticketUserListOrigin, ticketUserList.value)
+  const result = !TicketUser.equalList(
+    ticketRadiology.value.ticketUserRequestList,
+    ticketRadiologyOrigin.value.ticketUserRequestList,
+  )
   return result
 })
 
@@ -164,31 +82,29 @@ const closeModal = () => {
   showModal.value = false
   ticketRadiology.value = TicketRadiology.blank()
   ticketRadiologyOrigin.value = TicketRadiology.blank()
-  ticketUserList.value = []
-  ticketUserListOrigin = []
 }
 
 const clickDestroy = async () => {
   if (ticketRadiologyOrigin.value.paymentMoneyStatus === PaymentMoneyStatus.Paid) {
     return ModalStore.alert({
-      title: 'Không thể xóa phiếu chỉ định dịch vụ ?',
-      content: ['- Phiếu dịch vụ đã được thanh toán sẽ không thể xóa'],
+      title: 'Không thể xóa phiếu chỉ định CĐHA ?',
+      content: ['- Phiếu CĐHA đã được thanh toán sẽ không thể xóa'],
     })
   }
 
   ModalStore.confirm({
-    title: 'Xác nhận xóa dịch vụ ?',
+    title: 'Xác nhận xóa CĐHA ?',
     content: [
-      '- Hệ thống sẽ xóa dịch vụ này khỏi phiếu khám',
+      '- Hệ thống sẽ xóa CĐHA này khỏi phiếu khám',
       '- Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
     ],
     onOk: async () => {
       try {
         await TicketChangeRadiologyApi.destroyTicketRadiology({
-          ticketId: ticketRoomRef.value.id,
+          ticketId: ticketRadiology.value.ticketId,
           ticketRadiologyId: ticketRadiology.value.id,
         })
-        emit('success', ticketRadiology.value, 'DESTROY')
+        emit('success', 'DESTROY', ticketRadiology.value)
         closeModal()
       } catch (error) {
         console.log('🚀 ~ file: TicketClinicRadiology.vue:118 ~ onOk: ~ error:', error)
@@ -197,24 +113,33 @@ const clickDestroy = async () => {
   })
 }
 
-const updateMoneyTicketRadiology = async () => {
-  saveLoading.value = true
+const startUpdateTicketRadiology = async () => {
   try {
-    const hasUpdateTicketUser =
-      ticketUserListOrigin.length || ticketUserList.value.filter((i) => !!i.userId).length
-    await TicketChangeRadiologyApi.updateMoneyTicketRadiology({
-      ticketId: ticketRoomRef.value.id,
+    saveLoading.value = true
+    const ticketRadiologyResponse = await TicketChangeRadiologyApi.updateTicketRadiology({
+      ticketId: ticketRadiology.value.ticketId,
       ticketRadiologyId: ticketRadiology.value.id,
       ticketRadiology: hasChangeTicketRadiology.value ? ticketRadiology.value : undefined,
-      ticketUserList: hasUpdateTicketUser ? ticketUserList.value : undefined,
+      ticketUserRequestList: ticketRadiology.value.ticketUserRequestList || undefined,
     })
-    emit('success', ticketRadiology.value, 'UPDATE')
-    closeModal()
+    Object.assign(ticketRadiology.value, ticketRadiologyResponse)
   } catch (error) {
-    console.log('🚀: ~ updateMoneyTicketRadiology ~ error:', error)
+    console.log('🚀 ~ ModalTicketRadiologyUpdate.vue:128  ~ error:', error)
   } finally {
     saveLoading.value = false
   }
+}
+
+const submitForm = async () => {
+  if (ticketRadiology.value.id) {
+    await startUpdateTicketRadiology()
+  }
+  emit('success', 'UPDATE', ticketRadiology.value)
+  closeModal()
+}
+
+const handleFixTicketUserRequestList = (tuListData: TicketUser[]) => {
+  ticketRadiologyOrigin.value.ticketUserRequestList = TicketUser.fromList(tuListData)
 }
 
 defineExpose({ openModal })
@@ -224,13 +149,13 @@ defineExpose({ openModal })
     <div class="bg-white">
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          {{ radiologyMap[ticketRadiology.radiologyId]?.name }}
+          {{ ticketRadiology.radiology?.name }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
         </div>
       </div>
-      <form class="p-4 flex flex-wrap gap-4" @submit.prevent="(e) => updateMoneyTicketRadiology()">
+      <form class="p-4 flex flex-wrap gap-4" @submit.prevent="(e) => submitForm()">
         <div style="flex-basis: 45%; flex-grow: 1; min-width: 300px">
           <div>Giá niêm yết</div>
           <div>
@@ -288,33 +213,21 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <template v-if="ticketUserList.length">
-          <div
-            v-for="(ticketUser, index) in ticketUserList"
-            :key="index"
-            style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
-          >
-            <div>{{ roleMap[ticketUser.roleId]?.name || '' }}</div>
-            <div>
-              <InputFilter
-                v-model:value="ticketUserList[index].userId"
-                :options="userRoleMapRoleIdOptions[ticketUser.roleId] || []"
-                :maxHeight="200"
-                placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên"
-              >
-                <template #option="{ item: { data } }">
-                  <div>
-                    <b>{{ data.fullName }}</b>
-                    - {{ ESString.formatPhone(data.phone) }} -
-                  </div>
-                </template>
-              </InputFilter>
-            </div>
-          </div>
-        </template>
+        <div class="mt-4" style="flex-basis: 90%; flex-grow: 1; min-width: 300px">
+          <TicketChangeTicketUserPosition
+            ref="ticketChangeTicketUserPosition"
+            v-model:ticketUserList="ticketRadiology.ticketUserRequestList!"
+            :positionType="PositionType.RadiologyRequest"
+            :positionInteractId="ticketRadiology.radiologyId"
+            @fix:ticketUserList="handleFixTicketUserRequestList"
+            title="Nhân viên tư vấn, chỉ định dịch vụ"
+          />
+        </div>
 
         <div style="flex-grow: 1; flex-basis: 80%" class="mt-6 flex flex-wrap gap-4">
-          <VueButton color="red" icon="trash" @click="clickDestroy">Xóa</VueButton>
+          <VueButton v-if="ticketRadiology.id" color="red" icon="trash" @click="clickDestroy">
+            Xóa
+          </VueButton>
           <VueButton style="margin-left: auto" type="reset" icon="close" @click="closeModal">
             Đóng lại
           </VueButton>

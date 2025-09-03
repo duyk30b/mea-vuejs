@@ -16,6 +16,26 @@ export type StatisticTicketResponseType = {
   customer?: Customer
 }
 
+export type StatisticTicketQueryTimeResponseType = {
+  timeLabel: string
+  year: number
+  month: number
+  data: number
+  countTicket: number
+  sumTotalMoney: number
+  sumItemsCostAmount: number
+  sumProcedureMoney: number
+  sumProductMoney: number
+  sumRadiologyMoney: number
+  sumLaboratoryMoney: number
+  sumDiscountMoney: number
+  sumItemsDiscount: number
+  sumSurcharge: number
+  sumExpense: number
+  sumProfit: number
+  sumDebt: number
+}
+
 export class StatisticTicketQuery extends OmitClass(TicketGetQuery, ['sort']) {
   sortStatistic?: { [P in keyof StatisticTicketResponseType]?: 'DESC' }
 
@@ -56,41 +76,24 @@ export class StatisticTicketApi {
     }
   }
 
-  static async statisticTicket(
-    options: TicketFilterQuery & {
-      fromTime: string
-      toTime: string
-      groupTimeType: 'date' | 'month'
-    },
-  ) {
+  static async groupByTime(options: {
+    filter: TicketFilterQuery
+    fromTime: string
+    toTime: string
+    groupTimeType: 'date' | 'month'
+  }) {
     const filter = TicketGetQuery.toQuery(options)
-    const response = await AxiosInstance.get('/statistic/ticket/statistic', {
+    const response = await AxiosInstance.get('/statistic/ticket/group-by-time', {
       params: {
-        ...filter,
+        filter: JSON.stringify(options.filter),
         fromTime: options.fromTime,
         toTime: options.toTime,
         groupTimeType: options.groupTimeType,
       },
     })
-    const { data } = response.data as BaseResponse<
-      Record<
-        string,
-        {
-          countTicket: number
-          sumTotalMoney: number
-          sumTotalCostAmount: number
-          sumProcedureMoney: number
-          sumProductMoney: number
-          sumRadiologyMoney: number
-          sumLaboratoryMoney: number
-          sumSurcharge: number
-          sumExpense: number
-          sumDiscountMoney: number
-          sumProfit: number
-          sumDebt: number
-        }
-      >
-    >
-    return Object.entries(data).map(([key, value]) => ({ timeLabel: key, ...value }))
+    const { data } = response.data as BaseResponse<{
+      statisticData: Record<string, Omit<StatisticTicketQueryTimeResponseType, 'timeLabel'>>
+    }>
+    return Object.entries(data.statisticData).map(([key, value]) => ({ timeLabel: key, ...value }))
   }
 }

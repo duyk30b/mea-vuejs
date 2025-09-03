@@ -15,8 +15,10 @@ export class PositionApi {
     const response = await AxiosInstance.get('/position/pagination', { params })
     const { data, meta } = response.data as BaseResponse
     return {
-      meta,
-      data: Position.fromList(data),
+      page: data.page,
+      total: data.total,
+      limit: data.limit,
+      positionList: Position.fromList(data.positionList),
     }
   }
 
@@ -25,10 +27,7 @@ export class PositionApi {
 
     const response = await AxiosInstance.get('/position/list', { params })
     const { data, time } = response.data as BaseResponse<{ positionList: any[] }>
-    return {
-      time: new Date(time),
-      data: Position.fromList(data.positionList),
-    }
+    return Position.fromList(data.positionList)
   }
 
   static async detail(id: number, options: PositionDetailQuery = {}): Promise<Position> {
@@ -40,6 +39,7 @@ export class PositionApi {
 
   static async createOne(position: Position) {
     const response = await AxiosInstance.post('/position/create', {
+      priority: position.priority,
       roleId: position.roleId,
       positionType: position.positionType,
       positionInteractId: position.positionInteractId,
@@ -52,6 +52,7 @@ export class PositionApi {
 
   static async updateOne(id: number, position: Position) {
     const response = await AxiosInstance.patch(`/position/update/${id}`, {
+      priority: position.priority,
       roleId: position.roleId,
       positionType: position.positionType,
       positionInteractId: position.positionInteractId,
@@ -76,6 +77,7 @@ export class PositionApi {
       filter: options.filter,
       positionData: options.positionData.map((i) => {
         return {
+          priority: i.priority,
           positionType: i.positionType,
           roleId: i.roleId,
           positionInteractId: i.positionInteractId,

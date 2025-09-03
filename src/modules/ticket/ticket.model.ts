@@ -11,7 +11,8 @@ import { LaboratoryService } from '../laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../laboratory-group'
 import { Payment } from '../payment'
 import { PermissionId } from '../permission/permission.enum'
-import { Procedure, ProcedureService } from '../procedure'
+import { PositionType } from '../position'
+import { Procedure, ProcedureService, ProcedureType } from '../procedure'
 import { Product, ProductService } from '../product'
 import { RadiologyService } from '../radiology'
 import { RadiologyGroupService } from '../radiology-group'
@@ -98,15 +99,16 @@ export class Ticket {
   ticketLaboratoryGroupList?: TicketLaboratoryGroup[]
   ticketLaboratoryResultList?: TicketLaboratoryResult[]
   ticketRadiologyList?: TicketRadiology[]
-  ticketUserList?: TicketUser[]
   ticketSurchargeList?: TicketSurcharge[]
   ticketExpenseList?: TicketExpense[]
+
+  ticketUserList?: TicketUser[]
 
   toAppointment?: Appointment
   imageList: Image[]
 
   ticketAttributeMap: TicketAttributeMap // chỉ convert tại front-end
-  ticketUserGroup: Record<string, Record<string, TicketUser[]>> // chỉ convert tại front-end
+  ticketUserTree: Record<string, Record<string, Record<string, TicketUser[]>>> // ticketUserTree[positionType][ticketItemId][ticketItemChildId] = []
 
   static init(): Ticket {
     const ins = new Ticket()
@@ -143,13 +145,14 @@ export class Ticket {
     ins.ticketLaboratoryGroupList = []
     ins.ticketLaboratoryResultList = []
     ins.ticketRadiologyList = []
-    ins.ticketUserList = []
     ins.ticketSurchargeList = [TicketSurcharge.init()]
     ins.ticketExpenseList = [TicketExpense.init()]
     ins.imageList = []
 
+    ins.ticketUserList = []
+
     ins.ticketAttributeMap = {}
-    ins.ticketUserGroup = {}
+    ins.ticketUserTree = { [PositionType.Ticket]: { 0: { 0: [] } } } // ticketUserTree[positionType][ticketItemId][ticketItemChildId] = []
     return ins
   }
 
@@ -187,9 +190,6 @@ export class Ticket {
   }
 
   async refreshProcedure() {
-    if (!MeService.organizationPermission.value[PermissionId.PROCEDURE]) {
-      return
-    }
     if (!this.ticketProcedureList || !this.ticketProcedureList.length) {
       return
     }
@@ -200,9 +200,6 @@ export class Ticket {
   }
 
   async refreshRadiology() {
-    if (!MeService.organizationPermission.value[PermissionId.RADIOLOGY]) {
-      return
-    }
     if (!this.ticketRadiologyList || !this.ticketRadiologyList.length) {
       return
     }
@@ -215,13 +212,13 @@ export class Ticket {
         i.radiology.radiologyGroup = radiologyGroupMap[i.radiology.radiologyGroupId]
         i.room = roomMap[i.roomId]
       }
+      i.ticketUserRequestList =
+        this.ticketUserTree[PositionType.RadiologyRequest]?.[i.id]?.[0] || []
+      i.ticketUserResultList = this.ticketUserTree[PositionType.RadiologyResult]?.[i.id]?.[0] || []
     })
   }
 
   async refreshUserAndRole() {
-    if (!MeService.organizationPermission.value[PermissionId.MASTER_DATA_POSITION]) {
-      return
-    }
     if (!this.ticketUserList || !this.ticketUserList.length) {
       return
     }
@@ -232,23 +229,18 @@ export class Ticket {
     })
   }
 
-  refreshTicketUserGroup() {
-    this.ticketUserGroup = {}
+  refreshTicketUserTree() {
+    this.ticketUserTree = {}
     this.ticketUserList?.forEach((i) => {
-      if (!this.ticketUserGroup[i.positionType]) {
-        this.ticketUserGroup[i.positionType] = {}
-      }
-      if (!this.ticketUserGroup[i.positionType][i.ticketItemId]) {
-        this.ticketUserGroup[i.positionType][i.ticketItemId] = []
-      }
-      this.ticketUserGroup[i.positionType][i.ticketItemId].push(i)
+      this.ticketUserTree[i.positionType] ||= {}
+      this.ticketUserTree[i.positionType][i.ticketItemId] ||= {}
+      this.ticketUserTree[i.positionType][i.ticketItemId][i.ticketItemChildId] ||= []
+
+      this.ticketUserTree[i.positionType][i.ticketItemId][i.ticketItemChildId].push(i)
     })
   }
 
   async refreshLaboratory() {
-    if (!MeService.organizationPermission.value[PermissionId.LABORATORY]) {
-      return
-    }
     if (!this.ticketLaboratoryList || !this.ticketLaboratoryList.length) {
       return
     }
@@ -324,7 +316,25 @@ export class Ticket {
     })
   }
 
+  refreshTicketUserRelationTicketItem() {
+    this.ticketUserList?.forEach((tu) => {
+      if (tu.positionType === PositionType.ProcedureResult) {
+        tu.ticketProcedure = (this.ticketProcedureList || []).find((tp) => {
+          return tp.id === tu.ticketItemId
+        })
+        if (tu.ticketProcedure?.type === ProcedureType.Regimen) {
+          tu.ticketProcedureItem = (tu.ticketProcedure?.ticketProcedureItemList || []).find(
+            (tpi) => {
+              return tpi.id === tu.ticketItemChildId
+            },
+          )
+        }
+      }
+    })
+  }
+
   async refreshAllData() {
+    this.refreshTicketUserTree() // cái này cần refresh đầu tiên, để bọn sau có ticketUserTree để tính
     await Promise.all([
       this.refreshProduct(),
       this.refreshProcedure(),
@@ -333,7 +343,6 @@ export class Ticket {
       this.refreshUserAndRole(),
     ])
     this.refreshTicketProductHasTicketBatchList()
-    this.refreshTicketUserGroup()
   }
 
   static from(source: Ticket) {
@@ -359,7 +368,7 @@ export class Ticket {
     }
     if (source.ticketUserList) {
       target.ticketUserList = TicketUser.basicList(source.ticketUserList)
-      target.refreshTicketUserGroup()
+      target.refreshTicketUserTree()
     }
 
     if (source.paymentList) {

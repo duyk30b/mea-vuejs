@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { IconCalendar } from '../icon-antd'
 import DatePicker from './DatePicker.vue'
 import { IconClose, IconCloseCircle } from '../icon-antd'
+import { CONFIG } from '@/config'
+import { ESTimer } from '@/utils'
 
 const props = withDefaults(
   defineProps<{
@@ -37,6 +39,10 @@ const inputMinute = ref<HTMLElement>()
 const inputSecond = ref<HTMLElement>()
 
 const showDatePicker = ref<boolean>(false)
+
+const randomId = computed(() => {
+  return Math.random().toString(36).substring(2)
+})
 
 onMounted(() => {
   watch(
@@ -340,6 +346,9 @@ const handleClickClear = () => {
         @update:value="handleValueDatePicker"
       />
     </div>
+    <div v-if="CONFIG.MODE === 'development'" class="development" style="color: violet">
+      {{ randomId }} - {{ value ? ESTimer.timeToText(value, 'hh:mm:ss DD/MM/YYYY') : value }}
+    </div>
   </div>
 </template>
 
@@ -389,5 +398,16 @@ const handleClickClear = () => {
   left: 0;
   width: 100%;
   z-index: 1000;
+}
+
+.development {
+  position: absolute;
+  right: 5px;
+  top: 0;
+  font-size: 0.8em;
+  transform: translate(0, -50%);
+  background-color: rgba(255, 255, 255, 0.5);
+  padding: 4px;
+  white-space: nowrap;
 }
 </style>

@@ -7,6 +7,7 @@ import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { SettingKey } from '@/modules/_me/store.variable'
 import { OrganizationService } from '@/modules/organization'
+import { InputCheckbox } from '@/common/vue-form'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -74,6 +75,13 @@ defineExpose({ openModal })
                     <input v-model="settingDisplay.fromDateToDateDistance" type="number" />
                   </div>
                 </div>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <InputCheckbox v-model:checked="settingDisplay.procedure">
+                  Hiển thị dịch vụ
+                </InputCheckbox>
               </td>
             </tr>
           </tbody>

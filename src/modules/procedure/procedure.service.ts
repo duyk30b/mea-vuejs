@@ -136,7 +136,8 @@ export class ProcedureService {
 
   static async createOne(body: {
     procedure: Procedure
-    positionList?: Position[]
+    positionRequestList?: Position[]
+    positionResultList?: Position[]
     discountList?: Discount[]
   }) {
     const procedure = await ProcedureApi.createOne(body)
@@ -148,7 +149,8 @@ export class ProcedureService {
     id: number,
     body: {
       procedure: Procedure
-      positionList?: Position[]
+      positionRequestList?: Position[]
+      positionResultList?: Position[]
       discountList?: Discount[]
     },
   ) {

@@ -1,7 +1,8 @@
 import { BaseModel } from '../_base/base.model'
 import { Customer } from '../customer'
 import { DiscountType, PaymentMoneyStatus } from '../enum'
-import { Procedure } from '../procedure'
+import { Image } from '../image/image.model'
+import { Procedure, ProcedureType } from '../procedure'
 import { TicketUser } from '../ticket-user'
 import { Ticket } from '../ticket/ticket.model'
 import { TicketProcedureItem } from './ticket-procedure-item.model'
@@ -11,11 +12,13 @@ export enum TicketProcedureStatus {
   Pending = 2,
   Executing = 3,
   Completed = 4,
+  Cancelled = 5,
 }
 
 export class TicketProcedure extends BaseModel {
   id: number
 
+  type: ProcedureType
   priority: number
   ticketId: number
   customerId: number
@@ -23,7 +26,7 @@ export class TicketProcedure extends BaseModel {
 
   quantity: number
   totalSessions: number
-  completedSessions: number
+  finishedSessions: number
 
   expectedPrice: number // Giá dự kiến
   discountMoney: number // tiền giảm giá
@@ -38,18 +41,20 @@ export class TicketProcedure extends BaseModel {
   customer?: Customer
   ticket?: Ticket
   procedure?: Procedure
+
   ticketProcedureItemList?: TicketProcedureItem[]
-  ticketUserList: TicketUser[]
+  ticketUserRequestList?: TicketUser[]
 
   static init(): TicketProcedure {
     const ins = new TicketProcedure()
-    ins._localId = Math.random()
+    ins._localId = Math.random().toString(36).substring(2)
     ins.id = 0
 
     ins.priority = 1
     ins.ticketId = 0
     ins.customerId = 0
     ins.procedureId = 0
+    ins.type = ProcedureType.Basic
 
     ins.quantity = 1
     ins.totalSessions = 0
@@ -63,7 +68,6 @@ export class TicketProcedure extends BaseModel {
     ins.paymentMoneyStatus = PaymentMoneyStatus.NoEffect
     ins.status = TicketProcedureStatus.Pending
 
-
     return ins
   }
 
@@ -71,7 +75,6 @@ export class TicketProcedure extends BaseModel {
     const ins = TicketProcedure.init()
     ins.procedure = Procedure.init()
     ins.ticketProcedureItemList = []
-    ins.ticketUserList = []
     return ins
   }
 
@@ -82,7 +85,9 @@ export class TicketProcedure extends BaseModel {
       if (value === undefined) delete target[key as keyof typeof target]
     })
     Object.assign(target, source)
-    target._localId = source.id || source._localId || Math.random()
+    target._localId = String(
+      source.id || source._localId || Math.random().toString(36).substring(2),
+    )
     return target
   }
 
@@ -103,9 +108,17 @@ export class TicketProcedure extends BaseModel {
     }
     if (source.ticketProcedureItemList) {
       target.ticketProcedureItemList = TicketProcedureItem.basicList(source.ticketProcedureItemList)
+      target.ticketProcedureItemList.forEach((i) => {
+        if (i.imageList) {
+          i.imageList = Image.basicList(i.imageList)
+        }
+        if (i.ticketUserResultList) {
+          i.ticketUserResultList = TicketUser.basicList(i.ticketUserResultList)
+        }
+      })
     }
-    if (source.ticketUserList) {
-      target.ticketUserList = TicketUser.basicList(source.ticketUserList)
+    if (source.ticketUserRequestList) {
+      target.ticketUserRequestList = TicketUser.basicList(source.ticketUserRequestList)
     }
     return target
   }
@@ -117,6 +130,7 @@ export class TicketProcedure extends BaseModel {
   static equal(a: TicketProcedure, b: TicketProcedure) {
     if (a.id != b.id) return false
 
+    if (a.type != b.type) return false
     if (a.priority != b.priority) return false
     if (a.ticketId != b.ticketId) return false
     if (a.customerId != b.customerId) return false
@@ -124,6 +138,7 @@ export class TicketProcedure extends BaseModel {
 
     if (a.quantity != b.quantity) return false
     if (a.totalSessions != b.totalSessions) return false
+    if (a.finishedSessions != b.finishedSessions) return false
 
     if (a.expectedPrice != b.expectedPrice) return false
     if (a.discountMoney != b.discountMoney) return false

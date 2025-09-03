@@ -93,7 +93,7 @@ defineExpose({ openModal })
         <div class="">
           <div>Mã phụ phí</div>
           <div>
-            <InputText v-model:value="surcharge.code" />
+            <InputText v-model:value="surcharge.code" placeholder="Tạo tự động" />
           </div>
         </div>
         <div class="mt-4">
@@ -107,9 +107,7 @@ defineExpose({ openModal })
           <div>
             <VueSwitch v-model="surcharge.isActive" type-parser="number" />
           </div>
-          <div v-if="!surcharge.isActive" class="ml-4">
-            Tạm thời không thể sử dụng phụ phí này
-          </div>
+          <div v-if="!surcharge.isActive" class="ml-4">Tạm thời không thể sử dụng phụ phí này</div>
         </div>
       </div>
 

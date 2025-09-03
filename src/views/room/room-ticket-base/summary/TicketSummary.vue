@@ -5,6 +5,7 @@ import {
   IconCalendar,
   IconClockCircle,
   IconContainer,
+  IconDollar,
   IconPhone,
   IconSend,
   IconUser,
@@ -14,6 +15,8 @@ import { IconEditSquare } from '@/common/icon-google'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
+import { Appointment } from '@/modules/appointment'
+import { PaymentViewType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtmlAction } from '@/modules/print-html'
 import { ticketRoomRef } from '@/modules/room/room.ref'
@@ -21,18 +24,19 @@ import { TicketStatus } from '@/modules/ticket'
 import { ESString, ESTimer } from '@/utils'
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import ModalTicketPayment from '../ModalTicketPayment.vue'
+import ModalTicketRegisterAppointment from '../ModalTicketRegisterAppointment.vue'
+import TicketDeliveryStatusTag from '../TicketDeliveryStatusTag.vue'
 import TicketStatusTag from '../TicketStatusTag.vue'
 import ModalTicketChangeDiscount from './ModalTicketChangeDiscount.vue'
 import TicketSummaryLaboratory from './TicketSummaryLaboratory.vue'
 import TicketSummaryProcedure from './TicketSummaryProcedure.vue'
 import TicketSummaryProduct from './TicketSummaryProduct.vue'
 import TicketSummaryRadiology from './TicketSummaryRadiology.vue'
-import { Appointment } from '@/modules/appointment'
-import ModalTicketRegisterAppointment from '../ModalTicketRegisterAppointment.vue'
-import TicketDeliveryStatusTag from '../TicketDeliveryStatusTag.vue'
 
 const modalTicketChangeDiscount = ref<InstanceType<typeof ModalTicketChangeDiscount>>()
 const modalTicketRegisterAppointment = ref<InstanceType<typeof ModalTicketRegisterAppointment>>()
+const modalTicketPayment = ref<InstanceType<typeof ModalTicketPayment>>()
 
 const route = useRoute()
 const router = useRouter()
@@ -68,6 +72,7 @@ const handleClickModalRegisterAppointment = () => {
 </script>
 <template>
   <ModalTicketChangeDiscount ref="modalTicketChangeDiscount" />
+  <ModalTicketPayment ref="modalTicketPayment" />
   <ModalTicketRegisterAppointment ref="modalTicketRegisterAppointment" />
   <div class="flex flex-wrap gap-4">
     <div style="flex-grow: 5; flex-basis: 400px">
@@ -158,7 +163,7 @@ const handleClickModalRegisterAppointment = () => {
       </div>
     </div>
 
-    <div class="pl-2" style="flex-grow: 1; flex-basis: 260px; border-left: 1px solid #ddd;">
+    <div class="pl-2" style="flex-grow: 1; flex-basis: 260px; border-left: 1px solid #ddd">
       <table class="mt-4 table-information">
         <tbody>
           <tr>
@@ -202,6 +207,94 @@ const handleClickModalRegisterAppointment = () => {
             <td><TicketStatusTag :ticket="ticketRoomRef" /></td>
           </tr>
           <tr>
+            <td><IconClockCircle /></td>
+            <td>Thanh toán</td>
+            <td>:</td>
+            <td>
+              <div class="flex flex-wrap items-center gap-x-4">
+                <div>
+                  <VueButton
+                    v-if="
+                      [
+                        TicketStatus.Schedule,
+                        TicketStatus.Draft,
+                        TicketStatus.Deposited,
+                        TicketStatus.Executing,
+                      ].includes(ticketRoomRef.status)
+                    "
+                    size="small"
+                    color="green"
+                    icon="dollar"
+                    @click="
+                      modalTicketPayment?.openModal({
+                        ticket: ticketRoomRef,
+                        paymentView: PaymentViewType.Prepayment,
+                      })
+                    "
+                  >
+                    <span class="font-bold">TẠM ỨNG</span>
+                  </VueButton>
+                  <VueButton
+                    v-if="[TicketStatus.Debt].includes(ticketRoomRef.status)"
+                    size="small"
+                    color="green"
+                    icon="dollar"
+                    @click="
+                      modalTicketPayment?.openModal({
+                        ticket: ticketRoomRef,
+                        paymentView: PaymentViewType.PayDebt,
+                      })
+                    "
+                  >
+                    <span class="font-bold">TRẢ NỢ</span>
+                  </VueButton>
+                  <VueButton
+                    v-if="
+                      [TicketStatus.Completed, TicketStatus.Cancelled].includes(
+                        ticketRoomRef.status,
+                      )
+                    "
+                    size="small"
+                    color="green"
+                    icon="dollar"
+                    @click="
+                      modalTicketPayment?.openModal({
+                        ticket: ticketRoomRef,
+                        paymentView: PaymentViewType.Success,
+                      })
+                    "
+                  >
+                    <span class="font-bold">THANH TOÁN</span>
+                  </VueButton>
+                </div>
+                <span class="">
+                  {{ formatMoney(ticketRoomRef.paid) }} /
+                  {{ formatMoney(ticketRoomRef.totalMoney) }}
+                </span>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="ticketRoomRef.totalMoney < ticketRoomRef.paid">
+            <td><IconDollar /></td>
+            <td>Tiền thừa</td>
+            <td>:</td>
+            <td>
+              <div class="text-lg text-green-500 font-bold">
+                {{ formatMoney(Math.abs(ticketRoomRef.totalMoney - ticketRoomRef.paid)) }}
+              </div>
+            </td>
+          </tr>
+          <tr v-if="ticketRoomRef.totalMoney > ticketRoomRef.paid">
+            <td><IconDollar /></td>
+            <td>Còn thiếu</td>
+            <td>:</td>
+            <td>
+              <div class="text-lg text-red-500 font-bold">
+                {{ formatMoney(Math.abs(ticketRoomRef.totalMoney - ticketRoomRef.paid)) }}
+              </div>
+            </td>
+          </tr>
+          <tr>
             <td><IconSend /></td>
             <td>Sản phẩm</td>
             <td>:</td>
@@ -241,6 +334,10 @@ input[type='number']::-webkit-outer-spin-button {
 .table-information {
   td {
     padding: 8px 8px;
+  }
+
+  td:nth-child(2) {
+    white-space: nowrap;
   }
 }
 </style>

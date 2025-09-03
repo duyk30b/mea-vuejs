@@ -27,7 +27,7 @@ import {
   type UnitType,
 } from '@/modules/enum.ts'
 import { PermissionId } from '@/modules/permission/permission.enum.ts'
-import { Position, PositionInteractType } from '@/modules/position'
+import { Position, PositionType } from '@/modules/position'
 import { Product, ProductService } from '@/modules/product'
 import { ProductGroupService } from '@/modules/product-group'
 import { Role, RoleService } from '@/modules/role'
@@ -58,7 +58,7 @@ const settingStore = useSettingStore()
 const { isMobile, formatMoney } = settingStore
 const { userPermission } = MeService
 
-const productOrigin = ref(Product.blank())
+let productOrigin = Product.blank()
 const product = ref(Product.blank())
 const productGroupOptions = computed(() => {
   return ProductGroupService.productGroupAll.value.map((i) => {
@@ -160,34 +160,25 @@ splitBatchByCostPriceOptions.forEach((i) => {
   }
 })
 
-const handleAddPosition = () => {
-  const positionBlank = Position.blank()
-  positionBlank.positionType = PositionInteractType.Product
-  positionBlank.positionInteractId = product.value.id
-
-  product.value.positionList!.push(positionBlank)
-}
-
 const openModal = async (productId?: number, options?: { hasInitQuantity?: boolean }) => {
   showModal.value = true
   hasInitQuantity.value = !!options?.hasInitQuantity
 
   if (!productId) {
-    productOrigin.value = Product.blank()
+    productOrigin = Product.blank()
     product.value = Product.blank()
     unit.value = [{ name: '', rate: 1, default: true }]
   } else {
     try {
-      const productFetch = await ProductService.detail(
+      productOrigin = await ProductService.detail(
         productId,
         { relation: { positionList: true, discountList: true } },
         { query: true },
       )
-      productOrigin.value = Product.from(productFetch)
-      product.value = productFetch
     } catch (error) {
-      productOrigin.value = Product.blank()
+      productOrigin = Product.blank()
     }
+    product.value = Product.from(productOrigin)
 
     try {
       let unitParse: UnitType[] = JSON.parse(
@@ -200,9 +191,6 @@ const openModal = async (productId?: number, options?: { hasInitQuantity?: boole
     } catch (error) {
       unit.value = [{ name: '', rate: 1, default: true }]
     }
-  }
-  if (product.value.positionList?.length == 0) {
-    handleAddPosition()
   }
 
   try {
@@ -230,7 +218,7 @@ const handleChangeUnitDefault = (e: Event, index: number) => {
 const closeModal = () => {
   showModal.value = false
   product.value = Product.blank()
-  productOrigin.value = Product.blank()
+  productOrigin = Product.blank()
   warehouseIdSelect.value = {}
 }
 
@@ -263,16 +251,13 @@ const handleChangeSelectNoWarehouse = (e: Event) => {
 }
 
 const hasChangeDiscountList = computed(() => {
-  return !Discount.equalList(
-    product.value.discountList || [],
-    productOrigin.value.discountList || [],
-  )
+  return !Discount.equalList(product.value.discountList || [], productOrigin.discountList || [])
 })
 
-const hasChangePositionList = computed(() => {
+const hasChangePositionRequestList = computed(() => {
   return !Position.equalList(
-    (product.value.positionList || []).filter((i) => !!i.roleId),
-    productOrigin.value.positionList || [],
+    (product.value.positionRequestList || []).filter((i) => !!i.roleId),
+    productOrigin.positionRequestList || [],
   )
 })
 
@@ -290,7 +275,9 @@ const handleSave = async () => {
       const data = await ProductService.createOne({
         product: product.value,
         discountList: hasChangeDiscountList.value ? product.value.discountList : undefined,
-        positionList: hasChangePositionList.value ? product.value.positionList : undefined,
+        positionRequestList: hasChangePositionRequestList.value
+          ? product.value.positionRequestList
+          : undefined,
       })
       emit('success', data, 'CREATE')
       closeModal()
@@ -298,7 +285,9 @@ const handleSave = async () => {
       const response = await ProductService.updateOne(product.value.id, {
         product: product.value,
         discountList: hasChangeDiscountList.value ? product.value.discountList : undefined,
-        positionList: hasChangePositionList.value ? product.value.positionList : undefined,
+        positionRequestList: hasChangePositionRequestList.value
+          ? product.value.positionRequestList
+          : undefined,
       })
       if (response.success) {
         emit('success', response.data.product, 'UPDATE')
@@ -777,8 +766,9 @@ defineExpose({ openModal })
             <VueTabPanel :tabKey="TABS_KEY.ROLE_AND_POSITION">
               <div class="mt-4">
                 <PositionTableAction
-                  v-model:positionList="product.positionList!"
-                  :positionType="PositionInteractType.Product"
+                  v-model:positionList="product.positionRequestList!"
+                  :positionListCommon="product.positionRequestListCommon"
+                  :positionType="PositionType.ProductRequest"
                   :positionInteractId="product.id"
                   :editable="userPermission[PermissionId.MASTER_DATA_POSITION]"
                 />

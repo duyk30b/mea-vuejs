@@ -25,7 +25,7 @@ import { FileTicketApi } from '@/modules/file-excel/file-ticket.api'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtmlAction } from '@/modules/print-html'
 import { RoleService } from '@/modules/role'
-import { Room, RoomType, RoomService, roomTicketPagination } from '@/modules/room'
+import { Room, RoomType, RoomService, roomTicketPaginationMapRoomId } from '@/modules/room'
 import {
   Ticket,
   TicketActionApi,
@@ -97,7 +97,7 @@ const startFetchData = async (options?: { dataLoading: boolean }) => {
       relation: {
         customer: true,
         // ticketAttributeList: true,
-        ticketUserList: settingStore.TICKET_CLINIC_LIST.roleIdList.length ? {} : false,
+        ticketUserList: settingStore.TICKET_CLINIC_LIST.roleIdList.length ? {} : undefined,
       },
       filter: {
         roomId: filter.roomId ? filter.roomId : undefined,
@@ -119,7 +119,7 @@ const startFetchData = async (options?: { dataLoading: boolean }) => {
         : { registeredAt: 'DESC' },
     })
 
-    roomTicketPagination.value[currentRoom.value.id] = paginationResult.ticketList
+    roomTicketPaginationMapRoomId.value[currentRoom.value.id] = paginationResult.ticketList
     total.value = paginationResult.total
   } catch (error) {
   } finally {
@@ -258,7 +258,7 @@ const handleClickDestroy = async (ticketId: number) => {
     content: 'Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
     onOk: async () => {
       try {
-        roomTicketPagination.value[currentRoom.value.id] = roomTicketPagination.value[
+        roomTicketPaginationMapRoomId.value[currentRoom.value.id] = roomTicketPaginationMapRoomId.value[
           currentRoom.value.id
         ].filter((i) => {
           return i.id === ticketId
@@ -498,10 +498,10 @@ const startPrintAllMoney = async (options: { ticketId: number }) => {
           </tr>
         </tbody>
         <tbody v-else>
-          <tr v-if="roomTicketPagination[currentRoom.id]?.length === 0">
+          <tr v-if="roomTicketPaginationMapRoomId[currentRoom.id]?.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="ticket in roomTicketPagination[currentRoom.id]" :key="ticket.id">
+          <tr v-for="ticket in roomTicketPaginationMapRoomId[currentRoom.id]" :key="ticket.id">
             <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
               {{ ticket.id }} - {{ ticket.roomId }}
             </td>

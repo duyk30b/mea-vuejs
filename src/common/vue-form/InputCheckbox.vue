@@ -24,7 +24,7 @@ const props = withDefaults(
   },
 )
 const emit = defineEmits<{
-  (e: 'update:value', value: boolean | number): void
+  (e: 'update:value', value: number | boolean | number): void
   (e: 'update:checked', value: boolean): void
   (e: 'change', event: Event): void
 }>()

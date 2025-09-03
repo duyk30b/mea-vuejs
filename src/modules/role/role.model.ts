@@ -1,7 +1,8 @@
+import { BaseModel } from '../_base/base.model'
 import { User } from '../user'
 import { UserRole } from '../user-role/user-role.model'
 
-export class Role {
+export class Role extends BaseModel {
   id: number
   roleCode: string
   name: string
@@ -13,6 +14,9 @@ export class Role {
 
   static init(): Role {
     const ins = new Role()
+    ins.id = 0
+    ins._localId = Math.random().toString(36).substring(2)
+
     ins.permissionIds = JSON.stringify([])
     ins.isActive = 1
     return ins
@@ -30,6 +34,9 @@ export class Role {
       if (value === undefined) delete target[key as keyof typeof target]
     })
     Object.assign(target, source)
+    target._localId = String(
+      source.id || source._localId || Math.random().toString(36).substring(2),
+    )
     return target
   }
 

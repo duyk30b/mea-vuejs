@@ -12,7 +12,7 @@ import { Customer } from '@/modules/customer'
 import { Discount, DiscountInteractType } from '@/modules/discount'
 import { Image, ImageHostType } from '@/modules/image/image.model'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { CommissionCalculatorType, Position, PositionInteractType } from '@/modules/position'
+import { CommissionCalculatorType, Position, PositionType } from '@/modules/position'
 import { PrintHtml, PrintHtmlAction, PrintHtmlCompile, PrintHtmlType } from '@/modules/print-html'
 import { Radiology, RadiologyApi, RadiologyService } from '@/modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '@/modules/radiology-group'
@@ -41,7 +41,7 @@ const route = useRoute()
 const router = useRouter()
 
 const { userPermission, organization, user } = MeService
-const radiologyOrigin = ref(Radiology.blank())
+let radiologyOrigin = Radiology.blank()
 const radiology = ref(Radiology.blank())
 
 const radiologyGroupAll = ref<RadiologyGroup[]>([])
@@ -76,41 +76,44 @@ onBeforeMount(async () => {
 onMounted(async () => {
   const radiologyId = Number(route.params.id)
   if (radiologyId) {
-    const radiologyResponse = await RadiologyApi.detail(radiologyId, {
+    radiologyOrigin = await RadiologyApi.detail(radiologyId, {
       relation: { printHtml: true, positionList: true, discountList: true },
     })
-    radiologyOrigin.value = radiologyResponse
-    radiologyOrigin.value.radiologyGroup = await RadiologyGroupService.detail(
-      radiologyOrigin.value.radiologyGroupId,
+    radiologyOrigin.radiologyGroup = await RadiologyGroupService.detail(
+      radiologyOrigin.radiologyGroupId,
     )
-    radiology.value = Radiology.from(radiologyResponse)
+    radiology.value = Radiology.from(radiologyOrigin)
   } else {
     radiology.value = Radiology.blank()
   }
-  if (!radiology.value.positionList?.length) {
-    handleAddPosition()
-  }
+})
+
+const hasChangePositionRequestList = computed(() => {
+  return !Position.equalList(
+    (radiology.value.positionRequestList || []).filter((i) => !!i.roleId),
+    radiologyOrigin.positionRequestList || [],
+  )
+})
+
+const hasChangePositionResultList = computed(() => {
+  return !Position.equalList(
+    (radiology.value.positionResultList || []).filter((i) => !!i.roleId),
+    radiologyOrigin.positionResultList || [],
+  )
 })
 
 const hasChangeDiscountList = computed(() => {
-  return !Discount.equalList(
-    radiology.value.discountList || [],
-    radiologyOrigin.value.discountList || [],
-  )
-})
-
-const hasChangePositionList = computed(() => {
-  return !Position.equalList(
-    (radiology.value.positionList || []).filter((i) => !!i.roleId),
-    radiologyOrigin.value.positionList || [],
-  )
+  return !Discount.equalList(radiology.value.discountList || [], radiologyOrigin.discountList || [])
 })
 
 const hasChangeData = computed(() => {
-  if (!Radiology.equal(radiology.value, radiologyOrigin.value)) {
+  if (!Radiology.equal(radiology.value, radiologyOrigin)) {
     return true
   }
-  if (hasChangePositionList.value) {
+  if (hasChangePositionRequestList.value) {
+    return true
+  }
+  if (hasChangePositionResultList.value) {
     return true
   }
   if (hasChangeDiscountList.value) {
@@ -120,43 +123,38 @@ const hasChangeData = computed(() => {
 })
 
 const handleSave = async () => {
-  for (let i = 0; i < (radiology.value.positionList?.length || 0); i++) {
-    const element = radiology.value.positionList![i]
-    if (
-      element.commissionCalculatorType === CommissionCalculatorType.PercentActual ||
-      element.commissionCalculatorType === CommissionCalculatorType.PercentExpected
-    ) {
-      if (element.commissionValue >= 1000) {
-        return AlertStore.addError('Công thức tính hoa hồng theo % : không thể gán giá trị >= 1000')
-      }
-    }
-  }
-
   try {
     saveLoading.value = true
-    if (radiology.value.id) {
-      const radiologyResponse = await RadiologyService.updateOne(radiology.value.id, {
-        radiology: radiology.value,
-        positionList: hasChangePositionList.value ? radiology.value.positionList : undefined,
-        discountList: hasChangeDiscountList.value ? radiology.value.discountList : undefined,
-      })
-      Object.assign(radiology.value, Radiology.from(radiologyResponse))
-      Object.assign(radiologyOrigin.value, Radiology.from(radiologyResponse))
-      AlertStore.addSuccess('Cập nhật thành công', 1000)
-    } else {
+    if (!radiology.value.id) {
       const res = await RadiologyService.createOne({
         radiology: radiology.value,
-        positionList: hasChangePositionList.value ? radiology.value.positionList : undefined,
+        positionRequestList: hasChangePositionRequestList.value
+          ? radiology.value.positionRequestList
+          : undefined,
+        positionResultList: hasChangePositionResultList.value
+          ? radiology.value.positionResultList
+          : undefined,
         discountList: hasChangeDiscountList.value ? radiology.value.discountList : undefined,
       })
       router.push({ name: 'RadiologyList' })
       AlertStore.addSuccess('Tạo mới thành công', 500)
-
-      radiology.value = Radiology.from(res)
-      radiologyOrigin.value = Radiology.from(res)
+    } else {
+      const radiologyResponse = await RadiologyService.updateOne(radiology.value.id, {
+        radiology: radiology.value,
+        positionRequestList: hasChangePositionRequestList.value
+          ? radiology.value.positionRequestList
+          : undefined,
+        positionResultList: hasChangePositionResultList.value
+          ? radiology.value.positionResultList
+          : undefined,
+        discountList: hasChangeDiscountList.value ? radiology.value.discountList : undefined,
+      })
+      Object.assign(radiology.value, Radiology.from(radiologyResponse))
+      Object.assign(radiologyOrigin, Radiology.from(radiologyResponse))
+      AlertStore.addSuccess('Cập nhật thành công', 1000)
     }
   } catch (error) {
-    console.log('🚀 ~ file: RadiologyUpsert.vue:91 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ RadiologyUpsert.vue:157 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -270,7 +268,7 @@ const handleClickDelete = async () => {
             title: 'Không thể xóa phiếu CĐHA khi đã được chỉ định',
             content: [
               'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu khám liên quan trước',
-              `Phiếu khám liên quan: ${response.data.ticketRadiologyList
+              `Phiếu khám liên quan: ${response.ticketRadiologyList
                 .map((i) => i.ticketId)
                 .join(', ')}`,
             ],
@@ -340,17 +338,6 @@ const startTestPrint = async () => {
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
   }
-}
-
-const handleAddPosition = () => {
-  const positionBlank = Position.blank()
-  positionBlank.positionType = PositionInteractType.Radiology
-  positionBlank.positionInteractId = radiology.value.id
-
-  if (!radiology.value.positionList) {
-    radiology.value.positionList = []
-  }
-  radiology.value.positionList!.push(positionBlank)
 }
 
 const showDataSystemPrint = () => {
@@ -551,9 +538,21 @@ const startCleanHtml = () => {
         </VueTabPanel>
         <VueTabPanel :tabKey="TABS_KEY.ROLE_AND_POSITION">
           <div class="mt-4">
+            <div style="font-weight: bold">1. Vai trò chỉ định CĐHA</div>
             <PositionTableAction
-              v-model:positionList="radiology.positionList!"
-              :positionType="PositionInteractType.Radiology"
+              v-model:positionList="radiology.positionRequestList!"
+              :positionListCommon="radiology.positionRequestListCommon || []"
+              :positionType="PositionType.RadiologyRequest"
+              :positionInteractId="radiology.id"
+              :editable="userPermission[PermissionId.MASTER_DATA_POSITION]"
+            />
+          </div>
+          <div class="mt-10">
+            <div style="font-weight: bold">2. Vai trò thực hiện, trả kết quả CĐHA</div>
+            <PositionTableAction
+              v-model:positionList="radiology.positionResultList!"
+              :positionListCommon="radiology.positionResultListCommon || []"
+              :positionType="PositionType.RadiologyResult"
               :positionInteractId="radiology.id"
               :editable="userPermission[PermissionId.MASTER_DATA_POSITION]"
             />

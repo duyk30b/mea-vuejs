@@ -192,9 +192,9 @@ export class TicketChangeProductApi {
     ticketId: number
     ticketProductId: number
     ticketProduct?: TicketProduct
-    ticketUserList?: TicketUser[]
+    ticketUserRequestList?: TicketUser[]
   }) {
-    const { ticketId, ticketProduct, ticketProductId, ticketUserList } = body
+    const { ticketId, ticketProduct, ticketProductId, ticketUserRequestList } = body
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/product/update-ticket-product/${ticketProductId}`,
       {
@@ -212,12 +212,13 @@ export class TicketChangeProductApi {
             hintUsage: ticketProduct.hintUsage,
           }
           : undefined,
-        ticketUserList: ticketUserList
-          ? ticketUserList.map((i) => ({
-            id: i.id || 0,
-            roleId: i.roleId || 0,
-            userId: i.userId || 0,
-          }))
+        ticketUserRequestList: ticketUserRequestList
+          ? ticketUserRequestList
+            .filter((i) => !!i.userId)
+            .map((i) => ({
+              positionId: i.positionId,
+              userId: i.userId,
+            }))
           : undefined,
       },
     )
@@ -228,9 +229,9 @@ export class TicketChangeProductApi {
     ticketId: number
     ticketProductId: number
     ticketProduct?: TicketProduct
-    ticketUserList?: TicketUser[]
+    ticketUserRequestList?: TicketUser[]
   }) {
-    const { ticketId, ticketProduct, ticketProductId, ticketUserList } = body
+    const { ticketId, ticketProduct, ticketProductId, ticketUserRequestList } = body
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/consumable/update-ticket-product-consumable/${ticketProductId}`,
       {
@@ -248,12 +249,13 @@ export class TicketChangeProductApi {
             hintUsage: ticketProduct.hintUsage,
           }
           : undefined,
-        ticketUserList: ticketUserList
-          ? ticketUserList.map((i) => ({
-            id: i.id || 0,
-            roleId: i.roleId || 0,
-            userId: i.userId || 0,
-          }))
+        ticketUserRequestList: ticketUserRequestList
+          ? ticketUserRequestList
+            .filter((i) => !!i.userId)
+            .map((i) => ({
+              positionId: i.positionId,
+              userId: i.userId,
+            }))
           : undefined,
       },
     )
@@ -264,9 +266,9 @@ export class TicketChangeProductApi {
     ticketId: number
     ticketProductId: number
     ticketProduct?: TicketProduct
-    ticketUserList?: TicketUser[]
+    ticketUserRequestList?: TicketUser[]
   }) {
-    const { ticketId, ticketProduct, ticketProductId, ticketUserList } = body
+    const { ticketId, ticketProduct, ticketProductId, ticketUserRequestList } = body
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/prescription/update-ticket-product-prescription/${ticketProductId}`,
       {
@@ -284,12 +286,13 @@ export class TicketChangeProductApi {
             hintUsage: ticketProduct.hintUsage,
           }
           : undefined,
-        ticketUserList: ticketUserList
-          ? ticketUserList.map((i) => ({
-            id: i.id || 0,
-            roleId: i.roleId || 0,
-            userId: i.userId || 0,
-          }))
+        ticketUserRequestList: ticketUserRequestList
+          ? ticketUserRequestList
+            .filter((i) => !!i.userId)
+            .map((i) => ({
+              positionId: i.positionId,
+              userId: i.userId,
+            }))
           : undefined,
       },
     )

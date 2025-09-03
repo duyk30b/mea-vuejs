@@ -7,7 +7,7 @@ import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus, DiscountType, PaymentMoneyStatus } from '@/modules/enum'
-import { PositionInteractType, PositionService } from '@/modules/position'
+import { PositionType, PositionService } from '@/modules/position'
 import { Role, RoleService } from '@/modules/role'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeProductApi, TicketStatus } from '@/modules/ticket'
@@ -35,43 +35,6 @@ const ticketUserList = ref<TicketUser[]>([])
 
 const showModal = ref(false)
 const saveLoading = ref(false)
-
-const refreshTicketUserList = async () => {
-  ticketUserListOrigin = []
-  const ticketUserListRef =
-    ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.Product]?.[ticketProduct.value.id] ||
-    []
-
-  const positionList = await PositionService.list({
-    filter: {
-      positionType: PositionInteractType.Product,
-      positionInteractId: ticketProduct.value.productId,
-    },
-  })
-
-  // lấy tất cả role có trong commission trước
-  positionList.forEach((i) => {
-    const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
-    if (findExist) {
-      ticketUserListOrigin.push(TicketUser.from(findExist))
-    } else {
-      const ticketUserBlank = TicketUser.blank()
-      ticketUserBlank.roleId = i.roleId
-      ticketUserListOrigin.push(ticketUserBlank)
-    }
-  })
-
-  // lấy role còn thừa ra ở trong ticketUser vẫn phải hiển thị
-  ticketUserListRef.forEach((i) => {
-    const findExist = ticketUserListOrigin.find((j) => j.roleId === i.roleId)
-    if (findExist) {
-      return // nếu đã có rồi thì bỏ qua
-    } else {
-      ticketUserListOrigin.push(TicketUser.from(i))
-    }
-  })
-  ticketUserList.value = TicketUser.fromList(ticketUserListOrigin)
-}
 
 onMounted(async () => {
   try {
@@ -106,8 +69,6 @@ const openModal = async (ticketProductProp: TicketProduct) => {
   showModal.value = true
   ticketProductOrigin = TicketProduct.from(ticketProductProp)
   ticketProduct.value = TicketProduct.from(ticketProductProp)
-
-  await refreshTicketUserList()
 }
 
 const hasChangeTicketProduct = computed(() => {
@@ -232,7 +193,6 @@ const updateTicketProduct = async () => {
       ticketId: ticketRoomRef.value.id,
       ticketProductId: ticketProduct.value.id,
       ticketProduct: hasChangeTicketProduct.value ? ticketProduct.value : undefined,
-      ticketUserList: hasUpdateTicketUser ? ticketUserList.value : undefined,
     })
     closeModal()
   } catch (error) {

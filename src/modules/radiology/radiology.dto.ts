@@ -9,6 +9,8 @@ export class RadiologyGetQuery {
     printHtml?: boolean
     positionList?: boolean
     discountList?: boolean
+    ticketUserRequestList?: boolean
+    ticketUserResultList?: boolean
   }
 
   filter?: {

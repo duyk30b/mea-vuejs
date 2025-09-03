@@ -1,9 +1,11 @@
 <script lang="ts" setup>
-import { InputOptionsValue } from '@/common/vue-form'
-import type { ItemOption } from '@/common/vue-form/InputOptionsValue.vue'
+import { InputOptionsValue, InputSearch } from '@/common/vue-form'
+import type { ItemOption } from '@/common/vue-form/InputSearch.vue'
 import { CONFIG } from '@/config'
-import { useSettingStore } from '@/modules/_me/setting.store'
+import { Position, PositionService } from '@/modules/position'
+import { RoleService } from '@/modules/role'
 import { User, UserService } from '@/modules/user'
+import { UserRoleService } from '@/modules/user-role'
 import { ESString } from '@/utils'
 import { onMounted, ref } from 'vue'
 
@@ -15,49 +17,70 @@ const emit = defineEmits<{
 const props = withDefaults(
   defineProps<{
     userId: number
+    positionId?: number
     disabled?: boolean
     required?: boolean
-    label?: string
   }>(),
   {
     userId: 0,
+    positionId: 0,
     disabled: false,
     required: false,
-    label: 'Nhân viên',
   },
 )
 
 const inputOptionsUser = ref<InstanceType<typeof InputOptionsValue>>()
 
-const settingStore = useSettingStore()
-const { formatMoney, isMobile } = settingStore
-
-const userOptions = ref<ItemOption[]>([])
+const userOptions = ref<ItemOption<User>[]>([])
+const position = ref(Position.blank())
 
 onMounted(async () => {
-  const userAll = await UserService.getAll()
-  userOptions.value = userAll.map((i) => ({ value: i.id, text: i.fullName, data: i }))
+  await Promise.all([
+    UserService.getAll(),
+    UserRoleService.getAll(),
+    PositionService.getAll(),
+    RoleService.getAll(),
+  ])
+  if (!props.positionId) {
+    const userAll = await UserService.getAll()
+    userOptions.value = userAll.map((i) => ({ value: i.id, text: i.fullName, data: i }))
+    position.value = Position.blank()
+  } else {
+    position.value = await PositionService.detail(props.positionId, { relation: { role: true } })
+    const userMap = await UserService.getMap()
+    const userRoleMapList = await UserRoleService.getMapList()
+    userOptions.value = (userRoleMapList[position.value.roleId] || []).map((i) => {
+      const currentUser = userMap[i.userId]
+      return {
+        value: i.userId,
+        text: currentUser.fullName,
+        data: currentUser,
+      }
+    })
+  }
 })
 
 const handleUpdateValue = (v: any) => {
   emit('update:userId', v)
 }
 
-const handleSelectItem = (item?: ItemOption) => {
+const handleSelectItem = (item?: ItemOption<User>) => {
   emit('selectUser', item?.data)
 }
 
-const logicFilter = (item: ItemOption, text: string) => {
+const logicFilter = (item: ItemOption<User>, text: string) => {
   return ESString.customFilter(item.text, text)
 }
 </script>
 <template>
   <div class="flex gap-1 flex-wrap">
-    <span>{{ label }}</span>
-    <span v-if="CONFIG.MODE === 'development'" style="color: violet">({{ userId }})</span>
+    <div>{{ position.role?.name || 'Nhân viên' }}</div>
+    <div v-if="CONFIG.MODE === 'development'" style="color: violet">
+      (P{{ positionId }} - R{{ position.roleId }} - U{{ userId }})
+    </div>
   </div>
   <div>
-    <InputOptionsValue
+    <InputSearch
       ref="inputOptionsUser"
       :value="userId"
       :disabled="disabled"
@@ -74,7 +97,7 @@ const logicFilter = (item: ItemOption, text: string) => {
           <b>{{ data.fullName }}</b>
         </div>
       </template>
-    </InputOptionsValue>
+    </InputSearch>
   </div>
 </template>
 

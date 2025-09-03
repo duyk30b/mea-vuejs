@@ -8,6 +8,18 @@ import type { TicketProductListQuery } from '../ticket-product'
 import type { TicketRadiologyListQuery } from '../ticket-radiology'
 import type { TicketStatus } from './ticket.model'
 
+export class TicketFilterQuery {
+  roomId?: number | ConditionNumber
+  customerId?: number
+  status?: TicketStatus | ConditionEnum<TicketStatus>
+  deliveryStatus?: DeliveryStatus | ConditionEnum<DeliveryStatus>
+  registeredAt?: ConditionDate
+  startedAt?: ConditionDate
+  updatedAt?: ConditionDate
+  $OR?: TicketFilterQuery[]
+  $AND?: TicketFilterQuery[]
+}
+
 export class TicketGetQuery {
   page?: number
   limit?: number
@@ -18,7 +30,7 @@ export class TicketGetQuery {
     ticketExpenseList?: boolean
     ticketAttributeList?: boolean
     ticketProductList?: TicketProductListQuery
-    ticketBatchList?: { batch?: boolean } | false
+    ticketBatchList?: { batch?: boolean }
     ticketProductConsumableList?: TicketProductListQuery
     ticketProductPrescriptionList?: TicketProductListQuery
     ticketProcedureList?: TicketProcedureListQuery
@@ -26,21 +38,13 @@ export class TicketGetQuery {
     ticketLaboratoryGroupList?: TicketLaboratoryGroupListQuery
     ticketLaboratoryResultList?: boolean
     ticketRadiologyList?: TicketRadiologyListQuery
-    ticketUserList?: { user?: boolean } | false
+    ticketUserList?: { user?: boolean }
     toAppointment?: boolean
     customerSource?: boolean
     imageList?: boolean
   }
 
-  filter?: {
-    roomId?: number | ConditionNumber
-    customerId?: number
-    status?: TicketStatus | ConditionEnum<TicketStatus>
-    deliveryStatus?: DeliveryStatus | ConditionEnum<DeliveryStatus>
-    registeredAt?: ConditionDate
-    startedAt?: ConditionDate
-    updatedAt?: ConditionDate
-  }
+  filter?: TicketFilterQuery
 
   sort?: {
     id?: 'ASC' | 'DESC'
@@ -61,4 +65,3 @@ export class TicketGetQuery {
 export class TicketPaginationQuery extends TicketGetQuery { }
 export class TicketListQuery extends OmitClass(TicketGetQuery, ['page']) { }
 export class TicketDetailQuery extends PickClass(TicketGetQuery, ['relation']) { }
-export class TicketFilterQuery extends PickClass(TicketGetQuery, ['filter']) { }

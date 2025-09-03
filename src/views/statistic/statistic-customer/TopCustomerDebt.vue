@@ -72,10 +72,6 @@ const startFetchData = async () => {
       customerList.value.length,
       ...customerList.value.map((i) => i.debt / moneyDivision),
     )
-    console.log(
-      '🚀 ~ TopCustomerDebt.vue:66 ~ startFetchData ~ barData.datasets[0]:',
-      barData.datasets[0],
-    )
   } catch (error) {
     console.log('🚀 ~ TopCustomerDebt.vue:38 ~ startFetchData ~ error:', error)
   } finally {

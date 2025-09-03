@@ -60,7 +60,7 @@ const startFetchData = async (options?: { dataLoading: boolean }) => {
       relation: {
         customer: true,
         // ticketAttributeList: true,
-        ticketUserList: settingStore.TICKET_CLINIC_LIST.roleIdList.length ? {} : false,
+        ticketUserList: settingStore.TICKET_CLINIC_LIST.roleIdList.length ? {} : undefined,
       },
       filter: {
         customerId: customerId.value ? customerId.value : undefined,

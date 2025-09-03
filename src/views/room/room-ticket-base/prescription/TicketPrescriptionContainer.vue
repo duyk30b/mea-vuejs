@@ -5,22 +5,19 @@ import { IconFileSearch, IconSpin } from '@/common/icon-antd'
 import { IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import { IconEditSquare } from '@/common/icon-google'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { InputFilter, VueSwitch } from '@/common/vue-form'
+import { VueSwitch } from '@/common/vue-form'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus, DiscountType, PaymentMoneyStatus } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PositionInteractType, PositionService } from '@/modules/position'
 import { PrescriptionSample, type MedicineType } from '@/modules/prescription-sample'
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import { Product, ProductService } from '@/modules/product'
-import { RoleService } from '@/modules/role'
 import { ticketRoomRef } from '@/modules/room'
 import {
   TicketChangeAttributeApi,
   TicketChangeProductApi,
-  TicketChangeUserApi,
-  TicketStatus,
+  TicketStatus
 } from '@/modules/ticket'
 import {
   TicketAttributeKeyAdviceList,
@@ -28,9 +25,6 @@ import {
 } from '@/modules/ticket-attribute'
 import { TicketProduct, TicketProductType } from '@/modules/ticket-product'
 import { TicketUser } from '@/modules/ticket-user'
-import { UserService } from '@/modules/user'
-import { UserRoleService } from '@/modules/user-role'
-import { ESString } from '@/utils'
 import InputSearchPrescriptionSample from '@/views/component/InputSearchPrescriptionSample.vue'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
@@ -54,9 +48,7 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
 const ticketProductPrescriptionList = ref<TicketProduct[]>([])
-const roleMap = RoleService.roleMap
-const userMap = UserService.userMap
-const userRoleMapList = UserRoleService.userRoleMapList
+
 
 let ticketUserListOrigin: TicketUser[] = []
 const ticketUserList = ref<TicketUser[]>([])
@@ -67,49 +59,8 @@ const ticketAttributeMap = ref<{ [P in TicketAttributeKeyAdviceType]?: any } & {
 })
 
 onMounted(async () => {
-  refreshTicketUserList()
   await ticketRoomRef.value.refreshProduct()
 })
-
-const refreshTicketUserList = async () => {
-  if (!organizationPermission.value[PermissionId.MASTER_DATA_POSITION]) {
-    return
-  }
-  const tuListOrigin: TicketUser[] = []
-  const ticketUserListRef =
-    ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.PrescriptionList]?.[0] || []
-
-  const positionList = await PositionService.list({
-    filter: {
-      positionType: PositionInteractType.PrescriptionList,
-      positionInteractId: 0,
-    },
-  })
-
-  // lấy tất cả role có trong commission trước
-  positionList.forEach((i, index) => {
-    const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
-    if (findExist) {
-      tuListOrigin.push(TicketUser.from(findExist))
-    } else {
-      const ticketUserBlank = TicketUser.blank()
-      ticketUserBlank.roleId = i.roleId
-      tuListOrigin.push(ticketUserBlank)
-    }
-  })
-
-  // lấy role còn thừa ra ở trong ticketUser vẫn phải hiển thị
-  ticketUserListRef.forEach((i) => {
-    const findExist = tuListOrigin.find((j) => j.roleId === i.roleId)
-    if (findExist) {
-      return // nếu đã có rồi thì bỏ qua
-    } else {
-      tuListOrigin.push(TicketUser.from(i))
-    }
-  })
-  ticketUserListOrigin = tuListOrigin
-  ticketUserList.value = TicketUser.fromList(tuListOrigin)
-}
 
 const selectPrescriptionSample = async (psSelect?: PrescriptionSample) => {
   if (psSelect) {
@@ -143,10 +94,8 @@ watch(
 )
 
 watch(
-  () => ticketRoomRef.value.ticketUserGroup,
-  (newValue, oldValue) => {
-    refreshTicketUserList()
-  },
+  () => ticketRoomRef.value.ticketUserTree,
+  (newValue, oldValue) => {},
   { immediate: true, deep: true },
 )
 
@@ -244,30 +193,12 @@ const saveAdvicePrescription = async () => {
   }
 }
 
-const saveTicketUserList = async () => {
-  try {
-    await TicketChangeUserApi.updateTicketUserPosition({
-      ticketId: ticketRoomRef.value.id,
-      positionType: PositionInteractType.PrescriptionList,
-      positionInteractId: 0,
-      ticketItemId: 0,
-      quantity: 1,
-      ticketUserList: Object.values(ticketUserList.value),
-    })
-  } catch (e: any) {
-    console.log('🚀 ~ TicketClinicPrescription.vue:184 ~ e:', e)
-  }
-}
-
 const savePrescription = async () => {
   if (hasChangePriority.value) {
     savePriorityTicketProductPrescription()
   }
   if (hasChangeAttribute.value) {
     saveAdvicePrescription()
-  }
-  if (hasChangeTicketUserList.value) {
-    saveTicketUserList()
   }
 }
 
@@ -556,43 +487,6 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
       <div style="height: 140px">
         <VueTinyMCE v-model="ticketAttributeMap.advice" />
       </div>
-    </div>
-
-    <div class="mt-4 flex flex-wrap items-center gap-4">
-      <template v-if="ticketUserList.length">
-        <div
-          v-for="(ticketUser, index) in ticketUserList"
-          :key="index"
-          style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
-        >
-          <div>
-            {{ roleMap[ticketUser.roleId]?.name || '' }}
-          </div>
-          <div>
-            <InputFilter
-              v-model:value="ticketUserList[index].userId"
-              :options="
-                (userRoleMapList[ticketUser.roleId] || []).map((i) => {
-                  return {
-                    value: userMap[i.userId]?.id || 0,
-                    text: userMap[i.userId]?.fullName || '',
-                    data: userMap[i.userId],
-                  }
-                })
-              "
-              :maxHeight="200"
-              placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên"
-            >
-              <template #option="{ item: { data } }">
-                <div>
-                  <b>{{ data.fullName }}</b>
-                  - {{ ESString.formatPhone(data.phone) }} -
-                </div>
-              </template>
-            </InputFilter>
-          </div>
-        </div>
-      </template>
     </div>
   </div>
   <div class="mt-4 flex gap-2">

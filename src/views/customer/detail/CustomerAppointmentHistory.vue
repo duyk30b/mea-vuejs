@@ -27,15 +27,15 @@ const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await AppointmentApi.pagination({
+    const paginationResponse = await AppointmentApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: { customerId: props.customerId },
       relation: { customer: false },
       sort: { registeredAt: 'DESC' },
     })
-    appointmentList.value = data
-    total.value = meta.total
+    appointmentList.value = paginationResponse.appointmentList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: CustomerInvoicesHistory.vue:43 ~ error:', error)
   }
@@ -93,7 +93,7 @@ const handleClickDeleteAppointment = async (appointmentId: number) => {
             <td>
               <div>HK{{ appointment.id }}</div>
               <div>
-                <AppointmentStatusTag :appointmentStatus="appointment.appointmentStatus" />
+                <AppointmentStatusTag :status="appointment.status" />
               </div>
               <div style="white-space: nowrap; font-size: 0.9em">
                 {{ ESTimer.timeToText(appointment.registeredAt, 'DD/MM/YYYY hh:mm') }}
@@ -107,7 +107,7 @@ const handleClickDeleteAppointment = async (appointmentId: number) => {
                     AppointmentStatus.Waiting,
                     AppointmentStatus.Confirm,
                     AppointmentStatus.Cancelled,
-                  ].includes(appointment.appointmentStatus)
+                  ].includes(appointment.status)
                 "
                 class="text-red-500"
                 @click="handleClickDeleteAppointment(appointment.id)"
@@ -139,7 +139,7 @@ const handleClickDeleteAppointment = async (appointmentId: number) => {
             <td style="width: 200px">
               <div class="flex justify-center">
                 <div>
-                  <AppointmentStatusTag :appointmentStatus="appointment.appointmentStatus" />
+                  <AppointmentStatusTag :status="appointment.status" />
                 </div>
               </div>
             </td>
@@ -154,7 +154,7 @@ const handleClickDeleteAppointment = async (appointmentId: number) => {
                     AppointmentStatus.Waiting,
                     AppointmentStatus.Confirm,
                     AppointmentStatus.Cancelled,
-                  ].includes(appointment.appointmentStatus)
+                  ].includes(appointment.status)
                 "
                 class="text-red-500"
                 @click="handleClickDeleteAppointment(appointment.id)"
