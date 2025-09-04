@@ -119,7 +119,7 @@ const radiologyCostAmount = computed(() => {
               [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
                 ticketRadiology.paymentMoneyStatus,
               ) &&
-              userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY]
+              userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_REQUEST]
             "
             class="text-orange-500"
             @click="modalTicketRadiologyUpdate?.openModal({ ticketRadiology })"

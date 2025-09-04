@@ -7,7 +7,7 @@ import type { TicketLaboratory } from '../../ticket-laboratory'
 import type { TicketUser } from '../../ticket-user'
 
 export class TicketChangeLaboratoryApi {
-  static async upsertLaboratory(body: {
+  static async upsertRequestLaboratoryGroup(body: {
     ticketId: number
     ticketLaboratoryGroupAddList?: {
       roomId: number
@@ -25,7 +25,7 @@ export class TicketChangeLaboratoryApi {
     }
   }) {
     const { ticketId, ticketLaboratoryGroupAddList, ticketLaboratoryGroupUpdate } = body
-    const response = await AxiosInstance.post(`/ticket/${ticketId}/laboratory/upsert-laboratory`, {
+    const response = await AxiosInstance.post(`/ticket/${ticketId}/laboratory/upsert-request-laboratory-group`, {
       ticketLaboratoryGroupAddList: ticketLaboratoryGroupAddList
         ? ticketLaboratoryGroupAddList.map((tlg) => ({
           laboratoryGroupId: tlg.laboratoryGroupId,
@@ -90,7 +90,7 @@ export class TicketChangeLaboratoryApi {
     const { data } = response.data as BaseResponse<boolean>
   }
 
-  static async updateTicketLaboratory(body: {
+  static async updateRequestTicketLaboratory(body: {
     ticketId: number
     ticketLaboratoryId: number
     ticketLaboratory?: TicketLaboratory
@@ -98,7 +98,7 @@ export class TicketChangeLaboratoryApi {
   }) {
     const { ticketId, ticketLaboratory, ticketLaboratoryId, ticketUserList } = body
     const response = await AxiosInstance.post(
-      `/ticket/${ticketId}/laboratory/update-ticket-laboratory/${ticketLaboratoryId}`,
+      `/ticket/${ticketId}/laboratory/update-request-ticket-laboratory/${ticketLaboratoryId}`,
       {
         ticketLaboratory: ticketLaboratory
           ? {

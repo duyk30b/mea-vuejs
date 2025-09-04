@@ -116,7 +116,7 @@ const clickDestroy = async () => {
 const startUpdateTicketRadiology = async () => {
   try {
     saveLoading.value = true
-    const ticketRadiologyResponse = await TicketChangeRadiologyApi.updateTicketRadiology({
+    const ticketRadiologyResponse = await TicketChangeRadiologyApi.updateRequestTicketRadiology({
       ticketId: ticketRadiology.value.ticketId,
       ticketRadiologyId: ticketRadiology.value.id,
       ticketRadiology: hasChangeTicketRadiology.value ? ticketRadiology.value : undefined,

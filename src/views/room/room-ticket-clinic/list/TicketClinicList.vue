@@ -94,8 +94,9 @@ const startFetchData = async () => {
             ? {}
             : undefined,
         ticketProcedureList: settingStore.TICKET_CLINIC_LIST.procedure
-          ? { relation: { ticketProcedureItemList: { imageList: true } } }
+          ? { relation: { ticketProcedureItemList: {} } }
           : undefined,
+        imageList: settingStore.TICKET_CLINIC_LIST.procedure ? true : false,
       },
       filter: {
         roomId: currentRoom.value.isCommon ? undefined : currentRoom.value.id || 0,
@@ -127,7 +128,9 @@ const startFetchData = async () => {
     for (let i = 0; i < paginationResult.ticketList.length; i++) {
       const ticketItem = paginationResult.ticketList[i]
       ticketItem.refreshTicketUserTree()
+      ticketItem.refreshImageMap()
       await ticketItem.refreshProcedure()
+      console.log("🚀 ~ TicketClinicList.vue:133 ~ startFetchData ~ ticketItem:", ticketItem)
     }
 
     roomTicketPaginationMapRoomId.value[currentRoom.value.id] = paginationResult.ticketList
@@ -586,7 +589,7 @@ const handleUpdateTicketProcedure = async (data: { ticketProcedure: TicketProced
               <span v-if="CONFIG.MODE === 'development'" style="color: violet">
                 ({{
                   ticket.ticketUserList?.find((i: TicketUser) => {
-                    return i.positionType === PositionType.Ticket && i.roleId === roleId
+                    return i.positionType === PositionType.TicketReception && i.roleId === roleId
                   })?.userId
                 }})
               </span>
@@ -594,7 +597,7 @@ const handleUpdateTicketProcedure = async (data: { ticketProcedure: TicketProced
                 {{
                   userMap[
                     ticket.ticketUserList?.find((i: TicketUser) => {
-                      return i.positionType === PositionType.Ticket && i.roleId === roleId
+                      return i.positionType === PositionType.TicketReception && i.roleId === roleId
                     })?.userId || 0
                   ]?.fullName
                 }}

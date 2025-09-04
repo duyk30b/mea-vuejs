@@ -17,7 +17,7 @@ import { ModalStore } from '@/common/vue-modal/vue-modal.store.ts'
 import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
 import { MeService } from '@/modules/_me/me.service.ts'
 import { useSettingStore } from '@/modules/_me/setting.store.ts'
-import { Discount, DiscountInteractType } from '@/modules/discount'
+import { Discount, DiscountInteractType, DiscountService } from '@/modules/discount'
 import {
   ProductType,
   SplitBatchByCostPrice,
@@ -27,7 +27,7 @@ import {
   type UnitType,
 } from '@/modules/enum.ts'
 import { PermissionId } from '@/modules/permission/permission.enum.ts'
-import { Position, PositionType } from '@/modules/position'
+import { Position, PositionService, PositionType } from '@/modules/position'
 import { Product, ProductService } from '@/modules/product'
 import { ProductGroupService } from '@/modules/product-group'
 import { Role, RoleService } from '@/modules/role'
@@ -177,6 +177,12 @@ const openModal = async (productId?: number, options?: { hasInitQuantity?: boole
       )
     } catch (error) {
       productOrigin = Product.blank()
+      product.value.discountListExtra = await DiscountService.list({
+        filter: { discountInteractId: 0, discountInteractType: DiscountInteractType.Product },
+      })
+      product.value.positionRequestListCommon = await PositionService.list({
+        filter: { positionType: PositionType.ProductRequest, positionInteractId: 0 },
+      })
     }
     product.value = Product.from(productOrigin)
 

@@ -135,7 +135,7 @@ const updateTicketLaboratory = async () => {
   try {
     const hasUpdateTicketUser =
       ticketUserListOrigin.length || ticketUserList.value.filter((i) => !!i.userId).length
-    await TicketChangeLaboratoryApi.updateTicketLaboratory({
+    await TicketChangeLaboratoryApi.updateRequestTicketLaboratory({
       ticketId: ticketRoomRef.value.id,
       ticketLaboratoryId: ticketLaboratory.value.id,
       ticketLaboratory: hasChangeTicketLaboratory.value ? ticketLaboratory.value : undefined,

@@ -23,11 +23,7 @@ import TicketProcedureStatusTag from './TicketProcedureStatusTag.vue'
 const ticketChangeTicketUserPosition = ref<InstanceType<typeof TicketChangeTicketUserPosition>>()
 
 const emit = defineEmits<{
-  (
-    e: 'success',
-    type: 'CREATE' | 'UPDATE' | 'DESTROY',
-    data: { ticketProcedure: TicketProcedure; ticketUserRequestList: TicketUser[] },
-  ): void
+  (e: 'success', type: 'CREATE' | 'UPDATE' | 'DESTROY', data: TicketProcedure): void
 }>()
 
 const settingStore = useSettingStore()
@@ -35,21 +31,14 @@ const { formatMoney, isMobile } = settingStore
 
 let ticketProcedureOrigin = TicketProcedure.blank()
 const ticketProcedure = ref<TicketProcedure>(TicketProcedure.blank())
-const ticketUserRequestOriginList = ref<TicketUser[]>([])
-const ticketUserRequestList = ref<TicketUser[]>([])
 
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-const openModal = async (data: {
-  ticketProcedure: TicketProcedure
-  ticketUserRequestList: TicketUser[]
-}) => {
+const openModal = async (data: { ticketProcedure: TicketProcedure }) => {
   ticketProcedureOrigin = data.ticketProcedure
   ticketProcedure.value = TicketProcedure.from(data.ticketProcedure)
 
-  ticketUserRequestOriginList.value = data.ticketUserRequestList
-  ticketUserRequestList.value = TicketUser.fromList(data.ticketUserRequestList)
   showModal.value = true
 }
 
@@ -68,8 +57,8 @@ const hasChangeTicketProcedureItemList = computed(() => {
 
 const hasChangeTicketUserList = computed(() => {
   const result = !TicketUser.equalList(
-    ticketUserRequestOriginList.value || [],
-    ticketUserRequestList.value || [],
+    ticketProcedureOrigin.ticketUserRequestList || [],
+    ticketProcedure.value.ticketUserRequestList || [],
   )
   return result
 })
@@ -114,8 +103,6 @@ const closeModal = () => {
   showModal.value = false
   ticketProcedure.value = TicketProcedure.blank()
   ticketProcedureOrigin = TicketProcedure.blank()
-  ticketUserRequestOriginList.value = []
-  ticketUserRequestList.value = []
 }
 
 const clickDestroy = async () => {
@@ -138,10 +125,7 @@ const clickDestroy = async () => {
           ticketId: ticketRoomRef.value.id,
           ticketProcedureId: ticketProcedure.value.id,
         })
-        emit('success', 'DESTROY', {
-          ticketProcedure: ticketProcedure.value,
-          ticketUserRequestList: ticketUserRequestList.value,
-        })
+        emit('success', 'DESTROY', ticketProcedure.value)
         closeModal()
       } catch (error) {
         console.log('🚀 ~ file: TicketClinicProcedure.vue:185 ~ onOk: ~ error:', error)
@@ -158,10 +142,7 @@ const submitChangeTicketProcedure = async () => {
   if (ticketProcedure.value.id) {
     await fetchUpdateTicketProcedure()
   } else {
-    emit('success', 'UPDATE', {
-      ticketProcedure: ticketProcedure.value,
-      ticketUserRequestList: ticketUserRequestList.value,
-    })
+    emit('success', 'UPDATE', ticketProcedure.value)
     closeModal()
   }
 }
@@ -193,7 +174,7 @@ const fetchUpdateTicketProcedure = async () => {
   saveLoading.value = true
   reCalculatorStatus()
   try {
-    await TicketChangeProcedureApi.updateTicketProcedure({
+    await TicketChangeProcedureApi.updateRequestTicketProcedure({
       ticketId: ticketRoomRef.value.id,
       ticketProcedureId: ticketProcedure.value.id,
       ticketProcedure: ticketProcedure.value,
@@ -202,13 +183,10 @@ const fetchUpdateTicketProcedure = async () => {
         : undefined,
       ticketUserRequestList:
         hasChangeTicketProcedure.value || hasChangeTicketUserList.value
-          ? ticketUserRequestList.value
+          ? ticketProcedure.value.ticketUserRequestList
           : undefined,
     })
-    emit('success', 'UPDATE', {
-      ticketProcedure: ticketProcedure.value,
-      ticketUserRequestList: ticketUserRequestList.value,
-    })
+    emit('success', 'UPDATE', ticketProcedure.value)
     closeModal()
   } catch (error) {
     console.log('🚀: ModalTicketProcedureUpdate.vue:205 ~ updateTicketProcedure ~ error:', error)
@@ -260,7 +238,7 @@ const handleUpdateTimeTicketProcedureItem = (time: any, index: number) => {
 }
 
 const handleFixTicketUserList = (tuListData: TicketUser[]) => {
-  ticketUserRequestOriginList.value = TicketUser.fromList(tuListData)
+  ticketProcedureOrigin.ticketUserRequestList = TicketUser.fromList(tuListData)
 }
 
 defineExpose({ openModal })
@@ -353,7 +331,7 @@ defineExpose({ openModal })
         <div class="mt-4">
           <TicketChangeTicketUserPosition
             ref="ticketChangeTicketUserPosition"
-            v-model:ticketUserList="ticketUserRequestList!"
+            v-model:ticketUserList="ticketProcedure.ticketUserRequestList!"
             :positionType="PositionType.ProcedureRequest"
             :positionInteractId="ticketProcedure.procedureId"
             @fix:ticketUserList="handleFixTicketUserList"

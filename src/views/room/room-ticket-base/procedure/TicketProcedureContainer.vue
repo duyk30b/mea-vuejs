@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { VueTag } from '@/common'
 import VueButton from '@/common/VueButton.vue'
-import { IconFileSearch, IconSpin } from '@/common/icon-antd'
+import { IconEye, IconFileSearch, IconSpin } from '@/common/icon-antd'
 import { IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import { IconEditSquare } from '@/common/icon-google'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
@@ -10,7 +10,6 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { PaymentMoneyStatus } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PositionType } from '@/modules/position'
 import { ProcedureType } from '@/modules/procedure'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeProcedureApi, TicketStatus } from '@/modules/ticket'
@@ -20,16 +19,16 @@ import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProc
 import { computed, onMounted, ref, watch } from 'vue'
 import ModalProcessTicketProcedureRegimen from '../../room-procedure/ModalProcessTicketProcedureRegimen.vue'
 import ModalShowTicketProcedureRegimen from '../../room-procedure/ModalShowTicketProcedureRegimen.vue'
-import ModalTicketProcedureUpdate from '../../room-procedure/ModalTicketProcedureUpdate.vue'
+import ModalUpdateRequestTicketProcedure from '../../room-procedure/ModalUpdateRequestTicketProcedure.vue'
 import TicketProcedureStatusTooltip from '../../room-procedure/TicketProcedureStatusTooltip.vue'
 import TicketProcedureSelectItem from './TicketProcedureSelectItem.vue'
-import type { TicketUser } from '@/modules/ticket-user'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalProcessTicketProcedureRegimen =
   ref<InstanceType<typeof ModalProcessTicketProcedureRegimen>>()
 const modalShowTicketProcedureRegimen = ref<InstanceType<typeof ModalShowTicketProcedureRegimen>>()
-const modalTicketProcedureUpdate = ref<InstanceType<typeof ModalTicketProcedureUpdate>>()
+const modalUpdateRequestTicketProcedure =
+  ref<InstanceType<typeof ModalUpdateRequestTicketProcedure>>()
 
 const { userPermission, organization } = MeService
 
@@ -107,7 +106,7 @@ const handleUpdateTicketProcedure = (data: { ticketProcedure: TicketProcedure })
     ref="modalShowTicketProcedureRegimen"
     @success="handleUpdateTicketProcedure"
   />
-  <ModalTicketProcedureUpdate ref="modalTicketProcedureUpdate" />
+  <ModalUpdateRequestTicketProcedure ref="modalUpdateRequestTicketProcedure" />
   <TicketProcedureSelectItem @addTicketProcedureList="handleAddTicketProcedureList" />
   <div class="mt-10">
     <div class="flex flex-wrap items-baseline justify-between">
@@ -127,7 +126,7 @@ const handleUpdateTicketProcedure = (data: { ticketProcedure: TicketProcedure })
             <th>Chiết khấu</th>
             <th>Đơn giá</th>
             <th>T.Tiền</th>
-            <th>N.Viên</th>
+            <th v-if="CONFIG.MODE === 'development'">N.Viên</th>
             <th></th>
           </tr>
         </thead>
@@ -182,46 +181,81 @@ const handleUpdateTicketProcedure = (data: { ticketProcedure: TicketProcedure })
                 <a style="line-height: 0" @click="modalProcedureDetail?.openModal(tp.procedureId)">
                   <IconFileSearch />
                 </a>
-                <span
-                  v-if="tp.procedure?.procedureType === ProcedureType.Regimen"
-                  class="font-bold"
-                >
-                  ({{ tp.finishedSessions }}/{{ tp.totalSessions }} buổi)
-                </span>
-                <div
-                  v-if="tp.procedure?.procedureType === ProcedureType.Regimen"
-                  @click="modalShowTicketProcedureRegimen?.openModal({ ticketProcedure: tp })"
-                  class="font-bold italic underline cursor-pointer"
-                  style="color: var(--text-green)"
-                >
-                  XEM
-                </div>
-                <div
-                  v-if="tp.procedure?.procedureType === ProcedureType.Regimen"
-                  style="margin-left: auto"
-                >
-                  <VueButton
-                    v-if="tp.finishedSessions < tp.totalSessions"
-                    size="small"
-                    @click="
-                      modalProcessTicketProcedureRegimen?.openModal({
-                        ticketProcedure: tp,
-                        ticketProcedureItem: tp.ticketProcedureItemList![tp.finishedSessions],
-                      })
-                    "
+
+                <template v-if="tp.procedureType === ProcedureType.SingleProcess">
+                  <div style="margin-left: auto">
+                    <VueButton
+                      v-if="tp.finishedSessions < tp.totalSessions"
+                      size="small"
+                      @click="
+                        modalProcessTicketProcedureRegimen?.openModal({
+                          ticketProcedure: tp,
+                          ticketProcedureItem: tp.ticketProcedureItemList![0],
+                        })
+                      "
+                    >
+                      Thực hiện
+                      <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                        ({{ tp.ticketProcedureItemList![0].id }})
+                      </span>
+                    </VueButton>
+                    <div
+                      v-else
+                      class="font-bold italic flex gap-1 cursor-pointer"
+                      style="color: var(--text-green)"
+                      @click="
+                        modalProcessTicketProcedureRegimen?.openModal({
+                          ticketProcedure: tp,
+                          ticketProcedureItem: tp.ticketProcedureItemList![0],
+                        })
+                      "
+                    >
+                      <span>HOÀN THÀNH</span>
+                      <IconEye width="20" height="20" />
+                    </div>
+                  </div>
+                </template>
+
+                <template v-if="tp.procedureType === ProcedureType.Regimen">
+                  <div
+                    v-if="tp.procedure?.procedureType === ProcedureType.Regimen"
+                    class="font-bold"
                   >
-                    Thực hiện buổi {{ tp.finishedSessions + 1 }}
-                    <span v-if="CONFIG.MODE === 'development'" style="color: violet">
-                      ({{ tp.ticketProcedureItemList![tp.finishedSessions].id }})
+                    ({{ tp.finishedSessions }}/{{ tp.totalSessions }} buổi)
+                  </div>
+
+                  <div
+                    @click="modalShowTicketProcedureRegimen?.openModal({ ticketProcedure: tp })"
+                    class="font-bold italic underline cursor-pointer"
+                    style="color: var(--text-green)"
+                  >
+                    XEM
+                  </div>
+
+                  <div style="margin-left: auto">
+                    <VueButton
+                      v-if="tp.finishedSessions < tp.totalSessions"
+                      size="small"
+                      @click="
+                        modalProcessTicketProcedureRegimen?.openModal({
+                          ticketProcedure: tp,
+                          ticketProcedureItem: tp.ticketProcedureItemList![tp.finishedSessions],
+                        })
+                      "
+                    >
+                      Thực hiện buổi {{ tp.finishedSessions + 1 }}
+                      <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                        ({{ tp.ticketProcedureItemList![tp.finishedSessions].id }})
+                      </span>
+                    </VueButton>
+                    <span v-else class="font-bold italic" style="color: var(--text-green)">
+                      HOÀN THÀNH
                     </span>
-                  </VueButton>
-                  <span v-else class="font-bold italic" style="color: var(--text-green)">
-                    HOÀN THÀNH
-                  </span>
-                </div>
+                  </div>
+                </template>
               </div>
             </td>
-            <td class="text-center" v-if="tp.procedure?.procedureType === ProcedureType.Basic">
+            <td class="text-center" v-if="tp.procedureType === ProcedureType.Basic">
               <div>
                 {{ tp.quantity }}
               </div>
@@ -245,27 +279,11 @@ const handleUpdateTicketProcedure = (data: { ticketProcedure: TicketProcedure })
             <td class="text-right">
               {{ formatMoney(tp.actualPrice * tp.quantity) }}
             </td>
-            <td>
-              <span v-if="CONFIG.MODE === 'development'" style="color: violet">
-                ({{
-                  (
-                    ticketRoomRef.ticketUserTree?.[PositionType.ProcedureRequest]?.[tp.id]?.[0] ||
-                    []
-                  )
-                    .map((i) => i.userId || '')
-                    .join(',')
-                }})
-              </span>
-              <span>
-                {{
-                  (
-                    ticketRoomRef.ticketUserTree?.[PositionType.ProcedureRequest]?.[tp.id]?.[0] ||
-                    []
-                  )
-                    .map((i) => i.user?.fullName || '')
-                    .join(', ')
-                }}
-              </span>
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet">
+              <div v-for="tu in tp.ticketUserRequestList" :key="tu.id" class="flex gap-1">
+                <span>(P{{ tu.positionId }}-R{{ tu.roleId }}-U{{ tu.userId }})</span>
+                <span>{{ tu.user?.fullName }}</span>
+              </div>
             </td>
             <td class="text-center">
               <a v-if="!tp.id">
@@ -277,16 +295,9 @@ const handleUpdateTicketProcedure = (data: { ticketProcedure: TicketProcedure })
                   [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
                     tp.paymentMoneyStatus,
                   ) &&
-                  userPermission[PermissionId.TICKET_CHANGE_PROCEDURE]
+                  userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
                 "
-                @click="
-                  modalTicketProcedureUpdate?.openModal({
-                    ticketProcedure: tp,
-                    ticketUserRequestList:
-                      ticketRoomRef.ticketUserTree?.[PositionType.ProcedureRequest]?.[tp.id]?.[0] ||
-                      [],
-                  })
-                "
+                @click="modalUpdateRequestTicketProcedure?.openModal({ ticketProcedure: tp })"
                 style="color: var(--text-orange)"
               >
                 <IconEditSquare width="20" height="20" />
@@ -310,7 +321,7 @@ const handleUpdateTicketProcedure = (data: { ticketProcedure: TicketProcedure })
                 }}
               </b>
             </td>
-            <td></td>
+            <td v-if="CONFIG.MODE === 'development'"></td>
             <td></td>
           </tr>
         </tbody>
@@ -320,7 +331,7 @@ const handleUpdateTicketProcedure = (data: { ticketProcedure: TicketProcedure })
   <div class="mt-4 flex justify-between">
     <div></div>
     <VueButton
-      v-if="userPermission[PermissionId.TICKET_CHANGE_PROCEDURE] && hasChangePriority"
+      v-if="userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST] && hasChangePriority"
       color="blue"
       icon="save"
       @click="savePriorityTicketProcedure"

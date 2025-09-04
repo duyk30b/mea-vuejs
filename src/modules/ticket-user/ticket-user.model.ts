@@ -48,7 +48,7 @@ export class TicketUser extends BaseModel {
     ins.userId = 0
     ins.roleId = 0
 
-    ins.positionType = PositionType.Ticket
+    ins.positionType = PositionType.TicketReception
     ins.positionInteractId = 0
     ins.ticketItemId = 0
     ins.ticketItemChildId = 0

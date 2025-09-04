@@ -63,7 +63,7 @@ export class TicketChangeRadiologyApi {
     const { data } = response.data as BaseResponse<boolean>
   }
 
-  static async updateTicketRadiology(body: {
+  static async updateRequestTicketRadiology(body: {
     ticketId: number
     ticketRadiologyId: number
     ticketRadiology?: TicketRadiology
@@ -71,7 +71,7 @@ export class TicketChangeRadiologyApi {
   }) {
     const { ticketId, ticketRadiology, ticketRadiologyId, ticketUserRequestList } = body
     const response = await AxiosInstance.post(
-      `/ticket/${ticketId}/radiology/update-ticket-radiology/${ticketRadiologyId}`,
+      `/ticket/${ticketId}/radiology/update-request-ticket-radiology/${ticketRadiologyId}`,
       {
         ticketRadiology: ticketRadiology
           ? {

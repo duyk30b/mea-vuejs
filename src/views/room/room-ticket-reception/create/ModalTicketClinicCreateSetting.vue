@@ -35,7 +35,7 @@ const openModal = async () => {
   settingDisplay.value = JSON.parse(JSON.stringify(store.TICKET_CLINIC_CREATE))
   const fetchData = await Promise.all([
     RoleService.getMap(),
-    PositionService.list({ filter: { positionType: PositionType.Ticket } }),
+    PositionService.list({ filter: { positionType: PositionType.TicketReception } }),
   ])
   const roleMap = fetchData[0]
   roleOptions.value = fetchData[1].map((i) => ({ value: i.roleId, label: roleMap[i.roleId]?.name }))

@@ -111,7 +111,7 @@ const startFetchData = async () => {
     })
 
     paginationResponse.appointmentList.forEach((apm) => {
-      if (apm.ticketProcedure?.type === ProcedureType.Regimen) {
+      if (apm.ticketProcedure?.procedureType === ProcedureType.Regimen) {
         apm.ticketProcedureItem = (apm.ticketProcedure?.ticketProcedureItemList || []).find(
           (tpi) => {
             return tpi.id === apm.ticketProcedureItemId
@@ -203,6 +203,7 @@ const handleUpdateTicketProcedure = async (data: { ticketProcedure: TicketProced
       i.ticketProcedure.procedure = procedureMap[i.ticketProcedure.procedureId]
     }
   })
+  await startFetchData()
 }
 </script>
 

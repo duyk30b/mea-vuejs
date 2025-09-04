@@ -8,11 +8,11 @@ import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { Discount, DiscountInteractType } from '@/modules/discount'
+import { Discount, DiscountInteractType, DiscountService } from '@/modules/discount'
 import { Laboratory, LaboratoryService, LaboratoryValueType } from '@/modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '@/modules/laboratory-group'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Position, PositionType } from '@/modules/position'
+import { Position, PositionService, PositionType } from '@/modules/position'
 import PositionTableAction from '@/views/master-data/position/common/PositionTableAction.vue'
 import { computed, ref } from 'vue'
 import DiscountTableAction from '../../discount/common/DiscountTableAction.vue'
@@ -56,6 +56,13 @@ const openModal = async (laboratoryId?: number) => {
     laboratory.value.children = [Laboratory.blank()]
     const laboratoryAll = await LaboratoryService.list({})
     laboratory.value.priority = laboratoryAll.length + 1
+
+    laboratory.value.discountListExtra = await DiscountService.list({
+      filter: { discountInteractId: 0, discountInteractType: DiscountInteractType.Laboratory },
+    })
+    laboratory.value.positionRequestListCommon = await PositionService.list({
+      filter: { positionType: PositionType.LaboratoryRequest, positionInteractId: 0 },
+    })
   } else {
     laboratoryOrigin = await LaboratoryService.detail(
       laboratoryId,

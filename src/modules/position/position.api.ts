@@ -53,11 +53,8 @@ export class PositionApi {
   static async updateOne(id: number, position: Position) {
     const response = await AxiosInstance.patch(`/position/update/${id}`, {
       priority: position.priority,
-      roleId: position.roleId,
-      positionType: position.positionType,
-      positionInteractId: position.positionInteractId,
-      commissionValue: position.commissionValue,
       commissionCalculatorType: position.commissionCalculatorType,
+      commissionValue: position.commissionValue,
     })
     const { data } = response.data as BaseResponse<{ position: any }>
     return Position.from(data.position)

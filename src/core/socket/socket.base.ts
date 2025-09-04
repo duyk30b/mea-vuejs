@@ -91,10 +91,6 @@ export const socketInit = () => {
     SocketService.listenSocketTicketAttributeChange(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_USER, (data) => {
-    SocketService.listenSocketTicketUserListChange(data)
-  })
-
   SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_PROCEDURE, (data) => {
     SocketService.listenSocketTicketProcedureListChange(data)
   })
@@ -105,9 +101,6 @@ export const socketInit = () => {
   SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_LABORATORY, (data) => {
     SocketService.listenSocketTicketLaboratoryListChange(data)
   })
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_PRODUCT, (data) => {
-    SocketService.listenSocketTicketProductChange(data)
-  })
   SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_CONSUMABLE, (data) => {
     SocketService.listenSocketTicketConsumableChange(data)
   })
@@ -117,6 +110,12 @@ export const socketInit = () => {
 
   SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_BATCH, (data) => {
     SocketService.listenTicketBatchListChange(data)
+  })
+  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_USER, (data) => {
+    SocketService.listenSocketTicketUserListChange(data)
+  })
+  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_IMAGE, (data) => {
+    SocketService.listenTicketChangeImage(data)
   })
 }
 

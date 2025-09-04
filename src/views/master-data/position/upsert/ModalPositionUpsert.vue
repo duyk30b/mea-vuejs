@@ -88,7 +88,6 @@ const hasChangeData = computed(() => {
 const handleSave = async () => {
   saveLoading.value = true
   try {
-    console.log("🚀 ~ ModalPositionUpsert.vue:91 ~ handleSave ~ mode.value:", mode.value)
     if (mode.value === 'CREATE_API') {
       const response = await PositionService.createOne(position.value)
       emit('success', 'CREATE', response)
@@ -242,7 +241,10 @@ defineExpose({ openModal })
         </div>
 
         <div style="flex-grow: 1; flex-basis: 45%; min-width: 300px">
-          <InputSearchRole v-model:roleId="position.roleId"></InputSearchRole>
+          <InputSearchRole
+            v-model:roleId="position.roleId"
+            :disabled="!!position.id"
+          ></InputSearchRole>
         </div>
 
         <div style="flex-grow: 1; flex-basis: 45%; min-width: 300px">

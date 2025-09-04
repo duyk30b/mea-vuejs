@@ -53,7 +53,7 @@ watch(
 )
 
 watch(
-  () => ticketRoomRef.value.imageIds,
+  () => ticketRoomRef.value.imageDiagnosisIds,
   (newValue, oldValue) => (hasChangeImage.value = false),
   { immediate: true },
 )

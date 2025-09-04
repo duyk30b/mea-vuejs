@@ -63,6 +63,7 @@ const icdOptions = ref<ItemOption[]>([])
 
 const saveLoading = ref(false)
 const hasChangeImage = ref(false)
+const loadingImage = ref(false)
 
 onMounted(async () => {
   if (settingStore.TICKET_CLINIC_DETAIL.diagnosis.icd10) {
@@ -85,7 +86,7 @@ watch(
       return (ticketAttributeMap.value = { healthHistory: '', summary: '' })
     }
     newValue.forEach((i) => {
-      if (!TicketAttributeKeyGeneralList.includes(i.key as any)) return
+      // if (!TicketAttributeKeyGeneralList.includes(i.key as any)) return
       const k = i.key as unknown as TicketAttributeKeyGeneralType
       if (i.value === ticketAttributeOriginMap[k]) return
       ticketAttributeOriginMap[k] = i.value
@@ -96,14 +97,25 @@ watch(
 )
 
 watch(
-  () => ticketRoomRef.value!.imageIds,
-  (newValue, oldValue) => (hasChangeImage.value = false),
+  () => ticketRoomRef.value!.imageDiagnosisIds,
+  (newValue, oldValue) => {
+    try {
+      const imageDiagnosisIdList: number[] = JSON.parse(newValue)
+      ticketRoomRef.value!.imageDiagnosisList = imageDiagnosisIdList
+        .map((i) => ticketRoomRef.value!.imageMap[i])
+        .filter((i) => !!i)
+    } catch (error) {
+      ticketRoomRef.value!.imageDiagnosisList = []
+    }
+    hasChangeImage.value = false
+  },
   { immediate: true },
 )
 
 const hasChangeCustomer = computed(() => {
   const customerHealthHistory = ticketRoomRef.value.customer?.healthHistory || ''
-  return customerHealthHistory != ticketAttributeMap.value.healthHistory
+  const hasChange = customerHealthHistory != ticketAttributeMap.value.healthHistory
+  return hasChange
 })
 
 const hasChangeAttribute = computed(() => {
@@ -234,6 +246,7 @@ defineExpose({ getDataTicketDiagnosis })
     <div v-if="currentRoom.roomStyle === RoomTicketStyle.TicketClinicEye" class="mt-4">
       <DiagnosisEye :ticketAttributeMap="ticketAttributeMap" />
     </div>
+    <!-- <pre>{{ JSON.stringify(ticketRoomRef?.imageDiagnosisList, null, 4) }}</pre> -->
     <div class="mt-4">
       <div>Hình ảnh</div>
       <ImageUploadCloudinary
@@ -243,13 +256,14 @@ defineExpose({ getDataTicketDiagnosis })
         :editable="!!ticketRoomRef.id"
         :height="100"
         :rootImageList="
-          (ticketRoomRef?.imageList || []).map((i) => ({
+          (ticketRoomRef?.imageDiagnosisList || []).map((i) => ({
             thumbnail: ESImage.getImageLink(i, { size: 200 }),
             enlarged: ESImage.getImageLink(i, { size: 1000 }),
             id: i.id,
           }))
         "
         @changeImage="hasChangeImage = true"
+        @loading="(v) => (loadingImage = v)"
       />
     </div>
     <div class="mt-4" v-if="settingStore.TICKET_CLINIC_DETAIL.diagnosis.icd10">
@@ -278,7 +292,7 @@ defineExpose({ getDataTicketDiagnosis })
       <VueButton
         v-if="ticketRoomRef.id && userPermission[PermissionId.TICKET_CHANGE_ATTRIBUTE]"
         color="blue"
-        :disabled="!hasChangeData"
+        :disabled="!hasChangeData || loadingImage"
         :loading="saveLoading"
         icon="save"
         @click="saveTicketDiagnosis"

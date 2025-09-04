@@ -12,7 +12,7 @@ import { ticketRoomRef } from '@/modules/room'
 import { TicketStatus } from '@/modules/ticket'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProcedureDetail.vue'
-import ModalTicketProcedureUpdate from '@/views/room/room-procedure/ModalTicketProcedureUpdate.vue'
+import ModalTicketProcedureUpdate from '@/views/room/room-procedure/ModalUpdateRequestTicketProcedure.vue'
 import { computed, onMounted, ref } from 'vue'
 import TicketProcedureStatusTooltip from '../../room-procedure/TicketProcedureStatusTooltip.vue'
 import { PositionType } from '@/modules/position'
@@ -70,7 +70,7 @@ const procedureDiscount = computed(() => {
         <td class="text-center">
           <TicketProcedureStatusTooltip :status="ticketProcedure.status" />
         </td>
-        <td :colspan="ticketProcedure.procedure?.procedureType !== ProcedureType.Basic ? 4 : 3">
+        <td :colspan="ticketProcedure.procedure?.procedureType === ProcedureType.Basic ? 3 : 4">
           <div class="flex items-center gap-1">
             <span>{{ ticketProcedure.procedure?.name }}</span>
             <a
@@ -88,7 +88,7 @@ const procedureDiscount = computed(() => {
           </div>
         </td>
         <td
-          v-if="ticketProcedure.procedure?.procedureType !== ProcedureType.Regimen"
+          v-if="ticketProcedure.procedure?.procedureType === ProcedureType.Basic"
           class="text-center"
         >
           {{ ticketProcedure.quantity }}
@@ -122,16 +122,12 @@ const procedureDiscount = computed(() => {
               [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
                 ticketProcedure.paymentMoneyStatus,
               ) &&
-              userPermission[PermissionId.TICKET_CHANGE_PROCEDURE]
+              userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
             "
             class="text-orange-500"
             @click="
               modalTicketProcedureUpdate?.openModal({
                 ticketProcedure: ticketProcedure,
-                ticketUserRequestList:
-                  ticketRoomRef.ticketUserTree?.[PositionType.ProcedureRequest]?.[
-                    ticketProcedure.id
-                  ]?.[0] || [],
               })
             "
           >

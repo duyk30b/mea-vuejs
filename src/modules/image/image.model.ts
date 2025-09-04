@@ -37,4 +37,13 @@ export class Image {
   static basicList(sources: Image[]): Image[] {
     return sources.map((i) => Image.basic(i))
   }
+
+  static from(source: Image) {
+    const target = Image.basic(source)
+    return target
+  }
+
+  static fromList(roots: Image[]) {
+    return roots.map((i) => Image.from(i))
+  }
 }

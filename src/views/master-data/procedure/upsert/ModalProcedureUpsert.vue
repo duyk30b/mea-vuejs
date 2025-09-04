@@ -9,7 +9,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Discount, DiscountInteractType, DiscountService } from '@/modules/discount'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Position, PositionType } from '@/modules/position'
+import { Position, PositionService, PositionType } from '@/modules/position'
 import {
   GapHoursType,
   GapHoursTypeText,
@@ -26,6 +26,7 @@ import { computed, ref } from 'vue'
 import DiscountTableAction from '../../discount/common/DiscountTableAction.vue'
 import ModalDiscountUpsert from '../../discount/upsert/ModalDiscountUpsert.vue'
 import { ESTypescript } from '@/utils'
+import { CONFIG } from '@/config'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
@@ -43,8 +44,6 @@ const { userPermission } = MeService
 let procedureOrigin = Procedure.blank()
 const procedure = ref(Procedure.blank())
 const procedureGroupOptions = ref<{ value: number; label: string; data: ProcedureGroup }[]>([])
-
-const roleOptions = ref<{ value: number; text: string; data: Role }[]>([])
 
 const gapHoursTypeOptions = ESTypescript.keysEnum(GapHoursType).map((key) => ({
   value: GapHoursType[key],
@@ -105,6 +104,12 @@ const openModal = async (procedureId?: number) => {
     procedure.value.discountListExtra = await DiscountService.list({
       filter: { discountInteractId: 0, discountInteractType: DiscountInteractType.Procedure },
     })
+    procedure.value.positionRequestListCommon = await PositionService.list({
+      filter: { positionType: PositionType.ProcedureRequest, positionInteractId: 0 },
+    })
+    procedure.value.positionResultListCommon = await PositionService.list({
+      filter: { positionType: PositionType.ProcedureResult, positionInteractId: 0 },
+    })
   }
 
   ProcedureGroupService.list({})
@@ -113,14 +118,6 @@ const openModal = async (procedureId?: number) => {
     })
     .catch((e) => {
       console.log('🚀 ~ file: ModalProcedureUpsert.vue:105 ~ ProcedureGroupService ~ e:', e)
-    })
-
-  RoleService.list({})
-    .then((result) => {
-      roleOptions.value = result.map((i) => ({ value: i.id, text: i.name, data: i }))
-    })
-    .catch((e) => {
-      console.log('🚀: ModalProcedureUpsert.vue:51 ~ RoleService.list ~ e:', e)
     })
 }
 
@@ -283,7 +280,12 @@ defineExpose({ openModal })
                 </div>
 
                 <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
-                  <div class="">Loại dịch vụ</div>
+                  <div class="flex gap-1">
+                    <span>Loại dịch vụ</span>
+                    <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                      {totalSessions: {{ procedure.totalSessions }}}
+                    </span>
+                  </div>
                   <div>
                     <InputSelect
                       v-model:value="procedure.procedureType"

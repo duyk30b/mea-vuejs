@@ -2,7 +2,7 @@
 import VueButton from '@/common/VueButton.vue'
 import { IconClose, IconDoubleRight, IconSetting } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { InputCheckbox, InputDate, InputFilter, InputRadio, InputText } from '@/common/vue-form'
+import { InputCheckbox, InputDate, InputRadio, InputText } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { MeService } from '@/modules/_me/me.service'
@@ -17,7 +17,6 @@ import { Customer } from '@/modules/customer/customer.model'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PositionType } from '@/modules/position'
 import { type Procedure } from '@/modules/procedure'
-import { RoleService } from '@/modules/role'
 import { Room, RoomService, RoomTicketStyle, RoomType } from '@/modules/room'
 import {
   Ticket,
@@ -29,9 +28,7 @@ import {
 import type { TicketAttributeKeyGeneralType, TicketAttributeMap } from '@/modules/ticket-attribute'
 import { TicketProcedure } from '@/modules/ticket-procedure'
 import { TicketUser } from '@/modules/ticket-user'
-import { User, UserService } from '@/modules/user'
-import { UserRoleService } from '@/modules/user-role'
-import { ESString, ESTimer } from '@/utils'
+import { ESTimer } from '@/utils'
 import InputAddress from '@/views/component/InputAddress.vue'
 import InputSearchCustomer from '@/views/component/InputSearchCustomer.vue'
 import InputSearchProcedure from '@/views/component/InputSearchProcedure.vue'
@@ -41,8 +38,8 @@ import { nextTick, ref } from 'vue'
 import TableTicketProcedureListRequest from '../../room-procedure/TableTicketProcedureListRequest.vue'
 import DiagnosisObstetric from '../../room-ticket-clinic/detail/diagnosis/DiagnosisObstetric.vue'
 import DiagnosisVitalSigns from '../../room-ticket-clinic/detail/diagnosis/DiagnosisVitalSigns.vue'
-import ModalTicketClinicCreateSetting from './ModalTicketClinicCreateSetting.vue'
 import TicketChangeTicketUserPosition from '../../room-user/TicketChangeTicketUserPosition.vue'
+import ModalTicketClinicCreateSetting from './ModalTicketClinicCreateSetting.vue'
 
 const modalTicketClinicCreateSetting = ref<InstanceType<typeof ModalTicketClinicCreateSetting>>()
 const tableTicketProcedureListRequest = ref<InstanceType<typeof TableTicketProcedureListRequest>>()
@@ -71,9 +68,6 @@ const ticketAttributeMap = ref<TicketAttributeMap>({})
 
 const procedureId = ref(0)
 const ticketProcedureListRequest = ref<TicketProcedure[]>([])
-const ticketUserTree = ref<Record<string, Record<string, Record<string, TicketUser[]>>>>({
-  [PositionType.Ticket]: { 0: { 0: [] } },
-}) // ticketUserTree[positionType][ticketItemId][ticketItemChildId] = []
 
 const fromAppointmentId = ref(0)
 
@@ -98,7 +92,7 @@ const openModal = async (options: {
       ticket.value.registeredAt = Date.now()
       ticket.value.roomId = options.roomId
     } else {
-      ticket.value = await TicketService.detail(options.ticketId, {
+      const ticketResponse = await TicketService.detail(options.ticketId, {
         relation: {
           customer: true,
           ticketAttributeList: true,
@@ -106,11 +100,12 @@ const openModal = async (options: {
           customerSource: true,
         },
       })
-      ticketUserTree.value = ticket.value.ticketUserTree || {}
+      ticketResponse.refreshTicketUserTree()
+      ticketResponse.ticketUserReceptionList =
+        ticketResponse.ticketUserTree[PositionType.TicketReception]?.[0]?.[0] || []
+      ticket.value = ticketResponse
     }
-    ticketUserTree.value[PositionType.Ticket] ||= {}
-    ticketUserTree.value[PositionType.Ticket][0] ||= {}
-    ticketUserTree.value[PositionType.Ticket][0][0] ||= []
+
     currentCustomer.value = Customer.from(ticket.value.customer)
   } catch (error) {
     console.log('🚀 ~ ModalTicketClinicCreate.vue:109 ~ openModal ~ error:', error)
@@ -126,7 +121,6 @@ const closeModal = () => {
   ticketAttributeMap.value = {}
   fromAppointmentId.value = 0
   ticketProcedureListRequest.value = []
-  ticketUserTree.value = { [PositionType.Ticket]: { 0: { 0: [] } } }
 
   showModal.value = false
 }
@@ -225,13 +219,12 @@ const handleSubmitFormTicketClinic = async () => {
           fromAppointmentId: fromAppointmentId.value,
         },
         ticketAttributeList,
-        ticketUserReceptionList: ticketUserTree.value[PositionType.Ticket]?.[0]?.[0] || [],
+        ticketUserReceptionList: ticket.value.ticketUserReceptionList || [],
         ticketProcedureWrapList: ticketProcedureListRequest.value.map((i) => {
           return {
             ticketProcedure: i,
             ticketProcedureItemList: i.ticketProcedureItemList || [],
-            ticketUserRequestList:
-              ticketUserTree.value[PositionType.ProcedureRequest]?.[i._localId]?.[0] || [],
+            ticketUserRequestList: i.ticketUserRequestList || [],
           }
         }),
       })
@@ -247,7 +240,7 @@ const handleSubmitFormTicketClinic = async () => {
           note: ticket.value.note,
         },
         ticketAttributeList,
-        ticketUserReceptionList: ticketUserTree.value[PositionType.Ticket]?.[0]?.[0] || [],
+        ticketUserReceptionList: ticket.value.ticketUserReceptionList || [],
       })
       emit('success', 'UPDATE', ticket.value.id)
     }
@@ -267,7 +260,7 @@ const selectProcedure = async (procedureData?: Procedure) => {
 }
 
 const handleFixTicketUserList = (tuListData: TicketUser[]) => {
-  ticketUserTree.value[PositionType.Ticket][0][0] = TicketUser.fromList(tuListData)
+  ticket.value.ticketUserReceptionList = TicketUser.fromList(tuListData)
 }
 
 defineExpose({ openModal })
@@ -499,8 +492,8 @@ defineExpose({ openModal })
         <div v-if="ticket.id" style="flex-basis: 95%; flex-grow: 1">
           <TicketChangeTicketUserPosition
             ref="ticketChangeTicketUserPosition"
-            v-model:ticketUserList="ticketUserTree[PositionType.Ticket][0][0]"
-            :positionType="PositionType.Ticket"
+            v-model:ticketUserList="ticket.ticketUserReceptionList!"
+            :positionType="PositionType.TicketReception"
             :positionInteractId="0"
             @fix:ticketUserList="handleFixTicketUserList"
             title="Nhân viên tiếp đón"
@@ -509,8 +502,8 @@ defineExpose({ openModal })
         <div v-else style="flex-basis: 95%; flex-grow: 1">
           <TicketChangeTicketUserPosition
             ref="ticketChangeTicketUserPosition"
-            v-model:ticketUserList="ticketUserTree[PositionType.Ticket][0][0]"
-            :positionType="PositionType.Ticket"
+            v-model:ticketUserList="ticket.ticketUserReceptionList!"
+            :positionType="PositionType.TicketReception"
             :positionInteractId="0"
             @fix:ticketUserList="handleFixTicketUserList"
             title="Nhân viên tiếp đón"
@@ -536,7 +529,6 @@ defineExpose({ openModal })
         <div class="mt-2">
           <TableTicketProcedureListRequest
             :ticketProcedureListRequest="ticketProcedureListRequest"
-            :ticketUserTree="ticketUserTree"
             ref="tableTicketProcedureListRequest"
           />
         </div>

@@ -86,7 +86,7 @@ export class TicketReceptionApi {
           ticketProcedure: {
             priority: ticketProcedure.priority,
             procedureId: ticketProcedure.procedureId,
-            type: ticketProcedure.type,
+            procedureType: ticketProcedure.procedureType,
 
             quantity: ticketProcedure.quantity,
             totalSessions: ticketProcedure.totalSessions,

@@ -107,7 +107,7 @@ const laboratoryCostAmount = computed(() => {
                 [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
                   tl.paymentMoneyStatus,
                 ) &&
-                userPermission[PermissionId.TICKET_CHANGE_LABORATORY]
+                userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
               "
               class="text-orange-500"
               @click="modalTicketLaboratoryUpdateMoney?.openModal(tl)"

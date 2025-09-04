@@ -118,7 +118,7 @@ const startFetchData = async (ticketId?: number) => {
         ticketProductPrescriptionList: {},
         ticketBatchList: CONFIG.MODE === 'development' ? { batch: true } : undefined,
         ticketProcedureList: organizationPermission.value[PermissionId.PROCEDURE]
-          ? { relation: { ticketProcedureItemList: { imageList: true } } }
+          ? { relation: { ticketProcedureItemList: {} } }
           : undefined,
         ticketLaboratoryList: organizationPermission.value[PermissionId.LABORATORY]
           ? {}
@@ -129,9 +129,7 @@ const startFetchData = async (ticketId?: number) => {
         ticketLaboratoryResultList: organizationPermission.value[PermissionId.LABORATORY]
           ? true
           : undefined,
-        ticketRadiologyList: organizationPermission.value[PermissionId.RADIOLOGY]
-          ? { relation: { imageList: true } }
-          : undefined,
+        ticketRadiologyList: organizationPermission.value[PermissionId.RADIOLOGY] ? {} : undefined,
         ticketUserList: {},
         toAppointment: organizationPermission.value[PermissionId.APPOINTMENT] ? true : undefined,
         imageList: true,

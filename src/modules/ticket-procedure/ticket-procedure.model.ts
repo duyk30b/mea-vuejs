@@ -18,11 +18,12 @@ export enum TicketProcedureStatus {
 export class TicketProcedure extends BaseModel {
   id: number
 
-  type: ProcedureType
   priority: number
   ticketId: number
   customerId: number
+
   procedureId: number
+  procedureType: ProcedureType
 
   quantity: number
   totalSessions: number
@@ -54,7 +55,7 @@ export class TicketProcedure extends BaseModel {
     ins.ticketId = 0
     ins.customerId = 0
     ins.procedureId = 0
-    ins.type = ProcedureType.Basic
+    ins.procedureType = ProcedureType.Basic
 
     ins.quantity = 1
     ins.totalSessions = 0
@@ -130,11 +131,12 @@ export class TicketProcedure extends BaseModel {
   static equal(a: TicketProcedure, b: TicketProcedure) {
     if (a.id != b.id) return false
 
-    if (a.type != b.type) return false
     if (a.priority != b.priority) return false
     if (a.ticketId != b.ticketId) return false
     if (a.customerId != b.customerId) return false
+    
     if (a.procedureId != b.procedureId) return false
+    if (a.procedureType != b.procedureType) return false
 
     if (a.quantity != b.quantity) return false
     if (a.totalSessions != b.totalSessions) return false

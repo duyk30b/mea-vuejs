@@ -20,7 +20,7 @@ const props = withDefaults(
   }>(),
   {
     ticketUserList: () => [],
-    positionType: PositionType.Ticket,
+    positionType: PositionType.TicketReception,
     positionInteractId: 0,
     title: '',
   },

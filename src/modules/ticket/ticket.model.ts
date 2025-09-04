@@ -1,5 +1,4 @@
 import { ESArray } from '../../utils'
-import { MeService } from '../_me/me.service'
 import { Appointment } from '../appointment'
 import { Batch } from '../batch'
 import { Customer } from '../customer'
@@ -10,7 +9,6 @@ import { Image } from '../image/image.model'
 import { LaboratoryService } from '../laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../laboratory-group'
 import { Payment } from '../payment'
-import { PermissionId } from '../permission/permission.enum'
 import { PositionType } from '../position'
 import { Procedure, ProcedureService, ProcedureType } from '../procedure'
 import { Product, ProductService } from '../product'
@@ -72,7 +70,7 @@ export class Ticket {
   paid: number
   debt: number
 
-  imageIds: string
+  imageDiagnosisIds: string
 
   year: number
   month: number
@@ -102,13 +100,17 @@ export class Ticket {
   ticketSurchargeList?: TicketSurcharge[]
   ticketExpenseList?: TicketExpense[]
 
-  ticketUserList?: TicketUser[]
-
   toAppointment?: Appointment
+
+  ticketUserReceptionList?: TicketUser[]
+  ticketUserList?: TicketUser[]
+  ticketUserTree: Record<string, Record<string, Record<string, TicketUser[]>>> // ticketUserTree[positionType][ticketItemId][ticketItemChildId] = []
+
   imageList: Image[]
+  imageMap: Record<string, Image>
+  imageDiagnosisList: Image[]
 
   ticketAttributeMap: TicketAttributeMap // chỉ convert tại front-end
-  ticketUserTree: Record<string, Record<string, Record<string, TicketUser[]>>> // ticketUserTree[positionType][ticketItemId][ticketItemChildId] = []
 
   static init(): Ticket {
     const ins = new Ticket()
@@ -147,12 +149,15 @@ export class Ticket {
     ins.ticketRadiologyList = []
     ins.ticketSurchargeList = [TicketSurcharge.init()]
     ins.ticketExpenseList = [TicketExpense.init()]
-    ins.imageList = []
-
-    ins.ticketUserList = []
-
     ins.ticketAttributeMap = {}
-    ins.ticketUserTree = { [PositionType.Ticket]: { 0: { 0: [] } } } // ticketUserTree[positionType][ticketItemId][ticketItemChildId] = []
+
+    ins.ticketUserReceptionList = []
+    ins.ticketUserList = []
+    ins.ticketUserTree = { [PositionType.TicketReception]: { 0: { 0: [] } } } // ticketUserTree[positionType][ticketItemId][ticketItemChildId] = []
+
+    ins.imageList = []
+    ins.imageMap = {}
+    ins.imageDiagnosisList = []
     return ins
   }
 
@@ -194,8 +199,23 @@ export class Ticket {
       return
     }
     const procedureMap = await ProcedureService.getMap()
-    this.ticketProcedureList?.forEach((i) => {
-      i.procedure = procedureMap![i.procedureId]
+    this.ticketProcedureList?.forEach((tp) => {
+      tp.procedure = procedureMap![tp.procedureId]
+      tp.ticketUserRequestList =
+        this.ticketUserTree[PositionType.ProcedureRequest]?.[tp.id]?.[0] || []
+      tp.ticketProcedureItemList?.forEach((tpi) => {
+        tpi.ticketUserResultList =
+          this.ticketUserTree[PositionType.ProcedureResult]?.[tp.id]?.[tpi.id] || []
+
+        try {
+          const imageIdList: number[] = JSON.parse(tpi.imageIds || '[]')
+          tpi.imageList = imageIdList.map((imageId) => {
+            return this.imageMap[imageId]
+          })
+        } catch (error) {
+          tpi.imageList = []
+        }
+      })
     })
   }
 
@@ -206,15 +226,25 @@ export class Ticket {
     const radiologyMap = await RadiologyService.getMap()
     const radiologyGroupMap = await RadiologyGroupService.getMap()
     const roomMap = await RoomService.getMap()
-    this.ticketRadiologyList.forEach((i) => {
-      i.radiology = radiologyMap![i.radiologyId]
-      if (i.radiology) {
-        i.radiology.radiologyGroup = radiologyGroupMap[i.radiology.radiologyGroupId]
-        i.room = roomMap[i.roomId]
+    this.ticketRadiologyList.forEach((tr) => {
+      tr.radiology = radiologyMap![tr.radiologyId]
+      if (tr.radiology) {
+        tr.radiology.radiologyGroup = radiologyGroupMap[tr.radiology.radiologyGroupId]
+        tr.room = roomMap[tr.roomId]
       }
-      i.ticketUserRequestList =
-        this.ticketUserTree[PositionType.RadiologyRequest]?.[i.id]?.[0] || []
-      i.ticketUserResultList = this.ticketUserTree[PositionType.RadiologyResult]?.[i.id]?.[0] || []
+      tr.ticketUserRequestList =
+        this.ticketUserTree[PositionType.RadiologyRequest]?.[tr.id]?.[0] || []
+      tr.ticketUserResultList =
+        this.ticketUserTree[PositionType.RadiologyResult]?.[tr.id]?.[0] || []
+
+      try {
+        const imageIdList: number[] = JSON.parse(tr.imageIds || '[]')
+        tr.imageList = imageIdList.map((imageId) => {
+          return this.imageMap[imageId]
+        })
+      } catch (error) {
+        tr.imageList = []
+      }
     })
   }
 
@@ -238,6 +268,10 @@ export class Ticket {
 
       this.ticketUserTree[i.positionType][i.ticketItemId][i.ticketItemChildId].push(i)
     })
+  }
+
+  refreshImageMap() {
+    this.imageMap = ESArray.arrayToKeyValue(this.imageList || [], 'id')
   }
 
   async refreshLaboratory() {
@@ -322,7 +356,7 @@ export class Ticket {
         tu.ticketProcedure = (this.ticketProcedureList || []).find((tp) => {
           return tp.id === tu.ticketItemId
         })
-        if (tu.ticketProcedure?.type === ProcedureType.Regimen) {
+        if (tu.ticketProcedure?.procedureType === ProcedureType.Regimen) {
           tu.ticketProcedureItem = (tu.ticketProcedure?.ticketProcedureItemList || []).find(
             (tpi) => {
               return tpi.id === tu.ticketItemChildId
@@ -334,6 +368,7 @@ export class Ticket {
   }
 
   async refreshAllData() {
+    this.refreshImageMap()
     this.refreshTicketUserTree() // cái này cần refresh đầu tiên, để bọn sau có ticketUserTree để tính
     await Promise.all([
       this.refreshProduct(),
@@ -365,10 +400,6 @@ export class Ticket {
     if (source.ticketAttributeList) {
       target.ticketAttributeList = TicketAttribute.basicList(source.ticketAttributeList)
       target.ticketAttributeMap = TicketAttribute.basicMap(source.ticketAttributeList)
-    }
-    if (source.ticketUserList) {
-      target.ticketUserList = TicketUser.basicList(source.ticketUserList)
-      target.refreshTicketUserTree()
     }
 
     if (source.paymentList) {
@@ -438,8 +469,14 @@ export class Ticket {
       })
     }
 
+    if (source.ticketUserList) {
+      target.ticketUserList = TicketUser.basicList(source.ticketUserList)
+      target.refreshTicketUserTree()
+    }
+
     if (source.imageList) {
       target.imageList = Image.basicList(source.imageList)
+      target.refreshImageMap()
     }
     return target
   }
@@ -475,7 +512,7 @@ export class Ticket {
     if (a.paid != b.paid) return false
     if (a.debt != b.debt) return false
 
-    if (a.imageIds != b.imageIds) return false
+    if (a.imageDiagnosisIds != b.imageDiagnosisIds) return false
     if (a.year != b.year) return false
     if (a.month != b.month) return false
     if (a.date != b.date) return false

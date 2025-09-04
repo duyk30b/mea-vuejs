@@ -4,12 +4,10 @@ import { InputText } from '@/common/vue-form'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PositionType } from '@/modules/position'
 import { Procedure, ProcedureService, ProcedureType } from '@/modules/procedure'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeProcedureApi, TicketStatus } from '@/modules/ticket'
 import { TicketProcedure } from '@/modules/ticket-procedure'
-import type { TicketUser } from '@/modules/ticket-user'
 import { ESString } from '@/utils'
 import { onMounted, ref } from 'vue'
 import TableTicketProcedureListRequest from '../../room-procedure/TableTicketProcedureListRequest.vue'
@@ -20,16 +18,13 @@ const emit = defineEmits<{ (e: 'addTicketProcedureList', value: TicketProcedure[
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
+const { userPermission } = MeService
 
 const searchText = ref('')
 const procedureFilter = ref<Procedure[]>([])
 const procedureIdCheckbox = ref<Record<string, boolean>>({})
-const ticketProcedureListDraft = ref<TicketProcedure[]>([])
-const ticketUserTree = ref<Record<string, Record<string, Record<string, TicketUser[]>>>>({
-  [PositionType.ProcedureRequest]: { 0: { 0: [] } },
-}) // ticketUserTree[positionType][ticketItemId][ticketItemChildId] = []
 
-const { userPermission } = MeService
+const ticketProcedureListDraft = ref<TicketProcedure[]>([])
 
 const saveLoading = ref(false)
 
@@ -43,7 +38,6 @@ const reset = () => {
   startFilterProcedure('')
   procedureIdCheckbox.value = {}
   ticketProcedureListDraft.value = []
-  ticketUserTree.value = { [PositionType.ProcedureRequest]: { 0: { 0: [] } } }
 }
 
 const startFilterProcedure = (text: string) => {
@@ -73,7 +67,6 @@ const handleChangeCheckboxProcedure = async (checked: boolean, procedureData: Pr
     if (findIndex != -1) {
       ticketProcedureListDraft.value.splice(findIndex, 1)
       const currentTp = ticketProcedureListDraft.value[findIndex]
-      ticketUserTree.value[PositionType.ProcedureRequest][currentTp._localId] = {}
     }
   }
 }
@@ -89,7 +82,7 @@ const handleSave = async () => {
         return {
           ticketProcedure: i,
           ticketProcedureItemList: i.ticketProcedureItemList || [],
-          ticketUserRequestList: ticketUserTree.value[PositionType.ProcedureRequest][i._localId][0],
+          ticketUserRequestList: i.ticketUserRequestList || [],
         }
       }),
     })
@@ -165,7 +158,6 @@ const handleSave = async () => {
       <TableTicketProcedureListRequest
         ref="tableTicketProcedureListRequest"
         :ticketProcedureListRequest="ticketProcedureListDraft"
-        :ticketUserTree="ticketUserTree"
         @removeProcedureId="(procedureId) => (procedureIdCheckbox[procedureId] = false)"
       />
 
@@ -173,7 +165,7 @@ const handleSave = async () => {
         <VueButton
           :disabled="
             [TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.status) ||
-            !userPermission[PermissionId.TICKET_CHANGE_PROCEDURE]
+            !userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
           "
           color="blue"
           icon="save"

@@ -493,7 +493,7 @@ const handleProcessTicketProcedureRegimenSuccess = (data: TicketProcedure) => {
               {{
                 userMap[
                   ticket.ticketUserList?.find((i: TicketUser) => {
-                    return i.positionType === PositionType.Ticket && i.roleId === roleId
+                    return i.positionType === PositionType.TicketReception && i.roleId === roleId
                   })?.userId || 0
                 ]?.fullName
               }}

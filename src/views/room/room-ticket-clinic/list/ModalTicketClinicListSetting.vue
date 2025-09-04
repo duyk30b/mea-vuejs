@@ -28,7 +28,7 @@ const openModal = async () => {
 
   const fetchData = await Promise.all([
     RoleService.getMap(),
-    PositionService.list({ filter: { positionType: PositionType.Ticket } }),
+    PositionService.list({ filter: { positionType: PositionType.TicketReception } }),
   ])
   const roleMap = fetchData[0]
   roleOptions.value = fetchData[1].map((i) => ({ value: i.roleId, label: roleMap[i.roleId]?.name }))

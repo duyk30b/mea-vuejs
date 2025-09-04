@@ -9,10 +9,14 @@ import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
 import { MeService } from '@/modules/_me/me.service'
 import { Customer } from '@/modules/customer'
-import { Discount, DiscountInteractType } from '@/modules/discount'
+import { Discount, DiscountInteractType, DiscountService } from '@/modules/discount'
 import { Image, ImageHostType } from '@/modules/image/image.model'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { CommissionCalculatorType, Position, PositionType } from '@/modules/position'
+import {
+  Position,
+  PositionService,
+  PositionType
+} from '@/modules/position'
 import { PrintHtml, PrintHtmlAction, PrintHtmlCompile, PrintHtmlType } from '@/modules/print-html'
 import { Radiology, RadiologyApi, RadiologyService } from '@/modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '@/modules/radiology-group'
@@ -85,6 +89,15 @@ onMounted(async () => {
     radiology.value = Radiology.from(radiologyOrigin)
   } else {
     radiology.value = Radiology.blank()
+    radiology.value.discountListExtra = await DiscountService.list({
+      filter: { discountInteractId: 0, discountInteractType: DiscountInteractType.Radiology },
+    })
+    radiology.value.positionRequestListCommon = await PositionService.list({
+      filter: { positionType: PositionType.RadiologyRequest, positionInteractId: 0 },
+    })
+    radiology.value.positionResultListCommon = await PositionService.list({
+      filter: { positionType: PositionType.RadiologyResult, positionInteractId: 0 },
+    })
   }
 })
 

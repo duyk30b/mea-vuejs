@@ -1,39 +1,31 @@
 <!-- eslint-disable vue/no-mutating-props -->
 <script setup lang="ts">
 import { IconDelete, IconFileSearch } from '@/common/icon-antd'
+import { IconMinus, IconPlus } from '@/common/icon-font-awesome'
 import { IconEditSquare } from '@/common/icon-google'
+import { InputNumber } from '@/common/vue-form'
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DiscountType } from '@/modules/enum'
 import { ProcedureService, ProcedureType, type Procedure } from '@/modules/procedure'
 import { TicketProcedure, TicketProcedureStatus } from '@/modules/ticket-procedure'
 import { TicketProcedureItem } from '@/modules/ticket-procedure/ticket-procedure-item.model'
-import { ref } from 'vue'
-import ModalTicketProcedureUpdate from './ModalTicketProcedureUpdate.vue'
 import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProcedureDetail.vue'
-import { IconMinus, IconPlus } from '@/common/icon-font-awesome'
-import { InputNumber } from '@/common/vue-form'
-import { TicketUser } from '@/modules/ticket-user'
-import { PositionType } from '@/modules/position'
+import { ref } from 'vue'
+import ModalUpdateRequestTicketProcedure from './ModalUpdateRequestTicketProcedure.vue'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
-const props = withDefaults(
-  defineProps<{
-    ticketProcedureListRequest: TicketProcedure[]
-    ticketUserTree: Record<string, Record<string, Record<string, TicketUser[]>>> // // ticketUserTree[positionType][procedureLocalId][procedureItemId] = TicketUser[]
-  }>(),
-  {
-    ticketProcedureListRequest: () => [],
-    ticketUserTree: () => ({}),
-  },
-)
+const props = withDefaults(defineProps<{ ticketProcedureListRequest: TicketProcedure[] }>(), {
+  ticketProcedureListRequest: () => [],
+})
 
 const emit = defineEmits<{
   (e: 'removeProcedureId', procedureId: number): void
 }>()
 
-const modalTicketProcedureUpdate = ref<InstanceType<typeof ModalTicketProcedureUpdate>>()
+const modalUpdateRequestTicketProcedure =
+  ref<InstanceType<typeof ModalUpdateRequestTicketProcedure>>()
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
@@ -49,7 +41,7 @@ const selectProcedure = async (procedureData?: Procedure) => {
     temp.customerId = 0
     temp.procedureId = procedureData.id
     temp.procedure = procedureData
-    temp.type = procedureData.procedureType
+    temp.procedureType = procedureData.procedureType
 
     temp.paymentMoneyStatus = settingStore.TICKET_CLINIC_DETAIL.procedure.paymentMoneyStatus
     if (procedureData.procedureType === ProcedureType.Basic) {
@@ -69,6 +61,8 @@ const selectProcedure = async (procedureData?: Procedure) => {
     temp.totalSessions = procedureData.totalSessions
     temp.createdAt = Date.now()
 
+    temp.ticketUserRequestList = []
+
     await ProcedureService.executeRelation([procedureData], { discountList: true })
     const discountApply = procedureData?.discountApply
     if (discountApply) {
@@ -86,6 +80,14 @@ const selectProcedure = async (procedureData?: Procedure) => {
       temp.actualPrice = expectedPrice - discountMoney
     }
 
+    if (procedureData.procedureType === ProcedureType.SingleProcess) {
+      temp.ticketProcedureItemList = []
+      const tpItem = TicketProcedureItem.blank()
+
+      tpItem.registeredAt = null as any // để null để tránh tạo bản ghi hẹn
+
+      temp.ticketProcedureItemList.push(tpItem)
+    }
     if (procedureData.procedureType === ProcedureType.Regimen) {
       temp.ticketProcedureItemList = []
       const registeredAt = new Date()
@@ -100,43 +102,33 @@ const selectProcedure = async (procedureData?: Procedure) => {
       }
     }
     props.ticketProcedureListRequest.push(temp)
-    props.ticketUserTree[PositionType.ProcedureRequest] ||= {}
-    props.ticketUserTree[PositionType.ProcedureRequest][temp._localId] ||= {}
-    props.ticketUserTree[PositionType.ProcedureRequest][temp._localId][0] ||= []
   } else {
   }
   procedureId.value = 0
 }
 
-const handleModalTicketProcedureUpdateSuccess = (
+const handleModalUpdateRequestTicketProcedureSuccess = (
   type: 'CREATE' | 'UPDATE' | 'DESTROY',
-  data: { ticketProcedure: TicketProcedure; ticketUserRequestList: TicketUser[] },
+  ticketProcedureData: TicketProcedure,
 ) => {
   if (type === 'UPDATE') {
-    const _localId = data.ticketProcedure._localId
+    const _localId = ticketProcedureData._localId
     const findIndex = props.ticketProcedureListRequest.findIndex((i) => {
       return i._localId === _localId
     })
     if (findIndex !== -1) {
-      props.ticketProcedureListRequest[findIndex] = data.ticketProcedure
+      Object.assign(props.ticketProcedureListRequest[findIndex], ticketProcedureData)
+      props.ticketProcedureListRequest[findIndex] = ticketProcedureData
     }
-    props.ticketUserTree[PositionType.ProcedureRequest] ||= {}
-    props.ticketUserTree[PositionType.ProcedureRequest][_localId] ||= {}
-    props.ticketUserTree[PositionType.ProcedureRequest][_localId][0] = TicketUser.fromList(
-      data.ticketUserRequestList,
-    )
   }
 }
 
 const removeTicketProcedure = (ticketProcedureData: TicketProcedure) => {
-  const _localId = ticketProcedureData._localId
   const indexRemove = props.ticketProcedureListRequest.findIndex((i) => {
     return i._localId === ticketProcedureData._localId
   })
   if (indexRemove !== -1) {
     props.ticketProcedureListRequest.splice(indexRemove, 1)
-    props.ticketUserTree[PositionType.ProcedureRequest] ||= {}
-    props.ticketUserTree[PositionType.ProcedureRequest][_localId] = {}
     emit('removeProcedureId', ticketProcedureData.procedureId)
   }
 }
@@ -146,9 +138,9 @@ defineExpose({ selectProcedure })
 
 <template>
   <ModalProcedureDetail ref="modalProcedureDetail" />
-  <ModalTicketProcedureUpdate
-    ref="modalTicketProcedureUpdate"
-    @success="handleModalTicketProcedureUpdateSuccess"
+  <ModalUpdateRequestTicketProcedure
+    ref="modalUpdateRequestTicketProcedure"
+    @success="handleModalUpdateRequestTicketProcedureSuccess"
   />
   <div class="table-wrapper">
     <table>
@@ -160,7 +152,7 @@ defineExpose({ selectProcedure })
           <th style="width: 150px">Số lượng</th>
           <th>Giá</th>
           <th>T.Tiền</th>
-          <th>Nhân viên</th>
+          <th v-if="CONFIG.MODE === 'development'">Nhân viên</th>
           <th></th>
           <th></th>
         </tr>
@@ -218,24 +210,17 @@ defineExpose({ selectProcedure })
           <td class="text-right">
             {{ formatMoney(tp.actualPrice * tp.quantity) }}
           </td>
-          <td>
-            {{
-              (ticketUserTree[PositionType.ProcedureRequest][tp._localId][0] || [])
-                .map((i) => i.user?.fullName || '')
-                .join(', ')
-            }}
+          <td v-if="CONFIG.MODE === 'development'" style="color: violet">
+            <div v-for="tu in tp.ticketUserRequestList" :key="tu.id" class="flex gap-1">
+              <span>(P{{ tu.positionId }}-R{{ tu.roleId }}-U{{ tu.userId }})</span>
+              <span>{{ tu.user?.fullName }}</span>
+            </div>
           </td>
           <td>
             <a
               class="flex justify-center cursor-pointer"
               style="font-size: 20px"
-              @click="
-                modalTicketProcedureUpdate?.openModal({
-                  ticketProcedure: tp,
-                  ticketUserRequestList:
-                    ticketUserTree[PositionType.ProcedureRequest][tp._localId][0],
-                })
-              "
+              @click="modalUpdateRequestTicketProcedure?.openModal({ ticketProcedure: tp })"
             >
               <IconEditSquare />
             </a>
@@ -251,10 +236,11 @@ defineExpose({ selectProcedure })
         </tr>
         <tr>
           <td v-if="CONFIG.MODE === 'development'"></td>
-          <td colspan="5" class="text-right font-bold uppercase">Tổng tiền</td>
+          <td colspan="4" class="text-right font-bold uppercase">Tổng tiền</td>
           <td class="font-bold text-right">
             {{ formatMoney(ticketProcedureListRequest.reduce((acc, i) => acc + i.actualPrice, 0)) }}
           </td>
+          <td v-if="CONFIG.MODE === 'development'"></td>
           <td></td>
           <td></td>
         </tr>

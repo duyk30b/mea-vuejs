@@ -299,6 +299,7 @@ const handleModalTicketRadiologyUpdateSuccess = (
               <th>Tên</th>
               <th>Giá</th>
               <th v-if="CONFIG.MODE === 'development'">N.Viên</th>
+              <th v-if="CONFIG.MODE === 'development'">Description</th>
               <th></th>
               <th></th>
             </tr>
@@ -335,6 +336,11 @@ const handleModalTicketRadiologyUpdateSuccess = (
                   <span>{{ tu.user?.fullName }}</span>
                 </div>
               </td>
+              <td v-if="CONFIG.MODE === 'development'" style="width: 300px; color: violet">
+                <div class="max-line-2">
+                  {{ tp.description }}
+                </div>
+              </td>
               <td>
                 <a
                   class="flex justify-center cursor-pointer"
@@ -362,6 +368,7 @@ const handleModalTicketRadiologyUpdateSuccess = (
                 }}
               </td>
               <td v-if="CONFIG.MODE === 'development'"></td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
               <td></td>
               <td></td>
             </tr>
@@ -372,7 +379,7 @@ const handleModalTicketRadiologyUpdateSuccess = (
         <VueButton
           :disabled="
             [TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.status) ||
-            !userPermission[PermissionId.TICKET_CHANGE_PROCEDURE] ||
+            !userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_REQUEST] ||
             !ticketRadiologyListDraft.length
           "
           color="blue"

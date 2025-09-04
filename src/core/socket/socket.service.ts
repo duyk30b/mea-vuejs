@@ -32,6 +32,7 @@ import { TicketUser } from '../../modules/ticket-user'
 import { BatchDB } from '../indexed-db/repository/batch.repository'
 import { CustomerDB } from '../indexed-db/repository/customer.repository'
 import { ProductDB } from '../indexed-db/repository/product.repository'
+import { Image } from '@/modules/image/image.model'
 
 export class SocketService {
   static listenServerEmitDemo(data: any) {
@@ -179,53 +180,12 @@ export class SocketService {
     type: 'CREATE' | 'UPDATE' | 'DESTROY'
     ticket: any
   }) {
-    const ticket = Ticket.from(data.ticket)
-    await ticket.refreshAllData()
-
-    const roomPaginationList = SocketService.getRoomPaginationAction()
-    roomPaginationList.forEach((roomPagination) => {
-      const findIndex = roomPagination.findIndex((i) => i.id === ticket.id)
-      if (data.type === 'CREATE' || data.type === 'UPDATE') {
-        if (findIndex !== -1) {
-          Object.assign(roomPagination[findIndex], ticket)
-        } else {
-          roomPagination.unshift(ticket)
-        }
-      }
-      if (data.type === 'DESTROY') {
-        if (findIndex !== -1) {
-          roomPagination.splice(findIndex, 1)
-        }
-      }
-    })
-
-    Object.entries(roomTicketPaginationMapRoomId.value).forEach((entries) => {
-      const roomId = Number(entries[0])
-      const ticketPagination = entries[1]
-
-      if (ticket.roomId === roomId || RoomService.roomMap.value[roomId]?.isCommon) {
-        const findIndex = ticketPagination.findIndex((i) => i.id === ticket.id)
-        if (data.type === 'CREATE' || data.type === 'UPDATE') {
-          if (findIndex !== -1) {
-            Object.assign(ticketPagination[findIndex], ticket)
-          } else {
-            ticketPagination.unshift(ticket)
-          }
-        }
-        if (data.type === 'DESTROY') {
-          if (findIndex !== -1) {
-            ticketPagination.splice(findIndex, 1)
-          }
-        }
-      } else {
-        // Để xử lý trường hợp chuyển phòng
-        const findIndex = ticketPagination.findIndex((i) => i.id === ticket.id)
-        if (findIndex !== -1) {
-          ticketPagination.splice(findIndex, 1)
-        } else {
-        }
-      }
-    })
+    if (data.type === 'CREATE' || data.type === 'UPDATE') {
+      await SocketService.listenSocketTicketListChange({ ticketUpsertedList: [data.ticket] })
+    }
+    if (data.type === 'DESTROY') {
+      await SocketService.listenSocketTicketListChange({ ticketDestroyedList: [data.ticket] })
+    }
   }
 
   static async listenSocketTicketListChange(data: {
@@ -304,10 +264,345 @@ export class SocketService {
     })
   }
 
+  static async listenSocketTicketProcedureListChange(data: {
+    ticketId: number
+    ticketProcedureUpsertedList?: TicketProcedure[]
+    ticketProcedureDestroyedList?: TicketProcedure[]
+    ticketUserDestroyedList?: TicketUser[]
+    ticketUserUpsertedList?: TicketUser[]
+    imageDestroyedList?: Image[]
+    imageUpsertedList?: Image[]
+  }) {
+    await SocketService.listenSocketTicketUserListChange({
+      ticketId: data.ticketId,
+      ticketUserDestroyedList: data.ticketUserDestroyedList,
+      ticketUserUpsertedList: data.ticketUserUpsertedList,
+    })
+
+    await SocketService.listenTicketChangeImage({
+      ticketId: data.ticketId,
+      imageDestroyedList: data.imageDestroyedList,
+      imageUpsertedList: data.imageUpsertedList,
+    })
+
+    const ticketActionList: Ticket[] = [
+      ticketRoomRef.value,
+      ...Object.values(roomTicketPaginationMapRoomId.value).flat(),
+      ...roomFinancePagination.value,
+      ...roomDeliveryPagination.value,
+    ]
+
+    for (let i = 0; i < ticketActionList.length; i++) {
+      const ticket = ticketActionList[i]
+      if (ticket.id !== data.ticketId) continue
+      if (!ticket.ticketProcedureList) continue
+
+      if (data.ticketProcedureDestroyedList) {
+        const idDestroyList = data.ticketProcedureDestroyedList.map((i) => i.id)
+        ticket.ticketProcedureList = ticket.ticketProcedureList.filter((i) => {
+          return !idDestroyList.includes(i.id)
+        })
+      }
+
+      if (data.ticketProcedureUpsertedList) {
+        data.ticketProcedureUpsertedList.forEach((i) => {
+          const temp = TicketProcedure.from(i)
+          const index = ticket.ticketProcedureList!.findIndex((j) => {
+            return i.id === j.id
+          })
+          if (index !== -1) {
+            Object.assign(ticket.ticketProcedureList![index], temp)
+          } else {
+            ticket.ticketProcedureList!.push(temp)
+          }
+        })
+      }
+      ticket.ticketProcedureList.sort((a, b) => (a.priority < b.priority ? -1 : 1))
+
+      await ticket.refreshProcedure()
+    }
+  }
+
+  static async listenSocketTicketRadiologyListChange(data: {
+    ticketId: number
+    ticketRadiologyUpsertedList?: TicketRadiology[]
+    ticketRadiologyDestroyedList?: TicketRadiology[]
+    ticketUserDestroyedList?: TicketUser[]
+    ticketUserUpsertedList?: TicketUser[]
+    imageDestroyedList?: Image[]
+    imageUpsertedList?: Image[]
+  }) {
+    await SocketService.listenSocketTicketUserListChange({
+      ticketId: data.ticketId,
+      ticketUserDestroyedList: data.ticketUserDestroyedList,
+      ticketUserUpsertedList: data.ticketUserUpsertedList,
+    })
+
+    await SocketService.listenTicketChangeImage({
+      ticketId: data.ticketId,
+      imageDestroyedList: data.imageDestroyedList,
+      imageUpsertedList: data.imageUpsertedList,
+    })
+
+    const ticketAction: Ticket[] = SocketService.getTicketAction({
+      ticketId: data.ticketId,
+    })
+    for (let i = 0; i < ticketAction.length; i++) {
+      const ticket = ticketAction[i]
+      if (ticket.id !== data.ticketId) continue
+      if (!ticket.ticketRadiologyList) continue
+
+      if (data.ticketRadiologyUpsertedList) {
+        data.ticketRadiologyUpsertedList?.forEach((i) => {
+          const temp = TicketRadiology.from(i)
+          const index = ticket.ticketRadiologyList!.findIndex((j) => {
+            return i.id === j.id
+          })
+          if (index !== -1) {
+            ticket.ticketRadiologyList![index] = temp
+          } else {
+            ticket.ticketRadiologyList!.push(temp)
+          }
+        })
+      }
+
+      if (data.ticketRadiologyDestroyedList) {
+        const idDestroyList = data.ticketRadiologyDestroyedList.map((i) => i.id)
+        ticket.ticketRadiologyList = ticket.ticketRadiologyList.filter((i) => {
+          return !idDestroyList.includes(i.id)
+        })
+      }
+
+      await ticket.refreshRadiology()
+    }
+    const ticketRadiologyActionList = [
+      ...(data.ticketRadiologyUpsertedList || []),
+      ...(data.ticketRadiologyDestroyedList || []),
+    ]
+    ticketRadiologyActionList.forEach((tr) => {
+      roomRadiology.value[tr.roomId] = new Date().toISOString()
+    })
+  }
+
+  static async listenSocketTicketLaboratoryListChange(data: {
+    ticketId: number
+    ticketLaboratoryUpsertedList?: TicketLaboratory[]
+    ticketLaboratoryDestroyedList?: TicketLaboratory[]
+    ticketLaboratoryGroupUpsertedList?: TicketLaboratoryGroup[]
+    ticketLaboratoryGroupDestroyedList?: TicketLaboratoryGroup[]
+    ticketLaboratoryResultUpsertedList?: TicketLaboratoryResult[]
+    ticketLaboratoryResultDestroyedList?: TicketLaboratoryResult[]
+  }) {
+    const ticketAction: Ticket[] = SocketService.getTicketAction({
+      ticketId: data.ticketId,
+    })
+    ticketAction.forEach(async (ticket) => {
+      if (ticket.id !== data.ticketId) return
+      if (!ticket.ticketLaboratoryList) ticket.ticketLaboratoryList = []
+      if (!ticket.ticketLaboratoryGroupList) ticket.ticketLaboratoryGroupList = []
+      if (!ticket.ticketLaboratoryResultList) ticket.ticketLaboratoryResultList = []
+
+      if (data.ticketLaboratoryUpsertedList) {
+        data.ticketLaboratoryUpsertedList.forEach((i) => {
+          const temp = TicketLaboratory.from(i)
+          const index = ticket.ticketLaboratoryList!.findIndex((j) => {
+            return i.id === j.id
+          })
+          if (index !== -1) {
+            ticket.ticketLaboratoryList![index] = temp
+          } else {
+            ticket.ticketLaboratoryList!.push(temp)
+          }
+        })
+      }
+
+      if (data.ticketLaboratoryDestroyedList) {
+        const idDestroyList = data.ticketLaboratoryDestroyedList.map((i) => i.id)
+        ticket.ticketLaboratoryList = ticket.ticketLaboratoryList.filter((i) => {
+          return !idDestroyList.includes(i.id)
+        })
+      }
+
+      if (data.ticketLaboratoryGroupUpsertedList) {
+        data.ticketLaboratoryGroupUpsertedList.forEach((i) => {
+          const temp = TicketLaboratoryGroup.from(i)
+          const index = ticket.ticketLaboratoryGroupList!.findIndex((j) => {
+            return i.id === j.id
+          })
+          if (index !== -1) {
+            ticket.ticketLaboratoryGroupList![index] = temp
+          } else {
+            ticket.ticketLaboratoryGroupList!.push(temp)
+          }
+        })
+      }
+
+      if (data.ticketLaboratoryGroupDestroyedList) {
+        const idDestroyList = data.ticketLaboratoryGroupDestroyedList.map((i) => i.id)
+        ticket.ticketLaboratoryGroupList = ticket.ticketLaboratoryGroupList.filter((i) => {
+          return !idDestroyList.includes(i.id)
+        })
+      }
+
+      if (data.ticketLaboratoryResultUpsertedList) {
+        data.ticketLaboratoryResultUpsertedList.forEach((i) => {
+          const temp = TicketLaboratoryResult.from(i)
+          const index = ticket.ticketLaboratoryResultList!.findIndex((j) => {
+            return i.id === j.id
+          })
+          if (index !== -1) {
+            ticket.ticketLaboratoryResultList![index] = temp
+          } else {
+            ticket.ticketLaboratoryResultList!.push(temp)
+          }
+        })
+      }
+
+      if (data.ticketLaboratoryResultDestroyedList) {
+        const idDestroyList = data.ticketLaboratoryResultDestroyedList.map((i) => i.id)
+        ticket.ticketLaboratoryResultList = ticket.ticketLaboratoryResultList.filter((i) => {
+          return !idDestroyList.includes(i.id)
+        })
+      }
+
+      await ticket.refreshLaboratory()
+    })
+
+    const roomIdAction = [
+      ...(data.ticketLaboratoryUpsertedList || []).map((i) => i.roomId),
+      ...(data.ticketLaboratoryDestroyedList || []).map((i) => i.roomId),
+      ...(data.ticketLaboratoryGroupUpsertedList || []).map((i) => i.roomId),
+      ...(data.ticketLaboratoryGroupDestroyedList || []).map((i) => i.roomId),
+    ]
+    await LaboratoryGroupService.getMap()
+    roomIdAction.forEach((roomId) => {
+      roomLaboratory.value[roomId] = new Date().toISOString()
+    })
+  }
+
+  static async listenSocketTicketConsumableChange(data: {
+    ticketId: number
+    ticketProductDestroyedList?: TicketProduct[]
+    ticketProductUpsertedList?: TicketProduct[]
+  }) {
+    const { ticketId } = data
+    const ticketAction: Ticket[] = SocketService.getTicketAction({
+      ticketId: data.ticketId,
+    })
+
+    ticketAction.forEach(async (ticket) => {
+      if (ticket.id !== data.ticketId) return
+      if (!ticket.ticketProductConsumableList) return
+
+      if (data.ticketProductUpsertedList) {
+        data.ticketProductUpsertedList.forEach((i) => {
+          const temp = TicketProduct.from(i)
+          const index = ticket.ticketProductConsumableList!.findIndex((j) => {
+            return i.id === j.id
+          })
+          if (index !== -1) {
+            ticket.ticketProductConsumableList![index] = temp
+          } else {
+            ticket.ticketProductConsumableList!.push(temp)
+          }
+        })
+      }
+
+      if (data.ticketProductDestroyedList) {
+        const idDestroyList = data.ticketProductDestroyedList.map((i) => i.id)
+        ticket.ticketProductConsumableList = ticket.ticketProductConsumableList.filter((i) => {
+          return !idDestroyList.includes(i.id)
+        })
+      }
+
+      ticket.ticketProductConsumableList.sort((a, b) => (a.priority < b.priority ? -1 : 1))
+      await ticket.refreshProduct()
+    })
+  }
+
+  static async listenSocketTicketPrescriptionChange(data: {
+    ticketId: number
+    ticketProductDestroyedList?: TicketProduct[]
+    ticketProductUpsertedList?: TicketProduct[]
+  }) {
+    const { ticketId } = data
+    const ticketAction: Ticket[] = SocketService.getTicketAction({
+      ticketId: data.ticketId,
+    })
+
+    ticketAction.forEach(async (ticket) => {
+      if (ticket.id !== data.ticketId) return
+      if (!ticket.ticketProductPrescriptionList) return
+
+      if (data.ticketProductUpsertedList) {
+        data.ticketProductUpsertedList.forEach((i) => {
+          const temp = TicketProduct.from(i)
+          const index = (ticket.ticketProductPrescriptionList || []).findIndex((j) => {
+            return i.id === j.id
+          })
+          if (index !== -1) {
+            ticket.ticketProductPrescriptionList![index] = temp
+          } else {
+            ticket.ticketProductPrescriptionList!.push(temp)
+          }
+        })
+      }
+
+      if (data.ticketProductDestroyedList) {
+        const idDestroyList = data.ticketProductDestroyedList.map((i) => i.id)
+        ticket.ticketProductPrescriptionList = ticket.ticketProductPrescriptionList.filter((i) => {
+          return !idDestroyList.includes(i.id)
+        })
+      }
+
+      ticket.ticketProductPrescriptionList.sort((a, b) => (a.priority < b.priority ? -1 : 1))
+      await ticket.refreshProduct()
+    })
+  }
+
+  static async listenTicketBatchListChange(data: {
+    ticketId: number
+    roomId: number
+    ticketBatchDestroyedList?: TicketBatch[]
+    ticketBatchUpsertedList?: TicketBatch[]
+  }) {
+    const { ticketId } = data
+    const ticketAction: Ticket[] = SocketService.getTicketAction({
+      ticketId: data.ticketId,
+    })
+
+    ticketAction.forEach(async (ticket) => {
+      if (ticket.id !== data.ticketId) return
+      if (!ticket.ticketBatchList) return
+
+      if (data.ticketBatchUpsertedList) {
+        data.ticketBatchUpsertedList.forEach((i) => {
+          const temp = TicketBatch.from(i)
+          const index = (ticket.ticketBatchList || []).findIndex((j) => {
+            return i.id === j.id
+          })
+          if (index !== -1) {
+            ticket.ticketBatchList![index] = temp
+          } else {
+            ticket.ticketBatchList!.push(temp)
+          }
+        })
+      }
+
+      if (data.ticketBatchDestroyedList) {
+        const idDestroyList = data.ticketBatchDestroyedList.map((i) => i.id)
+        ticket.ticketBatchList = ticket.ticketBatchList.filter((i) => {
+          return !idDestroyList.includes(i.id)
+        })
+      }
+      ticket.refreshTicketProductHasTicketBatchList()
+    })
+  }
+
   static async listenSocketTicketUserListChange(data: {
     ticketId: number
-    ticketUserDestroyList?: TicketUser[]
-    ticketUserUpsertList?: TicketUser[]
+    ticketUserDestroyedList?: TicketUser[]
+    ticketUserUpsertedList?: TicketUser[]
   }) {
     const ticketActionList: Ticket[] = [
       ticketRoomRef.value,
@@ -316,20 +611,21 @@ export class SocketService {
       ...roomDeliveryPagination.value,
     ]
 
-    ticketActionList.forEach(async (ticketAction) => {
-      if (ticketAction.id !== data.ticketId) return
-      if (!ticketAction.ticketUserList) return
+    for (let i = 0; i < ticketActionList.length; i++) {
+      const ticketAction = ticketActionList[i]
+      if (ticketAction.id !== data.ticketId) continue
+      if (!ticketAction.ticketUserList) continue
 
       // Destroy phải  xử lý trước
-      if (data.ticketUserDestroyList) {
-        const idDestroyList = data.ticketUserDestroyList.map((i) => i.id)
+      if (data.ticketUserDestroyedList) {
+        const idDestroyList = data.ticketUserDestroyedList.map((i) => i.id)
         ticketAction.ticketUserList = ticketAction.ticketUserList.filter((i) => {
           return !idDestroyList.includes(i.id)
         })
       }
 
-      if (data.ticketUserUpsertList) {
-        data.ticketUserUpsertList.forEach((i) => {
+      if (data.ticketUserUpsertedList) {
+        data.ticketUserUpsertedList.forEach((i) => {
           const temp = TicketUser.from(i)
           const index = ticketAction.ticketUserList!.findIndex((j) => {
             return i.id === j.id
@@ -356,13 +652,13 @@ export class SocketService {
 
       ticketAction.refreshTicketUserTree()
       await ticketAction.refreshUserAndRole()
-    })
+    }
   }
 
-  static async listenSocketTicketProcedureListChange(data: {
+  static async listenTicketChangeImage(data: {
     ticketId: number
-    ticketProcedureUpsertList?: TicketProcedure[]
-    ticketProcedureDestroyList?: TicketProcedure[]
+    imageDestroyedList?: Image[]
+    imageUpsertedList?: Image[]
   }) {
     const ticketActionList: Ticket[] = [
       ticketRoomRef.value,
@@ -371,348 +667,33 @@ export class SocketService {
       ...roomDeliveryPagination.value,
     ]
 
-    ticketActionList.forEach(async (ticket) => {
-      if (!ticket.ticketProcedureList) return
+    ticketActionList.forEach(async (ticketAction) => {
+      if (ticketAction.id !== data.ticketId) return
+      if (!ticketAction.imageList) return
 
-      if (data.ticketProcedureDestroyList) {
-        const idDestroyList = data.ticketProcedureDestroyList.map((i) => i.id)
-        ticket.ticketProcedureList = ticket.ticketProcedureList.filter((i) => {
+      // Destroy phải  xử lý trước
+      if (data.imageDestroyedList) {
+        const idDestroyList = data.imageDestroyedList.map((i) => i.id)
+        ticketAction.imageList = ticketAction.imageList.filter((i) => {
           return !idDestroyList.includes(i.id)
         })
       }
 
-      if (data.ticketProcedureUpsertList) {
-        data.ticketProcedureUpsertList.forEach((i) => {
-          const temp = TicketProcedure.from(i)
-          const index = ticket.ticketProcedureList!.findIndex((j) => {
+      if (data.imageUpsertedList) {
+        data.imageUpsertedList.forEach((i) => {
+          const temp = Image.from(i)
+          const index = ticketAction.imageList!.findIndex((j) => {
             return i.id === j.id
           })
           if (index !== -1) {
-            Object.assign(ticket.ticketProcedureList![index], temp)
+            ticketAction.imageList![index] = temp
           } else {
-            ticket.ticketProcedureList!.push(temp)
-          }
-        })
-      }
-      ticket.ticketProcedureList.sort((a, b) => (a.priority < b.priority ? -1 : 1))
-
-      await ticket.refreshProcedure()
-    })
-  }
-
-  static async listenSocketTicketRadiologyListChange(data: {
-    ticketId: number
-    ticketRadiologyUpsertList?: TicketRadiology[]
-    ticketRadiologyDestroyList?: TicketRadiology[]
-    ticketUserDestroyList?: TicketUser[]
-    ticketUserUpsertList?: TicketUser[]
-  }) {
-    await SocketService.listenSocketTicketUserListChange({
-      ticketId: data.ticketId,
-      ticketUserDestroyList: data.ticketUserDestroyList,
-      ticketUserUpsertList: data.ticketUserUpsertList,
-    })
-
-    const ticketAction: Ticket[] = SocketService.getTicketAction({
-      ticketId: data.ticketId,
-    })
-    for (let i = 0; i < ticketAction.length; i++) {
-      const ticket = ticketAction[i]
-      if (!ticket.ticketRadiologyList) return
-
-      if (data.ticketRadiologyUpsertList) {
-        data.ticketRadiologyUpsertList?.forEach((i) => {
-          const temp = TicketRadiology.from(i)
-          const index = ticket.ticketRadiologyList!.findIndex((j) => {
-            return i.id === j.id
-          })
-          if (index !== -1) {
-            ticket.ticketRadiologyList![index] = temp
-          } else {
-            ticket.ticketRadiologyList!.push(temp)
+            ticketAction.imageList!.push(temp)
           }
         })
       }
 
-      if (data.ticketRadiologyDestroyList) {
-        const idDestroyList = data.ticketRadiologyDestroyList.map((i) => i.id)
-        ticket.ticketRadiologyList = ticket.ticketRadiologyList.filter((i) => {
-          return !idDestroyList.includes(i.id)
-        })
-      }
-
-      await ticket.refreshRadiology()
-    }
-    const ticketRadiologyActionList = [
-      ...(data.ticketRadiologyUpsertList || []),
-      ...(data.ticketRadiologyDestroyList || []),
-    ]
-    ticketRadiologyActionList.forEach((tr) => {
-      roomRadiology.value[tr.roomId] = new Date().toISOString()
-    })
-  }
-
-  static async listenSocketTicketLaboratoryListChange(data: {
-    ticketId: number
-    ticketLaboratoryUpsertList?: TicketLaboratory[]
-    ticketLaboratoryDestroyList?: TicketLaboratory[]
-    ticketLaboratoryGroupUpsertList?: TicketLaboratoryGroup[]
-    ticketLaboratoryGroupDestroyList?: TicketLaboratoryGroup[]
-    ticketLaboratoryResultUpsertList?: TicketLaboratoryResult[]
-    ticketLaboratoryResultDestroyList?: TicketLaboratoryResult[]
-  }) {
-    const ticketAction: Ticket[] = SocketService.getTicketAction({
-      ticketId: data.ticketId,
-    })
-    ticketAction.forEach(async (ticket) => {
-      if (!ticket.ticketLaboratoryList) ticket.ticketLaboratoryList = []
-      if (!ticket.ticketLaboratoryGroupList) ticket.ticketLaboratoryGroupList = []
-      if (!ticket.ticketLaboratoryResultList) ticket.ticketLaboratoryResultList = []
-
-      if (data.ticketLaboratoryUpsertList) {
-        data.ticketLaboratoryUpsertList.forEach((i) => {
-          const temp = TicketLaboratory.from(i)
-          const index = ticket.ticketLaboratoryList!.findIndex((j) => {
-            return i.id === j.id
-          })
-          if (index !== -1) {
-            ticket.ticketLaboratoryList![index] = temp
-          } else {
-            ticket.ticketLaboratoryList!.push(temp)
-          }
-        })
-      }
-
-      if (data.ticketLaboratoryDestroyList) {
-        const idDestroyList = data.ticketLaboratoryDestroyList.map((i) => i.id)
-        ticket.ticketLaboratoryList = ticket.ticketLaboratoryList.filter((i) => {
-          return !idDestroyList.includes(i.id)
-        })
-      }
-
-      if (data.ticketLaboratoryGroupUpsertList) {
-        data.ticketLaboratoryGroupUpsertList.forEach((i) => {
-          const temp = TicketLaboratoryGroup.from(i)
-          const index = ticket.ticketLaboratoryGroupList!.findIndex((j) => {
-            return i.id === j.id
-          })
-          if (index !== -1) {
-            ticket.ticketLaboratoryGroupList![index] = temp
-          } else {
-            ticket.ticketLaboratoryGroupList!.push(temp)
-          }
-        })
-      }
-
-      if (data.ticketLaboratoryGroupDestroyList) {
-        const idDestroyList = data.ticketLaboratoryGroupDestroyList.map((i) => i.id)
-        ticket.ticketLaboratoryGroupList = ticket.ticketLaboratoryGroupList.filter((i) => {
-          return !idDestroyList.includes(i.id)
-        })
-      }
-
-      if (data.ticketLaboratoryResultUpsertList) {
-        data.ticketLaboratoryResultUpsertList.forEach((i) => {
-          const temp = TicketLaboratoryResult.from(i)
-          const index = ticket.ticketLaboratoryResultList!.findIndex((j) => {
-            return i.id === j.id
-          })
-          if (index !== -1) {
-            ticket.ticketLaboratoryResultList![index] = temp
-          } else {
-            ticket.ticketLaboratoryResultList!.push(temp)
-          }
-        })
-      }
-
-      if (data.ticketLaboratoryResultDestroyList) {
-        const idDestroyList = data.ticketLaboratoryResultDestroyList.map((i) => i.id)
-        ticket.ticketLaboratoryResultList = ticket.ticketLaboratoryResultList.filter((i) => {
-          return !idDestroyList.includes(i.id)
-        })
-      }
-
-      await ticket.refreshLaboratory()
-    })
-
-    const roomIdAction = [
-      ...(data.ticketLaboratoryUpsertList || []).map((i) => i.roomId),
-      ...(data.ticketLaboratoryDestroyList || []).map((i) => i.roomId),
-      ...(data.ticketLaboratoryGroupUpsertList || []).map((i) => i.roomId),
-      ...(data.ticketLaboratoryGroupDestroyList || []).map((i) => i.roomId),
-    ]
-    await LaboratoryGroupService.getMap()
-    roomIdAction.forEach((roomId) => {
-      roomLaboratory.value[roomId] = new Date().toISOString()
-    })
-  }
-
-  static async listenSocketTicketProductChange(data: {
-    ticketId: number
-    ticketProductDestroyList?: TicketProduct[]
-    ticketProductUpsertList?: TicketProduct[]
-    ticketProductReplaceList?: TicketProduct[]
-  }) {
-    const { ticketId } = data
-    const ticketAction: Ticket[] = SocketService.getTicketAction({
-      ticketId: data.ticketId,
-    })
-
-    ticketAction.forEach(async (ticket) => {
-      if (!ticket.ticketProductList) return
-
-      if (data.ticketProductUpsertList) {
-        data.ticketProductUpsertList.forEach((i) => {
-          const temp = TicketProduct.from(i)
-          const index = ticket.ticketProductList!.findIndex((j) => {
-            return i.id === j.id
-          })
-          if (index !== -1) {
-            ticket.ticketProductList![index] = temp
-          } else {
-            ticket.ticketProductList!.push(temp)
-          }
-        })
-      }
-
-      if (data.ticketProductDestroyList) {
-        const idDestroyList = data.ticketProductDestroyList.map((i) => i.id)
-        ticket.ticketProductList = ticket.ticketProductList.filter((i) => {
-          return !idDestroyList.includes(i.id)
-        })
-      }
-
-      if (data?.ticketProductReplaceList) {
-        ticket.ticketProductList = TicketProduct.fromList(data.ticketProductReplaceList)
-      }
-      await ticket.refreshProduct()
-    })
-  }
-
-  static async listenSocketTicketConsumableChange(data: {
-    ticketId: number
-    ticketProductDestroyList?: TicketProduct[]
-    ticketProductUpsertList?: TicketProduct[]
-    ticketProductReplaceList?: TicketProduct[]
-  }) {
-    const { ticketId } = data
-    const ticketAction: Ticket[] = SocketService.getTicketAction({
-      ticketId: data.ticketId,
-    })
-
-    ticketAction.forEach(async (ticket) => {
-      if (!ticket.ticketProductConsumableList) return
-
-      if (data.ticketProductUpsertList) {
-        data.ticketProductUpsertList.forEach((i) => {
-          const temp = TicketProduct.from(i)
-          const index = ticket.ticketProductConsumableList!.findIndex((j) => {
-            return i.id === j.id
-          })
-          if (index !== -1) {
-            ticket.ticketProductConsumableList![index] = temp
-          } else {
-            ticket.ticketProductConsumableList!.push(temp)
-          }
-        })
-      }
-
-      if (data.ticketProductDestroyList) {
-        const idDestroyList = data.ticketProductDestroyList.map((i) => i.id)
-        ticket.ticketProductConsumableList = ticket.ticketProductConsumableList.filter((i) => {
-          return !idDestroyList.includes(i.id)
-        })
-      }
-
-      if (data?.ticketProductReplaceList) {
-        ticket.ticketProductConsumableList = TicketProduct.fromList(data.ticketProductReplaceList)
-      }
-      await ticket.refreshProduct()
-    })
-  }
-
-  static async listenSocketTicketPrescriptionChange(data: {
-    ticketId: number
-    ticketProductDestroyList?: TicketProduct[]
-    ticketProductUpsertList?: TicketProduct[]
-    ticketProductReplaceList?: TicketProduct[]
-  }) {
-    const { ticketId } = data
-    const ticketAction: Ticket[] = SocketService.getTicketAction({
-      ticketId: data.ticketId,
-    })
-
-    ticketAction.forEach(async (ticket) => {
-      if (!ticket.ticketProductPrescriptionList) return
-
-      if (data.ticketProductUpsertList) {
-        data.ticketProductUpsertList.forEach((i) => {
-          const temp = TicketProduct.from(i)
-          const index = (ticket.ticketProductPrescriptionList || []).findIndex((j) => {
-            return i.id === j.id
-          })
-          if (index !== -1) {
-            ticket.ticketProductPrescriptionList![index] = temp
-          } else {
-            ticket.ticketProductPrescriptionList!.push(temp)
-          }
-        })
-      }
-
-      if (data.ticketProductDestroyList) {
-        const idDestroyList = data.ticketProductDestroyList.map((i) => i.id)
-        ticket.ticketProductPrescriptionList = ticket.ticketProductPrescriptionList.filter((i) => {
-          return !idDestroyList.includes(i.id)
-        })
-      }
-
-      if (data.ticketProductReplaceList) {
-        ticket.ticketProductPrescriptionList = TicketProduct.fromList(data.ticketProductReplaceList)
-      }
-      await ticket.refreshProduct()
-    })
-  }
-
-  static async listenTicketBatchListChange(data: {
-    ticketId: number
-    roomId: number
-    ticketBatchDestroyList?: TicketBatch[]
-    ticketBatchUpsertList?: TicketBatch[]
-    ticketBatchReplaceList?: TicketBatch[]
-  }) {
-    const { ticketId } = data
-    const ticketAction: Ticket[] = SocketService.getTicketAction({
-      ticketId: data.ticketId,
-    })
-
-    ticketAction.forEach(async (ticket) => {
-      ticket.ticketBatchList ||= []
-
-      if (data.ticketBatchUpsertList) {
-        data.ticketBatchUpsertList.forEach((i) => {
-          const temp = TicketBatch.from(i)
-          const index = (ticket.ticketBatchList || []).findIndex((j) => {
-            return i.id === j.id
-          })
-          if (index !== -1) {
-            ticket.ticketBatchList![index] = temp
-          } else {
-            ticket.ticketBatchList!.push(temp)
-          }
-        })
-      }
-
-      if (data.ticketBatchDestroyList) {
-        const idDestroyList = data.ticketBatchDestroyList.map((i) => i.id)
-        ticket.ticketBatchList = ticket.ticketBatchList.filter((i) => {
-          return !idDestroyList.includes(i.id)
-        })
-      }
-
-      if (data.ticketBatchReplaceList) {
-        ticket.ticketBatchList = TicketBatch.fromList(data.ticketBatchReplaceList)
-      }
-      ticket.refreshTicketProductHasTicketBatchList()
+      ticketAction.refreshImageMap()
     })
   }
 }

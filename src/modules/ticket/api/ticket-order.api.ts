@@ -48,7 +48,7 @@ export class TicketOrderApi {
       ticketOrderProcedureDraftList: (ticket.ticketProcedureList || []).map((i, index) => ({
         priority: index + 1,
         procedureId: i.procedureId,
-        type: i.type,
+        procedureType: i.procedureType,
         paymentMoneyStatus: i.paymentMoneyStatus,
         quantity: i.quantity,
         totalSessions: i.totalSessions,

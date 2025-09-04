@@ -192,7 +192,7 @@ defineExpose({ openModal })
         </div>
 
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-          <template v-if="ticketUser.positionType === PositionType.Ticket">
+          <template v-if="ticketUser.positionType === PositionType.TicketReception">
             <div>Phiếu</div>
             <div>
               <InputText :value="'Phiếu khám'" disabled />

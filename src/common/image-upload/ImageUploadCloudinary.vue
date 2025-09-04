@@ -9,6 +9,7 @@ const imageListContainerRef = ref<HTMLElement>()
 
 const emit = defineEmits<{
   (e: 'changeImage'): void
+  (e: 'loading', value: boolean): void
 }>()
 
 const props = withDefaults(
@@ -61,54 +62,67 @@ watch(
   { immediate: true },
 )
 
-const handleAddImage = (e: Event) => {
+const handleAddImage = async (e: Event) => {
   const target = e.target as HTMLInputElement
   const files = target.files
   if (!files) return
 
+  emit('changeImage')
+  emit('loading', true)
   let loadCount = 0
+
+  const promiseList: Promise<any>[] = []
+
   for (let i = 0; i < files.length; i++) {
     const file = files[i]
 
-    new Compressor(file, {
-      quality: props.quality,
-      maxWidth: 1024,
-      success(result) {
-        const reader = new FileReader()
-        reader.readAsDataURL(result)
-        reader.onload = async function (e) {
-          if (e.target?.result) {
-            const itemData = {
-              thumbnail: '',
-              enlarged: '',
-              file: result,
-              id: 0,
-            }
-            imageDataList.value.push(itemData)
+    const filePromise = new Promise((resolve, reject) => {
+      return new Compressor(file, {
+        quality: props.quality,
+        maxWidth: 1024,
+        success(result) {
+          const reader = new FileReader()
+          reader.readAsDataURL(result)
+          reader.onload = async function (e) {
+            if (e.target?.result) {
+              const itemData = {
+                thumbnail: '',
+                enlarged: '',
+                file: result,
+                id: 0,
+              }
+              imageDataList.value.push(itemData)
 
-            const urlCloudinary = await ImageApi.uploadCloudinary({
-              file: result as any,
-              oid: props.oid,
-              customerId: props.customerId,
-            })
-            itemData.thumbnail = urlCloudinary
-            itemData.enlarged = urlCloudinary
-            imageDataList.value = [...imageDataList.value] // bắt buộc rerender lại
+              const urlCloudinary = await ImageApi.uploadCloudinary({
+                file: result as any,
+                oid: props.oid,
+                customerId: props.customerId,
+              })
+              itemData.thumbnail = urlCloudinary
+              itemData.enlarged = urlCloudinary
+              imageDataList.value = [...imageDataList.value] // bắt buộc rerender lại
+            }
+            loadCount++
+            if (loadCount === files.length) {
+              nextTick(() => {
+                imageListContainerRef.value!.scrollLeft = imageListContainerRef.value!.scrollWidth
+              })
+            }
+
+            resolve(true)
           }
-          loadCount++
-          if (loadCount === files.length) {
-            nextTick(() => {
-              imageListContainerRef.value!.scrollLeft = imageListContainerRef.value!.scrollWidth
-            })
-          }
-        }
-      },
-      error(err) {
-        console.error('Compression error:', err)
-      },
+        },
+        error(err) {
+          reject(false)
+          console.error('Compression error:', err)
+        },
+      })
     })
+    promiseList.push(filePromise)
   }
-  emit('changeImage')
+
+  await Promise.all(promiseList)
+  emit('loading', false)
 }
 
 const scrollImages = (direction: number) => {
@@ -130,7 +144,7 @@ const clickAddImage = (e: Event) => {
   }
 }
 
-const handleChangeImage = (e: Event, index: number) => {
+const handleChangeImage = async (e: Event, index: number) => {
   const target = e.target as HTMLInputElement
   const files = target.files
   if (!files || !files.length) return
@@ -143,45 +157,40 @@ const handleChangeImage = (e: Event, index: number) => {
     id: 0,
   }
 
-  new Compressor(file, {
-    quality: props.quality,
-    maxWidth: 1024,
-    success(result) {
-      const reader = new FileReader()
-      reader.readAsDataURL(result)
-      reader.onload = async function (e) {
-        if (e.target?.result) {
-          const urlCloudinary = await ImageApi.uploadCloudinary({
-            file: result as any,
-            oid: props.oid,
-            customerId: props.customerId,
-          })
-          imageDataList.value[index].thumbnail = urlCloudinary
-          imageDataList.value[index].enlarged = urlCloudinary
-          imageDataList.value[index].file = file
+  emit('changeImage')
+  emit('loading', true)
 
-          // imageDataList.value = [...imageDataList.value] // bắt buộc rerender lại
+  await new Promise((resolve, reject) => {
+    new Compressor(file, {
+      quality: props.quality,
+      maxWidth: 1024,
+      success(result) {
+        const reader = new FileReader()
+        reader.readAsDataURL(result)
+        reader.onload = async function (e) {
+          if (e.target?.result) {
+            const urlCloudinary = await ImageApi.uploadCloudinary({
+              file: result as any,
+              oid: props.oid,
+              customerId: props.customerId,
+            })
+            imageDataList.value[index].thumbnail = urlCloudinary
+            imageDataList.value[index].enlarged = urlCloudinary
+            imageDataList.value[index].file = file
+
+            // imageDataList.value = [...imageDataList.value] // bắt buộc rerender lại
+          }
+          resolve(true)
         }
-      }
-    },
-    error(err) {
-      console.error('Compression error:', err)
-    },
+      },
+      error(err) {
+        reject(false)
+        console.error('Compression error:', err)
+      },
+    })
   })
 
-  const reader = new FileReader()
-  reader.onload = function (e) {
-    if (e.target?.result) {
-      imageDataList.value[index] = {
-        thumbnail: e.target?.result as string,
-        enlarged: e.target?.result as string,
-        file,
-        id: 0,
-      }
-    }
-  }
-  reader.readAsDataURL(file)
-  emit('changeImage')
+  emit('loading', false)
 }
 
 const handleRemoveImage = (index: number) => {

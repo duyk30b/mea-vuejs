@@ -15,6 +15,7 @@ import { ESImage } from '@/utils'
 import { computed, ref } from 'vue'
 import TicketChangeTicketUserPosition from '../room-user/TicketChangeTicketUserPosition.vue'
 import ModalCancelTicketProcedureItem from './ModalCancelTicketProcedureItem.vue'
+import { ProcedureType } from '@/modules/procedure'
 
 const appointmentRegisterSuccessForm = ref<InstanceType<typeof HTMLFormElement>>()
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadCloudinary>>()
@@ -26,14 +27,14 @@ const emit = defineEmits<{
 
 const { userPermission, organization } = MeService
 
-const saveLoading = ref(false)
-const showModal = ref(false)
-
-const hasChangeImageList = ref(false)
-
 const ticketProcedure = ref<TicketProcedure>(TicketProcedure.blank())
 const ticketProcedureItemOrigin = ref<TicketProcedureItem>(TicketProcedureItem.blank())
 const ticketProcedureItem = ref<TicketProcedureItem>(TicketProcedureItem.blank())
+
+const hasChangeImageList = ref(false)
+const loadingImage = ref(false)
+const saveLoading = ref(false)
+const showModal = ref(false)
 
 const openModal = async (data: {
   ticketProcedure: TicketProcedure
@@ -42,11 +43,10 @@ const openModal = async (data: {
   ticketProcedure.value = TicketProcedure.from(data.ticketProcedure)
 
   ticketProcedureItemOrigin.value = data.ticketProcedureItem
-  ticketProcedureItem.value = TicketProcedureItem.from(data.ticketProcedureItem)
-  if (ticketProcedureItem.value.status !== TicketProcedureStatus.Completed) {
-    ticketProcedureItem.value.completedAt = Date.now()
+  if (ticketProcedureItemOrigin.value.status !== TicketProcedureStatus.Completed) {
+    ticketProcedureItemOrigin.value.completedAt = Date.now()
   }
-
+  ticketProcedureItem.value = TicketProcedureItem.from(ticketProcedureItemOrigin.value)
   showModal.value = true
 }
 
@@ -56,11 +56,24 @@ const closeModal = () => {
   showModal.value = false
 }
 
+const hasChangeTicketProcedureItem = computed(() => {
+  const result = !TicketProcedureItem.equal(
+    ticketProcedureItemOrigin.value,
+    ticketProcedureItem.value,
+  )
+  return result
+})
+
 const hasChangeTicketUserList = computed(() => {
   const result = !TicketUser.equalList(
     ticketProcedureItemOrigin.value.ticketUserResultList || [],
     ticketProcedureItem.value.ticketUserResultList || [],
   )
+  return result
+})
+
+const hasChangeData = computed(() => {
+  const result = hasChangeTicketProcedureItem.value || hasChangeTicketUserList.value
   return result
 })
 
@@ -100,10 +113,6 @@ const handleSave = async () => {
   }
 }
 
-const handleChangeImage = () => {
-  hasChangeImageList.value = true
-}
-
 const handleModalCancelTicketProcedureItemSuccess = (data: TicketProcedure) => {
   emit('success', { ticketProcedure: data })
   closeModal()
@@ -125,8 +134,10 @@ defineExpose({ openModal })
     <form ref="appointmentRegisterSuccessForm" class="bg-white pb-2" @submit.prevent="handleSave">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          {{ ticketProcedure.procedure?.name }}: buổi thứ
-          {{ ticketProcedure.finishedSessions + 1 }}
+          <span>{{ ticketProcedure.procedure?.name }}</span>
+          <span v-if="ticketProcedure.procedure?.procedureType === ProcedureType.Regimen">
+            : buổi thứ{{ ticketProcedure.finishedSessions + 1 }}
+          </span>
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
@@ -134,7 +145,10 @@ defineExpose({ openModal })
       </div>
 
       <div class="px-4 mt-4">
-        <div style="flex-basis: 300px; flex-grow: 1">
+        <div
+          v-if="ticketProcedure.procedureType === ProcedureType.Regimen"
+          style="flex-basis: 300px; flex-grow: 1"
+        >
           <div>Thời gian hẹn</div>
           <div>
             <InputDate
@@ -172,7 +186,8 @@ defineExpose({ openModal })
             :height="100"
             :oid="organization.id"
             :customerId="ticketProcedure.customerId"
-            @changeImage="handleChangeImage"
+            @changeImage="hasChangeImageList = true"
+            @loading="(v) => (loadingImage = v)"
             :rootImageList="
               (ticketProcedureItem.imageList || []).map((i: Image) => ({
                 thumbnail: ESImage.getImageLink(i, { size: 200 }),
@@ -190,7 +205,7 @@ defineExpose({ openModal })
             :positionType="PositionType.ProcedureResult"
             :positionInteractId="ticketProcedure.procedureId"
             @fix:ticketUserList="handleFixTicketUserResultList"
-            title="Nhân viên tư vấn, chỉ định dịch vụ"
+            title="Nhân viên thực hiện dịch vụ"
           />
         </div>
       </div>
@@ -207,10 +222,19 @@ defineExpose({ openModal })
             color="red"
             :loading="saveLoading"
           >
-            HỦY BUỔI {{ ticketProcedure.finishedSessions + 1 }}
+            <span>HỦY</span>
+            <span v-if="ticketProcedure.procedureType === ProcedureType.Regimen">
+              BUỔI {{ ticketProcedure.finishedSessions + 1 }}
+            </span>
           </VueButton>
         </div>
-        <VueButton color="blue" icon="save" type="submit" :loading="saveLoading">
+        <VueButton
+          color="blue"
+          icon="save"
+          type="submit"
+          :loading="saveLoading"
+          :disabled="!hasChangeData || loadingImage"
+        >
           THỰC HIỆN
         </VueButton>
       </div>

@@ -293,7 +293,7 @@ const saveLaboratorySelected = async () => {
       }
     }
 
-    await TicketChangeLaboratoryApi.upsertLaboratory({
+    await TicketChangeLaboratoryApi.upsertRequestLaboratoryGroup({
       ticketId: ticketRoomRef.value.id,
       ticketLaboratoryGroupAddList,
       ticketLaboratoryGroupUpdate: tlgEdit.value.id
@@ -622,7 +622,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                       [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
                         tlg.paymentMoneyStatus,
                       ) &&
-                      userPermission[PermissionId.TICKET_CHANGE_LABORATORY]
+                      userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
                     "
                     size="small"
                     @click="clickChangeLaboratoryGroup(tlg.id)"
@@ -646,7 +646,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                     [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
                       tlg.paymentMoneyStatus,
                     ) &&
-                    userPermission[PermissionId.TICKET_CHANGE_LABORATORY]
+                    userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
                   "
                   style="color: var(--text-red)"
                 >
@@ -700,7 +700,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   <a
                     v-else-if="
                       tlItem.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
-                      userPermission[PermissionId.TICKET_CHANGE_LABORATORY]
+                      userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
                     "
                     class="text-orange-500"
                     @click="modalTicketLaboratoryUpdateMoney?.openModal(tlItem)"

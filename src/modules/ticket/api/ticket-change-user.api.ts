@@ -8,8 +8,8 @@ export class TicketChangeUserApi {
     const response = await AxiosInstance.delete(
       `/ticket/${ticketId}/user/destroy-ticket-user/${ticketUserId}`,
     )
-    const { data } = response.data as BaseResponse<{ ticketUserDestroyed: any }>
-    return TicketUser.from(data.ticketUserDestroyed)
+    const { data } = response.data as BaseResponse<{ ticketUserDestroyedList: any[] }>
+    return TicketUser.fromList(data.ticketUserDestroyedList)
   }
 
   static async updateTicketUserCommission(body: {

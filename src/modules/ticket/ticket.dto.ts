@@ -38,9 +38,10 @@ export class TicketGetQuery {
     ticketLaboratoryGroupList?: TicketLaboratoryGroupListQuery
     ticketLaboratoryResultList?: boolean
     ticketRadiologyList?: TicketRadiologyListQuery
-    ticketUserList?: { user?: boolean }
     toAppointment?: boolean
     customerSource?: boolean
+    
+    ticketUserList?: { user?: boolean }
     imageList?: boolean
   }
 

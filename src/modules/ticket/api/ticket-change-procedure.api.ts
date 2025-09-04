@@ -33,7 +33,7 @@ export class TicketChangeProcedureApi {
             ticketProcedure: {
               priority: ticketProcedure.priority,
               procedureId: ticketProcedure.procedureId,
-              type: ticketProcedure.type,
+              procedureType: ticketProcedure.procedureType,
 
               quantity: ticketProcedure.quantity,
               totalSessions: ticketProcedure.totalSessions,
@@ -52,7 +52,10 @@ export class TicketChangeProcedureApi {
         }),
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as BaseResponse<{
+      ticketModified: any
+      ticketProcedureCreatedList: any[]
+    }>
   }
 
   static async destroyTicketProcedure(body: { ticketId: number; ticketProcedureId: number }) {
@@ -60,10 +63,10 @@ export class TicketChangeProcedureApi {
     const response = await AxiosInstance.delete(
       `/ticket/${ticketId}/procedure/destroy-ticket-procedure/${ticketProcedureId}`,
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as BaseResponse<{ ticketId: any; ticketProcedureId: number }>
   }
 
-  static async updateTicketProcedure(body: {
+  static async updateRequestTicketProcedure(body: {
     ticketId: number
     ticketProcedureId: number
     ticketProcedure?: TicketProcedure
@@ -78,7 +81,7 @@ export class TicketChangeProcedureApi {
       ticketUserRequestList,
     } = body
     const response = await AxiosInstance.post(
-      `/ticket/${ticketId}/procedure/update-ticket-procedure/${ticketProcedureId}`,
+      `/ticket/${ticketId}/procedure/update-request-ticket-procedure/${ticketProcedureId}`,
       {
         ticketProcedure: ticketProcedure
           ? {
@@ -110,7 +113,7 @@ export class TicketChangeProcedureApi {
           : undefined,
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as BaseResponse<{ ticketProcedureModified: any }>
   }
 
   static async updatePriorityTicketProcedure(body: {
@@ -127,7 +130,7 @@ export class TicketChangeProcedureApi {
         })),
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as BaseResponse<{ ticketProcedureList: any[] }>
   }
 
   static async updateResultTicketProcedureItem(options: {
@@ -194,7 +197,7 @@ export class TicketChangeProcedureApi {
   }) {
     const { ticketId } = options
     const response = await AxiosInstance.post(
-      `/ticket/${ticketId}/procedure/cancel-ticket-procedure-item`,
+      `/ticket/${ticketId}/procedure/cancel-result-ticket-procedure-item`,
       {
         ticketProcedureId: options.ticketProcedureId,
         ticketProcedureItemId: options.ticketProcedureItemId,

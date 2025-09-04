@@ -43,11 +43,11 @@ const { userPermission, organization } = MeService
 const ticketRadiologyOrigin = ref<TicketRadiology>(TicketRadiology.blank())
 const ticketRadiology = ref<TicketRadiology>(TicketRadiology.blank())
 const hasChangeImageList = ref(false)
+const loadingImage = ref(false)
 
 watch(
   () => props.ticketRadiologyProp,
   async (newValue) => {
-    console.log('🚀 ~ TicketRadiologyFormResult.vue:50 ~ newValue:', newValue)
     ticketRadiologyOrigin.value = TicketRadiology.from(newValue)
     if (!ticketRadiologyOrigin.value.completedAt) {
       ticketRadiologyOrigin.value.completedAt = Date.now()
@@ -83,7 +83,7 @@ const handleChangeImage = () => {
   hasChangeImageList.value = true
 }
 
-const hasChangeDate = computed(() => {
+const hasChangeData = computed(() => {
   if (
     hasChangeTicketRadiology.value ||
     ticketRadiology.value.status === TicketRadiologyStatus.Pending
@@ -301,6 +301,7 @@ const handleFixTicketUserResultList = (tuListData: TicketUser[]) => {
             :customerId="ticketRadiology.customerId"
             :editable="editable"
             @changeImage="handleChangeImage"
+            @loading="(v) => (loadingImage = v)"
             :rootImageList="
               (ticketRadiology.imageList || []).map((i: Image) => ({
                 thumbnail: ESImage.getImageLink(i, { size: 200 }),
@@ -356,14 +357,14 @@ const handleFixTicketUserResultList = (tuListData: TicketUser[]) => {
         color="blue"
         type="button"
         @click="updateResult({ print: true })"
-        :disabled="!hasChangeDate"
+        :disabled="!hasChangeData || loadingImage"
         icon="print"
       >
         Lưu và In
       </VueButton>
       <VueButton
         v-if="editable"
-        :disabled="!hasChangeDate"
+        :disabled="!hasChangeData || loadingImage"
         :loading="saveLoading"
         color="blue"
         type="submit"

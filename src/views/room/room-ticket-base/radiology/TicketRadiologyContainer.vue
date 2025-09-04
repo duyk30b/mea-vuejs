@@ -13,11 +13,7 @@ import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import { Radiology, RadiologyService } from '@/modules/radiology'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeRadiologyApi, TicketStatus } from '@/modules/ticket'
-import {
-  TicketRadiology,
-  TicketRadiologyApi,
-  TicketRadiologyStatus,
-} from '@/modules/ticket-radiology'
+import { TicketRadiology, TicketRadiologyStatus } from '@/modules/ticket-radiology'
 import IndexAndSort from '@/views/component/IndexAndSort.vue'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import ModalRadiologyDetail from '@/views/master-data/radiology/detail/ModalRadiologyDetail.vue'
@@ -26,7 +22,6 @@ import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadi
 import { computed, onMounted, ref, watch } from 'vue'
 import ModalTicketRadiologyUpdate from './ModalTicketRadiologyUpdate.vue'
 import TicketRadiologySelectItem from './TicketRadiologySelectItem.vue'
-import type { TicketProcedure } from '@/modules/ticket-procedure'
 
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalTicketRadiologyUpdate = ref<InstanceType<typeof ModalTicketRadiologyUpdate>>()
@@ -245,7 +240,7 @@ const openModalResult = (data: { ticketRadiology: TicketRadiology; noEdit?: bool
                   [PaymentMoneyStatus.NoEffect, PaymentMoneyStatus.Pending].includes(
                     tp.paymentMoneyStatus,
                   ) &&
-                  userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY]
+                  userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_REQUEST]
                 "
                 @click="modalTicketRadiologyUpdate?.openModal({ ticketRadiology: tp })"
                 style="color: var(--text-orange)"
@@ -281,7 +276,7 @@ const openModalResult = (data: { ticketRadiology: TicketRadiology; noEdit?: bool
     <div></div>
     <VueButton
       v-if="
-        userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY] &&
+        userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_REQUEST] &&
         ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
         hasChangePriority
       "

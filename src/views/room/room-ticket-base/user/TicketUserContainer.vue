@@ -141,7 +141,7 @@ const handleModalTicketUserUpdateCommissionSuccess = (
                   ({{ ticketUser.ticketItemId }} - {{ ticketUser.ticketItemChildId }} -
                   {{ ticketUser.positionInteractId }})
                 </span>
-                <template v-if="ticketUser.positionType === PositionType.Ticket">
+                <template v-if="ticketUser.positionType === PositionType.TicketReception">
                   Phiếu khám
                 </template>
                 <template v-if="ticketUser.positionType === PositionType.TicketPrescriptionRequest">
@@ -172,7 +172,7 @@ const handleModalTicketUserUpdateCommissionSuccess = (
               </td>
 
               <td class="text-right">
-                <template v-if="ticketUser.positionType !== PositionType.Ticket">
+                <template v-if="ticketUser.positionType !== PositionType.TicketReception">
                   <div
                     v-if="ticketUser.ticketItemExpectedPrice !== ticketUser.ticketItemActualPrice"
                     class="text-xs italic text-red-500"
@@ -187,7 +187,7 @@ const handleModalTicketUserUpdateCommissionSuccess = (
                 </template>
               </td>
               <td class="text-center">
-                <template v-if="ticketUser.positionType !== PositionType.Ticket">
+                <template v-if="ticketUser.positionType !== PositionType.TicketReception">
                   {{ ticketUser.quantity }}
                 </template>
               </td>

@@ -7,7 +7,7 @@ import { Radiology } from '../radiology'
 import { Role } from '../role/role.model'
 
 export enum PositionType {
-  Ticket = 1,
+  TicketReception = 1,
   ProductRequest = 2,
   TicketPrescriptionRequest = 3,
   ProcedureRequest = 4,
@@ -20,7 +20,7 @@ export enum PositionType {
 }
 
 export const PositionTypeText = {
-  [PositionType.Ticket]: 'Phòng khám',
+  [PositionType.TicketReception]: 'Phòng khám',
   [PositionType.ProductRequest]: 'Chỉ định sản phẩm',
   [PositionType.TicketPrescriptionRequest]: 'Kê đơn thuốc',
   [PositionType.ProcedureRequest]: 'Chỉ định dịch vụ',
@@ -46,10 +46,11 @@ export const CommissionCalculatorTypeText = {
 
 export class Position extends BaseModel {
   id: number
-  priority: number
-  roleId: number
   positionType: PositionType
   positionInteractId: number
+  roleId: number
+
+  priority: number
   commissionCalculatorType: CommissionCalculatorType
   commissionValue: number
 
@@ -69,7 +70,7 @@ export class Position extends BaseModel {
     ins.id = 0
     ins.roleId = 0
     ins.priority = 0
-    ins.positionType = PositionType.Ticket
+    ins.positionType = PositionType.TicketReception
     ins.positionInteractId = 0
     ins.commissionCalculatorType = CommissionCalculatorType.VND
     ins.commissionValue = 0
@@ -147,12 +148,14 @@ export class Position extends BaseModel {
 
   static equal(a: Position, b: Position) {
     if (a.id != b.id) return false
-    if (a.priority != b.priority) return false
-    if (a.roleId != b.roleId) return false
     if (a.positionType != b.positionType) return false
     if (a.positionInteractId != b.positionInteractId) return false
+    if (a.roleId != b.roleId) return false
+
+    if (a.priority != b.priority) return false
     if (a.commissionCalculatorType != b.commissionCalculatorType) return false
     if (a.commissionValue != b.commissionValue) return false
+    
     return true
   }
 
