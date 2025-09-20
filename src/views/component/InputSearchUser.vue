@@ -2,7 +2,7 @@
 import { InputOptionsValue, InputSearch } from '@/common/vue-form'
 import type { ItemOption } from '@/common/vue-form/InputSearch.vue'
 import { CONFIG } from '@/config'
-import { Position, PositionService } from '@/modules/position'
+import { CommissionCalculatorType, Position, PositionService } from '@/modules/position'
 import { RoleService } from '@/modules/role'
 import { User, UserService } from '@/modules/user'
 import { UserRoleService } from '@/modules/user-role'
@@ -76,7 +76,17 @@ const logicFilter = (item: ItemOption<User>, text: string) => {
   <div class="flex gap-1 flex-wrap">
     <div>{{ position.role?.name || 'Nhân viên' }}</div>
     <div v-if="CONFIG.MODE === 'development'" style="color: violet">
-      (P{{ positionId }} - R{{ position.roleId }} - U{{ userId }})
+      (P{{ positionId }} - R{{ position.roleId }} - U{{ userId }} -
+      <span v-if="position.commissionCalculatorType === CommissionCalculatorType.VND">
+        {{ position.commissionValue }}
+      </span>
+      <span v-if="position.commissionCalculatorType === CommissionCalculatorType.PercentActual">
+        {{ position.commissionValue }}% TT
+      </span>
+      <span v-if="position.commissionCalculatorType === CommissionCalculatorType.PercentExpected">
+        {{ position.commissionValue }}% NY
+      </span>
+      )
     </div>
   </div>
   <div>

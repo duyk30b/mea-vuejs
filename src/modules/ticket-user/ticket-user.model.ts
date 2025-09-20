@@ -2,7 +2,7 @@ import { BaseModel } from '../_base/base.model'
 import { CommissionCalculatorType, Position, PositionType } from '../position'
 import type { Role } from '../role'
 import type { TicketProcedure } from '../ticket-procedure'
-import type { TicketProcedureItem } from '../ticket-procedure/ticket-procedure-item.model'
+import type { TicketRegimen } from '../ticket-regimen'
 import { Ticket } from '../ticket/ticket.model'
 import { User } from '../user'
 
@@ -37,7 +37,7 @@ export class TicketUser extends BaseModel {
   position?: Position
 
   ticketProcedure?: TicketProcedure // chỉ convert tại màn TicketUserContainer
-  ticketProcedureItem?: TicketProcedureItem // chỉ convert tại màn TicketUserContainer
+  ticketRegimen?: TicketRegimen // chỉ convert tại màn TicketUserContainer
 
   static init(): TicketUser {
     const ins = new TicketUser()

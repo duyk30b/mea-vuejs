@@ -1,32 +1,23 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
-import { IconClose, IconDoubleRight } from '@/common/icon-antd'
+import { IconClose } from '@/common/icon-antd'
 import { InputMoney, InputNumber, InputSelect, InputText, VueSwitch } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
+import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Discount, DiscountInteractType, DiscountService } from '@/modules/discount'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { Position, PositionService, PositionType } from '@/modules/position'
-import {
-  GapHoursType,
-  GapHoursTypeText,
-  Procedure,
-  ProcedureService,
-  ProcedureType,
-  ProcedureTypeText,
-} from '@/modules/procedure'
+import { Procedure, ProcedureService, ProcedureType } from '@/modules/procedure'
 import { ProcedureGroup, ProcedureGroupService } from '@/modules/procedure-group'
-import { Product } from '@/modules/product'
-import { Role, RoleService } from '@/modules/role'
+import { ESTypescript } from '@/utils'
 import PositionTableAction from '@/views/master-data/position/common/PositionTableAction.vue'
 import { computed, ref } from 'vue'
 import DiscountTableAction from '../../discount/common/DiscountTableAction.vue'
 import ModalDiscountUpsert from '../../discount/upsert/ModalDiscountUpsert.vue'
-import { ESTypescript } from '@/utils'
-import { CONFIG } from '@/config'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
@@ -44,11 +35,6 @@ const { userPermission } = MeService
 let procedureOrigin = Procedure.blank()
 const procedure = ref(Procedure.blank())
 const procedureGroupOptions = ref<{ value: number; label: string; data: ProcedureGroup }[]>([])
-
-const gapHoursTypeOptions = ESTypescript.keysEnum(GapHoursType).map((key) => ({
-  value: GapHoursType[key],
-  label: GapHoursTypeText[GapHoursType[key]],
-}))
 
 const activeTab = ref(TABS_KEY.BASIC)
 
@@ -207,17 +193,6 @@ const handleModalDiscountUpsertSuccess = async (
   }
 }
 
-const handleChangeProcedureType = (value: ProcedureType) => {
-  if (value === ProcedureType.Basic) {
-    procedure.value.totalSessions = 0
-    procedure.value.gapHours = 0
-  }
-  if (value === ProcedureType.SingleProcess) {
-    procedure.value.totalSessions = 1
-    procedure.value.gapHours = 0
-  }
-}
-
 defineExpose({ openModal })
 </script>
 
@@ -282,52 +257,15 @@ defineExpose({ openModal })
                 <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
                   <div class="flex gap-1">
                     <span>Loại dịch vụ</span>
-                    <span v-if="CONFIG.MODE === 'development'" style="color: violet">
-                      {totalSessions: {{ procedure.totalSessions }}}
-                    </span>
                   </div>
                   <div>
                     <InputSelect
                       v-model:value="procedure.procedureType"
                       :options="[
                         { value: ProcedureType.Basic, label: 'Cơ bản' },
-                        { value: ProcedureType.SingleProcess, label: 'Thủ thuật (chỉ 1 buổi)' },
-                        { value: ProcedureType.Regimen, label: 'Liệu trình (nhiều buổi)' },
+                        { value: ProcedureType.Process, label: 'Thủ thuật (cần thực hiện)' },
                       ]"
-                      @update:value="(v) => handleChangeProcedureType(v as any)"
                     />
-                  </div>
-                </div>
-
-                <div style="flex-grow: 1; flex-basis: 90%">
-                  <div
-                    class="flex flex-wrap items-center gap-3"
-                    v-if="procedure.procedureType === ProcedureType.Regimen"
-                  >
-                    <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
-                      <div>Số buổi làm</div>
-                      <div>
-                        <InputNumber v-model:value="procedure.totalSessions" :min="1" />
-                      </div>
-                    </div>
-                    <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-                      <div>Khoảng cách mỗi buổi</div>
-                      <div>
-                        <InputNumber
-                          :value="procedure.gapHours / procedure.gapHoursType"
-                          @update:value="(v) => (procedure.gapHours = v * procedure.gapHoursType)"
-                        />
-                      </div>
-                    </div>
-                    <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-                      <div>Khoảng cách tính theo</div>
-                      <div>
-                        <InputSelect
-                          v-model:value="procedure.gapHoursType"
-                          :options="gapHoursTypeOptions"
-                        />
-                      </div>
-                    </div>
                   </div>
                 </div>
 
@@ -382,7 +320,7 @@ defineExpose({ openModal })
       <div class="p-4">
         <div class="flex gap-4">
           <VueButton
-            v-if="userPermission[PermissionId.PROCEDURE_DELETE] && procedure.id"
+            v-if="userPermission[PermissionId.MASTER_DATA_PROCEDURE] && procedure.id"
             color="red"
             icon="trash"
             @click="clickDestroy"

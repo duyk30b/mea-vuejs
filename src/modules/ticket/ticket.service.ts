@@ -32,23 +32,11 @@ export class TicketService {
           ticketAttributeList: true,
           ticketProductConsumableList: {},
           ticketProductPrescriptionList: {},
-          ticketProcedureList: MeService.organizationPermission.value[PermissionId.PROCEDURE]
-            ? {}
-            : undefined,
-          ticketRadiologyList: MeService.organizationPermission.value[PermissionId.RADIOLOGY]
-            ? { relation: { imageList: true } }
-            : undefined,
-          ticketLaboratoryList: MeService.organizationPermission.value[PermissionId.LABORATORY]
-            ? {}
-            : undefined,
-          ticketLaboratoryGroupList: MeService.organizationPermission.value[PermissionId.LABORATORY]
-            ? {}
-            : undefined,
-          ticketLaboratoryResultList: MeService.organizationPermission.value[
-            PermissionId.LABORATORY
-          ]
-            ? true
-            : undefined,
+          ticketProcedureList: {},
+          ticketRadiologyList: { relation: { imageList: true } },
+          ticketLaboratoryList: {},
+          ticketLaboratoryGroupList: {},
+          ticketLaboratoryResultList: true,
         },
       })
       await ticketResponse.refreshAllData()

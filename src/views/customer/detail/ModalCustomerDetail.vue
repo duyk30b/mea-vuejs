@@ -127,19 +127,11 @@ defineExpose({ openModal })
               <IconOneToOne />
               Sản phẩm
             </VueTabMenu>
-            <VueTabMenu
-              v-if="organizationPermission[PermissionId.PROCEDURE]"
-              style="padding: 6px 6px"
-              :tabKey="TABS_KEY.PROCEDURE_HISTORY"
-            >
+            <VueTabMenu style="padding: 6px 6px" :tabKey="TABS_KEY.PROCEDURE_HISTORY">
               <IconReconciliation />
               Dịch vụ
             </VueTabMenu>
-            <VueTabMenu
-              v-if="organizationPermission[PermissionId.RADIOLOGY]"
-              style="padding: 6px 6px"
-              :tabKey="TABS_KEY.RADIOLOGY_HISTORY"
-            >
+            <VueTabMenu style="padding: 6px 6px" :tabKey="TABS_KEY.RADIOLOGY_HISTORY">
               <IconRadiology />
               CĐHA
             </VueTabMenu>

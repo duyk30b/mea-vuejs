@@ -48,7 +48,7 @@ const { organizationPermission, userPermission } = MeService
       <div
         class="card"
         @click="router.push({ name: 'Procedure' })"
-        v-if="userPermission[PermissionId.PROCEDURE_MENU]"
+        v-if="userPermission[PermissionId.MASTER_DATA_PROCEDURE]"
       >
         <div class="card-icon">
           <IconReconciliation />
@@ -61,14 +61,28 @@ const { organizationPermission, userPermission } = MeService
 
       <div
         class="card"
+        @click="router.push({ name: 'Regimen' })"
+        v-if="userPermission[PermissionId.MASTER_DATA_REGIMEN]"
+      >
+        <div class="card-icon">
+          <IconReconciliation />
+        </div>
+        <div class="card-content">
+          <div class="card-title">3. Combo - Liệu trình</div>
+          <div class="card-description">Quản lý combo, tổng hợp các gói liệu trình, giá mua theo gói</div>
+        </div>
+      </div>
+
+      <div
+        class="card"
         @click="router.push({ name: 'Laboratory' })"
-        v-if="userPermission[PermissionId.LABORATORY_MENU]"
+        v-if="userPermission[PermissionId.MASTER_DATA_LABORATORY]"
       >
         <div class="card-icon">
           <IconLabPanel />
         </div>
         <div class="card-content">
-          <div class="card-title">3. Xét nghiệm</div>
+          <div class="card-title">4. Xét nghiệm</div>
           <div class="card-description">Quản lý thông tin, giá xét nghiệm</div>
         </div>
       </div>
@@ -76,13 +90,13 @@ const { organizationPermission, userPermission } = MeService
       <div
         class="card"
         @click="router.push({ name: 'Radiology' })"
-        v-if="userPermission[PermissionId.RADIOLOGY_MENU]"
+        v-if="userPermission[PermissionId.MASTER_DATA_RADIOLOGY]"
       >
         <div class="card-icon">
           <IconPulmonology />
         </div>
         <div class="card-content">
-          <div class="card-title">4. Chẩn đoán hình ảnh</div>
+          <div class="card-title">5. Chẩn đoán hình ảnh</div>
           <div class="card-description">
             Quản lý thông tin, giá, nội dung phiếu chẩn đoán hình ảnh
           </div>
@@ -98,7 +112,7 @@ const { organizationPermission, userPermission } = MeService
           <IconPrint />
         </div>
         <div class="card-content">
-          <div class="card-title">5. Cài đặt mẫu in</div>
+          <div class="card-title">6. Cài đặt mẫu in</div>
           <div class="card-description">
             Quản lý cách hiển thị mẫu in cho phiếu xét nghiệm, CĐHA, hóa đơn, ...
           </div>
@@ -114,7 +128,7 @@ const { organizationPermission, userPermission } = MeService
           <IconWarehouse />
         </div>
         <div class="card-content">
-          <div class="card-title">6. Danh sách kho</div>
+          <div class="card-title">7. Danh sách kho</div>
           <div class="card-description">Quản lý thông tin, danh sách kho</div>
         </div>
       </div>
@@ -128,7 +142,7 @@ const { organizationPermission, userPermission } = MeService
           <IconTeam />
         </div>
         <div class="card-content">
-          <div class="card-title">7. Vị trí và Quy tắc tính hoa hồng</div>
+          <div class="card-title">8. Vị trí và Quy tắc tính hoa hồng</div>
           <div class="card-description">
             Cài đặt các vị trí và vai trò làm việc, hoa hồng tính cho mỗi vị trí
           </div>
@@ -144,7 +158,7 @@ const { organizationPermission, userPermission } = MeService
           <IconDollar />
         </div>
         <div class="card-content">
-          <div class="card-title">8. Chương trình khuyến mại</div>
+          <div class="card-title">9. Chương trình khuyến mại</div>
           <div class="card-description">
             Cài đặt số tiền khuyến mại cho mỗi loại mặt hàng, thời gian khuyến mại ...
           </div>
@@ -160,7 +174,7 @@ const { organizationPermission, userPermission } = MeService
           <IconDollar />
         </div>
         <div class="card-content">
-          <div class="card-title">9. Phương thức thanh toán</div>
+          <div class="card-title">10. Phương thức thanh toán</div>
           <div class="card-description">
             Các phương thức thanh toán như: Tiền mặt, chuyển khoản, ...
           </div>
@@ -176,7 +190,7 @@ const { organizationPermission, userPermission } = MeService
           <IconUser />
         </div>
         <div class="card-content">
-          <div class="card-title">10. Nguồn khách hàng</div>
+          <div class="card-title">11. Nguồn khách hàng</div>
           <div class="card-description">Quản lý danh sách nguồn khách hàng</div>
         </div>
       </div>
@@ -190,7 +204,7 @@ const { organizationPermission, userPermission } = MeService
           <IconDollar />
         </div>
         <div class="card-content">
-          <div class="card-title">11. Phụ phí</div>
+          <div class="card-title">12. Phụ phí</div>
           <div class="card-description">
             Danh sách các phụ phí khách hàng cần trả thêm như: phí tư vấn, phí vận chuyển, ...
           </div>
@@ -206,7 +220,7 @@ const { organizationPermission, userPermission } = MeService
           <IconDollar />
         </div>
         <div class="card-content">
-          <div class="card-title">12. Chi phí</div>
+          <div class="card-title">13. Chi phí</div>
           <div class="card-description">
             Danh sách chi phí khi bán hàng mà người bán cần chịu: tiền hoa hồng, tiền bảo quản, ...
           </div>
@@ -237,7 +251,7 @@ const { organizationPermission, userPermission } = MeService
       <div
         class="card"
         @click="router.push({ name: 'LaboratorySample' })"
-        v-if="userPermission[PermissionId.LABORATORY_SAMPLE_CRUD]"
+        v-if="userPermission[PermissionId.MASTER_DATA_LABORATORY_SAMPLE]"
       >
         <div class="card-icon">
           <IconLabPanel />
@@ -253,7 +267,7 @@ const { organizationPermission, userPermission } = MeService
       <div
         class="card"
         @click="router.push({ name: 'RadiologySample' })"
-        v-if="userPermission[PermissionId.RADIOLOGY_SAMPLE_CRUD]"
+        v-if="userPermission[PermissionId.MASTER_DATA_RADIOLOGY_CONTENT_SAMPLE]"
       >
         <div class="card-icon">
           <IconPulmonology />

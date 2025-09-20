@@ -2,7 +2,7 @@
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { InputCheckbox } from '@/common/vue-form'
+import { InputCheckbox, InputSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { SettingKey } from '@/modules/_me/store.variable'
@@ -75,6 +75,20 @@ defineExpose({ openModal })
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <td style="width: 200px">Yêu cầu thanh toán</td>
+              <td>
+                <div>
+                  <InputSelect
+                    v-model:value="settingDisplay.requiredPaymentItem"
+                    :options="[
+                      { value: 0, label: '(Mặc định) Thanh toán chung ---' },
+                      { value: 1, label: 'Bắt buộc thanh toán cho từng dịch vụ lẻ' },
+                    ]"
+                  />
+                </div>
+              </td>
+            </tr>
             <tr>
               <td style="width: 30%">Hiển thị vai trò</td>
               <td>

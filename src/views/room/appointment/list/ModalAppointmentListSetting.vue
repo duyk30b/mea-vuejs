@@ -77,13 +77,6 @@ defineExpose({ openModal })
                 </div>
               </td>
             </tr>
-            <tr>
-              <td colspan="2">
-                <InputCheckbox v-model:checked="settingDisplay.procedure">
-                  Hiển thị dịch vụ
-                </InputCheckbox>
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>

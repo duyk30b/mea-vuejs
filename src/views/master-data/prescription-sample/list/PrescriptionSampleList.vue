@@ -186,7 +186,7 @@ const handleClickDestroyPrescription = async (prescriptionId: number) => {
             <td class="text-center">
               <a
                 v-if="
-                  userPermission[PermissionId.RADIOLOGY_SAMPLE_CRUD] &&
+                  userPermission[PermissionId.MASTER_DATA_RADIOLOGY_CONTENT_SAMPLE] &&
                   (prescriptionSample.userId === 0 || prescriptionSample.userId === meId)
                 "
                 style="color: var(--text-orange)"
@@ -198,7 +198,7 @@ const handleClickDestroyPrescription = async (prescriptionId: number) => {
             <td class="text-center">
               <a
                 v-if="
-                  userPermission[PermissionId.RADIOLOGY_SAMPLE_CRUD] &&
+                  userPermission[PermissionId.MASTER_DATA_RADIOLOGY_CONTENT_SAMPLE] &&
                   (prescriptionSample.userId === 0 || prescriptionSample.userId === meId)
                 "
                 style="color: var(--text-red)"

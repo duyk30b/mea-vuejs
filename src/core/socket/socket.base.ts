@@ -39,6 +39,10 @@ export const socketInit = () => {
     SocketService.listenOrganizationUpdate(data)
   })
 
+  SocketBase.on(SOCKET_EVENT.SOCKET_MASTER_DATA_CHANGE, (data) => {
+    SocketService.listenMasterDataChange(data)
+  })
+
   SocketBase.on(SOCKET_EVENT.SOCKET_SETTING_RELOAD, (data) => {
     SocketService.listenSettingReload(data)
   })

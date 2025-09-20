@@ -48,10 +48,7 @@ export class TicketOrderApi {
       ticketOrderProcedureDraftList: (ticket.ticketProcedureList || []).map((i, index) => ({
         priority: index + 1,
         procedureId: i.procedureId,
-        procedureType: i.procedureType,
-        paymentMoneyStatus: i.paymentMoneyStatus,
         quantity: i.quantity,
-        totalSessions: i.totalSessions,
         expectedPrice: i.expectedPrice,
         discountMoney: i.discountMoney,
         discountPercent: i.discountPercent,
@@ -119,9 +116,7 @@ export class TicketOrderApi {
       ticketOrderProcedureDraftList: (ticket.ticketProcedureList || []).map((i, index) => ({
         priority: index + 1,
         procedureId: i.procedureId,
-        paymentMoneyStatus: i.paymentMoneyStatus,
         quantity: i.quantity,
-        totalSessions: i.totalSessions,
         expectedPrice: i.expectedPrice,
         discountMoney: i.discountMoney,
         discountPercent: i.discountPercent,
@@ -190,9 +185,7 @@ export class TicketOrderApi {
       ticketOrderProcedureDraftList: (ticket.ticketProcedureList || []).map((i, index) => ({
         priority: index + 1,
         procedureId: i.procedureId,
-        paymentMoneyStatus: i.paymentMoneyStatus,
         quantity: i.quantity,
-        totalSessions: i.totalSessions,
         expectedPrice: i.expectedPrice,
         discountMoney: i.discountMoney,
         discountPercent: i.discountPercent,
@@ -262,9 +255,7 @@ export class TicketOrderApi {
       ticketOrderProcedureDraftList: (ticket.ticketProcedureList || []).map((i, index) => ({
         priority: index + 1,
         procedureId: i.procedureId,
-        paymentMoneyStatus: i.paymentMoneyStatus,
         quantity: i.quantity,
-        totalSessions: i.totalSessions,
         expectedPrice: i.expectedPrice,
         discountMoney: i.discountMoney,
         discountPercent: i.discountPercent,

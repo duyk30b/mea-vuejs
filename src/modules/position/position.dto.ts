@@ -8,6 +8,7 @@ export class PositionGetQuery {
   relation?: {
     role?: boolean
     productRequest?: boolean
+    regimenRequest?: boolean
     procedureRequest?: boolean
     procedureResult?: boolean
     laboratoryRequest?: boolean

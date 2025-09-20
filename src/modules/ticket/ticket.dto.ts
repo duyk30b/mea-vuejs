@@ -6,6 +6,7 @@ import type { TicketLaboratoryGroupListQuery } from '../ticket-laboratory-group'
 import type { TicketProcedureListQuery } from '../ticket-procedure'
 import type { TicketProductListQuery } from '../ticket-product'
 import type { TicketRadiologyListQuery } from '../ticket-radiology'
+import type { TicketRegimenListQuery } from '../ticket-regimen'
 import type { TicketStatus } from './ticket.model'
 
 export class TicketFilterQuery {
@@ -34,6 +35,8 @@ export class TicketGetQuery {
     ticketProductConsumableList?: TicketProductListQuery
     ticketProductPrescriptionList?: TicketProductListQuery
     ticketProcedureList?: TicketProcedureListQuery
+    ticketRegimenList?: TicketRegimenListQuery
+    ticketRegimenListExtra?: TicketRegimenListQuery
     ticketLaboratoryList?: TicketLaboratoryListQuery
     ticketLaboratoryGroupList?: TicketLaboratoryGroupListQuery
     ticketLaboratoryResultList?: boolean

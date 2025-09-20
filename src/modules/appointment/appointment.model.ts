@@ -1,8 +1,6 @@
 import { Customer } from '../customer'
 import { CustomerSource } from '../customer-source'
 import { Ticket } from '../ticket'
-import { TicketProcedure } from '../ticket-procedure'
-import { TicketProcedureItem } from '../ticket-procedure/ticket-procedure-item.model'
 
 export enum AppointmentStatus {
   Waiting = 1,
@@ -18,38 +16,27 @@ export const AppointmentStatusText = {
   [AppointmentStatus.Cancelled]: 'Hủy',
 }
 
-export enum AppointmentType {
-  Ticket = 1, // Phiếu khám
-  TicketProcedure = 2, // Dịch vụ
-}
-
 export class Appointment {
   id: number
   customerId: number
   customerSourceId: number
 
-  type: AppointmentType
   status: AppointmentStatus
   registeredAt: number
 
   fromTicketId: number
   toTicketId: number
-  ticketProcedureId: number
-  ticketProcedureItemId: number
 
   reason: string // Ghi chú
   cancelReason: string // Lý do hủy
 
   customer?: Customer
   customerSource?: CustomerSource
-  ticketProcedure?: TicketProcedure
-  ticketProcedureItem?: TicketProcedureItem
   toTicket?: Ticket
 
   static init(): Appointment {
     const ins = new Appointment()
     ins.id = 0
-    ins.type = AppointmentType.Ticket
     ins.status = AppointmentStatus.Waiting
     ins.customerId = 0
     ins.customerSourceId = 0
@@ -86,20 +73,8 @@ export class Appointment {
         ? CustomerSource.basic(source.customerSource)
         : source.customerSource
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'ticketProcedure')) {
-      target.ticketProcedure = source.ticketProcedure
-        ? TicketProcedure.basic(source.ticketProcedure)
-        : source.ticketProcedure
-    }
-    if (Object.prototype.hasOwnProperty.call(source, 'ticketProcedureItem')) {
-      target.ticketProcedureItem = source.ticketProcedureItem
-        ? TicketProcedureItem.basic(source.ticketProcedureItem)
-        : source.ticketProcedureItem
-    }
     if (Object.prototype.hasOwnProperty.call(source, 'toTicket')) {
-      target.toTicket = source.toTicket
-        ? Ticket.basic(source.toTicket)
-        : source.toTicket
+      target.toTicket = source.toTicket ? Ticket.basic(source.toTicket) : source.toTicket
     }
     return target
   }

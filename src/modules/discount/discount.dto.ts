@@ -7,6 +7,7 @@ export class DiscountGetQuery {
   limit?: number
   relation?: {
     product?: boolean
+    regimen?: boolean
     procedure?: boolean
     radiology?: boolean
     laboratory?: boolean

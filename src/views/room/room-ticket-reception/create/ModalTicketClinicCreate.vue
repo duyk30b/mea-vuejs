@@ -7,12 +7,7 @@ import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import {
-  Appointment,
-  AppointmentApi,
-  AppointmentStatus,
-  AppointmentType,
-} from '@/modules/appointment'
+import { Appointment, AppointmentApi, AppointmentStatus } from '@/modules/appointment'
 import { Customer } from '@/modules/customer/customer.model'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PositionType } from '@/modules/position'
@@ -35,11 +30,12 @@ import InputSearchProcedure from '@/views/component/InputSearchProcedure.vue'
 import InputSelectCustomerSource from '@/views/component/InputSelectCustomerSource.vue'
 import InputSelectRoom from '@/views/component/InputSelectRoom.vue'
 import { nextTick, ref } from 'vue'
-import TableTicketProcedureListRequest from '../../room-procedure/TableTicketProcedureListRequest.vue'
+import TableTicketProcedureListRequest from '../../room-ticket-clinic/detail/procedure/TableTicketProcedureListDraft.vue'
 import DiagnosisObstetric from '../../room-ticket-clinic/detail/diagnosis/DiagnosisObstetric.vue'
 import DiagnosisVitalSigns from '../../room-ticket-clinic/detail/diagnosis/DiagnosisVitalSigns.vue'
 import TicketChangeTicketUserPosition from '../../room-user/TicketChangeTicketUserPosition.vue'
 import ModalTicketClinicCreateSetting from './ModalTicketClinicCreateSetting.vue'
+import type { TicketRegimen } from '@/modules/ticket-regimen'
 
 const modalTicketClinicCreateSetting = ref<InstanceType<typeof ModalTicketClinicCreateSetting>>()
 const tableTicketProcedureListRequest = ref<InstanceType<typeof TableTicketProcedureListRequest>>()
@@ -67,7 +63,8 @@ const ticket = ref<Ticket>(Ticket.blank())
 const ticketAttributeMap = ref<TicketAttributeMap>({})
 
 const procedureId = ref(0)
-const ticketProcedureListRequest = ref<TicketProcedure[]>([])
+const ticketProcedureListDraft = ref<TicketProcedure[]>([])
+const ticketRegimenListDraft = ref<TicketRegimen[]>([])
 
 const fromAppointmentId = ref(0)
 
@@ -102,7 +99,7 @@ const openModal = async (options: {
       })
       ticketResponse.refreshTicketUserTree()
       ticketResponse.ticketUserReceptionList =
-        ticketResponse.ticketUserTree[PositionType.TicketReception]?.[0]?.[0] || []
+        ticketResponse.ticketUserTree[PositionType.TicketReception]?.[0] || []
       ticket.value = ticketResponse
     }
 
@@ -120,7 +117,8 @@ const closeModal = () => {
   ticket.value = Ticket.blank()
   ticketAttributeMap.value = {}
   fromAppointmentId.value = 0
-  ticketProcedureListRequest.value = []
+  ticketProcedureListDraft.value = []
+  ticketRegimenListDraft.value = []
 
   showModal.value = false
 }
@@ -137,7 +135,6 @@ const selectCustomer = async (customerSelect?: Customer) => {
 
     const appointmentList = await AppointmentApi.list({
       filter: {
-        type: AppointmentType.Ticket,
         status: { IN: [AppointmentStatus.Waiting, AppointmentStatus.Confirm] },
         customerId: customerSelect.id,
       },
@@ -220,11 +217,22 @@ const handleSubmitFormTicketClinic = async () => {
         },
         ticketAttributeList,
         ticketUserReceptionList: ticket.value.ticketUserReceptionList || [],
-        ticketProcedureWrapList: ticketProcedureListRequest.value.map((i) => {
+        ticketRegimenAddWrapList: ticketRegimenListDraft.value.map((i) => {
           return {
-            ticketProcedure: i,
-            ticketProcedureItemList: i.ticketProcedureItemList || [],
-            ticketUserRequestList: i.ticketUserRequestList || [],
+            ticketRegimenAdd: i,
+            ticketProcedureRegimenAddWrapList: (i.ticketProcedureWrapList || []).map((tpWrap) => {
+              return {
+                totalSession: tpWrap.totalSession,
+                ticketProcedureAdd: tpWrap.ticketProcedure,
+              }
+            }),
+            ticketUserRequestAddList: i.ticketUserRequestList || [],
+          }
+        }),
+        ticketProcedureNormalWrapList: ticketProcedureListDraft.value.map((i) => {
+          return {
+            ticketProcedureAdd: i,
+            ticketUserRequestAddList: i.ticketUserRequestList || [],
           }
         }),
       })
@@ -254,7 +262,13 @@ const handleSubmitFormTicketClinic = async () => {
 }
 
 const selectProcedure = async (procedureData?: Procedure) => {
-  tableTicketProcedureListRequest.value?.selectProcedure(procedureData)
+  if (!procedureData) return
+  const temp = await tableTicketProcedureListRequest.value?.selectProcedure({
+    procedure: procedureData,
+  })
+  if (temp) {
+    ticketProcedureListDraft.value.push(temp)
+  }
   await nextTick()
   procedureId.value = 0
 }
@@ -528,7 +542,10 @@ defineExpose({ openModal })
         </div>
         <div class="mt-2">
           <TableTicketProcedureListRequest
-            :ticketProcedureListRequest="ticketProcedureListRequest"
+            :ticketProcedureListDraft="ticketProcedureListDraft"
+            :ticketRegimenListDraft="ticketRegimenListDraft"
+            :priorityStart="0"
+            :requiredPaymentItem="!!settingStore.TICKET_CLINIC_LIST.requiredPaymentItem"
             ref="tableTicketProcedureListRequest"
           />
         </div>

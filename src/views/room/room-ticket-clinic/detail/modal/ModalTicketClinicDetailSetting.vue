@@ -15,6 +15,7 @@ import { WarehouseService } from '@/modules/warehouse/warehouse.service'
 import { PermissionId } from '@/modules/permission/permission.enum'
 
 const TABS_KEY = {
+  GENERAL: 'GENERAL',
   DIAGNOSIS: 'DIAGNOSIS',
   PROCEDURE: 'PROCEDURE',
   CONSUMABLE: 'CONSUMABLE',
@@ -37,7 +38,7 @@ const warehouseOptions = ref<{ value: number; label: string }[]>([])
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-const activeTab = ref(TABS_KEY.DIAGNOSIS)
+const activeTab = ref(TABS_KEY.GENERAL)
 
 const openModal = async () => {
   showModal.value = true
@@ -81,11 +82,6 @@ pickupStrategyPrescriptionOptions.forEach((i) => {
   }
 })
 
-const paymentStatusOptions = [
-  { value: PaymentMoneyStatus.NoEffect, label: '(Mặc định) Không thanh toán lẻ ---' },
-  { value: PaymentMoneyStatus.Pending, label: 'Chờ thanh toán' },
-]
-
 const closeModal = () => {
   showModal.value = false
 }
@@ -126,7 +122,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="margin-top: 50px;">
+  <VueModal v-model:show="showModal" style="margin-top: 50px">
     <div class="bg-white">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Cài đặt dữ liệu</div>
@@ -138,24 +134,27 @@ defineExpose({ openModal })
       <div class="px-4 mt-4 invoice-upsert-setting-screen-tabs">
         <VueTabs :tabShow="activeTab">
           <template #menu>
+            <VueTabMenu :tabKey="TABS_KEY.GENERAL">Cài đặt chung</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.DIAGNOSIS">Khám & Chẩn đoán</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.PROCEDURE">Dịch vụ</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.CONSUMABLE">Vật tư</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.PRESCRIPTION">Đơn thuốc</VueTabMenu>
-            <VueTabMenu
-              :tabKey="TABS_KEY.LABORATORY"
-              v-if="organizationPermission[PermissionId.LABORATORY]"
-            >
-              Xét nghiệm
-            </VueTabMenu>
-            <VueTabMenu
-              :tabKey="TABS_KEY.RADIOLOGY"
-              v-if="organizationPermission[PermissionId.RADIOLOGY]"
-            >
-              CĐHA
-            </VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.LABORATORY">Xét nghiệm</VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.RADIOLOGY">CĐHA</VueTabMenu>
           </template>
           <template #panel>
+            <VueTabPanel :tabKey="TABS_KEY.GENERAL">
+              <div class="mt-4 pb-20 table-wrapper">
+                <table class="">
+                  <thead>
+                    <tr>
+                      <th colspan="2">Cài đặt chung</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.DIAGNOSIS">
               <div class="mt-4 pb-20 table-wrapper">
                 <table class="">
@@ -186,19 +185,7 @@ defineExpose({ openModal })
                       <th colspan="2">Cài đặt xét nghiệm</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    <tr>
-                      <td style="width: 200px">Trạng thái thanh toán khi tạo mới</td>
-                      <td>
-                        <div>
-                          <InputSelect
-                            v-model:value="settingDisplay.procedure.paymentMoneyStatus"
-                            :options="paymentStatusOptions"
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
+                  <tbody></tbody>
                 </table>
               </div>
             </VueTabPanel>
@@ -241,17 +228,6 @@ defineExpose({ openModal })
                           <InputSelect
                             v-model:value="settingDisplay.consumable.pickupStrategy"
                             :options="pickupStrategyConsumableOptions"
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style="width: 200px">Trạng thái thanh toán khi tạo mới</td>
-                      <td>
-                        <div>
-                          <InputSelect
-                            v-model:value="settingDisplay.consumable.paymentMoneyStatus"
-                            :options="paymentStatusOptions"
                           />
                         </div>
                       </td>
@@ -303,17 +279,6 @@ defineExpose({ openModal })
                         </div>
                       </td>
                     </tr>
-                    <tr>
-                      <td style="width: 200px">Trạng thái thanh toán khi tạo mới</td>
-                      <td>
-                        <div>
-                          <InputSelect
-                            v-model:value="settingDisplay.prescriptions.paymentMoneyStatus"
-                            :options="paymentStatusOptions"
-                          />
-                        </div>
-                      </td>
-                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -326,19 +291,7 @@ defineExpose({ openModal })
                       <th colspan="2">Cài đặt xét nghiệm</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    <tr>
-                      <td style="width: 200px">Trạng thái thanh toán khi tạo mới</td>
-                      <td>
-                        <div>
-                          <InputSelect
-                            v-model:value="settingDisplay.laboratory.paymentMoneyStatus"
-                            :options="paymentStatusOptions"
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
+                  <tbody></tbody>
                 </table>
               </div>
             </VueTabPanel>
@@ -350,19 +303,7 @@ defineExpose({ openModal })
                       <th colspan="2">Cài đặt phiếu CĐHA</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    <tr>
-                      <td style="width: 200px">Trạng thái thanh toán khi tạo mới</td>
-                      <td>
-                        <div>
-                          <InputSelect
-                            v-model:value="settingDisplay.radiology.paymentMoneyStatus"
-                            :options="paymentStatusOptions"
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
+                  <tbody></tbody>
                 </table>
               </div>
             </VueTabPanel>

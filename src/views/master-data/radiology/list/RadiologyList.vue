@@ -174,7 +174,7 @@ const handleModalUploadRadiologySuccess = async () => {
     </div>
     <div class="">
       <VueButton
-        v-if="userPermission[PermissionId.RADIOLOGY_CREATE]"
+        v-if="userPermission[PermissionId.MASTER_DATA_RADIOLOGY]"
         color="blue"
         icon="plus"
         @click="router.push({ name: 'RadiologyUpsert' })"
@@ -202,7 +202,7 @@ const handleModalUploadRadiologySuccess = async () => {
         </VueButton>
       </div>
       <VueButton
-        v-if="userPermission[PermissionId.RADIOLOGY_GROUP_CRUD]"
+        v-if="userPermission[PermissionId.MASTER_DATA_RADIOLOGY]"
         icon="send"
         color="green"
         @click="modalRadiologyGroupManager?.openModal()"
@@ -292,7 +292,7 @@ const handleModalUploadRadiologySuccess = async () => {
               </div>
             </th>
             <th>Khuyến mại</th>
-            <th v-if="userPermission[PermissionId.RADIOLOGY_UPDATE]">Action</th>
+            <th v-if="userPermission[PermissionId.MASTER_DATA_RADIOLOGY]">Action</th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -346,7 +346,7 @@ const handleModalUploadRadiologySuccess = async () => {
                 {{ radiology.discountApply?.valueText }}
               </VueTag>
             </td>
-            <td v-if="userPermission[PermissionId.RADIOLOGY_UPDATE]" class="text-center">
+            <td v-if="userPermission[PermissionId.MASTER_DATA_RADIOLOGY]" class="text-center">
               <router-link :to="{ name: 'RadiologyUpsert', params: { id: radiology.id } }">
                 <IconEditSquare width="20px" height="20px" />
               </router-link>

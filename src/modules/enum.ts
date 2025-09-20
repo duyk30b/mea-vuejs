@@ -104,8 +104,8 @@ export enum AttributeLayoutType {
 }
 
 export enum PaymentMoneyStatus {
-  NoEffect = 1,
-  Pending = 2,
-  Partial = 3,
+  TicketPaid = 1,
+  NoEffect = 2,
+  PendingPayment = 3,
   Paid = 4,
 }

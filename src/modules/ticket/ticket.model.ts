@@ -14,6 +14,7 @@ import { Procedure, ProcedureService, ProcedureType } from '../procedure'
 import { Product, ProductService } from '../product'
 import { RadiologyService } from '../radiology'
 import { RadiologyGroupService } from '../radiology-group'
+import { RegimenService } from '../regimen'
 import { RoleService } from '../role'
 import { RoomService } from '../room'
 import { Surcharge } from '../surcharge'
@@ -26,6 +27,7 @@ import { TicketLaboratoryResult } from '../ticket-laboratory-result'
 import { TicketProcedure } from '../ticket-procedure/ticket-procedure.model'
 import { TicketProduct } from '../ticket-product/ticket-product.model'
 import { TicketRadiology } from '../ticket-radiology'
+import type { TicketRegimen } from '../ticket-regimen'
 import { TicketSurcharge } from '../ticket-surcharge/ticket-surcharge.model'
 import { TicketUser } from '../ticket-user'
 import { UserService } from '../user'
@@ -93,6 +95,8 @@ export class Ticket {
   ticketProductConsumableList?: TicketProduct[]
   ticketProductPrescriptionList?: TicketProduct[]
   ticketProcedureList?: TicketProcedure[]
+  ticketRegimenList?: TicketRegimen[]
+  ticketRegimenListExtra?: TicketRegimen[]
   ticketLaboratoryList?: TicketLaboratory[]
   ticketLaboratoryGroupList?: TicketLaboratoryGroup[]
   ticketLaboratoryResultList?: TicketLaboratoryResult[]
@@ -104,7 +108,7 @@ export class Ticket {
 
   ticketUserReceptionList?: TicketUser[]
   ticketUserList?: TicketUser[]
-  ticketUserTree: Record<string, Record<string, Record<string, TicketUser[]>>> // ticketUserTree[positionType][ticketItemId][ticketItemChildId] = []
+  ticketUserTree: Record<string, Record<string, TicketUser[]>> // ticketUserTree[positionType][ticketItemId] = []
 
   imageList: Image[]
   imageMap: Record<string, Image>
@@ -143,6 +147,8 @@ export class Ticket {
     ins.ticketBatchList = []
     ins.ticketProductList = []
     ins.ticketProcedureList = []
+    ins.ticketRegimenList = []
+    ins.ticketRegimenListExtra = []
     ins.ticketLaboratoryList = []
     ins.ticketLaboratoryGroupList = []
     ins.ticketLaboratoryResultList = []
@@ -153,7 +159,7 @@ export class Ticket {
 
     ins.ticketUserReceptionList = []
     ins.ticketUserList = []
-    ins.ticketUserTree = { [PositionType.TicketReception]: { 0: { 0: [] } } } // ticketUserTree[positionType][ticketItemId][ticketItemChildId] = []
+    ins.ticketUserTree = { [PositionType.TicketReception]: { 0: [] } } // ticketUserTree[positionType][ticketItemId] = []
 
     ins.imageList = []
     ins.imageMap = {}
@@ -194,27 +200,49 @@ export class Ticket {
     ticketProductList.forEach((i) => (i.product = productMap[i.productId]))
   }
 
-  async refreshProcedure() {
-    if (!this.ticketProcedureList || !this.ticketProcedureList.length) {
-      return
-    }
-    const procedureMap = await ProcedureService.getMap()
+  async refreshProcedureAndRegimen() {
+    const [regimenMap, procedureMap, userMap, roleMap] = await Promise.all([
+      RegimenService.getMap(),
+      ProcedureService.getMap(),
+      UserService.getMap(),
+      RoleService.getMap(),
+    ])
     this.ticketProcedureList?.forEach((tp) => {
       tp.procedure = procedureMap![tp.procedureId]
-      tp.ticketUserRequestList =
-        this.ticketUserTree[PositionType.ProcedureRequest]?.[tp.id]?.[0] || []
-      tp.ticketProcedureItemList?.forEach((tpi) => {
-        tpi.ticketUserResultList =
-          this.ticketUserTree[PositionType.ProcedureResult]?.[tp.id]?.[tpi.id] || []
-
-        try {
-          const imageIdList: number[] = JSON.parse(tpi.imageIds || '[]')
-          tpi.imageList = imageIdList.map((imageId) => {
-            return this.imageMap[imageId]
-          })
-        } catch (error) {
-          tpi.imageList = []
-        }
+      tp.ticketUserRequestList = this.ticketUserTree[PositionType.ProcedureRequest]?.[tp.id] || []
+      tp.ticketUserResultList = this.ticketUserTree[PositionType.ProcedureResult]?.[tp.id] || []
+      try {
+        const imageIdList: number[] = JSON.parse(tp.imageIds || '[]')
+        tp.imageList = imageIdList.map((imageId) => {
+          return this.imageMap[imageId]
+        })
+      } catch (error) {
+        tp.imageList = []
+      }
+    })
+    this.ticketRegimenList?.forEach((tr) => {
+      tr.regimen = regimenMap![tr.regimenId]
+      tr.ticketUserRequestList = this.ticketUserTree[PositionType.RegimenRequest]?.[tr.id] || []
+      tr.ticketProcedureList?.forEach((tp) => {
+        tp.procedure = procedureMap[tp.procedureId]
+        tp.ticketUserResultList?.forEach((tu) => {
+          tu.role = roleMap[tu.roleId]
+          tu.user = userMap[tu.userId]
+        })
+      })
+    })
+    this.ticketRegimenListExtra?.forEach((tr) => {
+      tr.regimen = regimenMap![tr.regimenId]
+      tr.ticketUserRequestList?.forEach((tu) => {
+        tu.role = roleMap[tu.roleId]
+        tu.user = userMap[tu.userId]
+      })
+      tr.ticketProcedureList?.forEach((tp) => {
+        tp.procedure = procedureMap[tp.procedureId]
+        tp.ticketUserResultList?.forEach((tu) => {
+          tu.role = roleMap[tu.roleId]
+          tu.user = userMap[tu.userId]
+        })
       })
     })
   }
@@ -232,10 +260,8 @@ export class Ticket {
         tr.radiology.radiologyGroup = radiologyGroupMap[tr.radiology.radiologyGroupId]
         tr.room = roomMap[tr.roomId]
       }
-      tr.ticketUserRequestList =
-        this.ticketUserTree[PositionType.RadiologyRequest]?.[tr.id]?.[0] || []
-      tr.ticketUserResultList =
-        this.ticketUserTree[PositionType.RadiologyResult]?.[tr.id]?.[0] || []
+      tr.ticketUserRequestList = this.ticketUserTree[PositionType.RadiologyRequest]?.[tr.id] || []
+      tr.ticketUserResultList = this.ticketUserTree[PositionType.RadiologyResult]?.[tr.id] || []
 
       try {
         const imageIdList: number[] = JSON.parse(tr.imageIds || '[]')
@@ -263,10 +289,8 @@ export class Ticket {
     this.ticketUserTree = {}
     this.ticketUserList?.forEach((i) => {
       this.ticketUserTree[i.positionType] ||= {}
-      this.ticketUserTree[i.positionType][i.ticketItemId] ||= {}
-      this.ticketUserTree[i.positionType][i.ticketItemId][i.ticketItemChildId] ||= []
-
-      this.ticketUserTree[i.positionType][i.ticketItemId][i.ticketItemChildId].push(i)
+      this.ticketUserTree[i.positionType][i.ticketItemId] ||= []
+      this.ticketUserTree[i.positionType][i.ticketItemId].push(i)
     })
   }
 
@@ -352,17 +376,15 @@ export class Ticket {
 
   refreshTicketUserRelationTicketItem() {
     this.ticketUserList?.forEach((tu) => {
-      if (tu.positionType === PositionType.ProcedureResult) {
+      if ([PositionType.RegimenRequest].includes(tu.positionType)) {
+        tu.ticketRegimen = (this.ticketRegimenList || []).find((tp) => {
+          return tp.id === tu.ticketItemId
+        })
+      }
+      if ([PositionType.ProcedureRequest, PositionType.ProcedureResult].includes(tu.positionType)) {
         tu.ticketProcedure = (this.ticketProcedureList || []).find((tp) => {
           return tp.id === tu.ticketItemId
         })
-        if (tu.ticketProcedure?.procedureType === ProcedureType.Regimen) {
-          tu.ticketProcedureItem = (tu.ticketProcedure?.ticketProcedureItemList || []).find(
-            (tpi) => {
-              return tpi.id === tu.ticketItemChildId
-            },
-          )
-        }
       }
     })
   }
@@ -372,7 +394,7 @@ export class Ticket {
     this.refreshTicketUserTree() // cái này cần refresh đầu tiên, để bọn sau có ticketUserTree để tính
     await Promise.all([
       this.refreshProduct(),
-      this.refreshProcedure(),
+      this.refreshProcedureAndRegimen(),
       this.refreshRadiology(),
       this.refreshLaboratory(),
       this.refreshUserAndRole(),

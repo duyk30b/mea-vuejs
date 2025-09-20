@@ -20,6 +20,7 @@ import {
   PositionTypeText,
 } from '../../../../modules/position'
 import { ESTypescript } from '../../../../utils'
+import InputSearchRegimen from '@/views/component/InputSearchRegimen.vue'
 
 const emit = defineEmits<{
   (e: 'success', type: 'CREATE' | 'UPDATE' | 'DESTROY', value: Position): void
@@ -189,6 +190,13 @@ defineExpose({ openModal })
                 :disabled="!!position.id || !!requiredInteract"
                 :showQuantity="false"
                 :showEditProduct="false"
+              />
+            </template>
+            <template v-if="[PositionType.RegimenRequest].includes(position.positionType)">
+              <InputSearchRegimen
+                v-model:regimenId="position.positionInteractId"
+                required
+                :disabled="!!position.id || !!requiredInteract"
               />
             </template>
             <template

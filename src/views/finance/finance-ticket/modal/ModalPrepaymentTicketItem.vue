@@ -81,27 +81,27 @@ const openModal = async (options: { ticketId: number; customer: Customer }) => {
       relation: {
         ticketProcedureList: {
           filter: {
-            paymentMoneyStatus: PaymentMoneyStatus.Pending,
+            paymentMoneyStatus: PaymentMoneyStatus.PendingPayment,
           },
         },
         ticketProductConsumableList: {
           filter: {
-            paymentMoneyStatus: PaymentMoneyStatus.Pending,
+            paymentMoneyStatus: PaymentMoneyStatus.PendingPayment,
           },
         },
         ticketProductPrescriptionList: {
           filter: {
-            paymentMoneyStatus: PaymentMoneyStatus.Pending,
+            paymentMoneyStatus: PaymentMoneyStatus.PendingPayment,
           },
         },
         ticketLaboratoryList: {
           filter: {
-            paymentMoneyStatus: PaymentMoneyStatus.Pending,
+            paymentMoneyStatus: PaymentMoneyStatus.PendingPayment,
           },
         },
         ticketRadiologyList: {
           filter: {
-            paymentMoneyStatus: PaymentMoneyStatus.Pending,
+            paymentMoneyStatus: PaymentMoneyStatus.PendingPayment,
           },
         },
       },

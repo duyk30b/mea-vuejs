@@ -122,7 +122,7 @@ watch(
 
 const updateDropdownPosition = async () => {
   if (!showOptions.value) return
-  await nextTick()
+  // await nextTick()
   if (!wrapperRef.value) return
   const rect = wrapperRef.value.getBoundingClientRect()
 
@@ -137,14 +137,6 @@ const updateDropdownPosition = async () => {
   const showAbove = spaceBelow < dropdownHeight && spaceAbove > spaceBelow
   dropdownDirection.value = showAbove ? 'up' : 'down'
 
-  const a = {
-    left: `${rect.left + window.scrollX}px`,
-    width: `${rect.width}px`,
-    maxHeight: props.maxHeight + 'px',
-    top: showAbove
-      ? `${rect.top + window.scrollY - dropdownHeight}px`
-      : `${rect.bottom + window.scrollY}px`,
-  }
   dropdownStyle.value = {
     left: `${rect.left + window.scrollX}px`,
     width: `${rect.width}px`,
@@ -308,8 +300,7 @@ defineExpose({ focus })
       <IconClearCircle class="icon-clear-blur" @click="handleClickClear" /> -->
     </div>
     <teleport to="body">
-      <!-- <transition :name="dropdownDirection === 'up' ? 'slide-up' : 'slide-down'"> -->
-      <div v-if="showOptions" ref="dropdownRef" class="vue-input-dropdown" :style="dropdownStyle">
+      <div v-if="showOptions" ref="dropdownRef" class="input-search-option" :style="dropdownStyle">
         <div
           v-for="(item, index) in optionsFilter"
           :key="index"
@@ -328,7 +319,6 @@ defineExpose({ focus })
           {{ messageNoResult }}
         </div>
       </div>
-      <!-- </transition> -->
     </teleport>
   </div>
 </template>
@@ -354,7 +344,7 @@ defineExpose({ focus })
   white-space: nowrap;
 }
 
-.vue-input-dropdown {
+.input-search-option {
   position: absolute;
   top: 0;
   left: 0;
@@ -384,35 +374,5 @@ defineExpose({ focus })
       white-space: nowrap;
     }
   }
-}
-
-/* Slide xuống */
-.slide-down-enter-active,
-.slide-down-leave-active,
-.slide-up-enter-active,
-.slide-up-leave-active {
-  transition:
-    opacity 0.1s ease,
-    transform 0.1s ease;
-}
-
-.slide-down-enter-to,
-.slide-down-leave-from,
-.slide-up-enter-to,
-.slide-up-leave-from {
-  opacity: 1;
-  transform: scaleY(1) translateY(0);
-}
-
-.slide-down-enter-from,
-.slide-down-leave-to {
-  opacity: 0;
-  transform: scaleY(1) translateY(-10px);
-}
-
-.slide-up-enter-from,
-.slide-up-leave-to {
-  opacity: 0;
-  transform: scaleY(1) translateY(10px);
 }
 </style>

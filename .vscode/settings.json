@@ -6,6 +6,7 @@
   "editor.inlayHints.fontSize": 10,
   "editor.suggest.insertMode": "replace",
   "eslint.validate": ["javascript", "javascriptreact", "vue"],
+  "editor.acceptSuggestionOnCommitCharacter": false,
   "workbench.editor.wrapTabs": true,
   "window.title": "${rootName}",
   "workbench.colorCustomizations": {

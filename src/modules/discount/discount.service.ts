@@ -5,6 +5,7 @@ import { Laboratory, LaboratoryService } from '../laboratory'
 import { ProcedureService, type Procedure } from '../procedure'
 import { Product, ProductService } from '../product'
 import { Radiology, RadiologyService } from '../radiology'
+import { RegimenService, type Regimen } from '../regimen'
 import { DiscountApi } from './discount.api'
 import type {
   DiscountDetailQuery,
@@ -62,19 +63,27 @@ export class DiscountService {
         .filter((i) => i.discountInteractType === DiscountInteractType.Product)
         .map((i) => i.discountInteractId)
 
-      const [productMap, procedureMap, laboratoryMap, radiologyMap] = await Promise.all([
-        relation?.product
-          ? ProductService.map({ filter: { id: { IN: productIdList } } })
-          : <Record<string, Product>>{},
-        relation?.procedure ? ProcedureService.getMap() : <Record<string, Procedure>>{},
-        relation?.laboratory ? LaboratoryService.getMap() : <Record<string, Laboratory>>{},
-        relation?.radiology ? RadiologyService.getMap() : <Record<string, Radiology>>{},
-      ])
+      const [productMap, regimenMap, procedureMap, laboratoryMap, radiologyMap] = await Promise.all(
+        [
+          relation?.product
+            ? ProductService.map({ filter: { id: { IN: productIdList } } })
+            : <Record<string, Product>>{},
+          relation?.regimen ? RegimenService.getMap() : <Record<string, Regimen>>{},
+          relation?.procedure ? ProcedureService.getMap() : <Record<string, Procedure>>{},
+          relation?.laboratory ? LaboratoryService.getMap() : <Record<string, Laboratory>>{},
+          relation?.radiology ? RadiologyService.getMap() : <Record<string, Radiology>>{},
+        ],
+      )
 
       discountList.forEach((i) => {
         if (relation?.product) {
           if (i.discountInteractType === DiscountInteractType.Product) {
             i.product = productMap[i.discountInteractId]
+          }
+        }
+        if (relation?.regimen) {
+          if (i.discountInteractType === DiscountInteractType.Regimen) {
+            i.regimen = regimenMap[i.discountInteractId]
           }
         }
         if (relation?.procedure) {

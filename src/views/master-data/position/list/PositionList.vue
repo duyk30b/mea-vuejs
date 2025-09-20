@@ -62,6 +62,7 @@ const startFetchData = async (options?: { refetch: boolean }) => {
       {
         relation: {
           productRequest: true,
+          regimenRequest: true,
           procedureRequest: true,
           procedureResult: true,
           laboratoryRequest: true,
@@ -253,6 +254,9 @@ const handleSelectItemFilterRole = (roleId: number) => {
               <template v-else-if="position.positionType === PositionType.ProductRequest">
                 {{ position.productRequest?.brandName }} -
                 {{ formatMoney(position.productRequest?.retailPrice) }}
+              </template>
+              <template v-else-if="position.positionType === PositionType.RegimenRequest">
+                {{ position.regimenRequest?.name }}
               </template>
               <template v-else-if="position.positionType === PositionType.ProcedureRequest">
                 {{ position.procedureRequest?.name }} -

@@ -100,7 +100,7 @@ export class TicketProduct {
 
     ins.pickupStrategy = PickupStrategy.AutoWithFIFO
     ins.deliveryStatus = DeliveryStatus.Pending
-    ins.paymentMoneyStatus = PaymentMoneyStatus.NoEffect
+    ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
 
     ins.quantity = 0
     ins.quantityPrescription = 0

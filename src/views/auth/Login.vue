@@ -28,18 +28,18 @@ const startLogin = async () => {
   loading.value = true
   if (!isRootLogin.value) {
     const result = await AuthService.login({
-      organizationCode: formState.organizationCode,
-      username: formState.username,
-      password: formState.password,
+      organizationCode: formState.organizationCode.trim(),
+      username: formState.username.trim(),
+      password: formState.password.trim(),
     })
     if (result) {
       router.push({ name: 'AppHome' })
     }
   } else if (isRootLogin.value) {
     const result = await AuthService.loginRoot({
-      organizationCode: formState.organizationCode,
-      username: formState.username,
-      password: formState.password,
+      organizationCode: formState.organizationCode.trim(),
+      username: formState.username.trim(),
+      password: formState.password.trim(),
       oid: formState.oid,
       uid: formState.uid,
     })

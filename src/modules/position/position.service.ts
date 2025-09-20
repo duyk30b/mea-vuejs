@@ -15,6 +15,7 @@ import type {
 } from './position.dto'
 import { Position, PositionType } from './position.model'
 import { Role, RoleService } from '../role'
+import { Regimen, RegimenService } from '../regimen'
 
 const PositionDBQuery = new IndexedDBQuery<Position>()
 
@@ -64,23 +65,31 @@ export class PositionService {
         .filter((i) => i.positionType === PositionType.ProductRequest)
         .map((i) => i.positionInteractId)
 
-      const [roleMap, productMap, procedureMap, laboratoryMap, laboratoryGroupMap, radiologyMap] =
-        await Promise.all([
-          relation?.role ? RoleService.getMap() : <Record<string, Role>>{},
-          relation?.productRequest
-            ? ProductService.map({ filter: { id: { IN: productIdList } } })
-            : <Record<string, Product>>{},
-          relation?.procedureRequest || relation?.procedureResult
-            ? ProcedureService.getMap()
-            : <Record<string, Procedure>>{},
-          relation?.laboratoryRequest ? LaboratoryService.getMap() : <Record<string, Laboratory>>{},
-          relation?.laboratoryGroupRequest || relation?.laboratoryGroupResult
-            ? LaboratoryGroupService.getMap()
-            : <Record<string, LaboratoryGroup>>{},
-          relation?.radiologyRequest || relation?.radiologyResult
-            ? RadiologyService.getMap()
-            : <Record<string, Radiology>>{},
-        ])
+      const [
+        roleMap,
+        productMap,
+        regimenMap,
+        procedureMap,
+        laboratoryMap,
+        laboratoryGroupMap,
+        radiologyMap,
+      ] = await Promise.all([
+        relation?.role ? RoleService.getMap() : <Record<string, Role>>{},
+        relation?.productRequest
+          ? ProductService.map({ filter: { id: { IN: productIdList } } })
+          : <Record<string, Product>>{},
+        relation?.regimenRequest ? RegimenService.getMap() : <Record<string, Regimen>>{},
+        relation?.procedureRequest || relation?.procedureResult
+          ? ProcedureService.getMap()
+          : <Record<string, Procedure>>{},
+        relation?.laboratoryRequest ? LaboratoryService.getMap() : <Record<string, Laboratory>>{},
+        relation?.laboratoryGroupRequest || relation?.laboratoryGroupResult
+          ? LaboratoryGroupService.getMap()
+          : <Record<string, LaboratoryGroup>>{},
+        relation?.radiologyRequest || relation?.radiologyResult
+          ? RadiologyService.getMap()
+          : <Record<string, Radiology>>{},
+      ])
 
       positionList.forEach((i) => {
         if (relation?.role) {
@@ -89,6 +98,11 @@ export class PositionService {
         if (relation?.productRequest) {
           if (i.positionType === PositionType.ProductRequest) {
             i.productRequest = productMap[i.positionInteractId]
+          }
+        }
+        if (relation?.regimenRequest) {
+          if (i.positionType === PositionType.RegimenRequest) {
+            i.regimenRequest = regimenMap[i.positionInteractId]
           }
         }
         if (relation?.procedureRequest) {

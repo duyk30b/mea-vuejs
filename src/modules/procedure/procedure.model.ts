@@ -4,43 +4,23 @@ import { ProcedureGroup } from '../procedure-group'
 
 export enum ProcedureType {
   Basic = 1,
-  SingleProcess = 2,
-  Regimen = 3, // Liệu trình
+  Process = 2,
 }
 
 export const ProcedureTypeText = {
   [ProcedureType.Basic]: 'Cơ bản',
-  [ProcedureType.SingleProcess]: 'Thủ thuật',
-  [ProcedureType.Regimen]: 'Liệu trình',
-}
-
-export enum GapHoursType {
-  Hour = 1,
-  Day = 24,
-  Week = 24 * 7,
-  Month = 24 * 30,
-}
-
-export const GapHoursTypeText = {
-  [GapHoursType.Hour]: 'Giờ',
-  [GapHoursType.Day]: 'Ngày',
-  [GapHoursType.Week]: 'Tuần',
-  [GapHoursType.Month]: 'Tháng',
+  [ProcedureType.Process]: 'Thủ thuật',
 }
 
 export class Procedure {
   id: number
   code: string
   name: string // Tên dịch vụ
+  
   procedureGroupId: number
   procedureType: ProcedureType
 
-  totalSessions: number
-  gapHours: number
-  gapHoursType: GapHoursType
-
   price: number
-
   isActive: 0 | 1
 
   procedureGroup?: ProcedureGroup
@@ -72,10 +52,6 @@ export class Procedure {
     ins.name = ''
     ins.procedureGroupId = 0
     ins.procedureType = ProcedureType.Basic
-
-    ins.totalSessions = 0
-    ins.gapHours = 0
-    ins.gapHoursType = 24
 
     ins.price = 0
 
@@ -145,12 +121,9 @@ export class Procedure {
     if (a.id != b.id) return false
     if (a.code != b.code) return false
     if (a.name != b.name) return false
+
     if (a.procedureGroupId != b.procedureGroupId) return false
     if (a.procedureType != b.procedureType) return false
-
-    if (a.totalSessions != b.totalSessions) return false
-    if (a.gapHours != b.gapHours) return false
-    if (a.gapHoursType != b.gapHoursType) return false
 
     if (a.price != b.price) return false
     if (a.isActive != b.isActive) return false

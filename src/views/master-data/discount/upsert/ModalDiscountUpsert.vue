@@ -180,22 +180,14 @@ defineExpose({ openModal })
                   value: DiscountInteractType.Procedure,
                   label: DiscountInteractTypeText[DiscountInteractType.Procedure],
                 },
-                ...(organizationPermission[PermissionId.LABORATORY]
-                  ? [
-                      {
-                        value: DiscountInteractType.Laboratory,
-                        label: DiscountInteractTypeText[DiscountInteractType.Laboratory],
-                      },
-                    ]
-                  : []),
-                ...(organizationPermission[PermissionId.RADIOLOGY]
-                  ? [
-                      {
-                        value: DiscountInteractType.Radiology,
-                        label: DiscountInteractTypeText[DiscountInteractType.Radiology],
-                      },
-                    ]
-                  : []),
+                {
+                  value: DiscountInteractType.Laboratory,
+                  label: DiscountInteractTypeText[DiscountInteractType.Laboratory],
+                },
+                {
+                  value: DiscountInteractType.Radiology,
+                  label: DiscountInteractTypeText[DiscountInteractType.Radiology],
+                },
               ]"
               @update:value="discount.discountInteractId = 0"
             ></InputSelect>

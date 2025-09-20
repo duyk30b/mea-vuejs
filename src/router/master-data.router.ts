@@ -12,6 +12,19 @@ export const masterDataRouter: RouteRecordRaw = {
       component: () => import('../views/master-data/MasterData.vue'),
     },
     {
+      path: 'master-data-room',
+      name: 'MasterDataRoom',
+      meta: { title: 'Danh sách phòng' },
+      redirect: () => ({ name: 'MasterDataRoomList' }),
+      children: [
+        {
+          path: 'list',
+          name: 'MasterDataRoomList',
+          component: () => import('../views/master-data/room/RoomList.vue'),
+        },
+      ],
+    },
+    {
       path: 'procedure',
       name: 'Procedure',
       meta: { title: 'Dịch vụ' },
@@ -21,6 +34,19 @@ export const masterDataRouter: RouteRecordRaw = {
           path: 'list',
           name: 'ProcedureList',
           component: () => import('../views/master-data/procedure/list/ProcedureList.vue'),
+        },
+      ],
+    },
+    {
+      path: 'regimen',
+      name: 'Regimen',
+      meta: { title: 'Liệu trình' },
+      redirect: () => ({ name: 'RegimenList' }),
+      children: [
+        {
+          path: 'list',
+          name: 'RegimenList',
+          component: () => import('../views/master-data/regimen/list/RegimenList.vue'),
         },
       ],
     },
@@ -82,20 +108,6 @@ export const masterDataRouter: RouteRecordRaw = {
               return 'Tạo mới mẫu in'
             },
           },
-        },
-      ],
-    },
-
-    {
-      path: 'master-data-room',
-      name: 'MasterDataRoom',
-      meta: { title: 'Danh sách phòng' },
-      redirect: () => ({ name: 'MasterDataRoomList' }),
-      children: [
-        {
-          path: 'list',
-          name: 'MasterDataRoomList',
-          component: () => import('../views/master-data/room/RoomList.vue'),
         },
       ],
     },

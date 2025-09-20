@@ -1,7 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionEnum } from '../_base/base-condition'
-import type { TicketProcedureListQuery } from '../ticket-procedure'
-import type { AppointmentStatus, AppointmentType } from './appointment.model'
+import type { AppointmentStatus } from './appointment.model'
 
 export class AppointmentGetQuery {
   page: number
@@ -9,14 +8,11 @@ export class AppointmentGetQuery {
   relation?: {
     customer?: boolean
     customerSource?: boolean
-    ticketProcedure?: TicketProcedureListQuery
-    ticketProcedureItem?: boolean
     toTicket?: boolean
   }
 
   filter?: {
     customerId?: number
-    type?: AppointmentType
     status?: AppointmentStatus | ConditionEnum<AppointmentStatus>
     registeredAt?: ConditionDate
   }

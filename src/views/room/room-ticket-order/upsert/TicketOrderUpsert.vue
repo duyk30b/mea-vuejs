@@ -410,16 +410,10 @@ const handleChangeTabs = (activeKey: any) => {
         <div class="bg-white p-4">
           <VueTabs :tabShow="tabStart" @update:tabShow="handleChangeTabs">
             <template #menu>
-              <VueTabMenu
-                v-if="organizationPermission[PermissionId.PRODUCT]"
-                :tabKey="TABS_KEY.PRODUCT"
-              >
+              <VueTabMenu :tabKey="TABS_KEY.PRODUCT">
                 Hàng hóa ({{ ticketOrderUpsertRef.ticketProductList!.length }})
               </VueTabMenu>
-              <VueTabMenu
-                v-if="organizationPermission[PermissionId.PROCEDURE]"
-                :tabKey="TABS_KEY.PROCEDURE"
-              >
+              <VueTabMenu :tabKey="TABS_KEY.PROCEDURE">
                 Dịch vụ ({{ ticketOrderUpsertRef.ticketProcedureList!.length }})
               </VueTabMenu>
             </template>

@@ -14,7 +14,6 @@ import { CustomerService } from '@/modules/customer'
 import { DeliveryStatus, PaymentViewType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PositionType } from '@/modules/position'
-import { ProcedureType } from '@/modules/procedure'
 import { RoleService } from '@/modules/role'
 import { Room, RoomService, RoomType } from '@/modules/room'
 import { roomTicketPaginationMapRoomId } from '@/modules/room/room.ref'
@@ -22,7 +21,7 @@ import { Ticket, TicketActionApi, TicketQueryApi, TicketStatus } from '@/modules
 import { TicketProcedure } from '@/modules/ticket-procedure'
 import { TicketUser } from '@/modules/ticket-user'
 import { UserService } from '@/modules/user'
-import { ESString, ESTimer, formatPhone } from '@/utils'
+import { ESString, ESTimer } from '@/utils'
 import Breadcrumb from '@/views/component/Breadcrumb.vue'
 import InputSearchCustomer from '@/views/component/InputSearchCustomer.vue'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
@@ -34,8 +33,6 @@ import { onBeforeMount, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalTicketClinicPayment from '../../room-ticket-base/ModalTicketPayment.vue'
 import TicketLink from '../../room-ticket-base/TicketLink.vue'
-import ModalProcessTicketProcedureRegimen from '../../room-procedure/ModalProcessTicketProcedureRegimen.vue'
-import ModalShowTicketProcedureRegimen from '../../room-procedure/ModalShowTicketProcedureRegimen.vue'
 import { fromTime, toTime } from '../../room-ticket-base/room-ticket.ref'
 import ModalTicketClinicListSetting from './ModalTicketClinicListSetting.vue'
 
@@ -43,10 +40,6 @@ const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalTicketClinicCreate = ref<InstanceType<typeof ModalTicketClinicCreate>>()
 const modalTicketClinicListSetting = ref<InstanceType<typeof ModalTicketClinicListSetting>>()
 
-const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
-const modalProcessTicketProcedureRegimen =
-  ref<InstanceType<typeof ModalProcessTicketProcedureRegimen>>()
-const modalShowTicketProcedureRegimen = ref<InstanceType<typeof ModalShowTicketProcedureRegimen>>()
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalTicketChangeAllMoney = ref<InstanceType<typeof ModalTicketChangeAllMoney>>()
 
@@ -93,10 +86,6 @@ const startFetchData = async () => {
           settingStore.TICKET_CLINIC_LIST.procedure
             ? {}
             : undefined,
-        ticketProcedureList: settingStore.TICKET_CLINIC_LIST.procedure
-          ? { relation: { ticketProcedureItemList: {} } }
-          : undefined,
-        imageList: settingStore.TICKET_CLINIC_LIST.procedure ? true : false,
       },
       filter: {
         roomId: currentRoom.value.isCommon ? undefined : currentRoom.value.id || 0,
@@ -128,9 +117,6 @@ const startFetchData = async () => {
     for (let i = 0; i < paginationResult.ticketList.length; i++) {
       const ticketItem = paginationResult.ticketList[i]
       ticketItem.refreshTicketUserTree()
-      ticketItem.refreshImageMap()
-      await ticketItem.refreshProcedure()
-      console.log("🚀 ~ TicketClinicList.vue:133 ~ startFetchData ~ ticketItem:", ticketItem)
     }
 
     roomTicketPaginationMapRoomId.value[currentRoom.value.id] = paginationResult.ticketList
@@ -288,14 +274,7 @@ const handleUpdateTicketProcedure = async (data: { ticketProcedure: TicketProced
     ref="modalTicketClinicListSetting"
     @success="handleModalTicketClinicListSettingSuccess"
   />
-  <ModalShowTicketProcedureRegimen
-    ref="modalShowTicketProcedureRegimen"
-    @success="handleUpdateTicketProcedure"
-  />
-  <ModalProcessTicketProcedureRegimen
-    ref="modalProcessTicketProcedureRegimen"
-    @success="handleUpdateTicketProcedure"
-  />
+
   <ModalTicketClinicPayment ref="modalTicketClinicPayment" />
 
   <div class="mx-4 mt-4 gap-4 flex items-center justify-between">
@@ -524,61 +503,6 @@ const handleUpdateTicketProcedure = async (data: { ticketProcedure: TicketProced
             <td v-if="settingStore.TICKET_CLINIC_LIST.note">
               <div class="max-line-2">
                 {{ ticket.note || '' }}
-              </div>
-            </td>
-            <td v-if="settingStore.TICKET_CLINIC_LIST.procedure">
-              <div
-                v-for="tp in ticket.ticketProcedureList"
-                :key="tp.id"
-                class="flex flex-wrap gap-2"
-              >
-                <div class="flex flex-wrap gap-1 items-center">
-                  <div class="flex items-center gap-1" style="white-space: nowrap">
-                    <span>{{ tp.procedure?.name }}</span>
-                    <a
-                      style="line-height: 0"
-                      @click="modalProcedureDetail?.openModal(tp.procedureId)"
-                    >
-                      <IconFileSearch />
-                    </a>
-                  </div>
-
-                  <span
-                    v-if="tp.procedure?.procedureType === ProcedureType.Regimen"
-                    class="font-bold"
-                  >
-                    ({{ tp.finishedSessions }}/{{ tp.totalSessions }} buổi)
-                  </span>
-                  <div
-                    v-if="tp.procedure?.procedureType === ProcedureType.Regimen"
-                    @click="modalShowTicketProcedureRegimen?.openModal({ ticketProcedure: tp })"
-                    class="font-bold italic underline cursor-pointer"
-                    style="color: var(--text-green)"
-                  >
-                    XEM KQ
-                  </div>
-                </div>
-
-                <div v-if="tp.procedure?.procedureType === ProcedureType.Regimen">
-                  <VueButton
-                    v-if="tp.finishedSessions < tp.totalSessions"
-                    size="small"
-                    @click="
-                      modalProcessTicketProcedureRegimen?.openModal({
-                        ticketProcedure: tp,
-                        ticketProcedureItem: tp.ticketProcedureItemList![tp.finishedSessions],
-                      })
-                    "
-                  >
-                    Thực hiện buổi {{ tp.finishedSessions + 1 }}
-                    <span v-if="CONFIG.MODE === 'development'" style="color: violet">
-                      ({{ tp.ticketProcedureItemList![tp.finishedSessions]?.id }})
-                    </span>
-                  </VueButton>
-                  <span v-else class="font-bold italic" style="color: var(--text-blue)">
-                    HOÀN THÀNH
-                  </span>
-                </div>
               </div>
             </td>
             <td

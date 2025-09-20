@@ -4,7 +4,7 @@ import type { BaseResponse } from '../../_base/base-dto'
 import type { Customer } from '../../customer'
 import type { TicketUser } from '../../ticket-user'
 import { Ticket, type TicketStatus } from '../ticket.model'
-import type { TicketProcedureItem } from '@/modules/ticket-procedure/ticket-procedure-item.model'
+import type { TicketRegimen } from '@/modules/ticket-regimen'
 
 export class TicketReceptionApi {
   static async create(body: {
@@ -20,10 +20,17 @@ export class TicketReceptionApi {
     }
     ticketAttributeList: { key: string; value: any }[]
     ticketUserReceptionList: TicketUser[]
-    ticketProcedureWrapList: {
-      ticketProcedure: TicketProcedure
-      ticketProcedureItemList: TicketProcedureItem[]
-      ticketUserRequestList: TicketUser[]
+    ticketRegimenAddWrapList: {
+      ticketRegimenAdd: TicketRegimen
+      ticketUserRequestAddList: TicketUser[]
+      ticketProcedureRegimenAddWrapList: {
+        totalSession: number
+        ticketProcedureAdd: TicketProcedure
+      }[]
+    }[]
+    ticketProcedureNormalWrapList: {
+      ticketProcedureAdd: TicketProcedure
+      ticketUserRequestAddList: TicketUser[]
     }[]
   }) {
     const {
@@ -31,7 +38,8 @@ export class TicketReceptionApi {
       ticketReception,
       ticketAttributeList,
       ticketUserReceptionList,
-      ticketProcedureWrapList,
+      ticketRegimenAddWrapList,
+      ticketProcedureNormalWrapList,
     } = body
     const response = await AxiosInstance.post('/ticket/reception-create', {
       customer:
@@ -70,37 +78,73 @@ export class TicketReceptionApi {
       ticketUserReceptionList: ticketUserReceptionList
         .filter((i) => !!i.userId)
         .map((i) => ({ userId: i.userId, positionId: i.positionId })),
-      ticketProcedureWrapList: ticketProcedureWrapList.map((tp) => {
-        const { ticketProcedure, ticketProcedureItemList, ticketUserRequestList } = tp
+      ticketRegimenAddWrapList: ticketRegimenAddWrapList.map((trWrap) => {
+        const { ticketRegimenAdd, ticketProcedureRegimenAddWrapList, ticketUserRequestAddList } =
+          trWrap
         return {
-          ticketUserRequestList: (ticketUserRequestList || [])
+          ticketRegimenAdd: {
+            regimenId: ticketRegimenAdd.regimenId,
+            paymentMoneyStatus: ticketRegimenAdd.paymentMoneyStatus,
+
+            expectedPrice: ticketRegimenAdd.expectedPrice,
+            discountMoney: ticketRegimenAdd.discountMoney,
+            discountPercent: ticketRegimenAdd.discountPercent,
+            discountType: ticketRegimenAdd.discountType,
+            actualPrice: ticketRegimenAdd.actualPrice,
+          },
+          ticketProcedureRegimenAddWrapList: (ticketProcedureRegimenAddWrapList || [])
+            .filter((tpWrap) => tpWrap.totalSession > 0)
+            .map((tpWrap, index) => {
+              const { ticketProcedureAdd } = tpWrap
+              return {
+                ticketProcedureAdd: {
+                  priority: ticketProcedureAdd.priority,
+                  procedureId: ticketProcedureAdd.procedureId,
+                  status: ticketProcedureAdd.status,
+                  paymentMoneyStatus: ticketProcedureAdd.paymentMoneyStatus,
+
+                  quantity: ticketProcedureAdd.quantity,
+
+                  expectedPrice: ticketProcedureAdd.expectedPrice,
+                  discountMoney: ticketProcedureAdd.discountMoney,
+                  discountPercent: ticketProcedureAdd.discountPercent,
+                  discountType: ticketProcedureAdd.discountType,
+                  actualPrice: ticketProcedureAdd.actualPrice,
+                },
+                totalSession: tpWrap.totalSession,
+              }
+            }),
+          ticketUserRequestAddList: (ticketUserRequestAddList || [])
             .filter((i) => !!i.userId)
             .map((i) => ({
               positionId: i.positionId || 0,
               userId: i.userId || 0,
             })),
-          ticketProcedureItemList: (ticketProcedureItemList || []).map((i, index) => ({
-            registeredAt: i.registeredAt,
-            indexSession: index,
-          })),
-          ticketProcedure: {
-            priority: ticketProcedure.priority,
-            procedureId: ticketProcedure.procedureId,
-            procedureType: ticketProcedure.procedureType,
+        }
+      }),
+      ticketProcedureNormalWrapList: ticketProcedureNormalWrapList.map((tp) => {
+        const { ticketProcedureAdd, ticketUserRequestAddList } = tp
+        return {
+          ticketProcedureAdd: {
+            priority: ticketProcedureAdd.priority,
+            procedureId: ticketProcedureAdd.procedureId,
+            status: ticketProcedureAdd.status,
+            paymentMoneyStatus: ticketProcedureAdd.paymentMoneyStatus,
 
-            quantity: ticketProcedure.quantity,
-            totalSessions: ticketProcedure.totalSessions,
+            quantity: ticketProcedureAdd.quantity,
 
-            expectedPrice: ticketProcedure.expectedPrice,
-            discountMoney: ticketProcedure.discountMoney,
-            discountPercent: ticketProcedure.discountPercent,
-            discountType: ticketProcedure.discountType,
-            actualPrice: ticketProcedure.actualPrice,
-
-            status: ticketProcedure.status,
-            paymentMoneyStatus: ticketProcedure.paymentMoneyStatus,
-            createdAt: ticketProcedure.createdAt,
+            expectedPrice: ticketProcedureAdd.expectedPrice,
+            discountMoney: ticketProcedureAdd.discountMoney,
+            discountPercent: ticketProcedureAdd.discountPercent,
+            discountType: ticketProcedureAdd.discountType,
+            actualPrice: ticketProcedureAdd.actualPrice,
           },
+          ticketUserRequestAddList: (ticketUserRequestAddList || [])
+            .filter((i) => !!i.userId)
+            .map((i) => ({
+              positionId: i.positionId || 0,
+              userId: i.userId || 0,
+            })),
         }
       }),
     })

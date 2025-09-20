@@ -1,10 +1,9 @@
 import {
-  PaymentMoneyStatus,
   PickupStrategy,
   SplitBatchByCostPrice,
   SplitBatchByDistributor,
   SplitBatchByExpiryDate,
-  SplitBatchByWarehouse,
+  SplitBatchByWarehouse
 } from '../enum'
 
 export const SETTING_DEFAULT = {
@@ -243,7 +242,6 @@ export const SETTING_DEFAULT = {
 
   APPOINTMENT_LIST: {
     fromDateToDateDistance: -1,
-    procedure: false,
   },
 
   APPOINTMENT_UPSERT: {
@@ -280,6 +278,7 @@ export const SETTING_DEFAULT = {
   },
 
   TICKET_CLINIC_LIST: {
+    requiredPaymentItem: 0,
     includePendingStatus: false,
     goRoomAfterReception: true,
     procedure: false,
@@ -290,27 +289,19 @@ export const SETTING_DEFAULT = {
   },
   TICKET_CLINIC_DETAIL: {
     diagnosis: { icd10: 0 },
-    procedure: {
-      paymentMoneyStatus: PaymentMoneyStatus.NoEffect,
-    },
+    procedure: {},
     consumable: {
       warehouseIdList: [0],
-      paymentMoneyStatus: PaymentMoneyStatus.NoEffect,
       searchIncludeZeroQuantity: 1,
       pickupStrategy: PickupStrategy.Inherit,
     },
     prescriptions: {
       warehouseIdList: [0],
-      paymentMoneyStatus: PaymentMoneyStatus.NoEffect,
       searchIncludeZeroQuantity: 1,
       pickupStrategy: PickupStrategy.Inherit,
     },
-    laboratory: {
-      paymentMoneyStatus: PaymentMoneyStatus.NoEffect,
-    },
-    radiology: {
-      paymentMoneyStatus: PaymentMoneyStatus.NoEffect,
-    },
+    laboratory: {},
+    radiology: {},
   },
   TICKET_SPA_LIST: {
     roleIdList: [],

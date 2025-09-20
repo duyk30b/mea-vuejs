@@ -1,4 +1,4 @@
-import { TicketProcedureItem } from '@/modules/ticket-procedure/ticket-procedure-item.model'
+import { TicketRegimen } from '@/modules/ticket-regimen'
 import { AxiosInstance } from '../../../core/axios.instance'
 import type { BaseResponse } from '../../_base/base-dto'
 import { TicketProcedure } from '../../ticket-procedure'
@@ -7,54 +7,98 @@ import { TicketUser } from '../../ticket-user'
 export class TicketChangeProcedureApi {
   static async addTicketProcedureList(obj: {
     ticketId: number
-    ticketProcedureWrapList: {
-      ticketProcedure: TicketProcedure
-      ticketProcedureItemList: TicketProcedureItem[]
-      ticketUserRequestList: TicketUser[]
+    ticketRegimenAddWrapList: {
+      ticketRegimenAdd: TicketRegimen
+      ticketUserRequestAddList: TicketUser[]
+      ticketProcedureRegimenAddWrapList: {
+        totalSession: number
+        ticketProcedureAdd: TicketProcedure
+      }[]
+    }[]
+    ticketProcedureNormalWrapList: {
+      ticketProcedureAdd: TicketProcedure
+      ticketUserRequestAddList: TicketUser[]
     }[]
   }) {
-    const { ticketId, ticketProcedureWrapList } = obj
+    const { ticketId, ticketRegimenAddWrapList, ticketProcedureNormalWrapList } = obj
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/procedure/add-ticket-procedure-list`,
       {
-        ticketProcedureWrapList: ticketProcedureWrapList.map((tp) => {
-          const { ticketProcedure, ticketProcedureItemList, ticketUserRequestList } = tp
+        ticketRegimenAddWrapList: ticketRegimenAddWrapList.map((trWrap) => {
+          const { ticketRegimenAdd, ticketProcedureRegimenAddWrapList, ticketUserRequestAddList } =
+            trWrap
           return {
-            ticketUserRequestList: (ticketUserRequestList || [])
+            ticketRegimenAdd: {
+              regimenId: ticketRegimenAdd.regimenId,
+              paymentMoneyStatus: ticketRegimenAdd.paymentMoneyStatus,
+
+              expectedPrice: ticketRegimenAdd.expectedPrice,
+              discountMoney: ticketRegimenAdd.discountMoney,
+              discountPercent: ticketRegimenAdd.discountPercent,
+              discountType: ticketRegimenAdd.discountType,
+              actualPrice: ticketRegimenAdd.actualPrice,
+            },
+            ticketProcedureRegimenAddWrapList: (ticketProcedureRegimenAddWrapList || [])
+              .filter((tpWrap) => tpWrap.totalSession > 0)
+              .map((tpWrap, index) => {
+                const { ticketProcedureAdd } = tpWrap
+                return {
+                  ticketProcedureAdd: {
+                    priority: ticketProcedureAdd.priority,
+                    procedureId: ticketProcedureAdd.procedureId,
+                    status: ticketProcedureAdd.status,
+                    paymentMoneyStatus: ticketProcedureAdd.paymentMoneyStatus,
+
+                    quantity: ticketProcedureAdd.quantity,
+
+                    expectedPrice: ticketProcedureAdd.expectedPrice,
+                    discountMoney: ticketProcedureAdd.discountMoney,
+                    discountPercent: ticketProcedureAdd.discountPercent,
+                    discountType: ticketProcedureAdd.discountType,
+                    actualPrice: ticketProcedureAdd.actualPrice,
+                  },
+                  totalSession: tpWrap.totalSession,
+                }
+              }),
+            ticketUserRequestAddList: (ticketUserRequestAddList || [])
               .filter((i) => !!i.userId)
               .map((i) => ({
                 positionId: i.positionId || 0,
                 userId: i.userId || 0,
               })),
-            ticketProcedureItemList: (ticketProcedureItemList || []).map((i, index) => ({
-              registeredAt: i.registeredAt,
-              indexSession: index,
-            })),
-            ticketProcedure: {
-              priority: ticketProcedure.priority,
-              procedureId: ticketProcedure.procedureId,
-              procedureType: ticketProcedure.procedureType,
+          }
+        }),
+        ticketProcedureNormalWrapList: ticketProcedureNormalWrapList.map((tp) => {
+          const { ticketProcedureAdd, ticketUserRequestAddList } = tp
+          return {
+            ticketProcedureAdd: {
+              priority: ticketProcedureAdd.priority,
+              procedureId: ticketProcedureAdd.procedureId,
+              status: ticketProcedureAdd.status,
+              paymentMoneyStatus: ticketProcedureAdd.paymentMoneyStatus,
 
-              quantity: ticketProcedure.quantity,
-              totalSessions: ticketProcedure.totalSessions,
+              quantity: ticketProcedureAdd.quantity,
 
-              expectedPrice: ticketProcedure.expectedPrice,
-              discountMoney: ticketProcedure.discountMoney,
-              discountPercent: ticketProcedure.discountPercent,
-              discountType: ticketProcedure.discountType,
-              actualPrice: ticketProcedure.actualPrice,
-
-              status: ticketProcedure.status,
-              paymentMoneyStatus: ticketProcedure.paymentMoneyStatus,
-              createdAt: ticketProcedure.createdAt,
+              expectedPrice: ticketProcedureAdd.expectedPrice,
+              discountMoney: ticketProcedureAdd.discountMoney,
+              discountPercent: ticketProcedureAdd.discountPercent,
+              discountType: ticketProcedureAdd.discountType,
+              actualPrice: ticketProcedureAdd.actualPrice,
             },
+            ticketUserRequestAddList: (ticketUserRequestAddList || [])
+              .filter((i) => !!i.userId)
+              .map((i) => ({
+                positionId: i.positionId || 0,
+                userId: i.userId || 0,
+              })),
           }
         }),
       },
     )
     const { data } = response.data as BaseResponse<{
       ticketModified: any
-      ticketProcedureCreatedList: any[]
+      ticketRegimenCreatedList: any[]
+      ticketProcedureNormalCreatedList: any[]
     }>
   }
 
@@ -66,51 +110,69 @@ export class TicketChangeProcedureApi {
     const { data } = response.data as BaseResponse<{ ticketId: any; ticketProcedureId: number }>
   }
 
-  static async updateRequestTicketProcedure(body: {
+  static async destroyTicketRegimen(body: { ticketId: number; ticketRegimenId: number }) {
+    const { ticketId, ticketRegimenId } = body
+    const response = await AxiosInstance.delete(
+      `/ticket/${ticketId}/procedure/destroy-ticket-regimen/${ticketRegimenId}`,
+    )
+    const { data } = response.data as BaseResponse<{ ticketId: any; ticketRegimenId: number }>
+  }
+
+  static async updateMoneyTicketProcedure(body: {
     ticketId: number
     ticketProcedureId: number
-    ticketProcedure?: TicketProcedure
-    ticketProcedureItemList?: TicketProcedureItem[]
-    ticketUserRequestList?: TicketUser[]
+    ticketProcedure: TicketProcedure
   }) {
-    const {
-      ticketId,
-      ticketProcedureId,
-      ticketProcedure,
-      ticketProcedureItemList,
-      ticketUserRequestList,
-    } = body
+    const { ticketId, ticketProcedureId, ticketProcedure } = body
     const response = await AxiosInstance.post(
-      `/ticket/${ticketId}/procedure/update-request-ticket-procedure/${ticketProcedureId}`,
+      `/ticket/${ticketId}/procedure/update-money-ticket-procedure/${ticketProcedureId}`,
       {
-        ticketProcedure: ticketProcedure
-          ? {
-            status: ticketProcedure.status,
-            quantity: ticketProcedure.quantity,
-            totalSessions: ticketProcedure.totalSessions,
-            finishedSessions: ticketProcedure.finishedSessions,
-            expectedPrice: ticketProcedure.expectedPrice,
-            discountType: ticketProcedure.discountType,
-            discountMoney: ticketProcedure.discountMoney,
-            discountPercent: ticketProcedure.discountPercent,
-            actualPrice: ticketProcedure.actualPrice,
-          }
-          : undefined,
-        ticketProcedureItemList: ticketProcedureItemList
-          ? ticketProcedureItemList.map((i, index) => ({
-            id: i.id || 0,
-            registeredAt: i.registeredAt,
-            indexSession: index,
-          }))
-          : undefined,
-        ticketUserRequestList: ticketUserRequestList
-          ? ticketUserRequestList
-            .filter((i) => !!i.userId)
-            .map((i) => ({
-              positionId: i.positionId,
-              userId: i.userId,
-            }))
-          : undefined,
+        expectedPrice: ticketProcedure.expectedPrice,
+        discountMoney: ticketProcedure.discountMoney,
+        discountPercent: ticketProcedure.discountPercent,
+        discountType: ticketProcedure.discountType,
+        actualPrice: ticketProcedure.actualPrice,
+      },
+    )
+    const { data } = response.data as BaseResponse<{ ticketProcedureModified: any }>
+    return TicketProcedure.from(data.ticketProcedureModified)
+  }
+
+  static async updateUserRequestTicketProcedure(body: {
+    ticketId: number
+    ticketProcedureId: number
+    ticketUserRequestList: TicketUser[]
+  }) {
+    const { ticketId, ticketProcedureId } = body
+    const response = await AxiosInstance.post(
+      `/ticket/${ticketId}/procedure/update-user-request-ticket-procedure/${ticketProcedureId}`,
+      {
+        ticketUserRequestList: body.ticketUserRequestList
+          .filter((i) => !!i.userId)
+          .map((i) => ({
+            positionId: i.positionId,
+            userId: i.userId,
+          })),
+      },
+    )
+    const { data } = response.data as BaseResponse<{ ticketProcedureModified: any }>
+  }
+
+  static async updateUserResultTicketProcedure(body: {
+    ticketId: number
+    ticketProcedureId: number
+    ticketUserResultList: TicketUser[]
+  }) {
+    const { ticketId, ticketProcedureId } = body
+    const response = await AxiosInstance.post(
+      `/ticket/${ticketId}/procedure/update-user-result-ticket-procedure/${ticketProcedureId}`,
+      {
+        ticketUserResultList: body.ticketUserResultList
+          .filter((i) => !!i.userId)
+          .map((i) => ({
+            positionId: i.positionId,
+            userId: i.userId,
+          })),
       },
     )
     const { data } = response.data as BaseResponse<{ ticketProcedureModified: any }>
@@ -133,11 +195,63 @@ export class TicketChangeProcedureApi {
     const { data } = response.data as BaseResponse<{ ticketProcedureList: any[] }>
   }
 
-  static async updateResultTicketProcedureItem(options: {
+  static async updateMoneyTicketRegimen(body: {
     ticketId: number
-    ticketProcedureItem: {
-      ticketProcedureItemId: number
-      ticketProcedureId: number
+    ticketRegimenId: number
+    ticketRegimen: TicketRegimen
+    ticketProcedureList: TicketProcedure[]
+  }) {
+    const { ticketId, ticketRegimenId, ticketRegimen, ticketProcedureList } = body
+    const response = await AxiosInstance.post(
+      `/ticket/${ticketId}/procedure/update-money-ticket-regimen/${ticketRegimenId}`,
+      {
+        ticketRegimen: {
+          expectedPrice: ticketRegimen.expectedPrice,
+          discountMoney: ticketRegimen.discountMoney,
+          discountPercent: ticketRegimen.discountPercent,
+          discountType: ticketRegimen.discountType,
+          actualPrice: ticketRegimen.actualPrice,
+        },
+        ticketProcedureList: ticketProcedureList.map((i, index) => ({
+          id: i.id || 0,
+          quantity: i.quantity,
+
+          expectedPrice: i.expectedPrice,
+          discountMoney: i.discountMoney,
+          discountPercent: i.discountPercent,
+          discountType: i.discountType,
+          actualPrice: i.actualPrice,
+        })),
+      },
+    )
+    const { data } = response.data as BaseResponse<{ ticketRegimenModified: any }>
+    return TicketRegimen.from(data.ticketRegimenModified)
+  }
+
+  static async updateUserRequestTicketRegimen(body: {
+    ticketId: number
+    ticketRegimenId: number
+    ticketUserRequestList: TicketUser[]
+  }) {
+    const { ticketId, ticketRegimenId, ticketUserRequestList } = body
+    const response = await AxiosInstance.post(
+      `/ticket/${ticketId}/procedure/update-user-request-ticket-regimen/${ticketRegimenId}`,
+      {
+        ticketUserRequestList: ticketUserRequestList
+          .filter((i) => !!i.userId)
+          .map((i) => ({
+            positionId: i.positionId,
+            userId: i.userId,
+          })),
+      },
+    )
+    const { data } = response.data as BaseResponse<{ ticketRegimenModified: any }>
+  }
+
+  static async updateResultTicketProcedure(options: {
+    ticketId: number
+    ticketProcedureId: number
+    ticketProcedure: {
       completedAt: number
       result: string
     }
@@ -146,9 +260,8 @@ export class TicketChangeProcedureApi {
       imageIdsWait: number[]
       externalUrlList: string[]
     }
-    ticketUserResultList?: TicketUser[]
   }) {
-    const { ticketId, ticketProcedureItem, ticketUserResultList, imagesChange } = options
+    const { ticketId, ticketProcedureId, ticketProcedure, imagesChange } = options
 
     const formData = new FormData()
 
@@ -161,24 +274,10 @@ export class TicketChangeProcedureApi {
       formData.append('imagesChange', imagesChangeStr)
     }
 
-    formData.append('ticketProcedureItem', JSON.stringify(ticketProcedureItem))
-
-    if (ticketUserResultList) {
-      formData.append(
-        'ticketUserResultList',
-        JSON.stringify(
-          ticketUserResultList
-            .filter((i) => !!i.userId)
-            .map((i) => ({
-              positionId: i.positionId || 0,
-              userId: i.userId || 0,
-            })),
-        ),
-      )
-    }
+    formData.append('ticketProcedure', JSON.stringify(ticketProcedure))
 
     const response = await AxiosInstance.post(
-      `ticket/${ticketId}/procedure/update-result-ticket-procedure-item`,
+      `ticket/${ticketId}/procedure/update-result-ticket-procedure/${ticketProcedureId}`,
       formData,
       {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -189,22 +288,13 @@ export class TicketChangeProcedureApi {
     return TicketProcedure.from(data.ticketProcedureModified)
   }
 
-  static async cancelTicketProcedureItem(options: {
-    ticketId: number
-    ticketProcedureId: number
-    ticketProcedureItemId: number
-    cancelReason: string
-  }) {
-    const { ticketId } = options
+  static async cancelResultTicketProcedure(body: { ticketId: number; ticketProcedureId: number }) {
+    const { ticketId, ticketProcedureId } = body
     const response = await AxiosInstance.post(
-      `/ticket/${ticketId}/procedure/cancel-result-ticket-procedure-item`,
-      {
-        ticketProcedureId: options.ticketProcedureId,
-        ticketProcedureItemId: options.ticketProcedureItemId,
-        cancelReason: options.cancelReason,
-      },
+      `ticket/${ticketId}/procedure/cancel-result-ticket-procedure/${ticketProcedureId}`,
     )
     const { data } = response.data as BaseResponse<{ ticketProcedureModified: any }>
+
     return TicketProcedure.from(data.ticketProcedureModified)
   }
 }

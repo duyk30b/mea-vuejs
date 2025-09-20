@@ -55,20 +55,19 @@ const discountInteractTypeOptions = [
   })),
 ]
 
-const startFetchData = async (options?: { loading?: boolean }) => {
+const startFetchData = async (options?: { refetch?: boolean }) => {
   try {
-    if (options?.loading) {
-      dataLoading.value = true
-    }
+    dataLoading.value = true
     const response = await DiscountService.pagination(
       {
         page: page.value,
         limit: limit.value,
         relation: {
-          product: organizationPermission.value[PermissionId.PRODUCT],
-          procedure: organizationPermission.value[PermissionId.PROCEDURE],
-          laboratory: organizationPermission.value[PermissionId.LABORATORY],
-          radiology: organizationPermission.value[PermissionId.RADIOLOGY],
+          product: true,
+          regimen: true,
+          procedure: true,
+          laboratory: true,
+          radiology: true,
         },
         filter: {
           discountInteractType: discountInteractType.value ? discountInteractType.value : undefined,
@@ -79,7 +78,7 @@ const startFetchData = async (options?: { loading?: boolean }) => {
             }
           : { id: 'DESC' },
       },
-      { refetch: false },
+      { refetch: !!options?.refetch },
     )
     discountList.value = response.data
     total.value = response.meta.total
@@ -91,7 +90,7 @@ const startFetchData = async (options?: { loading?: boolean }) => {
 }
 
 onBeforeMount(async () => {
-  startFetchData({ loading: true })
+  startFetchData({ refetch: true })
 })
 
 const startFilterData = async () => {
@@ -129,10 +128,10 @@ const handleModalDiscountUpsertSuccess = async (
   discountIdAction.value = discountData.id
 
   await DiscountService.executeRelation([discountData], {
-    product: organizationPermission.value[PermissionId.PRODUCT],
-    procedure: organizationPermission.value[PermissionId.PROCEDURE],
-    laboratory: organizationPermission.value[PermissionId.LABORATORY],
-    radiology: organizationPermission.value[PermissionId.RADIOLOGY],
+    product: true,
+    procedure: true,
+    laboratory: true,
+    radiology: true,
   })
 
   if (mode === 'CREATE') {
@@ -160,10 +159,10 @@ const handleModalDiscountUpsertSuccess = async (
   }
   discountIdAction.value = 0
   await DiscountService.executeRelation(discountList.value, {
-    product: organizationPermission.value[PermissionId.PRODUCT],
-    procedure: organizationPermission.value[PermissionId.PROCEDURE],
-    laboratory: organizationPermission.value[PermissionId.LABORATORY],
-    radiology: organizationPermission.value[PermissionId.RADIOLOGY],
+    product: true,
+    procedure: true,
+    laboratory: true,
+    radiology: true,
   })
 }
 
@@ -253,6 +252,9 @@ const clickDelete = (discountId: number) => {
               </template>
               <template v-if="discount.discountInteractType === DiscountInteractType.Product">
                 {{ discount.product?.brandName }}
+              </template>
+              <template v-if="discount.discountInteractType === DiscountInteractType.Regimen">
+                {{ discount.regimen?.name }}
               </template>
               <template v-if="discount.discountInteractType === DiscountInteractType.Procedure">
                 {{ discount.procedure?.name }}

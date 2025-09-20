@@ -35,23 +35,22 @@ import { PermissionId } from '@/modules/permission/permission.enum'
 import { Room, RoomService, RoomTicketStyle, ticketRoomRef } from '@/modules/room'
 import { Ticket, TicketActionApi, TicketService, TicketStatus } from '@/modules/ticket'
 import { TicketRadiologyStatus } from '@/modules/ticket-radiology'
-import { UserRoleService } from '@/modules/user-role'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
 import { computed, onBeforeMount, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalTicketPayment from '../../room-ticket-base/ModalTicketPayment.vue'
 import ModalTicketReturnProduct from '../../room-ticket-base/ModalTicketReturnProduct.vue'
 import ModalTicketClinicHistory from '../history/ModalTicketClinicHistory.vue'
+import TicketClinicConsumableContainer from './consumable/TicketClinicConsumableContainer.vue'
 import TicketClinicDiagnosis from './diagnosis/TicketClinicDiagnosis.vue'
 import TicketClinicDiagnosisEyeSpecial from './diagnosis/TicketClinicDiagnosisEyeSpecial.vue'
+import TicketClinicLaboratoryContainer from './laboratory/TicketClinicLaboratoryContainer.vue'
 import ModalTicketClinicDetailSetting from './modal/ModalTicketClinicDetailSetting.vue'
-import TicketClinicConsumable from './TicketClinicConsumable.vue'
-import TicketClinicLaboratory from './TicketClinicLaboratory.vue'
-import TicketClinicPrescription from './TicketClinicPrescription.vue'
-import TicketClinicProcedure from './TicketClinicProcedure.vue'
-import TicketClinicRadiology from './TicketClinicRadiology.vue'
-import TicketClinicSummary from './TicketClinicSummary.vue'
-import TicketClinicUser from './TicketClinicUser.vue'
+import TicketClinicPrescriptionContainer from './prescription/TicketClinicPrescriptionContainer.vue'
+import TicketClinicProcedureContainer from './procedure/TicketClinicProcedureContainer.vue'
+import TicketClinicRadiologyContainer from './radiology/TicketClinicRadiologyContainer.vue'
+import TicketClinicSummaryContainer from './summary/TicketClinicSummaryContainer.vue'
+import TicketClinicUserContainer from './user/TicketClinicUserContainer.vue'
 
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
@@ -117,19 +116,15 @@ const startFetchData = async (ticketId?: number) => {
         ticketProductConsumableList: {},
         ticketProductPrescriptionList: {},
         ticketBatchList: CONFIG.MODE === 'development' ? { batch: true } : undefined,
-        ticketProcedureList: organizationPermission.value[PermissionId.PROCEDURE]
-          ? { relation: { ticketProcedureItemList: {} } }
-          : undefined,
-        ticketLaboratoryList: organizationPermission.value[PermissionId.LABORATORY]
-          ? {}
-          : undefined,
-        ticketLaboratoryGroupList: organizationPermission.value[PermissionId.LABORATORY]
-          ? {}
-          : undefined,
-        ticketLaboratoryResultList: organizationPermission.value[PermissionId.LABORATORY]
-          ? true
-          : undefined,
-        ticketRadiologyList: organizationPermission.value[PermissionId.RADIOLOGY] ? {} : undefined,
+        ticketProcedureList: {},
+        ticketRegimenList: { relation: { ticketProcedureList: { ticketUserResultList: true } } },
+        ticketRegimenListExtra: {
+          relation: { ticketProcedureList: { ticketUserResultList: true } },
+        },
+        ticketLaboratoryList: {},
+        ticketLaboratoryGroupList: {},
+        ticketLaboratoryResultList: true,
+        ticketRadiologyList: {},
         ticketUserList: {},
         toAppointment: organizationPermission.value[PermissionId.APPOINTMENT] ? true : undefined,
         imageList: true,
@@ -422,6 +417,11 @@ const clickReturnProduct = () => {
     </div>
 
     <div class="mr-2 flex flex-wrap items-center gap-4">
+      <div>
+        <span>{{ formatMoney(ticketRoomRef.paid) }}</span>
+        /
+        <span>{{ formatMoney(ticketRoomRef.totalMoney) }}</span>
+      </div>
       <VueButton
         v-if="
           [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Deposited].includes(
@@ -631,10 +631,9 @@ const clickReturnProduct = () => {
           </VueTabMenu>
         </template>
         <VueTabMenu
-          v-if="organizationPermission[PermissionId.PROCEDURE]"
-          :tabKey="TicketClinicProcedure.__name!"
+          :tabKey="TicketClinicProcedureContainer.__name!"
           style="padding: 6px 12px"
-          @active="router.push({ name: TicketClinicProcedure.__name })"
+          @active="router.push({ name: TicketClinicProcedureContainer.__name })"
         >
           <IconFluidMed />
           Dịch vụ
@@ -648,50 +647,48 @@ const clickReturnProduct = () => {
         >
           <VueTabMenu
             style="padding: 6px 12px"
-            :tabKey="TicketClinicConsumable.__name!"
-            @active="router.push({ name: TicketClinicConsumable.__name })"
+            :tabKey="TicketClinicConsumableContainer.__name!"
+            @active="router.push({ name: TicketClinicConsumableContainer.__name })"
           >
             <IconOneToOne />
             Vật tư
           </VueTabMenu>
           <VueTabMenu
-            v-if="organizationPermission[PermissionId.LABORATORY]"
             style="padding: 6px 12px"
-            :tabKey="TicketClinicLaboratory.__name!"
-            @active="router.push({ name: TicketClinicLaboratory.__name })"
+            :tabKey="TicketClinicLaboratoryContainer.__name!"
+            @active="router.push({ name: TicketClinicLaboratoryContainer.__name })"
           >
             <IconLabPanel />
             Xét nghiệm
           </VueTabMenu>
           <VueTabMenu
-            v-if="organizationPermission[PermissionId.RADIOLOGY]"
             style="padding: 6px 12px"
-            :tabKey="TicketClinicRadiology.__name!"
-            @active="router.push({ name: TicketClinicRadiology.__name })"
+            :tabKey="TicketClinicRadiologyContainer.__name!"
+            @active="router.push({ name: TicketClinicRadiologyContainer.__name })"
           >
             <IconRadiology />
             CĐHA
           </VueTabMenu>
           <VueTabMenu
             style="padding: 6px 12px"
-            :tabKey="TicketClinicPrescription.__name!"
-            @active="router.push({ name: TicketClinicPrescription.__name })"
+            :tabKey="TicketClinicPrescriptionContainer.__name!"
+            @active="router.push({ name: TicketClinicPrescriptionContainer.__name })"
           >
             <IconDisconnect />
             Đơn thuốc
           </VueTabMenu>
           <VueTabMenu
             style="padding: 6px 12px"
-            :tabKey="TicketClinicUser.__name!"
-            @active="router.push({ name: TicketClinicUser.__name })"
+            :tabKey="TicketClinicUserContainer.__name!"
+            @active="router.push({ name: TicketClinicUserContainer.__name })"
           >
             <IconUser />
             Nhân Viên
           </VueTabMenu>
           <VueTabMenu
             style="padding: 6px 12px"
-            :tabKey="TicketClinicSummary.__name!"
-            @active="router.push({ name: TicketClinicSummary.__name })"
+            :tabKey="TicketClinicSummaryContainer.__name!"
+            @active="router.push({ name: TicketClinicSummaryContainer.__name })"
           >
             <IconPicCenter />
             Tổng kết
@@ -705,11 +702,11 @@ const clickReturnProduct = () => {
           [
             TicketClinicDiagnosis.__name,
             TicketClinicDiagnosisEyeSpecial.__name,
-            TicketClinicProcedure.__name,
-            TicketClinicConsumable.__name,
-            TicketClinicLaboratory.__name,
-            TicketClinicRadiology.__name,
-            TicketClinicPrescription.__name,
+            TicketClinicProcedureContainer.__name,
+            TicketClinicConsumableContainer.__name,
+            TicketClinicLaboratoryContainer.__name,
+            TicketClinicRadiologyContainer.__name,
+            TicketClinicPrescriptionContainer.__name,
           ].join(',')
         "
       >

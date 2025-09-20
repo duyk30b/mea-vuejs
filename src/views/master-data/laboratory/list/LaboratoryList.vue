@@ -3,6 +3,7 @@ import { VueTag } from '@/common'
 import VueButton from '@/common/VueButton.vue'
 import VuePagination from '@/common/VuePagination.vue'
 import { IconFileSearch, IconSetting } from '@/common/icon-antd'
+import { IconSortChange } from '@/common/icon-font-awesome'
 import { IconDownload, IconEditSquare, IconUpload } from '@/common/icon-google'
 import VueDropdown from '@/common/popover/VueDropdown.vue'
 import { InputSelect, InputText, VueSelect } from '@/common/vue-form'
@@ -22,7 +23,6 @@ import ModalLaboratoryUpsert from '../upsert/ModalLaboratoryUpsert.vue'
 import ModalCopyLaboratorySystem from './ModalCopyLaboratorySystem.vue'
 import ModalLaboratoryGroupManager from './ModalLaboratoryGroupManager.vue'
 import ModalUploadLaboratory from './ModalUploadLaboratory.vue'
-import { IconSortChange } from '@/common/icon-font-awesome'
 
 const modalCopyLaboratoryExample = ref<InstanceType<typeof ModalCopyLaboratorySystem>>()
 const modalLaboratoryGroupManager = ref<InstanceType<typeof ModalLaboratoryGroupManager>>()
@@ -178,7 +178,7 @@ const handleModalUploadLaboratorySuccess = async () => {
     </div>
     <div class="">
       <VueButton
-        v-if="userPermission[PermissionId.LABORATORY_CREATE]"
+        v-if="userPermission[PermissionId.MASTER_DATA_LABORATORY]"
         color="blue"
         icon="plus"
         @click="modalLaboratoryUpsert?.openModal()"
@@ -206,7 +206,7 @@ const handleModalUploadLaboratorySuccess = async () => {
         </VueButton>
       </div>
       <VueButton
-        v-if="userPermission[PermissionId.LABORATORY_GROUP_CRUD]"
+        v-if="userPermission[PermissionId.MASTER_DATA_LABORATORY]"
         icon="send"
         color="green"
         @click="modalLaboratoryGroupManager?.openModal()"
@@ -290,7 +290,7 @@ const handleModalUploadLaboratorySuccess = async () => {
               </div>
             </th>
             <th>Khuyến mại</th>
-            <th v-if="userPermission[PermissionId.LABORATORY_UPDATE]">Action</th>
+            <th v-if="userPermission[PermissionId.MASTER_DATA_LABORATORY]">Action</th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -359,7 +359,7 @@ const handleModalUploadLaboratorySuccess = async () => {
                 {{ laboratory.discountApply?.valueText }}
               </VueTag>
             </td>
-            <td v-if="userPermission[PermissionId.LABORATORY_UPDATE]" class="text-center">
+            <td v-if="userPermission[PermissionId.MASTER_DATA_LABORATORY]" class="text-center">
               <a
                 style="color: var(--text-orange)"
                 @click="modalLaboratoryUpsert?.openModal(laboratory.id)"

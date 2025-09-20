@@ -33,7 +33,7 @@ export class TicketLaboratoryGroup {
     const ins = new TicketLaboratoryGroup()
     ins.id = 0
     ins.laboratoryGroupId = 0
-    ins.paymentMoneyStatus = PaymentMoneyStatus.NoEffect
+    ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
     ins.result = ''
     return ins
   }

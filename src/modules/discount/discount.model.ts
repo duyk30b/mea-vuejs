@@ -1,9 +1,10 @@
 import { BaseModel } from '../_base/base.model'
 import { DiscountType } from '../enum'
-import type { Laboratory } from '../laboratory'
-import type { Procedure } from '../procedure'
-import type { Product } from '../product'
-import type { Radiology } from '../radiology'
+import { Laboratory } from '../laboratory'
+import { Procedure } from '../procedure'
+import { Product } from '../product'
+import { Radiology } from '../radiology'
+import { Regimen } from '../regimen'
 
 export enum DiscountInteractType {
   Product = 1,
@@ -41,6 +42,7 @@ export class Discount extends BaseModel {
   periodsTime: string // [[11:30,13:30],[15h:17h],[21h:23h]]
 
   product?: Product
+  regimen?: Regimen
   procedure?: Procedure
   radiology?: Radiology
   laboratory?: Laboratory
@@ -77,13 +79,11 @@ export class Discount extends BaseModel {
   }
 
   get valueText() {
-    if (this.discountType === DiscountType.VND) {
-      return this.discountMoney
-    }
     if (this.discountType === DiscountType.Percent) {
       return this.discountPercent + '%'
+    } else {
+      return this.discountMoney
     }
-    return ''
   }
 
   static canApplyNow(discount: Discount): boolean {
@@ -169,6 +169,21 @@ export class Discount extends BaseModel {
 
   static from(source: Discount) {
     const target = Discount.basic(source)
+    if (Object.prototype.hasOwnProperty.call(source, 'product')) {
+      target.product = source.product ? Product.basic(source.product) : source.product
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'regimen')) {
+      target.regimen = source.regimen ? Regimen.basic(source.regimen) : source.regimen
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'procedure')) {
+      target.procedure = source.procedure ? Procedure.basic(source.procedure) : source.procedure
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'laboratory')) {
+      target.laboratory = source.laboratory ? Laboratory.basic(source.laboratory) : source.laboratory
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'radiology')) {
+      target.radiology = source.radiology ? Radiology.basic(source.radiology) : source.radiology
+    }
     return target
   }
 

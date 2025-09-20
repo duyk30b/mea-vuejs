@@ -63,6 +63,7 @@ export class TicketChangeLaboratoryApi {
             discountPercent: tl.discountPercent,
             discountType: tl.discountType,
             actualPrice: tl.actualPrice,
+            paymentMoneyStatus: tl.paymentMoneyStatus,
             createdAt: ticketLaboratoryGroupUpdate.createdAt,
           })),
         }

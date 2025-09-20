@@ -156,7 +156,7 @@ const handleModalUploadProcedureSuccess = async () => {
     </div>
     <div>
       <VueButton
-        v-if="userPermission[PermissionId.PROCEDURE_CREATE]"
+        v-if="userPermission[PermissionId.MASTER_DATA_PROCEDURE]"
         color="blue"
         icon="plus"
         @click="modalProcedureUpsert?.openModal()"
@@ -184,7 +184,7 @@ const handleModalUploadProcedureSuccess = async () => {
         </VueButton>
       </div>
       <VueButton
-        v-if="userPermission[PermissionId.PROCEDURE_GROUP_CRUD]"
+        v-if="userPermission[PermissionId.MASTER_DATA_PROCEDURE]"
         icon="send"
         color="green"
         @click="modalProcedureGroupManager?.openModal()"
@@ -349,7 +349,7 @@ const handleModalUploadProcedureSuccess = async () => {
             </th>
             <th>Khuyến mại</th>
             <th>Trạng thái</th>
-            <th v-if="userPermission[PermissionId.PROCEDURE_UPDATE]">Thao tác</th>
+            <th v-if="userPermission[PermissionId.MASTER_DATA_PROCEDURE]">Thao tác</th>
           </tr>
         </thead>
         <tbody>
@@ -363,9 +363,6 @@ const handleModalUploadProcedureSuccess = async () => {
             <td class="text-center">{{ procedure.code }}</td>
             <td>
               <span>{{ procedure.name }}</span>
-              <span v-if="procedure.procedureType === ProcedureType.Regimen" class="font-bold">
-                ({{ procedure.totalSessions }} buổi)
-              </span>
               <a class="ml-1" @click="modalProcedureDetail?.openModal(procedure.id)">
                 <IconFileSearch />
               </a>

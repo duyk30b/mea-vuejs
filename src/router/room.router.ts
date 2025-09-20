@@ -107,106 +107,55 @@ export const roomRouter: RouteRecordRaw = {
             },
             {
               path: 'procedure',
-              name: 'TicketClinicProcedure',
+              name: 'TicketClinicProcedureContainer',
               component: () =>
-                import('../views/room/room-ticket-clinic/detail/TicketClinicProcedure.vue'),
+                import(
+                  '../views/room/room-ticket-clinic/detail/procedure/TicketClinicProcedureContainer.vue'
+                ),
               meta: { keepAlive: true, title: 'Chỉ định dịch vụ' },
             },
             {
               path: 'laboratory',
-              name: 'TicketClinicLaboratory',
+              name: 'TicketClinicLaboratoryContainer',
               component: () =>
-                import('../views/room/room-ticket-clinic/detail/TicketClinicLaboratory.vue'),
+                import('../views/room/room-ticket-clinic/detail/laboratory/TicketClinicLaboratoryContainer.vue'),
               meta: { keepAlive: true, title: 'Chỉ định Xét nghiệm' },
             },
             {
               path: 'radiology',
-              name: 'TicketClinicRadiology',
+              name: 'TicketClinicRadiologyContainer',
               component: () =>
-                import('../views/room/room-ticket-clinic/detail/TicketClinicRadiology.vue'),
+                import('../views/room/room-ticket-clinic/detail/radiology/TicketClinicRadiologyContainer.vue'),
               meta: { keepAlive: true, title: 'Chỉ định CĐHA' },
             },
             {
               path: 'consumable',
-              name: 'TicketClinicConsumable',
+              name: 'TicketClinicConsumableContainer',
               component: () =>
-                import('../views/room/room-ticket-clinic/detail/TicketClinicConsumable.vue'),
+                import(
+                  '../views/room/room-ticket-clinic/detail/consumable/TicketClinicConsumableContainer.vue'
+                ),
               meta: { keepAlive: true, title: 'Vật tư' },
             },
             {
               path: 'prescription',
-              name: 'TicketClinicPrescription',
+              name: 'TicketClinicPrescriptionContainer',
               component: () =>
-                import('../views/room/room-ticket-clinic/detail/TicketClinicPrescription.vue'),
+                import('../views/room/room-ticket-clinic/detail/prescription/TicketClinicPrescriptionContainer.vue'),
               meta: { keepAlive: true, title: 'Kê đơn thuốc' },
             },
             {
               path: 'user',
-              name: 'TicketClinicUser',
+              name: 'TicketClinicUserContainer',
               component: () =>
-                import('../views/room/room-ticket-clinic/detail/TicketClinicUser.vue'),
+                import('../views/room/room-ticket-clinic/detail/user/TicketClinicUserContainer.vue'),
               meta: { keepAlive: true, title: 'Nhân viên' },
             },
             {
               path: 'summary',
-              name: 'TicketClinicSummary',
+              name: 'TicketClinicSummaryContainer',
               component: () =>
-                import('../views/room/room-ticket-clinic/detail/TicketClinicSummary.vue'),
-              meta: { title: 'Tổng kết' },
-            },
-          ],
-        },
-      ],
-    },
-    {
-      path: 'room-ticket-spa/:roomId',
-      name: 'RoomTicketSpa',
-      component: () => import('../views/room/room-ticket-spa/RoomTicketSpa.vue'),
-      redirect: () => ({ name: 'TicketSpaList' }),
-      meta: {
-        menuKey: (route: RouteLocationNormalizedLoaded, params: { roomId: any }) => {
-          return route.name?.toString() + '_' + params?.roomId
-        },
-      },
-      children: [
-        {
-          path: 'ticket-list',
-          name: 'TicketSpaList',
-          component: () => import('../views/room/room-ticket-spa/list/TicketSpaList.vue'),
-        },
-        {
-          path: 'ticket-detail/:ticketId',
-          name: 'TicketSpaDetailContainer',
-          component: () =>
-            import('../views/room/room-ticket-spa/detail/TicketSpaDetailContainer.vue'),
-          redirect: () => {
-            return { name: 'TicketSpaDiagnosis' }
-          },
-          children: [
-            {
-              path: 'diagnosis',
-              name: 'TicketSpaDiagnosis',
-              component: () =>
-                import('../views/room/room-ticket-spa/detail/TicketSpaDiagnosis.vue'),
-              meta: { keepAlive: true, title: 'Khám' },
-            },
-            {
-              path: 'procedure',
-              name: 'TicketSpaProcedure',
-              component: () =>
-                import('../views/room/room-ticket-spa/detail/TicketSpaProcedure.vue'),
-              meta: { keepAlive: true, title: 'Dịch vụ' },
-            },
-            {
-              path: 'product',
-              name: 'TicketSpaProduct',
-              component: () => import('../views/room/room-ticket-spa/detail/TicketSpaProduct.vue'),
-              meta: { keepAlive: true, title: 'Vật tư' },
-            },
-            {
-              path: 'summary',
-              name: 'TicketSpaSummary',
-              component: () => import('../views/room/room-ticket-spa/detail/TicketSpaSummary.vue'),
+                import('../views/room/room-ticket-clinic/detail/summary/TicketClinicSummaryContainer.vue'),
               meta: { title: 'Tổng kết' },
             },
           ],

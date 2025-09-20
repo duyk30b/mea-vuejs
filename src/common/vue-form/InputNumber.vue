@@ -12,6 +12,8 @@ const props = withDefaults(
     disabled?: boolean
     placeholder?: string
     required?: boolean
+    buttonControl?: boolean
+    step?: number
     validate?: {
       'gt'?: number
       'GT'?: number
@@ -36,6 +38,8 @@ const props = withDefaults(
     placeholder: '',
     required: false,
     validate: () => ({}),
+    buttonControl: false,
+    step: 1,
   },
 )
 const emit = defineEmits<{ (e: 'update:value', value: number): void }>()
@@ -116,6 +120,14 @@ const handleInput = (e: Event) => {
   emit('update:value', number)
 }
 
+const clickDown = () => {
+  emit('update:value', Number(props.value) - props.step)
+}
+
+const clickUp = () => {
+  emit('update:value', Number(props.value) + props.step)
+}
+
 const handleFocus = (e: Event) => {
   const target = e.target as HTMLInputElement
   if (target.value) {
@@ -135,6 +147,16 @@ defineExpose({ focus })
     <div v-if="prepend" class="prepend">
       {{ prepend }}
     </div>
+    <button
+      type="button"
+      v-if="buttonControl"
+      class="button-control button-minus"
+      @click.prevent="clickDown"
+    >
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19,13H5V11H19V13Z"></path>
+      </svg>
+    </button>
     <div class="input-area">
       <input
         ref="inputNumber"
@@ -147,6 +169,16 @@ defineExpose({ focus })
         @input="handleInput"
       />
     </div>
+    <button
+      type="button"
+      v-if="buttonControl"
+      class="button-control button-plus"
+      @click.prevent="clickUp"
+    >
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"></path>
+      </svg>
+    </button>
     <div v-if="append" class="append">
       {{ append }}
     </div>
@@ -156,5 +188,32 @@ defineExpose({ focus })
 <style lang="scss" scoped>
 input {
   padding-right: 12px !important;
+}
+
+.button-control {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  width: 2em;
+  & > svg {
+    width: 1.2em;
+    height: 1.2em;
+  }
+  &:active {
+    border-left: 1px solid #40a9ff;
+    & > svg {
+      width: 1.4em;
+      height: 1.4em;
+    }
+  }
+}
+
+.button-minus {
+  border-right: 1px solid #cdcdcd;
+}
+
+.button-plus {
+  border-left: 1px solid #cdcdcd;
 }
 </style>

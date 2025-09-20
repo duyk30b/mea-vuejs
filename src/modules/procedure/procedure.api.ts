@@ -65,9 +65,6 @@ export class ProcedureApi {
         procedureGroupId: procedure.procedureGroupId,
         procedureType: procedure.procedureType,
         price: procedure.price,
-        totalSessions: procedure.totalSessions,
-        gapHours: procedure.gapHours,
-        gapHoursType: procedure.gapHoursType,
         isActive: procedure.isActive,
       },
       positionRequestList: positionRequestList
@@ -127,9 +124,6 @@ export class ProcedureApi {
         procedureGroupId: procedure.procedureGroupId,
         procedureType: procedure.procedureType,
         price: procedure.price,
-        totalSessions: procedure.totalSessions,
-        gapHours: procedure.gapHours,
-        gapHoursType: procedure.gapHoursType,
         isActive: procedure.isActive,
       },
       positionRequestList: positionRequestList

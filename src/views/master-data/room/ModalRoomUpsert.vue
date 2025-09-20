@@ -134,7 +134,7 @@ const clickDelete = () => {
           })
         }
       } catch (error) {
-        console.log("🚀 ~ ModalRoomUpsert.vue:137 ~ clickDelete ~ error:", error)
+        console.log('🚀 ~ ModalRoomUpsert.vue:137 ~ clickDelete ~ error:', error)
       }
     },
   })
@@ -186,30 +186,18 @@ defineExpose({ openModal })
                   value: RoomType.Product,
                   label: RoomTypeText[RoomType.Product],
                 },
-                ...(organizationPermission[PermissionId.PROCEDURE]
-                  ? [
-                      {
-                        value: RoomType.Procedure,
-                        label: RoomTypeText[RoomType.Procedure],
-                      },
-                    ]
-                  : []),
-                ...(organizationPermission[PermissionId.LABORATORY]
-                  ? [
-                      {
-                        value: RoomType.Laboratory,
-                        label: RoomTypeText[RoomType.Laboratory],
-                      },
-                    ]
-                  : []),
-                ...(organizationPermission[PermissionId.RADIOLOGY]
-                  ? [
-                      {
-                        value: RoomType.Radiology,
-                        label: RoomTypeText[RoomType.Radiology],
-                      },
-                    ]
-                  : []),
+                {
+                  value: RoomType.Procedure,
+                  label: RoomTypeText[RoomType.Procedure],
+                },
+                {
+                  value: RoomType.Laboratory,
+                  label: RoomTypeText[RoomType.Laboratory],
+                },
+                {
+                  value: RoomType.Radiology,
+                  label: RoomTypeText[RoomType.Radiology],
+                },
               ]"
             ></InputSelect>
           </div>

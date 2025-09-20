@@ -4,6 +4,7 @@ import { LaboratoryGroup } from '../laboratory-group'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
 import { Radiology } from '../radiology'
+import { Regimen } from '../regimen'
 import { Role } from '../role/role.model'
 
 export enum PositionType {
@@ -12,11 +13,12 @@ export enum PositionType {
   TicketPrescriptionRequest = 3,
   ProcedureRequest = 4,
   ProcedureResult = 5,
-  LaboratoryRequest = 6,
-  LaboratoryGroupRequest = 7,
-  LaboratoryGroupResult = 8,
-  RadiologyRequest = 9,
-  RadiologyResult = 10,
+  RegimenRequest = 6,
+  LaboratoryRequest = 8,
+  LaboratoryGroupRequest = 9,
+  LaboratoryGroupResult = 10,
+  RadiologyRequest = 11,
+  RadiologyResult = 12,
 }
 
 export const PositionTypeText = {
@@ -25,6 +27,7 @@ export const PositionTypeText = {
   [PositionType.TicketPrescriptionRequest]: 'Kê đơn thuốc',
   [PositionType.ProcedureRequest]: 'Chỉ định dịch vụ',
   [PositionType.ProcedureResult]: 'Thực hiện dịch vụ',
+  [PositionType.RegimenRequest]: 'Chỉ định liệu trình',
   [PositionType.LaboratoryRequest]: 'Chỉ định xét nghiệm',
   [PositionType.LaboratoryGroupRequest]: 'Chỉ định nhóm phiếu xét nghiệm',
   [PositionType.LaboratoryGroupResult]: 'Trả kết quả nhóm phiếu xét nghiệm',
@@ -56,6 +59,7 @@ export class Position extends BaseModel {
 
   role?: Role
   productRequest?: Product
+  regimenRequest?: Regimen
   procedureRequest?: Procedure
   procedureResult?: Procedure
   laboratoryRequest?: Laboratory
@@ -109,6 +113,11 @@ export class Position extends BaseModel {
         ? Product.basic(source.productRequest)
         : source.productRequest
     }
+    if (Object.prototype.hasOwnProperty.call(source, 'regimenRequest')) {
+      target.regimenRequest = source.regimenRequest
+        ? Regimen.basic(source.regimenRequest)
+        : source.regimenRequest
+    }
     if (Object.prototype.hasOwnProperty.call(source, 'procedureRequest')) {
       target.procedureRequest = source.procedureRequest
         ? Procedure.basic(source.procedureRequest)
@@ -155,7 +164,7 @@ export class Position extends BaseModel {
     if (a.priority != b.priority) return false
     if (a.commissionCalculatorType != b.commissionCalculatorType) return false
     if (a.commissionValue != b.commissionValue) return false
-    
+
     return true
   }
 

@@ -90,7 +90,7 @@ const hasChangeData = computed(() => {
 })
 
 const disabledButtonSave = computed(() => {
-  if (!userPermission.value[PermissionId.RADIOLOGY_SAMPLE_CRUD]) return true
+  if (!userPermission.value[PermissionId.MASTER_DATA_RADIOLOGY_CONTENT_SAMPLE]) return true
   if (
     radiologySampleOrigin.value.userId !== 0 &&
     radiologySampleOrigin.value.userId !== MeService.user.value?.id

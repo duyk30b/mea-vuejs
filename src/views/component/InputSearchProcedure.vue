@@ -85,9 +85,6 @@ const logicFilter = (item: ItemOption<Procedure>, text: string) => {
       <template #option="{ item: { data } }">
         <div>
           <b>{{ data.name }}</b>
-          <b v-if="data?.procedureType === ProcedureType.Regimen">
-            ({{ data.totalSessions }} buổi)
-          </b>
           - {{ formatMoney(data.price) }}
         </div>
       </template>

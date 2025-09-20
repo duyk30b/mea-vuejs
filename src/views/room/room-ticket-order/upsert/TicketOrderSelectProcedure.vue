@@ -12,7 +12,7 @@ import { ESString } from '@/utils'
 import ModalProcedureUpsert from '@/views/master-data/procedure/upsert/ModalProcedureUpsert.vue'
 import { ref } from 'vue'
 import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
-import TicketProcedureStatusTag from '../../room-procedure/TicketProcedureStatusTag.vue'
+import TicketProcedureStatusTag from '../../room-ticket-clinic/detail/procedure/TicketProcedureStatusTag.vue'
 
 const inputOptionsProcedure = ref<InstanceType<typeof InputOptions>>()
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
@@ -51,13 +51,12 @@ const createTicketProcedure = async (procedureData?: Procedure) => {
     temp.procedure = Procedure.from(procedureData)
 
     temp.quantity = 1
-    temp.paymentMoneyStatus = PaymentMoneyStatus.NoEffect
+    temp.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
     if (procedureData.procedureType === ProcedureType.Basic) {
       temp.status = TicketProcedureStatus.Completed
     } else {
       temp.status = TicketProcedureStatus.Pending
     }
-    temp.totalSessions = procedureData.totalSessions
     temp.createdAt = Date.now()
 
     temp.expectedPrice = procedureData.price
@@ -164,7 +163,7 @@ defineExpose({ focus })
         <span>Tên dịch vụ</span>
         <span>
           <a
-            v-if="userPermission[PermissionId.PROCEDURE_CREATE]"
+            v-if="userPermission[PermissionId.MASTER_DATA_PROCEDURE]"
             @click="modalProcedureUpsert?.openModal()"
           >
             Thêm dịch vụ mới

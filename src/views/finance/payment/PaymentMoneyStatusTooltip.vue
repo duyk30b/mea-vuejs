@@ -4,26 +4,19 @@ import { VueTooltip } from '@/common/popover'
 import { PaymentMoneyStatus } from '@/modules/enum'
 
 const props = withDefaults(defineProps<{ paymentMoneyStatus: PaymentMoneyStatus }>(), {
-  paymentMoneyStatus: PaymentMoneyStatus.NoEffect,
+  paymentMoneyStatus: PaymentMoneyStatus.TicketPaid,
 })
 </script>
 
 <template>
   <div class="flex justify-center">
-    <div v-if="paymentMoneyStatus === PaymentMoneyStatus.NoEffect"></div>
+    <div v-if="paymentMoneyStatus === PaymentMoneyStatus.TicketPaid"></div>
 
-    <VueTooltip v-else-if="paymentMoneyStatus === PaymentMoneyStatus.Pending">
+    <VueTooltip v-else-if="paymentMoneyStatus === PaymentMoneyStatus.PendingPayment">
       <template #trigger>
         <IconDollar style="font-size: 18px; color: orange; cursor: not-allowed" />
       </template>
       <div>Chưa thanh toán</div>
-    </VueTooltip>
-
-    <VueTooltip v-else-if="paymentMoneyStatus === PaymentMoneyStatus.Partial">
-      <template #trigger>
-        <IconDollar style="font-size: 18px; color: violet; cursor: not-allowed" />
-      </template>
-      <div>Thanh toán 1 phần</div>
     </VueTooltip>
 
     <VueTooltip v-else-if="paymentMoneyStatus === PaymentMoneyStatus.Paid">

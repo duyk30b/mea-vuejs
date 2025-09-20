@@ -1,9 +1,12 @@
 import { Batch } from '@/modules/batch'
-import { DiscountService, type Discount } from '@/modules/discount'
-import { LaboratoryService, type Laboratory } from '@/modules/laboratory'
+import { Discount, DiscountService } from '@/modules/discount'
+import { Expense, ExpenseService } from '@/modules/expense'
+import { Image } from '@/modules/image/image.model'
+import { Laboratory, LaboratoryService } from '@/modules/laboratory'
 import { LaboratoryGroupService } from '@/modules/laboratory-group'
-import { ProcedureService, type Procedure } from '@/modules/procedure'
-import { RadiologyService, type Radiology } from '@/modules/radiology'
+import { Procedure, ProcedureService } from '@/modules/procedure'
+import { Radiology, RadiologyService } from '@/modules/radiology'
+import { Regimen, RegimenService } from '@/modules/regimen'
 import { RoomService } from '@/modules/room'
 import {
   roomDeliveryPagination,
@@ -13,11 +16,13 @@ import {
   roomTicketPaginationMapRoomId,
   ticketRoomRef,
 } from '@/modules/room/room.ref'
+import { Surcharge, SurchargeService } from '@/modules/surcharge'
+import { TicketRegimen } from '@/modules/ticket-regimen'
 import { MeService } from '../../modules/_me/me.service'
 import { Customer } from '../../modules/customer'
 import { Distributor, DistributorService } from '../../modules/distributor'
 import { Organization } from '../../modules/organization'
-import { Position, PositionService, type PositionType } from '../../modules/position'
+import { Position, PositionService } from '../../modules/position'
 import { Product } from '../../modules/product'
 import { Ticket } from '../../modules/ticket'
 import { TicketAttribute } from '../../modules/ticket-attribute'
@@ -25,14 +30,13 @@ import { TicketBatch } from '../../modules/ticket-batch'
 import { TicketLaboratory } from '../../modules/ticket-laboratory'
 import { TicketLaboratoryGroup } from '../../modules/ticket-laboratory-group'
 import { TicketLaboratoryResult } from '../../modules/ticket-laboratory-result'
-import { TicketProcedure } from '../../modules/ticket-procedure'
+import { TicketProcedure, TicketProcedureType } from '../../modules/ticket-procedure'
 import { TicketProduct } from '../../modules/ticket-product'
 import { TicketRadiology } from '../../modules/ticket-radiology'
 import { TicketUser } from '../../modules/ticket-user'
 import { BatchDB } from '../indexed-db/repository/batch.repository'
 import { CustomerDB } from '../indexed-db/repository/customer.repository'
 import { ProductDB } from '../indexed-db/repository/product.repository'
-import { Image } from '@/modules/image/image.model'
 
 export class SocketService {
   static listenServerEmitDemo(data: any) {
@@ -46,6 +50,28 @@ export class SocketService {
 
   static async listenSettingReload(data: any) {
     await MeService.reloadSetting()
+  }
+
+  static async listenMasterDataChange(data: {
+    [Distributor.name]: boolean
+    [Procedure.name]: boolean
+    [Laboratory.name]: boolean
+    [Radiology.name]: boolean
+    [Regimen.name]: boolean
+    [Position.name]: boolean
+    [Discount.name]: boolean
+    [Surcharge.name]: boolean
+    [Expense.name]: boolean
+  }) {
+    if (data[Distributor.name]) DistributorService.loadedAll = false
+    if (data[Procedure.name]) ProcedureService.loadedAll = false
+    if (data[Laboratory.name]) LaboratoryService.loadedAll = false
+    if (data[Radiology.name]) RadiologyService.loadedAll = false
+    if (data[Regimen.name]) RegimenService.loadedAll = false
+    if (data[Position.name]) PositionService.loadedAll = false
+    if (data[Discount.name]) DiscountService.loadedAll = false
+    if (data[Surcharge.name]) SurchargeService.loadedAll = false
+    if (data[Expense.name]) ExpenseService.loadedAll = false
   }
 
   static async listenDistributorUpsert(data: { distributor: any }) {
@@ -266,8 +292,13 @@ export class SocketService {
 
   static async listenSocketTicketProcedureListChange(data: {
     ticketId: number
-    ticketProcedureUpsertedList?: TicketProcedure[]
-    ticketProcedureDestroyedList?: TicketProcedure[]
+    customerId: number
+    ticketProcedureNormalCreatedList?: TicketProcedure[]
+    ticketProcedureModifiedList?: TicketProcedure[]
+    ticketProcedureDestroyed?: TicketProcedure
+    ticketRegimenCreatedList?: TicketRegimen[]
+    ticketRegimenModified?: TicketRegimen
+    ticketRegimenDestroyed?: TicketRegimen
     ticketUserDestroyedList?: TicketUser[]
     ticketUserUpsertedList?: TicketUser[]
     imageDestroyedList?: Image[]
@@ -294,32 +325,168 @@ export class SocketService {
 
     for (let i = 0; i < ticketActionList.length; i++) {
       const ticket = ticketActionList[i]
-      if (ticket.id !== data.ticketId) continue
-      if (!ticket.ticketProcedureList) continue
-
-      if (data.ticketProcedureDestroyedList) {
-        const idDestroyList = data.ticketProcedureDestroyedList.map((i) => i.id)
-        ticket.ticketProcedureList = ticket.ticketProcedureList.filter((i) => {
-          return !idDestroyList.includes(i.id)
-        })
-      }
-
-      if (data.ticketProcedureUpsertedList) {
-        data.ticketProcedureUpsertedList.forEach((i) => {
-          const temp = TicketProcedure.from(i)
-          const index = ticket.ticketProcedureList!.findIndex((j) => {
-            return i.id === j.id
+      if (ticket.customerId !== data.customerId) continue
+      if (ticket.id === data.ticketId && ticket.ticketProcedureList) {
+        if (data.ticketProcedureDestroyed) {
+          ticket.ticketProcedureList = ticket.ticketProcedureList.filter((i) => {
+            return i.id !== data.ticketProcedureDestroyed!.id
           })
-          if (index !== -1) {
-            Object.assign(ticket.ticketProcedureList![index], temp)
-          } else {
-            ticket.ticketProcedureList!.push(temp)
-          }
-        })
-      }
-      ticket.ticketProcedureList.sort((a, b) => (a.priority < b.priority ? -1 : 1))
+        }
 
-      await ticket.refreshProcedure()
+        if (data.ticketProcedureModifiedList) {
+          data.ticketProcedureModifiedList.forEach((tpModified) => {
+            const index = ticket.ticketProcedureList!.findIndex((i) => {
+              return i.id === tpModified!.id
+            })
+            if (index !== -1) {
+              if (tpModified.ticketId === ticket.id) {
+                Object.assign(ticket.ticketProcedureList![index], tpModified)
+              } else {
+                ticket.ticketProcedureList!.splice(index, 1)
+              }
+            } else {
+              ticket.ticketProcedureList!.push(TicketProcedure.from(tpModified))
+            }
+          })
+        }
+
+        if (data.ticketProcedureNormalCreatedList) {
+          data.ticketProcedureNormalCreatedList.forEach((i) => {
+            const temp = TicketProcedure.from(i)
+            const index = ticket.ticketProcedureList!.findIndex((j) => {
+              return i.id === j.id
+            })
+            if (index !== -1) {
+              Object.assign(ticket.ticketProcedureList![index], temp)
+            } else {
+              ticket.ticketProcedureList!.push(temp)
+            }
+          })
+        }
+        ticket.ticketProcedureList.sort((a, b) => (a.priority < b.priority ? -1 : 1))
+      }
+
+      if (ticket.ticketRegimenList) {
+        if (data.ticketRegimenCreatedList) {
+          data.ticketRegimenCreatedList.forEach((i) => {
+            if (i.ticketId === ticket.id) {
+              const temp = TicketRegimen.from(i)
+              const index = ticket.ticketRegimenList!.findIndex((j) => {
+                return i.id === j.id
+              })
+              if (index !== -1) {
+                Object.assign(ticket.ticketRegimenList![index], temp)
+              } else {
+                ticket.ticketRegimenList!.push(temp)
+              }
+            }
+          })
+        }
+        if (data.ticketRegimenModified) {
+          if (data.ticketRegimenModified.ticketId === ticket.id) {
+            const temp = TicketRegimen.from(data.ticketRegimenModified)
+            const index = ticket.ticketRegimenList!.findIndex((j) => {
+              return data.ticketRegimenModified!.id === j.id
+            })
+            if (index !== -1) {
+              Object.assign(ticket.ticketRegimenList![index], temp)
+            }
+          }
+        }
+        if (data.ticketRegimenDestroyed) {
+          if (data.ticketRegimenDestroyed.ticketId === ticket.id) {
+            ticket.ticketRegimenList = ticket.ticketRegimenList.filter((i) => {
+              return i.id !== data.ticketRegimenDestroyed!.id
+            })
+          }
+        }
+        if (data.ticketProcedureModifiedList) {
+          data.ticketProcedureModifiedList.forEach((tpModified) => {
+            if (
+              tpModified.customerId === ticket.customerId &&
+              tpModified.ticketProcedureType === TicketProcedureType.InRegimen
+            ) {
+              const ticketRegimen = ticket.ticketRegimenList!.find((i) => {
+                return i.id === tpModified!.ticketRegimenId
+              })
+              if (ticketRegimen) {
+                const ticketProcedureFind = (ticketRegimen.ticketProcedureList || []).find((i) => {
+                  return i.id === tpModified!.id
+                })
+                if (ticketProcedureFind) {
+                  Object.assign(ticketProcedureFind, tpModified)
+                }
+              }
+            }
+          })
+        }
+      }
+
+      if (ticket.ticketRegimenListExtra) {
+        if (data.ticketRegimenCreatedList) {
+          data.ticketRegimenCreatedList.forEach((i) => {
+            if (i.customerId === ticket.customerId && i.ticketId !== ticket.id) {
+              const temp = TicketRegimen.from(i)
+              const index = ticket.ticketRegimenListExtra!.findIndex((j) => {
+                return i.id === j.id
+              })
+              if (index !== -1) {
+                Object.assign(ticket.ticketRegimenListExtra![index], temp)
+              } else {
+                ticket.ticketRegimenListExtra!.push(temp)
+              }
+            }
+          })
+        }
+
+        if (data.ticketRegimenModified) {
+          if (
+            data.ticketRegimenModified.customerId === ticket.customerId &&
+            data.ticketRegimenModified.ticketId !== ticket.id
+          ) {
+            const temp = TicketRegimen.from(data.ticketRegimenModified)
+            const index = ticket.ticketRegimenListExtra!.findIndex((j) => {
+              return data.ticketRegimenModified!.id === j.id
+            })
+            if (index !== -1) {
+              Object.assign(ticket.ticketRegimenListExtra![index], temp)
+            }
+          }
+        }
+        if (data.ticketRegimenDestroyed) {
+          if (
+            data.ticketRegimenDestroyed.customerId === ticket.customerId &&
+            data.ticketRegimenDestroyed.ticketId !== ticket.id
+          ) {
+            ticket.ticketRegimenListExtra = ticket.ticketRegimenListExtra.filter((i) => {
+              return i.id !== data.ticketRegimenDestroyed!.id
+            })
+          }
+        }
+
+        if (data.ticketProcedureModifiedList) {
+          data.ticketProcedureModifiedList.forEach((tpModified) => {
+            if (
+              tpModified.customerId === ticket.customerId &&
+              tpModified.ticketProcedureType === TicketProcedureType.InRegimen
+            ) {
+              const ticketRegimen = ticket.ticketRegimenListExtra!.find((i) => {
+                return i.id === tpModified!.ticketRegimenId
+              })
+              if (ticketRegimen) {
+                const ticketProcedureFind = (ticketRegimen.ticketProcedureList || []).find((i) => {
+                  return i.id === tpModified!.id
+                })
+                if (ticketProcedureFind) {
+                  Object.assign(ticketProcedureFind, tpModified)
+                }
+              }
+            }
+          })
+        }
+      }
+
+      await ticket.refreshProcedureAndRegimen()
     }
   }
 
@@ -627,6 +794,7 @@ export class SocketService {
       if (data.ticketUserUpsertedList) {
         data.ticketUserUpsertedList.forEach((i) => {
           const temp = TicketUser.from(i)
+          if (i.ticketId !== ticketAction.id) return
           const index = ticketAction.ticketUserList!.findIndex((j) => {
             return i.id === j.id
           })

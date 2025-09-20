@@ -227,31 +227,16 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item v-if="userPermission[PermissionId.STATISTIC_PRODUCT]" key="StatisticProduct">
         <router-link :to="{ name: 'StatisticProduct' }">Báo cáo sản phẩm</router-link>
       </a-menu-item>
-      <a-menu-item
-        v-if="
-          organizationPermission[PermissionId.PROCEDURE] &&
-          userPermission[PermissionId.STATISTIC_PROCEDURE]
-        "
-        key="StatisticProcedure"
-      >
+      <a-menu-item v-if="userPermission[PermissionId.STATISTIC_PROCEDURE]" key="StatisticProcedure">
         <router-link :to="{ name: 'StatisticProcedure' }">Báo cáo dịch vụ</router-link>
       </a-menu-item>
       <a-menu-item
-        v-if="
-          organizationPermission[PermissionId.LABORATORY] &&
-          userPermission[PermissionId.STATISTIC_LABORATORY]
-        "
+        v-if="userPermission[PermissionId.STATISTIC_LABORATORY]"
         key="StatisticLaboratory"
       >
         <router-link :to="{ name: 'StatisticLaboratory' }">Báo cáo xét nghiệm</router-link>
       </a-menu-item>
-      <a-menu-item
-        v-if="
-          organizationPermission[PermissionId.RADIOLOGY] &&
-          userPermission[PermissionId.STATISTIC_RADIOLOGY]
-        "
-        key="StatisticRadiology"
-      >
+      <a-menu-item v-if="userPermission[PermissionId.STATISTIC_RADIOLOGY]" key="StatisticRadiology">
         <router-link :to="{ name: 'StatisticRadiology' }">Báo cáo phiếu CĐHA</router-link>
       </a-menu-item>
     </a-sub-menu>

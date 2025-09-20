@@ -77,7 +77,7 @@ const handleModalLaboratorySampleUpsertSuccess = async () => {
         <Breadcrumb />
       </div>
       <VueButton
-        v-if="userPermission[PermissionId.LABORATORY_SAMPLE_CRUD]"
+        v-if="userPermission[PermissionId.MASTER_DATA_LABORATORY_SAMPLE]"
         color="blue"
         icon="plus"
         @click="modalLaboratorySampleUpsert?.openModal()"
@@ -94,7 +94,7 @@ const handleModalLaboratorySampleUpsertSuccess = async () => {
           <tr>
             <th style="width: 100px">STT</th>
             <th>Tên</th>
-            <th v-if="userPermission[PermissionId.LABORATORY_SAMPLE_CRUD]" style="width: 100px">
+            <th v-if="userPermission[PermissionId.MASTER_DATA_LABORATORY_SAMPLE]" style="width: 100px">
               Action
             </th>
           </tr>
@@ -124,7 +124,7 @@ const handleModalLaboratorySampleUpsertSuccess = async () => {
                 <span>{{ laboratorySample.name }}</span>
               </div>
             </td>
-            <td v-if="userPermission[PermissionId.LABORATORY_SAMPLE_CRUD]" class="text-center">
+            <td v-if="userPermission[PermissionId.MASTER_DATA_LABORATORY_SAMPLE]" class="text-center">
               <a
                 style="color: var(--text-orange)"
                 @click="modalLaboratorySampleUpsert?.openModal(laboratorySample.id)"
