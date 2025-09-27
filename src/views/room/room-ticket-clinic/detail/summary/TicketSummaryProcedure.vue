@@ -5,7 +5,7 @@ import { IconEditSquare } from '@/common/icon-google'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { PaymentMoneyStatus } from '@/modules/enum'
+import { DiscountType, PaymentEffect, PaymentMoneyStatus } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { ProcedureType } from '@/modules/procedure'
 import { ticketRoomRef } from '@/modules/room'
@@ -15,8 +15,12 @@ import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProc
 import ModalTicketProcedureUpdate from '@/views/room/room-ticket-clinic/detail/procedure/ModalTicketProcedureUpdateMoney.vue'
 import { computed, onMounted, ref } from 'vue'
 import TicketProcedureStatusTooltip from '../procedure/TicketProcedureStatusTooltip.vue'
-import { TicketProcedureType } from '@/modules/ticket-procedure'
+import { TicketProcedureService, TicketProcedureType } from '@/modules/ticket-procedure'
+import { TicketRegimenService } from '@/modules/ticket-regimen'
+import TicketRegimenStatusTooltip from '../procedure/TicketRegimenStatusTooltip.vue'
+import ModalRegimenDetail from '@/views/master-data/regimen/detail/ModalRegimenDetail.vue'
 
+const modalRegimenDetail = ref<InstanceType<typeof ModalRegimenDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalTicketProcedureUpdate = ref<InstanceType<typeof ModalTicketProcedureUpdate>>()
 
@@ -25,7 +29,16 @@ const { formatMoney, isMobile } = settingStore
 const { userPermission } = MeService
 
 onMounted(async () => {
-  await ticketRoomRef.value.refreshProcedureAndRegimen()
+  try {
+    await Promise.all([
+      TicketProcedureService.refreshRelation(ticketRoomRef.value.ticketProcedureList || []),
+      TicketRegimenService.refreshRelation(ticketRoomRef.value.ticketRegimenList || []),
+      TicketRegimenService.refreshRelationItem(ticketRoomRef.value.ticketRegimenItemList || []),
+    ])
+    ticketRoomRef.value.refreshTicketProcedureAndRegimen()
+  } catch (error: any) {
+    console.log('🚀 ~ TicketClinicProcedureContainer.vue:84 ~ error:', error)
+  }
 })
 
 const procedureDiscount = computed(() => {
@@ -36,9 +49,12 @@ const procedureDiscount = computed(() => {
 </script>
 
 <template>
+  <ModalRegimenDetail ref="modalRegimenDetail" />
   <ModalProcedureDetail ref="modalProcedureDetail" />
   <ModalTicketProcedureUpdate ref="modalTicketProcedureUpdate" />
-  <template v-if="ticketRoomRef.ticketProcedureList?.length">
+  <template
+    v-if="ticketRoomRef.ticketProcedureList?.length || ticketRoomRef.ticketRegimenList?.length"
+  >
     <thead>
       <tr>
         <th v-if="CONFIG.MODE === 'development'">ID</th>
@@ -52,11 +68,117 @@ const procedureDiscount = computed(() => {
         <th>Giá</th>
         <th>Chiết khấu</th>
         <th v-if="CONFIG.MODE === 'development'">Vốn</th>
+        <th v-if="CONFIG.MODE === 'development'">H.Hồng</th>
         <th>Tổng tiền</th>
         <th></th>
       </tr>
     </thead>
     <tbody>
+      <!--       
+      <template v-for="(ticketRegimen, index) in ticketRoomRef.ticketRegimenList" :key="index">
+        <tr>
+          <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+            {{ ticketRegimen.id }}
+          </td>
+          <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
+            {{ index + 1 }}
+          </td>
+          <td v-if="ticketRoomRef.isPaymentEachItem">
+            <PaymentMoneyStatusTooltip :paymentMoneyStatus="ticketRegimen.paymentMoneyStatus" />
+          </td>
+          <td class="text-center">
+            <TicketRegimenStatusTooltip :status="ticketRegimen.status" />
+          </td>
+          <td :colspan="3">
+            <div class="flex items-center gap-1">
+              <span style="font-weight: 500">{{ ticketRegimen.regimen?.name }}</span>
+              <a
+                style="line-height: 0"
+                @click="modalRegimenDetail?.openModal(ticketRegimen.regimenId)"
+              >
+                <IconFileSearch />
+              </a>
+            </div>
+          </td>
+          <td class="text-center"></td>
+
+          <td class="text-right whitespace-nowrap">
+            <div v-if="ticketRegimen.discountMoney" class="text-xs italic text-red-500">
+              <del>{{ formatMoney(ticketRegimen.expectedPrice) }}</del>
+            </div>
+            <div>{{ formatMoney(ticketRegimen.actualPrice) }}</div>
+          </td>
+
+          <td class="text-center">
+            <div v-if="ticketRegimen.discountMoney">
+              <VueTag v-if="ticketRegimen.discountType === 'VNĐ'" color="green">
+                {{ formatMoney(ticketRegimen.discountMoney) }}
+              </VueTag>
+              <VueTag v-if="ticketRegimen.discountType === '%'" color="green">
+                {{ ticketRegimen.discountPercent || 0 }}%
+              </VueTag>
+            </div>
+          </td>
+          <td
+            v-if="CONFIG.MODE === 'development'"
+            class="text-right whitespace-nowrap"
+            style="color: violet"
+          >
+            {{ formatMoney(ticketRegimen.costAmount) }}
+          </td>
+          <td
+            v-if="CONFIG.MODE === 'development'"
+            class="text-right whitespace-nowrap"
+            style="color: violet"
+          >
+            {{ formatMoney(ticketRegimen.commissionAmount) }}
+          </td>
+          <td class="text-right whitespace-nowrap">
+            <span>
+              {{ formatMoney(ticketRegimen.actualPrice) }}
+            </span>
+          </td>
+          <td class="text-center"></td>
+        </tr>
+        <tr v-for="(tri, triIndex) in ticketRegimen.ticketRegimenItemList" :key="tri.id">
+          <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+            {{ tri.id }}
+          </td>
+          <td></td>
+          <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+          <td class="text-center"></td>
+          <td colspan="3">{{ triIndex + 1 }}. {{ tri.procedure?.name }}</td>
+          <td style="font-weight: 700; text-align: center">
+            {{ tri.quantityFinish }} / {{ tri.quantityTotal }}
+          </td>
+          <td class="text-right whitespace-nowrap">
+            <div v-if="tri.discountMoney" class="text-xs italic text-red-500">
+              <del>{{ formatMoney(tri.expectedPrice) }}</del>
+            </div>
+            <div>{{ formatMoney(tri.actualPrice) }}</div>
+          </td>
+          <td class="text-center">
+            <div v-if="tri.discountMoney">
+              <VueTag v-if="tri.discountType === DiscountType.VND" color="green">
+                {{ formatMoney(tri.discountMoney) }}
+              </VueTag>
+              <VueTag v-if="tri.discountType === DiscountType.Percent" color="green">
+                {{ tri.discountPercent || 0 }}%
+              </VueTag>
+            </div>
+          </td>
+          <td v-if="CONFIG.MODE === 'development'"></td>
+          <td v-if="CONFIG.MODE === 'development'"></td>
+          <td class="text-right whitespace-nowrap">
+            <span>
+               {{ formatMoney(tri.actualPrice * tri.quantityFinish) }} 
+            </span>
+          </td>
+          <td></td>
+        </tr>
+      </template> 
+    -->
+
       <tr v-for="(ticketProcedure, index) in ticketRoomRef.ticketProcedureList" :key="index">
         <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
           {{ ticketProcedure.id }}
@@ -73,18 +195,18 @@ const procedureDiscount = computed(() => {
         <td :colspan="3">
           <div class="flex items-center gap-1">
             <span>{{ ticketProcedure.procedure?.name }}</span>
+            <span
+              style="font-weight: 500"
+              v-if="ticketProcedure.ticketProcedureType === TicketProcedureType.InRegimen"
+            >
+              ({{ ticketProcedure.indexSession }})
+            </span>
             <a
               style="line-height: 0"
               @click="modalProcedureDetail?.openModal(ticketProcedure.procedureId)"
             >
               <IconFileSearch />
             </a>
-            <span
-              v-if="ticketProcedure.ticketProcedureType === TicketProcedureType.InRegimen"
-              class="font-bold"
-            >
-              (buổi {{ ticketProcedure.sessionIndex }})
-            </span>
           </div>
         </td>
         <td class="text-center">
@@ -108,7 +230,20 @@ const procedureDiscount = computed(() => {
             </VueTag>
           </div>
         </td>
-        <td v-if="CONFIG.MODE === 'development'" style="color: violet"></td>
+        <td
+          v-if="CONFIG.MODE === 'development'"
+          class="text-right whitespace-nowrap"
+          style="color: violet"
+        >
+          {{ formatMoney(ticketProcedure.costAmount) }}
+        </td>
+        <td
+          v-if="CONFIG.MODE === 'development'"
+          class="text-right whitespace-nowrap"
+          style="color: violet"
+        >
+          {{ formatMoney(ticketProcedure.commissionAmount) }}
+        </td>
         <td class="text-right whitespace-nowrap">
           {{ formatMoney(ticketProcedure.actualPrice * ticketProcedure.quantity) }}
         </td>
@@ -116,9 +251,7 @@ const procedureDiscount = computed(() => {
           <a
             v-if="
               ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-              [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                ticketProcedure.paymentMoneyStatus,
-              ) &&
+              ticketProcedure.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
               userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
             "
             class="text-orange-500"
@@ -142,6 +275,7 @@ const procedureDiscount = computed(() => {
             </span>
           </div>
         </td>
+        <td v-if="CONFIG.MODE === 'development'"></td>
         <td v-if="CONFIG.MODE === 'development'"></td>
         <td class="font-bold text-right whitespace-nowrap" colspan="1">
           {{ formatMoney(ticketRoomRef.procedureMoney) }}

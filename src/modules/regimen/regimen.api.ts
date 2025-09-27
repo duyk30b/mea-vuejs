@@ -63,14 +63,13 @@ export class RegimenApi {
       regimen: {
         code: regimen.code,
         name: regimen.name,
-        gapHours: regimen.gapHours,
-        gapHoursType: regimen.gapHoursType,
         isActive: regimen.isActive,
       },
       regimenItemList: regimenItemList.map((regimenItem) => {
         return {
           procedureId: regimenItem.procedureId,
           quantity: regimenItem.quantity,
+          gapDay: regimenItem.gapDay,
         }
       }),
       positionRequestList: positionRequestList
@@ -128,14 +127,13 @@ export class RegimenApi {
       regimen: {
         code: regimen.code,
         name: regimen.name,
-        gapHours: regimen.gapHours,
-        gapHoursType: regimen.gapHoursType,
         isActive: regimen.isActive,
       },
       regimenItemList: regimenItemList.map((regimenItem) => {
         return {
           procedureId: regimenItem.procedureId,
           quantity: regimenItem.quantity,
+          gapDay: regimenItem.gapDay,
         }
       }),
       positionRequestList: positionRequestList

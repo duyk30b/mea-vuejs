@@ -27,18 +27,17 @@ const showModal = ref(false)
 const dataLoading = ref(false)
 const changeLoading = ref(false)
 
-const openModal = async (options: { ticketId: number; customer: Customer }) => {
+const openModal = async (options: { ticketId: string; customer: Customer }) => {
   showModal.value = true
 
   try {
     const ticketData = await TicketService.detail(options.ticketId, {
       relation: {
-        ticketProcedureList: {},
-        ticketProductConsumableList: {},
-        ticketProductPrescriptionList: {},
-        ticketLaboratoryList: {},
-        ticketLaboratoryGroupList: {},
-        ticketRadiologyList: {},
+        ticketProcedureList: true,
+        ticketProductList: true,
+        ticketLaboratoryList: true,
+        ticketLaboratoryGroupList: true,
+        ticketRadiologyList: true,
       },
     })
     if (!ticketData.ticketProcedureList) ticketData.ticketProcedureList = []

@@ -75,7 +75,7 @@ watch(
           <td>
             <LinkAndStatusTicket :ticket="ticketLaboratory.ticket!" />
             <div style="font-size: 0.8rem; white-space: nowrap">
-              {{ timeToText(ticketLaboratory.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
+              {{ timeToText(ticketLaboratory.ticket?.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
           </td>
           <td class="">

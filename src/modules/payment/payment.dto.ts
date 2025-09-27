@@ -18,7 +18,7 @@ export class PaymentGetParams {
 
   filter?: {
     voucherType?: PaymentVoucherType
-    voucherId?: number
+    voucherId?: string
     paymentMethodId?: number
     personType?: PaymentPersonType | ConditionEnum<PaymentPersonType>
     personId?: number

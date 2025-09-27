@@ -13,15 +13,11 @@ import { PermissionId } from '@/modules/permission/permission.enum'
 import { PositionType } from '@/modules/position'
 import { type Procedure } from '@/modules/procedure'
 import { Room, RoomService, RoomTicketStyle, RoomType } from '@/modules/room'
-import {
-  Ticket,
-  TicketActionApi,
-  TicketReceptionApi,
-  TicketService,
-  TicketStatus,
-} from '@/modules/ticket'
+import { Ticket, TicketChangeReceptionApi, TicketQueryApi, TicketStatus } from '@/modules/ticket'
 import type { TicketAttributeKeyGeneralType, TicketAttributeMap } from '@/modules/ticket-attribute'
 import { TicketProcedure } from '@/modules/ticket-procedure'
+import { TicketReception } from '@/modules/ticket-reception'
+import type { TicketRegimen } from '@/modules/ticket-regimen'
 import { TicketUser } from '@/modules/ticket-user'
 import { ESTimer } from '@/utils'
 import InputAddress from '@/views/component/InputAddress.vue'
@@ -29,21 +25,20 @@ import InputSearchCustomer from '@/views/component/InputSearchCustomer.vue'
 import InputSearchProcedure from '@/views/component/InputSearchProcedure.vue'
 import InputSelectCustomerSource from '@/views/component/InputSelectCustomerSource.vue'
 import InputSelectRoom from '@/views/component/InputSelectRoom.vue'
+import DiagnosisObstetric from '@/views/room/room-ticket-clinic/detail/diagnosis/DiagnosisObstetric.vue'
+import DiagnosisVitalSigns from '@/views/room/room-ticket-clinic/detail/diagnosis/DiagnosisVitalSigns.vue'
+import TableTicketProcedureListRequest from '@/views/room/room-ticket-clinic/detail/procedure/TableTicketProcedureListDraft.vue'
+import TicketChangeTicketUserPosition from '@/views/room/room-user/TicketChangeTicketUserPosition.vue'
 import { nextTick, ref } from 'vue'
-import TableTicketProcedureListRequest from '../../room-ticket-clinic/detail/procedure/TableTicketProcedureListDraft.vue'
-import DiagnosisObstetric from '../../room-ticket-clinic/detail/diagnosis/DiagnosisObstetric.vue'
-import DiagnosisVitalSigns from '../../room-ticket-clinic/detail/diagnosis/DiagnosisVitalSigns.vue'
-import TicketChangeTicketUserPosition from '../../room-user/TicketChangeTicketUserPosition.vue'
-import ModalTicketClinicCreateSetting from './ModalTicketClinicCreateSetting.vue'
-import type { TicketRegimen } from '@/modules/ticket-regimen'
+import ModalReceptionCreateSetting from './ModalReceptionCreateSetting.vue'
 
-const modalTicketClinicCreateSetting = ref<InstanceType<typeof ModalTicketClinicCreateSetting>>()
+const modalReceptionCreateSetting = ref<InstanceType<typeof ModalReceptionCreateSetting>>()
 const tableTicketProcedureListRequest = ref<InstanceType<typeof TableTicketProcedureListRequest>>()
 
 const ticketClinicCreateForm = ref<InstanceType<typeof HTMLFormElement>>()
 
 const emit = defineEmits<{
-  (e: 'success', type: 'CREATE' | 'UPDATE' | 'DESTROY', ticketId: number): void
+  (e: 'success', type: 'CREATE' | 'UPDATE' | 'DESTROY', data: { ticketId: string }): void
 }>()
 
 const settingStore = useSettingStore()
@@ -51,74 +46,74 @@ const { formatMoney } = settingStore
 const { userPermission } = MeService
 
 const appointmentOptions = ref<Appointment[]>([])
+const ticketPendingOptions = ref<Ticket[]>([])
 
 const currentRoom = ref(Room.blank())
 
-const customerOptions = ref<{ value: number; text: string; data: Customer }[]>([])
-
 const currentCustomer = ref<Customer>(Customer.blank())
-const ticketId = ref(0)
-const ticket = ref<Ticket>(Ticket.blank())
+
+const ticketReception = ref<TicketReception>(TicketReception.blank())
 
 const ticketAttributeMap = ref<TicketAttributeMap>({})
 
 const procedureId = ref(0)
 const ticketProcedureListDraft = ref<TicketProcedure[]>([])
 const ticketRegimenListDraft = ref<TicketRegimen[]>([])
+const ticketUserReceptionList = ref<TicketUser[]>([])
 
-const fromAppointmentId = ref(0)
+const fromAppointmentId = ref('')
+const ticketPendingId = ref('')
 
 const ticketStatusRegister = ref<TicketStatus>(TicketStatus.Draft)
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-const openModal = async (options: {
-  roomId: number
-  ticketId?: number
+const openModal = async (object: {
+  roomId?: number
+  ticketReception?: TicketReception
+  customer?: Customer
   ticketStatusRegister?: TicketStatus
 }) => {
   showModal.value = true
 
-  currentRoom.value = await RoomService.detail(options.roomId)
-
-  ticketStatusRegister.value = options.ticketStatusRegister || TicketStatus.Draft
+  if (object.roomId) {
+    currentRoom.value = await RoomService.detail(object.roomId)
+  }
+  ticketStatusRegister.value = object.ticketStatusRegister || TicketStatus.Draft
 
   try {
-    if (!options.ticketId) {
-      ticket.value = Ticket.blank()
-      ticket.value.registeredAt = Date.now()
-      ticket.value.roomId = options.roomId
+    if (!object.ticketReception) {
+      ticketReception.value = TicketReception.blank()
+      ticketReception.value.receptionAt = Date.now()
+      ticketReception.value.roomId = object.roomId || 0
+      currentCustomer.value = Customer.blank()
     } else {
-      const ticketResponse = await TicketService.detail(options.ticketId, {
-        relation: {
-          customer: true,
-          ticketAttributeList: true,
-          ticketUserList: {},
-          customerSource: true,
-        },
-      })
-      ticketResponse.refreshTicketUserTree()
-      ticketResponse.ticketUserReceptionList =
-        ticketResponse.ticketUserTree[PositionType.TicketReception]?.[0] || []
-      ticket.value = ticketResponse
+      ticketReception.value = TicketReception.from(object.ticketReception)
+      currentCustomer.value = Customer.from(object.customer || Customer.blank())
     }
-
-    currentCustomer.value = Customer.from(ticket.value.customer)
   } catch (error) {
     console.log('🚀 ~ ModalTicketClinicCreate.vue:109 ~ openModal ~ error:', error)
   }
 }
 
 const closeModal = () => {
-  customerOptions.value = []
-  appointmentOptions.value = []
+  ticketReception.value = TicketReception.blank()
 
+  appointmentOptions.value = []
+  ticketPendingOptions.value = []
+
+  currentRoom.value = Room.blank()
   currentCustomer.value = Customer.blank()
-  ticket.value = Ticket.blank()
+
+  fromAppointmentId.value = ''
+  ticketPendingId.value = ''
+
   ticketAttributeMap.value = {}
-  fromAppointmentId.value = 0
+
+  procedureId.value = 0
   ticketProcedureListDraft.value = []
   ticketRegimenListDraft.value = []
+  ticketUserReceptionList.value = []
 
   showModal.value = false
 }
@@ -131,14 +126,37 @@ const selectCustomer = async (customerSelect?: Customer) => {
   currentCustomer.value = Customer.from(customerSelect)
 
   try {
-    ticket.value.customerSourceId = customerSelect.customerSourceId
+    ticketReception.value.customerSourceId = customerSelect.customerSourceId
 
-    const appointmentList = await AppointmentApi.list({
-      filter: {
-        status: { IN: [AppointmentStatus.Waiting, AppointmentStatus.Confirm] },
-        customerId: customerSelect.id,
-      },
+    const [appointmentList, ticketResponseList] = await Promise.all([
+      AppointmentApi.list({
+        filter: {
+          status: { IN: [AppointmentStatus.Waiting, AppointmentStatus.Confirm] },
+          customerId: customerSelect.id,
+        },
+      }),
+      TicketQueryApi.list({
+        filter: {
+          status: {
+            IN: [
+              TicketStatus.Draft,
+              TicketStatus.Schedule,
+              TicketStatus.Deposited,
+              TicketStatus.Executing,
+            ],
+          },
+          customerId: customerSelect.id,
+        },
+      }),
+    ])
+
+    ticketPendingOptions.value = ticketResponseList.ticketList.sort((a, b) => {
+      return a.createdAt > b.createdAt ? 1 : -1
     })
+    if (ticketPendingOptions.value.length) {
+      ticketPendingId.value = ticketPendingOptions.value[0].id
+      ticketReception.value.isFirstReception = 0
+    }
 
     appointmentOptions.value = appointmentList.sort((a, b) => {
       return a.registeredAt > b.registeredAt ? 1 : -1
@@ -157,31 +175,27 @@ const handleChangeCheckboxAppointment = (e: Event, appointment: Appointment) => 
   if ((e.target as HTMLInputElement).checked) {
     fromAppointmentId.value = appointment.id
     ticketAttributeMap.value.reason = appointment.reason || ''
-    ticket.value.customerSourceId = appointment.customerSourceId
+    ticketReception.value.customerSourceId = appointment.customerSourceId
   } else {
-    fromAppointmentId.value = 0
-    ticket.value.customerSourceId = 0
+    fromAppointmentId.value = ''
+    ticketReception.value.customerSourceId = 0
   }
 }
 
-const handleModalTicketClinicCreateSettingSuccess = () => {}
-
-const handleClickDestroy = async () => {
-  ModalStore.confirm({
-    title: 'Bạn có chắc muốn xóa lượt khám này ?',
-    content: 'Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
-    onOk: async () => {
-      try {
-        await TicketActionApi.destroy(ticket.value.id)
-        AlertStore.addSuccess('Xóa phiếu khám thành công')
-        emit('success', 'DESTROY', ticket.value.id)
-        closeModal()
-      } catch (error) {
-        console.log('🚀 ModalTicketClinicCreate.vue:356 ~ handleClickDestroy: ~ error:', error)
-      }
-    },
-  })
+const handleChangeCheckboxTicketPending = (e: Event, ticket: Ticket) => {
+  if ((e.target as HTMLInputElement).checked) {
+    ticketPendingId.value = ticket.id
+    ticketAttributeMap.value.reason = ticket.note || ''
+    ticketReception.value.customerSourceId = ticket.customerSourceId
+    ticketReception.value.isFirstReception = 0
+  } else {
+    ticketPendingId.value = ''
+    ticketReception.value.customerSourceId = 0
+    ticketReception.value.isFirstReception = 1
+  }
 }
+
+const handleModalReceptionCreateSettingSuccess = () => {}
 
 const handleSubmitFormTicketClinic = async () => {
   saveLoading.value = true
@@ -191,12 +205,7 @@ const handleSubmitFormTicketClinic = async () => {
       value: value != null ? value : '',
     }))
 
-    if (!ticket.value.id) {
-      if (ESTimer.timeToText(ticket.value.registeredAt) !== ESTimer.timeToText(new Date())) {
-        return AlertStore.addError(
-          'Thời gian đăng ký khám không hợp lệ. Chỉ được đăng ký khám trong ngày',
-        )
-      }
+    if (!ticketReception.value.id) {
       if (currentCustomer.value.healthHistory) {
         const key: TicketAttributeKeyGeneralType = 'healthHistory'
         ticketAttributeList.push({
@@ -204,53 +213,41 @@ const handleSubmitFormTicketClinic = async () => {
           key,
         })
       }
-      const ticketCreated = await TicketReceptionApi.create({
+      const ticketResponse = await TicketChangeReceptionApi.create({
+        ticketId: ticketPendingId.value,
+        customerId: currentCustomer.value.id,
+        isPaymentEachItem: settingStore.TICKET_CLINIC_LIST.isPaymentEachItem,
         customer: currentCustomer.value,
-        ticketReception: {
-          roomId: ticket.value.roomId,
-          status: ticketStatusRegister.value,
-          registeredAt: ticket.value.registeredAt,
-          customerSourceId: ticket.value.customerSourceId,
-          note: ticket.value.note,
-          customerId: currentCustomer.value.id,
-          fromAppointmentId: fromAppointmentId.value,
-        },
+        ticketReception: ticketReception.value,
         ticketAttributeList,
-        ticketUserReceptionList: ticket.value.ticketUserReceptionList || [],
-        ticketRegimenAddWrapList: ticketRegimenListDraft.value.map((i) => {
+        ticketUserReceptionList: ticketUserReceptionList.value || [],
+        ticketRegimenWrapList: ticketRegimenListDraft.value.map((i) => {
           return {
             ticketRegimenAdd: i,
-            ticketProcedureRegimenAddWrapList: (i.ticketProcedureWrapList || []).map((tpWrap) => {
-              return {
-                totalSession: tpWrap.totalSession,
-                ticketProcedureAdd: tpWrap.ticketProcedure,
-              }
-            }),
+            ticketRegimenItemAddList: i.ticketRegimenItemList || [],
             ticketUserRequestAddList: i.ticketUserRequestList || [],
           }
         }),
-        ticketProcedureNormalWrapList: ticketProcedureListDraft.value.map((i) => {
+        ticketProcedureWrapList: ticketProcedureListDraft.value.map((i) => {
           return {
             ticketProcedureAdd: i,
             ticketUserRequestAddList: i.ticketUserRequestList || [],
           }
         }),
+        fromAppointmentId: fromAppointmentId.value,
+        status: ticketStatusRegister.value,
       })
-      emit('success', 'CREATE', ticketCreated.id)
+      emit('success', 'CREATE', { ticketId: ticketResponse.id })
     }
-    if (ticket.value.id) {
-      await TicketReceptionApi.update({
-        ticketId: ticket.value.id,
-        ticketReception: {
-          roomId: ticket.value.roomId,
-          registeredAt: ticket.value.registeredAt,
-          customerSourceId: ticket.value.customerSourceId,
-          note: ticket.value.note,
-        },
+    if (ticketReception.value.id) {
+      const ticketResponse = await TicketChangeReceptionApi.update({
+        ticketId: ticketReception.value.ticketId,
+        ticketReceptionId: ticketReception.value.id,
+        ticketReception: ticketReception.value,
         ticketAttributeList,
-        ticketUserReceptionList: ticket.value.ticketUserReceptionList || [],
+        ticketUserReceptionList: ticketUserReceptionList.value || [],
       })
-      emit('success', 'UPDATE', ticket.value.id)
+      emit('success', 'UPDATE', { ticketId: ticketResponse.id })
     }
 
     closeModal()
@@ -274,7 +271,27 @@ const selectProcedure = async (procedureData?: Procedure) => {
 }
 
 const handleFixTicketUserList = (tuListData: TicketUser[]) => {
-  ticket.value.ticketUserReceptionList = TicketUser.fromList(tuListData)
+  ticketUserReceptionList.value = TicketUser.fromList(tuListData)
+}
+
+const handleClickDestroy = async () => {
+  ModalStore.confirm({
+    title: 'Bạn có chắc muốn xóa phiếu tiếp đón này ?',
+    content: 'Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
+    onOk: async () => {
+      try {
+        await TicketChangeReceptionApi.destroyTicketReception({
+          ticketId: ticketReception.value.ticketId,
+          ticketReceptionId: ticketReception.value.id,
+        })
+        AlertStore.addSuccess('Xóa phiếu tiếp đón thành công')
+        emit('success', 'DESTROY', { ticketId: ticketReception.value.ticketId })
+        closeModal()
+      } catch (error) {
+        console.log('🚀 ~ TicketReceptionList.vue:181 ~ handleClickDestroy ~ error:', error)
+      }
+    },
+  })
 }
 
 defineExpose({ openModal })
@@ -289,14 +306,14 @@ defineExpose({ openModal })
     >
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          <span v-if="!ticket.customerId">Tiếp đón khách hàng mới</span>
-          <span v-if="!!ticket.customerId">Sửa thông tin tiếp đón</span>
+          <span v-if="!ticketReception.customerId">Tiếp đón khách hàng mới</span>
+          <span v-if="!!ticketReception.customerId">Sửa thông tin tiếp đón</span>
         </div>
         <div
           v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
-          @click="modalTicketClinicCreateSetting?.openModal()"
+          @click="modalReceptionCreateSetting?.openModal()"
         >
           <IconSetting />
         </div>
@@ -310,8 +327,8 @@ defineExpose({ openModal })
           <InputSearchCustomer
             v-model:customerId="currentCustomer.id"
             v-model:text="currentCustomer.fullName"
-            :customer="ticket.customer"
-            :disabled="!!ticket.id"
+            :customer="ticketReception.customer"
+            :disabled="!!ticketReception.id"
             required
             @selectCustomer="selectCustomer"
             :clearTextIfNoSelect="false"
@@ -331,35 +348,7 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <template v-if="!ticketId">
-          <div
-            v-if="settingStore.TICKET_CLINIC_CREATE.facebook"
-            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
-          >
-            <div>Link Facebook</div>
-            <div>
-              <InputText
-                v-model:value="currentCustomer.facebook"
-                :disabled="!!currentCustomer.id"
-                type="url"
-              />
-            </div>
-          </div>
-
-          <div
-            v-if="settingStore.TICKET_CLINIC_CREATE.zalo"
-            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
-          >
-            <div>Link Zalo</div>
-            <div>
-              <InputText
-                v-model:value="currentCustomer.zalo"
-                :disabled="!!currentCustomer.id"
-                type="url"
-              />
-            </div>
-          </div>
-
+        <template v-if="!ticketReception.id">
           <div
             v-if="settingStore.TICKET_CLINIC_CREATE.birthday"
             :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
@@ -417,34 +406,12 @@ defineExpose({ openModal })
               </div>
             </div>
           </template>
-
-          <div
-            v-if="settingStore.TICKET_CLINIC_CREATE.relative"
-            :disabled="!!currentCustomer.id"
-            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
-          >
-            <div>Liên hệ khác</div>
-            <div>
-              <InputText
-                v-model:value="currentCustomer.relative"
-                :disabled="!!currentCustomer.id"
-                placeholder="Tên người thân, số điện thoại"
-              />
-            </div>
-          </div>
-
-          <div
-            v-if="settingStore.TICKET_CLINIC_CREATE.note"
-            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
-          >
-            <div>Ghi chú</div>
-            <div style="flex: 1">
-              <InputText v-model:value="currentCustomer.note" :disabled="!!currentCustomer.id" />
-            </div>
-          </div>
         </template>
 
-        <div v-if="appointmentOptions.length" class="grow basis-[80%]">
+        <div
+          v-if="appointmentOptions.length"
+          style="flex-grow: 1; flex-basis: 40%; min-width: 400px"
+        >
           <div>Khách hàng đến theo hẹn ?</div>
           <div class="ml-4">
             <div v-for="(appointment, index) in appointmentOptions" :key="index">
@@ -460,14 +427,39 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="settingStore.TICKET_CLINIC_CREATE.customerSource"
-          :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+          v-if="ticketPendingOptions.length"
+          style="flex-grow: 1; flex-basis: 40%; min-width: 400px"
         >
-          <InputSelectCustomerSource v-model:customerSourceId="ticket.customerSourceId" />
+          <div>Khách hàng đến tiếp tục điều trị ?</div>
+          <div class="ml-4">
+            <div v-for="(ticketPending, index) in ticketPendingOptions" :key="index">
+              <InputCheckbox
+                :checked="ticketPendingId === ticketPending.id"
+                @change="(e: Event) => handleChangeCheckboxTicketPending(e, ticketPending)"
+              >
+                <span>
+                  {{ ESTimer.timeToText(ticketPending.receptionAt, 'DD/MM/YYYY hh:mm ') }} - CĐ:
+                  {{ ticketPending.note }}
+                </span>
+              </InputCheckbox>
+            </div>
+          </div>
         </div>
 
         <div
-          v-if="currentRoom.roomStyle === RoomTicketStyle.TicketClinicObstetric"
+          v-if="settingStore.TICKET_CLINIC_CREATE.customerSource"
+          :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+        >
+          <InputSelectCustomerSource
+            :disabled="!!ticketPendingId || !ticketReception.isFirstReception"
+            v-model:customerSourceId="ticketReception.customerSourceId"
+          />
+        </div>
+
+        <div
+          v-if="
+            !ticketReception.id && currentRoom.roomStyle === RoomTicketStyle.TicketClinicObstetric
+          "
           style="flex-basis: 90%; flex-grow: 1"
           class="flex gap-4"
         >
@@ -476,10 +468,10 @@ defineExpose({ openModal })
         </div>
 
         <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
-          <div>Thời gian đăng ký khám</div>
+          <div>Thời gian tiếp đón</div>
           <div>
             <InputDate
-              v-model:value="ticket.registeredAt"
+              v-model:value="ticketReception.receptionAt"
               type-parser="number"
               class="w-full"
               show-time
@@ -490,34 +482,31 @@ defineExpose({ openModal })
           <div>Đăng ký phòng</div>
           <div>
             <InputSelectRoom
-              v-model:roomId="ticket.roomId"
+              v-model:roomId="ticketReception.roomId"
               :roomType="RoomType.Ticket"
+              :disabled="!!ticketPendingId || !ticketReception.isFirstReception"
+              :roomTicketStyle="[
+                RoomTicketStyle.TicketClinicGeneral,
+                RoomTicketStyle.TicketClinicObstetric,
+                RoomTicketStyle.TicketClinicEye,
+              ]"
               removeLabelWrapper
+              autoSelectFirstValue
             />
           </div>
         </div>
 
         <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
-          <div>Lý do / Chẩn đoán</div>
+          <div>Lý do</div>
           <div>
-            <InputText v-model:value="ticket.note" />
+            <InputText v-model:value="ticketReception.reason" />
           </div>
         </div>
-        <div v-if="ticket.id" style="flex-basis: 95%; flex-grow: 1">
+        <div style="flex-basis: 95%; flex-grow: 1">
           <TicketChangeTicketUserPosition
             ref="ticketChangeTicketUserPosition"
-            v-model:ticketUserList="ticket.ticketUserReceptionList!"
-            :positionType="PositionType.TicketReception"
-            :positionInteractId="0"
-            @fix:ticketUserList="handleFixTicketUserList"
-            title="Nhân viên tiếp đón"
-          />
-        </div>
-        <div v-else style="flex-basis: 95%; flex-grow: 1">
-          <TicketChangeTicketUserPosition
-            ref="ticketChangeTicketUserPosition"
-            v-model:ticketUserList="ticket.ticketUserReceptionList!"
-            :positionType="PositionType.TicketReception"
+            v-model:ticketUserList="ticketUserReceptionList"
+            :positionType="PositionType.Reception"
             :positionInteractId="0"
             @fix:ticketUserList="handleFixTicketUserList"
             title="Nhân viên tiếp đón"
@@ -527,7 +516,11 @@ defineExpose({ openModal })
 
       <div
         class="px-4 mt-4"
-        v-if="settingStore.TICKET_CLINIC_CREATE.requestProcedure && !ticket.id"
+        v-if="
+          !ticketReception.id &&
+          !ticketPendingId &&
+          settingStore.TICKET_CLINIC_CREATE.requestProcedure
+        "
       >
         <div class="font-bold">
           <IconDoubleRight />
@@ -545,7 +538,6 @@ defineExpose({ openModal })
             :ticketProcedureListDraft="ticketProcedureListDraft"
             :ticketRegimenListDraft="ticketRegimenListDraft"
             :priorityStart="0"
-            :requiredPaymentItem="!!settingStore.TICKET_CLINIC_LIST.requiredPaymentItem"
             ref="tableTicketProcedureListRequest"
           />
         </div>
@@ -553,29 +545,24 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex flex-wrap gap-4">
-          <VueButton
-            v-if="ticket.id && [TicketStatus.Schedule, TicketStatus.Draft].includes(ticket.status)"
-            color="red"
-            icon="trash"
-            @click="handleClickDestroy"
-          >
+          <VueButton v-if="ticketReception.id" color="red" icon="trash" @click="handleClickDestroy">
             Xóa
           </VueButton>
           <div style="margin-left: auto">
             <VueButton icon="close" type="reset" @click="closeModal">Hủy bỏ</VueButton>
           </div>
           <VueButton class="btn btn-blue" icon="save" type="submit" :loading="saveLoading">
-            <span v-if="!ticket.id">ĐĂNG KÝ KHÁM</span>
+            <span v-if="!ticketReception.id">TIẾP ĐÓN</span>
             <span v-else>CẬP NHẬT THÔNG TIN</span>
           </VueButton>
         </div>
       </div>
     </form>
   </VueModal>
-  <ModalTicketClinicCreateSetting
+  <ModalReceptionCreateSetting
     v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalTicketClinicCreateSetting"
-    @success="handleModalTicketClinicCreateSettingSuccess"
+    ref="modalReceptionCreateSetting"
+    @success="handleModalReceptionCreateSettingSuccess"
   />
 </template>
 

@@ -4,17 +4,18 @@ import { RoomService, RoomTicketStyle } from '@/modules/room'
 import { Ticket } from '@/modules/ticket'
 import { useRouter } from 'vue-router'
 import TicketStatusTag from './TicketStatusTag.vue'
+import TicketClinicSummaryContainer from '../room-ticket-clinic/detail/summary/TicketClinicSummaryContainer.vue'
 
 const props = withDefaults(
   defineProps<{
     ticket?: Ticket
-    ticketId?: number
+    ticketId?: string
     link?: boolean
     status?: boolean
   }>(),
   {
     ticket: () => Ticket.blank(),
-    ticketId: 0,
+    ticketId: '',
     link: true,
     status: true,
   },
@@ -31,17 +32,9 @@ const openBlankTicketOrderDetail = async (ticket: Ticket) => {
   window.open(route.href, '_blank')
 }
 
-const openBlankTicketSpaDetail = async (ticket: Ticket) => {
-  const route = router.resolve({
-    name: 'TicketSpaSummary',
-    params: { ticketId: ticket.id, roomId: ticket.roomId },
-  })
-  window.open(route.href, '_blank')
-}
-
 const openBlankTicketClinicDetail = async (ticket: Ticket) => {
   const route = router.resolve({
-    name: 'TicketClinicSummary',
+    name: 'TicketClinicSummaryContainer',
     params: { ticketId: ticket.id, roomId: ticket.roomId },
   })
   window.open(route.href, '_blank')
@@ -56,12 +49,6 @@ const openBlankTicketClinicDetail = async (ticket: Ticket) => {
     <div v-if="roomMap[ticket.roomId]?.roomStyle === RoomTicketStyle.TicketOrder" style="">
       <a v-if="link" style="margin-right: 0.5em" @click="openBlankTicketOrderDetail(ticket)">
         BH{{ ticket.id }}
-      </a>
-      <TicketStatusTag v-if="status" :ticket="ticket" />
-    </div>
-    <div v-else-if="roomMap[ticket.roomId]?.roomStyle === RoomTicketStyle.TicketSpa" style="">
-      <a v-if="link" style="margin-right: 0.5em" @click="openBlankTicketSpaDetail(ticket)">
-        SPA{{ ticket.id }}
       </a>
       <TicketStatusTag v-if="status" :ticket="ticket" />
     </div>

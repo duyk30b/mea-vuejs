@@ -126,7 +126,7 @@ defineExpose({ openModal })
       <div class="mt-8 flex gap-4">
         <VueButton type="reset" icon="close" @click="closeModal">Hủy bỏ</VueButton>
         <VueButton
-          v-if="payment.voucherId === 0"
+          v-if="!payment.voucherId || payment.voucherId === '0'"
           type="button"
           icon="trash"
           color="red"

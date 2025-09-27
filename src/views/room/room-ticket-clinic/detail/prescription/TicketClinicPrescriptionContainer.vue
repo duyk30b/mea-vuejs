@@ -14,16 +14,12 @@ import { PrescriptionSample, type MedicineType } from '@/modules/prescription-sa
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import { Product, ProductService } from '@/modules/product'
 import { ticketRoomRef } from '@/modules/room'
-import {
-  TicketChangeAttributeApi,
-  TicketChangeProductApi,
-  TicketStatus
-} from '@/modules/ticket'
+import { TicketChangeAttributeApi, TicketChangeProductApi, TicketStatus } from '@/modules/ticket'
 import {
   TicketAttributeKeyAdviceList,
   type TicketAttributeKeyAdviceType,
 } from '@/modules/ticket-attribute'
-import { TicketProduct, TicketProductType } from '@/modules/ticket-product'
+import { TicketProduct, TicketProductService, TicketProductType } from '@/modules/ticket-product'
 import { TicketUser } from '@/modules/ticket-user'
 import InputSearchPrescriptionSample from '@/views/component/InputSearchPrescriptionSample.vue'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
@@ -49,7 +45,6 @@ const { formatMoney, isMobile } = settingStore
 
 const ticketProductPrescriptionList = ref<TicketProduct[]>([])
 
-
 let ticketUserListOrigin: TicketUser[] = []
 const ticketUserList = ref<TicketUser[]>([])
 
@@ -59,7 +54,8 @@ const ticketAttributeMap = ref<{ [P in TicketAttributeKeyAdviceType]?: any } & {
 })
 
 onMounted(async () => {
-  await ticketRoomRef.value.refreshProduct()
+  await TicketProductService.refreshRelation(ticketRoomRef.value.ticketProductList)
+  ticketRoomRef.value.refreshTicketProduct()
 })
 
 const selectPrescriptionSample = async (psSelect?: PrescriptionSample) => {
@@ -484,8 +480,12 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
 
     <div class="mt-4">
       <div>Lời dặn của bác sĩ</div>
+      {{ ticketAttributeMap.advice }}
       <div style="height: 140px">
-        <VueTinyMCE v-model="ticketAttributeMap.advice" />
+        <VueTinyMCE
+          v-model="ticketAttributeMap.advice"
+          :readonly="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.status)"
+        />
       </div>
     </div>
   </div>

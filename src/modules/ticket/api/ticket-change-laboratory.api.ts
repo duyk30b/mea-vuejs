@@ -1,24 +1,22 @@
-import { TicketLaboratoryGroup } from '@/modules/ticket-laboratory-group'
-import type { TicketLaboratoryResult } from '@/modules/ticket-laboratory-result'
+import { TicketLaboratoryGroup } from '@/modules/ticket-laboratory'
 import { AxiosInstance } from '../../../core/axios.instance'
 import type { BaseResponse } from '../../_base/base-dto'
 import type { PaymentMoneyStatus } from '../../enum'
-import type { TicketLaboratory } from '../../ticket-laboratory'
+import type { TicketLaboratory, TicketLaboratoryResult } from '../../ticket-laboratory'
 import type { TicketUser } from '../../ticket-user'
 
 export class TicketChangeLaboratoryApi {
   static async upsertRequestLaboratoryGroup(body: {
-    ticketId: number
+    ticketId: string
     ticketLaboratoryGroupAddList?: {
       roomId: number
       laboratoryGroupId: number
       createdAt: number | null
-      paymentMoneyStatus: PaymentMoneyStatus
       ticketLaboratoryList: TicketLaboratory[]
     }[]
     ticketLaboratoryGroupUpdate?: {
       roomId: number
-      id: number
+      id: string
       laboratoryGroupId: number
       createdAt: number | null
       ticketLaboratoryList: TicketLaboratory[]
@@ -31,7 +29,6 @@ export class TicketChangeLaboratoryApi {
           laboratoryGroupId: tlg.laboratoryGroupId,
           createdAt: tlg.createdAt,
           roomId: tlg.roomId,
-          paymentMoneyStatus: tlg.paymentMoneyStatus,
           ticketLaboratoryList: tlg.ticketLaboratoryList.map((tl) => ({
             priority: tl.priority,
             laboratoryId: tl.laboratoryId,
@@ -43,7 +40,6 @@ export class TicketChangeLaboratoryApi {
             discountType: tl.discountType,
             actualPrice: tl.actualPrice,
             createdAt: tlg.createdAt,
-            paymentMoneyStatus: tl.paymentMoneyStatus,
           })),
         }))
         : undefined,
@@ -63,7 +59,6 @@ export class TicketChangeLaboratoryApi {
             discountPercent: tl.discountPercent,
             discountType: tl.discountType,
             actualPrice: tl.actualPrice,
-            paymentMoneyStatus: tl.paymentMoneyStatus,
             createdAt: ticketLaboratoryGroupUpdate.createdAt,
           })),
         }
@@ -72,7 +67,7 @@ export class TicketChangeLaboratoryApi {
     const { data } = response.data as BaseResponse<boolean>
   }
 
-  static async destroyTicketLaboratory(body: { ticketId: number; ticketLaboratoryId: number }) {
+  static async destroyTicketLaboratory(body: { ticketId: string; ticketLaboratoryId: string }) {
     const { ticketId, ticketLaboratoryId } = body
     const response = await AxiosInstance.delete(
       `/ticket/${ticketId}/laboratory/destroy-ticket-laboratory/${ticketLaboratoryId}`,
@@ -81,8 +76,8 @@ export class TicketChangeLaboratoryApi {
   }
 
   static async destroyTicketLaboratoryGroup(body: {
-    ticketId: number
-    ticketLaboratoryGroupId: number
+    ticketId: string
+    ticketLaboratoryGroupId: string
   }) {
     const { ticketId, ticketLaboratoryGroupId } = body
     const response = await AxiosInstance.delete(
@@ -92,8 +87,8 @@ export class TicketChangeLaboratoryApi {
   }
 
   static async updateRequestTicketLaboratory(body: {
-    ticketId: number
-    ticketLaboratoryId: number
+    ticketId: string
+    ticketLaboratoryId: string
     ticketLaboratory?: TicketLaboratory
     ticketUserList?: TicketUser[]
   }) {
@@ -124,8 +119,8 @@ export class TicketChangeLaboratoryApi {
   }
 
   static async updateResult(options: {
-    ticketId: number
-    ticketLaboratoryGroupId: number
+    ticketId: string
+    ticketLaboratoryGroupId: string
     completedAt: number
     ticketLaboratoryResultUpdateList: TicketLaboratoryResult[]
     response: {
@@ -160,7 +155,7 @@ export class TicketChangeLaboratoryApi {
     return TicketLaboratoryGroup.from(data.ticketLaboratoryGroup)
   }
 
-  static async cancelResult(body: { ticketId: number; ticketLaboratoryGroupId: number }) {
+  static async cancelResult(body: { ticketId: string; ticketLaboratoryGroupId: string }) {
     const { ticketId, ticketLaboratoryGroupId } = body
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/laboratory/cancel-result/${ticketLaboratoryGroupId}`,

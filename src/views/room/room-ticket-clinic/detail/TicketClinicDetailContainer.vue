@@ -51,6 +51,7 @@ import TicketClinicProcedureContainer from './procedure/TicketClinicProcedureCon
 import TicketClinicRadiologyContainer from './radiology/TicketClinicRadiologyContainer.vue'
 import TicketClinicSummaryContainer from './summary/TicketClinicSummaryContainer.vue'
 import TicketClinicUserContainer from './user/TicketClinicUserContainer.vue'
+import { TicketUserService } from '@/modules/ticket-user'
 
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
@@ -87,7 +88,7 @@ watch(
 )
 
 onBeforeMount(async () => {
-  const ticketId = Number(route.params.ticketId)
+  const ticketId = route.params.ticketId as string
   await startFetchData(ticketId)
 
   ticketLoaded.value = true
@@ -98,7 +99,7 @@ onUnmounted(async () => {
   ticketLoaded.value = false
 })
 
-const startFetchData = async (ticketId?: number) => {
+const startFetchData = async (ticketId?: string) => {
   if (!ticketId) {
     ticketRoomRef.value = Ticket.blank()
     ticketRoomRef.value.customer = Customer.init()
@@ -112,20 +113,16 @@ const startFetchData = async (ticketId?: number) => {
         paymentList: false, // query khi bật modal thanh toán
 
         ticketAttributeList: true,
-        // ticketProductList: true,
-        ticketProductConsumableList: {},
-        ticketProductPrescriptionList: {},
+        ticketProductList: true,
         ticketBatchList: CONFIG.MODE === 'development' ? { batch: true } : undefined,
-        ticketProcedureList: {},
-        ticketRegimenList: { relation: { ticketProcedureList: { ticketUserResultList: true } } },
-        ticketRegimenListExtra: {
-          relation: { ticketProcedureList: { ticketUserResultList: true } },
-        },
-        ticketLaboratoryList: {},
-        ticketLaboratoryGroupList: {},
+        ticketProcedureList: true,
+        ticketRegimenList: true,
+        ticketRegimenItemList: true,
+        ticketLaboratoryList: true,
+        ticketLaboratoryGroupList: true,
         ticketLaboratoryResultList: true,
-        ticketRadiologyList: {},
-        ticketUserList: {},
+        ticketRadiologyList: true,
+        ticketUserList: true,
         toAppointment: organizationPermission.value[PermissionId.APPOINTMENT] ? true : undefined,
         imageList: true,
       },
@@ -141,14 +138,15 @@ const startFetchData = async (ticketId?: number) => {
         {
           key: 'healthHistory',
           value: ticketData.customer?.healthHistory || '',
-          id: 0,
+          id: '',
           ticketId: ticketData.id,
         },
       ]
       ticketData.ticketAttributeMap = { healthHistory }
     }
-    ticketData.refreshUserAndRole()
     ticketRoomRef.value = ticketData
+    await TicketUserService.refreshRelation(ticketData.ticketUserList || [])
+    ticketData.refreshTreeData()
   } catch (error) {
     console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
   }
@@ -311,7 +309,7 @@ const clickReopenTicket = () => {
             `- Số tiền nợ sẽ được hoàn trả, khi đóng hồ sơ lại sẽ ghi nợ trở lại`,
             `- Trừ nợ khách hàng: ${formatMoney(ticketRoomRef.value.debt)}`,
           ]
-        : ['- Hồ sơ này sẽ quay lại trạng thái: "Đang khám"']),
+        : ['- Hồ sơ này sẽ quay lại trạng thái: "Đang điều trị"']),
     ],
     async onOk() {
       await startReopenVisit()
@@ -421,6 +419,10 @@ const clickReturnProduct = () => {
         <span>{{ formatMoney(ticketRoomRef.paid) }}</span>
         /
         <span>{{ formatMoney(ticketRoomRef.totalMoney) }}</span>
+      </div>
+      <div v-if="CONFIG.MODE === 'development'" style="color: violet">
+        Cost {{ formatMoney(ticketRoomRef.itemsCostAmount) }} - Commission
+        {{ formatMoney(ticketRoomRef.commissionMoney) }}
       </div>
       <VueButton
         v-if="

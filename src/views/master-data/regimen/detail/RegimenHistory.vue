@@ -71,9 +71,9 @@ watch(
         </tr>
         <tr v-for="(ticketRegimen, index) in ticketRegimenList" :key="index">
           <td>
-            <LinkAndStatusTicket :ticket="ticketRegimen.ticket!" />
+            <LinkAndStatusTicket :ticket="ticketRegimen.ticketCreated!" />
             <div style="font-size: 0.8rem; white-space: nowrap">
-              {{ timeToText(ticketRegimen.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
+              {{ timeToText(ticketRegimen.ticketCreated?.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
           </td>
           <td class="">

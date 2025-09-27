@@ -54,15 +54,15 @@ const { formatMoney, isMobile } = settingStore
 const loadingProcess = ref(false)
 const loadingRefund = ref(false)
 
-const startFetchData = async (ticketId: number) => {
+const startFetchData = async (ticketId: string) => {
   try {
     ticketOrderDetailRef.value = await TicketService.detail(ticketId, {
       relation: {
         customer: true,
         paymentList: true,
         // ticketAttributeList: true,
-        ticketProductList: { relation: { product: true } },
-        ticketProcedureList: { relation: { procedure: true } },
+        ticketProductList: true,
+        ticketProcedureList: true,
         ticketSurchargeList: true,
         ticketExpenseList: true,
       },
@@ -73,7 +73,7 @@ const startFetchData = async (ticketId: number) => {
 }
 
 onBeforeMount(async () => {
-  const ticketId = Number(route.params.ticketId)
+  const ticketId = route.params.ticketId as string
   if (ticketId) {
     await startFetchData(ticketId)
   }
@@ -327,7 +327,7 @@ const openModalTicketOrderPreview = () => {
         <tr>
           <td class="px-2 py-1 whitespace-nowrap">Thời gian tạo</td>
           <td class="px-2 py-1">
-            {{ timeToText(ticketOrderDetailRef.registeredAt, 'hh:mm DD/MM/YY') }}
+            {{ timeToText(ticketOrderDetailRef.createdAt, 'hh:mm DD/MM/YY') }}
           </td>
         </tr>
         <tr>

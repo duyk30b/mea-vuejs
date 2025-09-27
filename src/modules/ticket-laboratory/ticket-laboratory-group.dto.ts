@@ -1,7 +1,7 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionEnum, ConditionNumber } from '../_base/base-condition'
 import type { PaymentMoneyStatus } from '../enum'
-import type { TicketLaboratoryStatus } from '../ticket-laboratory/ticket-laboratory.model'
+import type { TicketLaboratoryStatus } from './ticket-laboratory.model'
 
 export class TicketLaboratoryGroupGetQuery {
   page: number

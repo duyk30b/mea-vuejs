@@ -18,21 +18,17 @@ export const RoomTypeText = {
 }
 
 export enum RoomTicketStyle {
-  TicketReception = 101,
   TicketOrder = 111,
   TicketClinicGeneral = 121,
   TicketClinicObstetric = 122,
   TicketClinicEye = 123,
-  TicketSpa = 151,
 }
 
 export const RoomTicketStyleText = {
-  [RoomTicketStyle.TicketReception]: 'Phòng tiếp đón',
   [RoomTicketStyle.TicketOrder]: 'Phòng bán hàng',
   [RoomTicketStyle.TicketClinicGeneral]: 'Phòng khám cơ bản',
   [RoomTicketStyle.TicketClinicObstetric]: 'Phòng khám sản',
   [RoomTicketStyle.TicketClinicEye]: 'Phòng khám mắt',
-  [RoomTicketStyle.TicketSpa]: 'Phòng SPA - Liệu trình',
 }
 
 export class Room {

@@ -6,7 +6,7 @@ import { PurchaseOrder } from '../purchase-order.model'
 
 export class PurchaseOrderMoneyApi {
   static async prepaymentMoney(object: {
-    purchaseOrderId: number
+    purchaseOrderId: string
     body: {
       distributorId: number
       paymentMethodId: number
@@ -37,7 +37,7 @@ export class PurchaseOrderMoneyApi {
     paymentMethodId: number
     paidAmount: number
     note: string
-    dataList: { purchaseOrderId: number; paidAmount: number }[]
+    dataList: { purchaseOrderId: string; paidAmount: number }[]
   }) {
     const response = await AxiosInstance.post('/purchase-order/pay-debt', body)
     const { data } = response.data as BaseResponse<{
@@ -54,7 +54,7 @@ export class PurchaseOrderMoneyApi {
   }
 
   static async refundMoney(object: {
-    purchaseOrderId: number
+    purchaseOrderId: string
     body: {
       distributorId: number
       paymentMethodId: number

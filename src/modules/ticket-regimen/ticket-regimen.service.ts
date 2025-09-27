@@ -1,25 +1,22 @@
 import { ProcedureService } from '../procedure'
 import { RegimenService } from '../regimen'
-import { UserService } from '../user'
+import type { TicketRegimenItem } from './ticket-regimen-item.model'
 import { TicketRegimen } from './ticket-regimen.model'
 
 export class TicketRegimenService {
-  static async refreshRelation(ticketRegimen: TicketRegimen) {
-    const [regimenMap, procedureMap, userMap] = await Promise.all([
-      RegimenService.getMap(),
-      ProcedureService.getMap(),
-      UserService.getMap(),
-    ])
-
-    ticketRegimen.regimen = regimenMap[ticketRegimen.regimenId]
-    ticketRegimen.ticketUserRequestList?.forEach((tu) => {
-      tu.user = userMap[tu.userId]
+  static async refreshRelation(data?: TicketRegimen[]) {
+    if (!data?.length) return
+    const regimenMap = await RegimenService.getMap()
+    data.forEach((i) => {
+      i.regimen = regimenMap![i.regimenId]
     })
-    ticketRegimen.ticketProcedureList?.forEach((tp) => {
-      tp.procedure = procedureMap[tp.procedureId]
-      tp.ticketUserResultList.forEach((tu) => {
-        tu.user = userMap[tu.userId]
-      })
+  }
+
+  static async refreshRelationItem(data?: TicketRegimenItem[]) {
+    if (!data?.length) return
+    const procedureMap = await ProcedureService.getMap()
+    data.forEach((i) => {
+      i.procedure = procedureMap![i.procedureId]
     })
   }
 }

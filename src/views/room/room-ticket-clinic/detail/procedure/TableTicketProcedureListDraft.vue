@@ -4,26 +4,24 @@ import { IconDelete, IconDollar, IconFileSearch, IconTeam } from '@/common/icon-
 import { InputNumber } from '@/common/vue-form'
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
+import { DiscountType, PaymentEffect, PaymentMoneyStatus } from '@/modules/enum'
 import { ProcedureService, ProcedureType, type Procedure } from '@/modules/procedure'
 import { TicketProcedure, TicketProcedureStatus } from '@/modules/ticket-procedure'
 import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import { ref } from 'vue'
 import ModalTicketProcedureUpdateMoney from './ModalTicketProcedureUpdateMoney.vue'
-import ModalTicketProcedureUpdateUserResult from './ModalTicketProcedureUpdateUserResult.vue'
-import { TicketRegimen, TicketRegimenStatus } from '@/modules/ticket-regimen'
+import ModalTicketProcedureUpdateUser from './ModalTicketProcedureUpdateUser.vue'
+import { TicketRegimen, TicketRegimenItem, TicketRegimenStatus } from '@/modules/ticket-regimen'
 import ModalTicketRegimenUpdateMoney from './ModalTicketRegimenUpdateMoney.vue'
 import ModalTicketRegimenUpdateUser from './ModalTicketRegimenUpdateUser.vue'
 import type { Regimen } from '@/modules/regimen'
 import { VueTag } from '@/common'
-import ModalTicketProcedureUpdateUserRequest from './ModalTicketProcedureUpdateUserRequest.vue'
+import ModalTicketProcedureUpdateUserRequest from './ModalTicketProcedureUpdateUser.vue'
+import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
-
-const modalTicketProcedureUpdateUserResult =
-  ref<InstanceType<typeof ModalTicketProcedureUpdateUserResult>>()
-const modalTicketProcedureUpdateUserRequest =
-  ref<InstanceType<typeof ModalTicketProcedureUpdateUserRequest>>()
+const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
+const modalTicketProcedureUpdateUser = ref<InstanceType<typeof ModalTicketProcedureUpdateUser>>()
 const modalTicketProcedureUpdateMoney = ref<InstanceType<typeof ModalTicketProcedureUpdateMoney>>()
 const modalTicketRegimenUpdateUser = ref<InstanceType<typeof ModalTicketRegimenUpdateUser>>()
 const modalTicketRegimenUpdateMoney = ref<InstanceType<typeof ModalTicketRegimenUpdateMoney>>()
@@ -33,13 +31,11 @@ const props = withDefaults(
     ticketProcedureListDraft: TicketProcedure[]
     ticketRegimenListDraft: TicketRegimen[]
     priorityStart: number
-    requiredPaymentItem: boolean
   }>(),
   {
     ticketProcedureListDraft: () => [],
     ticketRegimenListDraft: () => [],
     priorityStart: 0,
-    requiredPaymentItem: false,
   },
 )
 
@@ -56,13 +52,12 @@ const selectProcedure = async (data: { procedure: Procedure }) => {
   const temp = TicketProcedure.blank()
 
   temp.priority = props.priorityStart + props.ticketProcedureListDraft.length + 1
-  temp.ticketId = 0
+  temp.ticketId = ''
   temp.customerId = 0
   temp.procedureId = procedureData.id
-  temp.ticketRegimenId = 0
+  temp.ticketRegimenId = ''
 
   temp.quantity = 1
-  temp.sessionIndex = 0
 
   temp.expectedPrice = procedureData.price
   temp.discountMoney = 0
@@ -70,16 +65,12 @@ const selectProcedure = async (data: { procedure: Procedure }) => {
   temp.discountType = DiscountType.Percent
   temp.actualPrice = procedureData.price
 
+  temp.paymentMoneyStatus = PaymentMoneyStatus.PendingPaid
   if (procedureData.procedureType === ProcedureType.Basic) {
     temp.status = TicketProcedureStatus.NoEffect
   }
   if (procedureData.procedureType === ProcedureType.Process) {
     temp.status = TicketProcedureStatus.Pending
-  }
-  if (props.requiredPaymentItem) {
-    temp.paymentMoneyStatus = PaymentMoneyStatus.PendingPayment
-  } else {
-    temp.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
   }
 
   temp.createdAt = Date.now()
@@ -109,7 +100,7 @@ const selectProcedure = async (data: { procedure: Procedure }) => {
 const selectRegimen = async (data: { regimen: Regimen }) => {
   const regimenData = data.regimen
   const temp = TicketRegimen.blank()
-  temp.ticketId = 0
+  temp.ticketId = ''
   temp.customerId = 0
   temp.regimenId = regimenData.id
 
@@ -130,40 +121,28 @@ const selectRegimen = async (data: { regimen: Regimen }) => {
   }
   temp.actualPrice = temp.expectedPrice - temp.discountMoney
 
-  if (props.requiredPaymentItem) {
-    temp.paymentMoneyStatus = PaymentMoneyStatus.PendingPayment
-  } else {
-    temp.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
-  }
+  temp.paymentMoneyStatus = PaymentMoneyStatus.PendingPaid
   temp.status = TicketRegimenStatus.Pending
   temp.createdAt = Date.now()
 
   temp.regimen = regimenData
 
-  temp.ticketProcedureWrapList = (regimenData.regimenItemList || []).map((ri) => {
-    const tp = TicketProcedure.blank()
-    tp.procedureId = ri.procedureId
-    tp.quantity = ri.quantity
+  temp.ticketRegimenItemList = (regimenData.regimenItemList || []).map((ri) => {
+    const tri = TicketRegimenItem.blank()
+    tri.regimenId = ri.regimenId
+    tri.procedureId = ri.procedureId
+    tri.quantityTotal = ri.quantity
+    tri.quantityFinish = 0
+    tri.gapDay = 1
 
-    tp.expectedPrice = ri.procedure?.price || 0
-    tp.discountType = DiscountType.Percent
-    tp.discountPercent = temp.discountPercent
-    tp.discountMoney = ((ri.procedure?.price || 0) * temp.discountPercent) / 100
-    tp.actualPrice = tp.expectedPrice - tp.discountMoney
+    tri.expectedPrice = ri.procedure?.price || 0
+    tri.discountType = DiscountType.Percent
+    tri.discountPercent = temp.discountPercent
+    tri.discountMoney = ((ri.procedure?.price || 0) * temp.discountPercent) / 100
+    tri.actualPrice = tri.expectedPrice - tri.discountMoney
 
-    if (ri.procedure?.procedureType === ProcedureType.Basic) {
-      tp.status = TicketProcedureStatus.NoEffect
-    }
-    if (ri.procedure?.procedureType === ProcedureType.Process) {
-      tp.status = TicketProcedureStatus.Pending
-    }
-    tp.paymentMoneyStatus = PaymentMoneyStatus.NoEffect
-    tp.procedure = ri.procedure
-    return {
-      _localId: Math.random().toString(36).substring(2),
-      totalSession: ri.quantity,
-      ticketProcedure: tp,
-    }
+    tri.procedure = ri.procedure
+    return tri
   })
 
   return temp
@@ -211,19 +190,19 @@ const handleModalTicketProcedureUpdateSuccess = (ticketProcedureData: TicketProc
   }
 }
 
-const handleChangeTicketRegimenTotalSession = (data: {
+const handleChangeTicketRegimenItemQuantityTotal = (data: {
   trLocalId: string
-  tpWrapLocalId: string
-  totalSession: number
+  triLocalId: string
+  quantityTotal: number
 }) => {
   const ticketRegimen = props.ticketRegimenListDraft.find((i) => i._localId === data.trLocalId)
   if (!ticketRegimen) return
 
-  ticketRegimen.expectedPrice = ticketRegimen.ticketProcedureWrapList!.reduce((acc, item) => {
-    return acc + item.totalSession * item.ticketProcedure.expectedPrice
+  ticketRegimen.expectedPrice = ticketRegimen.ticketRegimenItemList!.reduce((acc, item) => {
+    return acc + item.quantityTotal * item.expectedPrice
   }, 0)
-  ticketRegimen.actualPrice = ticketRegimen.ticketProcedureWrapList!.reduce((acc, item) => {
-    return acc + item.totalSession * item.ticketProcedure.actualPrice
+  ticketRegimen.actualPrice = ticketRegimen.ticketRegimenItemList!.reduce((acc, item) => {
+    return acc + item.quantityTotal * item.actualPrice
   }, 0)
 }
 
@@ -232,16 +211,13 @@ defineExpose({ selectProcedure, selectRegimen })
 
 <template>
   <ModalProcedureDetail ref="modalProcedureDetail" />
+  <ModalProductDetail ref="modalProductDetail" />
   <ModalTicketProcedureUpdateMoney
     ref="modalTicketProcedureUpdateMoney"
     @success="handleModalTicketProcedureUpdateSuccess"
   />
-  <ModalTicketProcedureUpdateUserRequest
-    ref="modalTicketProcedureUpdateUserRequest"
-    @success="handleModalTicketProcedureUpdateSuccess"
-  />
-  <ModalTicketProcedureUpdateUserResult
-    ref="modalTicketProcedureUpdateUserResult"
+  <ModalTicketProcedureUpdateUser
+    ref="modalTicketProcedureUpdateUser"
     @success="handleModalTicketProcedureUpdateSuccess"
   />
   <ModalTicketRegimenUpdateMoney
@@ -256,10 +232,14 @@ defineExpose({ selectProcedure, selectRegimen })
     <table>
       <thead>
         <tr>
-          <th v-if="CONFIG.MODE === 'development'"></th>
+          <th v-if="CONFIG.MODE === 'development'">
+            <div>RegimenId</div>
+            <div>ProcedureId</div>
+          </th>
           <th>#</th>
           <th>Dịch vụ</th>
           <th style="width: 150px">Số lượng</th>
+          <th v-if="ticketRegimenListDraft.length" style="width: 100px">Cách ngày</th>
           <th>Giá</th>
           <th>T.Tiền</th>
           <th></th>
@@ -276,7 +256,7 @@ defineExpose({ selectProcedure, selectRegimen })
             <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
               {{ tr.regimenId }}
             </td>
-            <td colspan="3">
+            <td colspan="4">
               <div class="flex items-center gap-1 font-bold">
                 <span>{{ tr.regimen?.name }}</span>
               </div>
@@ -297,9 +277,7 @@ defineExpose({ selectProcedure, selectRegimen })
               </div>
             </td>
             <td class="text-right">
-              <div v-if="tr.paymentMoneyStatus !== PaymentMoneyStatus.NoEffect">
-                {{ formatMoney(tr.actualPrice) }}
-              </div>
+              {{ formatMoney(tr.actualPrice) }}
             </td>
             <td>
               <a
@@ -339,53 +317,50 @@ defineExpose({ selectProcedure, selectRegimen })
               </div>
             </td>
           </tr>
-          <tr v-for="(tpWrap, triIndex) in tr.ticketProcedureWrapList" :key="tpWrap._localId">
+          <tr v-for="(tri, triIndex) in tr.ticketRegimenItemList" :key="tri._localId">
             <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center"></td>
             <td style="text-align: center">{{ triIndex + 1 }}</td>
-            <td>{{ tpWrap.ticketProcedure.procedure?.name }}</td>
+            <td>{{ tri.procedure?.name }}</td>
             <td class="text-right">
               <InputNumber
-                v-model:value="tpWrap.totalSession"
+                v-model:value="tri.quantityTotal"
                 buttonControl
                 textAlign="right"
                 @update:value="
                   (v) =>
-                    handleChangeTicketRegimenTotalSession({
-                      totalSession: v,
+                    handleChangeTicketRegimenItemQuantityTotal({
                       trLocalId: tr._localId,
-                      tpWrapLocalId: tpWrap._localId,
+                      triLocalId: tri._localId,
+                      quantityTotal: v,
                     })
                 "
               />
             </td>
             <td>
+              <InputNumber v-model:value="tri.gapDay" textAlign="right" />
+            </td>
+            <td>
               <div class="flex justify-between items-center gap-4">
                 <div>
                   <VueTag
-                    v-if="
-                      tpWrap.ticketProcedure.discountType === DiscountType.Percent &&
-                      tpWrap.ticketProcedure.discountMoney
-                    "
+                    v-if="tri.discountType === DiscountType.Percent && tri.discountMoney"
                     color="green"
                   >
-                    {{ tpWrap.ticketProcedure.discountPercent + ' %' }}
+                    {{ tri.discountPercent + ' %' }}
                   </VueTag>
                 </div>
                 <div>
-                  <div
-                    v-if="tpWrap.ticketProcedure.discountMoney"
-                    class="text-xs italic text-red-500"
-                  >
-                    <del>{{ formatMoney(tpWrap.ticketProcedure.expectedPrice) }}</del>
+                  <div v-if="tri.discountMoney" class="text-xs italic text-red-500">
+                    <del>{{ formatMoney(tri.expectedPrice) }}</del>
                   </div>
-                  <div>{{ formatMoney(tpWrap.ticketProcedure.actualPrice) }}</div>
+                  <div>{{ formatMoney(tri.actualPrice) }}</div>
                 </div>
               </div>
             </td>
             <td class="text-right">
-              <div v-if="tpWrap.ticketProcedure.paymentMoneyStatus !== PaymentMoneyStatus.NoEffect">
-                {{ formatMoney(tpWrap.ticketProcedure.actualPrice * tpWrap.totalSession) }}
-              </div>
+              <!-- <div v-if="tri.ticketProcedure.paymentMoneyStatus !== PaymentMoneyStatus.NoEffect">
+                {{ formatMoney(tri.ticketProcedure.actualPrice * tri.totalSession) }}
+              </div> -->
             </td>
             <td></td>
             <td></td>
@@ -414,6 +389,7 @@ defineExpose({ selectProcedure, selectRegimen })
               <InputNumber v-model:value="tp.quantity" textAlign="right" :buttonControl="true" />
             </div>
           </td>
+          <td v-if="ticketRegimenListDraft.length"></td>
           <template v-if="!!tp.ticketRegimenId">
             <td colspan="4" class="text-center">
               <!-- <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" /> -->
@@ -451,7 +427,7 @@ defineExpose({ selectProcedure, selectRegimen })
                 <a
                   class="flex justify-center cursor-pointer"
                   style="font-size: 20px"
-                  @click="modalTicketProcedureUpdateUserRequest?.openModal({ ticketProcedure: tp })"
+                  @click="modalTicketProcedureUpdateUser?.openModal({ ticketProcedure: tp })"
                 >
                   <IconTeam />
                 </a>
@@ -471,12 +447,17 @@ defineExpose({ selectProcedure, selectRegimen })
         </tr>
         <tr>
           <td v-if="CONFIG.MODE === 'development'"></td>
-          <td colspan="4" class="text-right font-bold uppercase">Tổng tiền</td>
+          <td
+            :colspan="ticketRegimenListDraft.length ? 5 : 4"
+            class="text-right font-bold uppercase"
+          >
+            Tổng tiền
+          </td>
           <td class="font-bold text-right">
             {{
               formatMoney(
-                ticketProcedureListDraft.reduce((acc, i) => acc + i.remainMoney, 0) +
-                  ticketRegimenListDraft.reduce((acc, i) => acc + i.remainMoney, 0),
+                ticketProcedureListDraft.reduce((acc, i) => acc + i.actualPrice * i.quantity, 0) +
+                  ticketRegimenListDraft.reduce((acc, i) => acc + i.actualPrice, 0),
               )
             }}
           </td>

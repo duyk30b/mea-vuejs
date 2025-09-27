@@ -1,15 +1,15 @@
-import type { TicketAttributeKeyType, TicketAttributeMap } from './ticket-attribute.variable'
+import type { TicketAttributeKeyType } from './ticket-attribute.variable'
 
 export class TicketAttribute {
-  id: number
-  ticketId: number
+  id: string
+  ticketId: string
 
   key: TicketAttributeKeyType
   value: string
 
   static init(): TicketAttribute {
     const ins = new TicketAttribute()
-    ins.id = 0
+    ins.id = ''
     return ins
   }
 
@@ -30,14 +30,6 @@ export class TicketAttribute {
 
   static basicList(sources: TicketAttribute[]): TicketAttribute[] {
     return sources.map((i) => TicketAttribute.basic(i))
-  }
-
-  static basicMap(sources: TicketAttribute[]) {
-    const result: TicketAttributeMap = {}
-    sources.forEach((i) => {
-      result[i.key] = i.value
-    })
-    return result
   }
 
   static from(source: TicketAttribute) {

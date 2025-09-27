@@ -176,7 +176,7 @@ const updatePreview = async () => {
   console.log('Compile HTML success !!!')
 }
 
-const handleModalSelectTicketDemoSuccess = async (ticketDemoId: number) => {
+const handleModalSelectTicketDemoSuccess = async (ticketDemoId: string) => {
   if (ticketMap[ticketDemoId]) {
     ticketDemo.value = ticketMap[ticketDemoId]
   } else {
@@ -187,15 +187,13 @@ const handleModalSelectTicketDemoSuccess = async (ticketDemoId: number) => {
           paymentList: false,
 
           ticketAttributeList: true,
-          // ticketProductList: true,
-          ticketProductConsumableList: { relation: { product: true } },
-          ticketProductPrescriptionList: { relation: { product: true } },
-          ticketProcedureList: {},
-          ticketLaboratoryList: {},
-          ticketLaboratoryGroupList: {},
+          ticketProductList: true,
+          ticketProcedureList: true,
+          ticketLaboratoryList: true,
+          ticketLaboratoryGroupList: true,
           ticketLaboratoryResultList: true,
-          ticketRadiologyList: {},
-          ticketUserList: {},
+          ticketRadiologyList: true,
+          ticketUserList: true,
           toAppointment: true,
         },
       })

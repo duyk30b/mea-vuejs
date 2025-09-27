@@ -214,7 +214,6 @@ defineExpose({ openModal })
               </tr>
               <tr>
                 <td v-if="CONFIG.MODE === 'development'"></td>
-                <td v-if="CONFIG.MODE === 'development'"></td>
                 <td colspan="4" class="text-right">Tổng đã thanh toán :</td>
                 <td class="text-right font-bold">{{ formatMoney(purchaseOrder.paid) }}</td>
                 <td v-if="CONFIG.MODE === 'development'"></td>
@@ -222,14 +221,12 @@ defineExpose({ openModal })
               </tr>
               <tr v-if="purchaseOrder.debt >= 0">
                 <td v-if="CONFIG.MODE === 'development'"></td>
-                <td v-if="CONFIG.MODE === 'development'"></td>
                 <td colspan="4" class="text-right">Đang thiếu :</td>
                 <td class="text-right font-bold">{{ formatMoney(purchaseOrder.debt) }}</td>
                 <td v-if="CONFIG.MODE === 'development'"></td>
                 <td v-if="CONFIG.MODE === 'development'"></td>
               </tr>
               <tr v-else style="color: var(--text-green)">
-                <td v-if="CONFIG.MODE === 'development'"></td>
                 <td v-if="CONFIG.MODE === 'development'"></td>
                 <td colspan="4" class="text-right">Đang thừa</td>
                 <td class="text-right font-bold">{{ formatMoney(-purchaseOrder.debt) }}</td>

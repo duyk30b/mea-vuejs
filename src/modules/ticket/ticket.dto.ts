@@ -1,12 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionEnum, ConditionNumber } from '../_base/base-condition'
 import type { DeliveryStatus } from '../enum'
-import type { TicketLaboratoryListQuery } from '../ticket-laboratory'
-import type { TicketLaboratoryGroupListQuery } from '../ticket-laboratory-group'
-import type { TicketProcedureListQuery } from '../ticket-procedure'
-import type { TicketProductListQuery } from '../ticket-product'
-import type { TicketRadiologyListQuery } from '../ticket-radiology'
-import type { TicketRegimenListQuery } from '../ticket-regimen'
 import type { TicketStatus } from './ticket.model'
 
 export class TicketFilterQuery {
@@ -14,9 +8,8 @@ export class TicketFilterQuery {
   customerId?: number
   status?: TicketStatus | ConditionEnum<TicketStatus>
   deliveryStatus?: DeliveryStatus | ConditionEnum<DeliveryStatus>
-  registeredAt?: ConditionDate
-  startedAt?: ConditionDate
-  updatedAt?: ConditionDate
+  createdAt?: ConditionDate
+  receptionAt?: ConditionDate
   $OR?: TicketFilterQuery[]
   $AND?: TicketFilterQuery[]
 }
@@ -27,24 +20,30 @@ export class TicketGetQuery {
   relation?: {
     customer?: boolean
     paymentList?: boolean
+
+    ticketReceptionList?: boolean
+
+    ticketAttributeList?: boolean
     ticketSurchargeList?: boolean
     ticketExpenseList?: boolean
-    ticketAttributeList?: boolean
-    ticketProductList?: TicketProductListQuery
+
+    ticketProductList?: boolean
     ticketBatchList?: { batch?: boolean }
-    ticketProductConsumableList?: TicketProductListQuery
-    ticketProductPrescriptionList?: TicketProductListQuery
-    ticketProcedureList?: TicketProcedureListQuery
-    ticketRegimenList?: TicketRegimenListQuery
-    ticketRegimenListExtra?: TicketRegimenListQuery
-    ticketLaboratoryList?: TicketLaboratoryListQuery
-    ticketLaboratoryGroupList?: TicketLaboratoryGroupListQuery
+
+    ticketProcedureList?: boolean
+    ticketRegimenList?: boolean
+    ticketRegimenItemList?: boolean
+
+    ticketLaboratoryList?: boolean
+    ticketLaboratoryGroupList?: boolean
     ticketLaboratoryResultList?: boolean
-    ticketRadiologyList?: TicketRadiologyListQuery
+
+    ticketRadiologyList?: boolean
+    ticketUserList?: boolean
+
     toAppointment?: boolean
     customerSource?: boolean
-    
-    ticketUserList?: { user?: boolean }
+
     imageList?: boolean
   }
 
@@ -52,7 +51,8 @@ export class TicketGetQuery {
 
   sort?: {
     id?: 'ASC' | 'DESC'
-    registeredAt?: 'ASC' | 'DESC'
+    receptionAt?: 'ASC' | 'DESC',
+    createdAt?: 'ASC' | 'DESC',
   }
 
   static toQuery(instance: Partial<TicketGetQuery>) {

@@ -2,16 +2,13 @@ import { Customer } from '../customer'
 import { PaymentMoneyStatus } from '../enum'
 import { LaboratoryGroup } from '../laboratory-group'
 import { Room } from '../room'
-import { TicketLaboratoryResult } from '../ticket-laboratory-result'
-import {
-  TicketLaboratory,
-  TicketLaboratoryStatus,
-} from '../ticket-laboratory/ticket-laboratory.model'
 import { Ticket } from '../ticket/ticket.model'
+import { TicketLaboratoryResult } from './ticket-laboratory-result.model'
+import { TicketLaboratory, TicketLaboratoryStatus } from './ticket-laboratory.model'
 
 export class TicketLaboratoryGroup {
-  id: number
-  ticketId: number
+  id: string
+  ticketId: string
   roomId: number
   customerId: number
   laboratoryGroupId: number
@@ -31,9 +28,9 @@ export class TicketLaboratoryGroup {
 
   static init(): TicketLaboratoryGroup {
     const ins = new TicketLaboratoryGroup()
-    ins.id = 0
+    ins.id = ''
     ins.laboratoryGroupId = 0
-    ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
+    ins.paymentMoneyStatus = PaymentMoneyStatus.PendingPaid
     ins.result = ''
     return ins
   }

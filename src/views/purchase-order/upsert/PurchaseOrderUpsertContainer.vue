@@ -69,7 +69,7 @@ const saveLoading = ref(false)
 watch(
   () => [route.params.id, route.query.mode, route.query.distributor_id],
   async ([paramId, queryMode, queryDistributorId]) => {
-    const purchaseOrderId = Number(paramId)
+    const purchaseOrderId = paramId as string
     const distributorId = Number(queryDistributorId)
     let distributorDefault = Distributor.blank()
     if (queryMode) {

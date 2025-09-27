@@ -41,7 +41,7 @@ const deliveryStatus = ref<DeliveryStatus>(DeliveryStatus.Pending)
 
 const roomMap = RoomService.roomMap
 
-const sortColumn = ref<'registeredAt' | 'id' | ''>('')
+const sortColumn = ref<'createdAt' | 'id' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const page = ref(1)
@@ -60,11 +60,11 @@ const startFetchData = async (options?: { dataLoading: boolean }) => {
       relation: {
         customer: true,
         // ticketAttributeList: true,
-        ticketUserList: settingStore.TICKET_CLINIC_LIST.roleIdList.length ? {} : undefined,
+        ticketUserList: settingStore.TICKET_CLINIC_LIST.roleIdList.length ? true : undefined,
       },
       filter: {
         customerId: customerId.value ? customerId.value : undefined,
-        registeredAt:
+        createdAt:
           fromTime.value || toTime.value
             ? {
                 GTE: fromTime.value ? fromTime.value : undefined,
@@ -76,9 +76,9 @@ const startFetchData = async (options?: { dataLoading: boolean }) => {
       sort: sortValue.value
         ? {
             id: sortColumn.value === 'id' ? sortValue.value : undefined,
-            registeredAt: sortColumn.value === 'registeredAt' ? sortValue.value : undefined,
+            createdAt: sortColumn.value === 'createdAt' ? sortValue.value : undefined,
           }
-        : { registeredAt: 'DESC' },
+        : { createdAt: 'DESC' },
     })
 
     roomDeliveryPagination.value = paginationResult.ticketList
@@ -113,7 +113,7 @@ const startFilter = async () => {
   await startFetchData()
 }
 
-const changeSort = async (column: 'id' | 'registeredAt') => {
+const changeSort = async (column: 'id' | 'createdAt') => {
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
     sortValue.value = ''
@@ -237,16 +237,16 @@ const changeLimit = async (limitSelect: any) => {
                 />
               </div>
             </th>
-            <th class="cursor-pointer" @click="changeSort('registeredAt')">
+            <th class="cursor-pointer" @click="changeSort('createdAt')">
               <div class="flex items-center gap-1 justify-center">
                 <span>Trạng thái</span>
-                <IconSort v-if="sortColumn !== 'registeredAt'" style="opacity: 0.4" />
+                <IconSort v-if="sortColumn !== 'createdAt'" style="opacity: 0.4" />
                 <IconSortUp
-                  v-if="sortColumn === 'registeredAt' && sortValue === 'ASC'"
+                  v-if="sortColumn === 'createdAt' && sortValue === 'ASC'"
                   style="opacity: 0.4"
                 />
                 <IconSortDown
-                  v-if="sortColumn === 'registeredAt' && sortValue === 'DESC'"
+                  v-if="sortColumn === 'createdAt' && sortValue === 'DESC'"
                   style="opacity: 0.4"
                 />
               </div>
@@ -304,7 +304,7 @@ const changeLimit = async (limitSelect: any) => {
             </td>
             <td>
               <div><TicketStatusTag :ticket="ticket" /></div>
-              <div>{{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}</div>
+              <div>{{ ESTimer.timeToText(ticket.createdAt, 'hh:mm DD/MM/YYYY') }}</div>
             </td>
             <td>
               <div>

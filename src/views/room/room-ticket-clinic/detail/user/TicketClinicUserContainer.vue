@@ -29,33 +29,13 @@ const laboratoryMap = LaboratoryService.laboratoryMap
 const radiologyMap = RadiologyService.radiologyMap
 
 onMounted(async () => {
-  await Promise.all([
-    RegimenService.getMap(),
-    ProcedureService.getMap(),
-    LaboratoryService.getMap(),
-    RadiologyService.getMap(),
-    ticketRoomRef.value.refreshUserAndRole(),
-  ])
+  ticketRoomRef.value.refreshTicketUserRelationTicketItem()
 })
 
 watch(
   () => ticketRoomRef.value.ticketUserList,
   async (newValue, oldValue) => {
     ticketRoomRef.value.refreshTicketUserRelationTicketItem()
-
-    const productIdList = (newValue || [])
-      .filter((i) => i.positionType === PositionType.ProductRequest)
-      .map((i) => i.positionInteractId)
-    let productMapLocal: Record<string, Product> = {}
-    if (productIdList.length) {
-      const productList = await ProductService.list({
-        filter: {
-          id: { IN: productIdList },
-        },
-      })
-      productMapLocal = arrayToKeyValue(productList, 'id')
-    }
-    productMap.value = productMapLocal
   },
   { immediate: true, deep: true },
 )
@@ -92,12 +72,16 @@ const handleModalTicketUserUpdateCommissionSuccess = (
         <thead>
           <tr>
             <th>#</th>
-            <th v-if="CONFIG.MODE === 'development'">ID-PositionId-PositionType</th>
+            <th v-if="CONFIG.MODE === 'development'">
+              <div>ID-PositionId</div>
+              <div>PositionType</div>
+            </th>
             <th>Vai trò</th>
             <th>Nhân viên</th>
             <th>
               <div v-if="CONFIG.MODE === 'development'">
-                (ticketItemId - ticketItemChildId - positionInteractId)
+                <div>ticketItemId</div>
+                <div>positionInteractId</div>
               </div>
               <div>DV/SP/XN...</div>
             </th>
@@ -141,10 +125,9 @@ const handleModalTicketUserUpdateCommissionSuccess = (
               </td>
               <td>
                 <span v-if="CONFIG.MODE === 'development'" style="color: violet">
-                  ({{ ticketUser.ticketItemId }} - {{ ticketUser.ticketItemChildId }} -
-                  {{ ticketUser.positionInteractId }})
+                  ({{ ticketUser.ticketItemId }} - {{ ticketUser.positionInteractId }})
                 </span>
-                <template v-if="ticketUser.positionType === PositionType.TicketReception">
+                <template v-if="ticketUser.positionType === PositionType.Reception">
                   Phiếu khám
                 </template>
                 <template v-if="ticketUser.positionType === PositionType.ProductRequest">
@@ -177,7 +160,7 @@ const handleModalTicketUserUpdateCommissionSuccess = (
               </td>
 
               <td class="text-right">
-                <template v-if="ticketUser.positionType !== PositionType.TicketReception">
+                <template v-if="ticketUser.positionType !== PositionType.Reception">
                   <div
                     v-if="ticketUser.ticketItemExpectedPrice !== ticketUser.ticketItemActualPrice"
                     class="text-xs italic text-red-500"
@@ -192,7 +175,7 @@ const handleModalTicketUserUpdateCommissionSuccess = (
                 </template>
               </td>
               <td class="text-center">
-                <template v-if="ticketUser.positionType !== PositionType.TicketReception">
+                <template v-if="ticketUser.positionType !== PositionType.Reception">
                   {{ ticketUser.quantity }}
                 </template>
               </td>

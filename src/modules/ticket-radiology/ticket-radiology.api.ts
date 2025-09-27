@@ -21,10 +21,10 @@ export class TicketRadiologyApi {
     }
   }
 
-  static async detail(id: number, options: TicketRadiologyDetailQuery) {
+  static async detail(ticketRadiologyId: string, options: TicketRadiologyDetailQuery) {
     const params = TicketRadiologyGetQuery.toQuery(options)
 
-    const response = await AxiosInstance.get(`/ticket-radiology/detail/${id}`, { params })
+    const response = await AxiosInstance.get(`/ticket-radiology/detail/${ticketRadiologyId}`, { params })
     const { data } = response.data as BaseResponse<{ ticketRadiology: any }>
     return TicketRadiology.from(data.ticketRadiology)
   }

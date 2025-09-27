@@ -14,9 +14,9 @@ export enum TicketRadiologyStatus {
 }
 
 export class TicketRadiology extends BaseModel {
-  id: number
+  id: string
   priority: number
-  ticketId: number
+  ticketId: string
   customerId: number
   roomId: number
   radiologyId: number
@@ -50,11 +50,11 @@ export class TicketRadiology extends BaseModel {
 
   static init(): TicketRadiology {
     const ins = new TicketRadiology()
-    ins.id = 0
+    ins.id = ''
     ins._localId = Math.random().toString(36).substring(2)
 
     ins.radiologyId = 0
-    ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
+    ins.paymentMoneyStatus = PaymentMoneyStatus.PendingPaid
     ins.printHtmlId = 0
     ins.imageIds = '[]'
     ins.description = ''

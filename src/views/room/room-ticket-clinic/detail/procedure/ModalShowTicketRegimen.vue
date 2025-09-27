@@ -43,7 +43,7 @@ const openModal = async (data: { ticketRegimen: TicketRegimen }) => {
     },
   })
   Object.assign(ticketRegimen.value, ticketRegimenResponse)
-  await TicketRegimenService.refreshRelation(ticketRegimen.value)
+  await TicketRegimenService.refreshRelation([ticketRegimen.value])
 }
 
 const closeModal = () => {

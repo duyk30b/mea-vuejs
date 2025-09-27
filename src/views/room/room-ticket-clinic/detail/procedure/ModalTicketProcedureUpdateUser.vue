@@ -9,8 +9,6 @@ import { TicketChangeProcedureApi } from '@/modules/ticket/api/ticket-change-pro
 import TicketChangeTicketUserPosition from '@/views/room/room-user/TicketChangeTicketUserPosition.vue'
 import { computed, ref } from 'vue'
 
-const ticketChangeTicketUserPosition = ref<InstanceType<typeof TicketChangeTicketUserPosition>>()
-
 const emit = defineEmits<{
   (e: 'success', data: TicketProcedure): void
 }>()
@@ -28,11 +26,22 @@ const openModal = async (data: { ticketProcedure: TicketProcedure }) => {
   showModal.value = true
 }
 
-const hasChangeData = computed(() => {
+const hasChangeTicketUserRequest = computed(() => {
   return !TicketUser.equalList(
     ticketProcedureOrigin.ticketUserRequestList || [],
     ticketProcedure.value.ticketUserRequestList || [],
   )
+})
+
+const hasChangeTicketUserResult = computed(() => {
+  return !TicketUser.equalList(
+    ticketProcedureOrigin.ticketUserResultList || [],
+    ticketProcedure.value.ticketUserResultList || [],
+  )
+})
+
+const hasChangeData = computed(() => {
+  return hasChangeTicketUserRequest.value || hasChangeTicketUserResult.value
 })
 
 const closeModal = () => {
@@ -44,12 +53,12 @@ const closeModal = () => {
 const handleSave = async () => {
   try {
     if (ticketProcedure.value.id) {
-      const ticketProcedureResponse =
-        await TicketChangeProcedureApi.updateUserRequestTicketProcedure({
-          ticketId: ticketProcedure.value.ticketId,
-          ticketProcedureId: ticketProcedure.value.id,
-          ticketUserRequestList: ticketProcedure.value.ticketUserRequestList || [],
-        })
+      const ticketProcedureResponse = await TicketChangeProcedureApi.updateUserTicketProcedure({
+        ticketId: ticketProcedure.value.ticketId,
+        ticketProcedureId: ticketProcedure.value.id,
+        ticketUserRequestList: ticketProcedure.value.ticketUserRequestList || [],
+        ticketUserResultList: ticketProcedure.value.ticketUserResultList || [],
+      })
       Object.assign(ticketProcedure.value, ticketProcedureResponse)
     }
     emit('success', ticketProcedure.value)
@@ -61,6 +70,9 @@ const handleSave = async () => {
 
 const handleFixTicketUserRequestList = (tuListData: TicketUser[]) => {
   ticketProcedureOrigin.ticketUserRequestList = TicketUser.fromList(tuListData)
+}
+const handleFixTicketUserResultList = (tuListData: TicketUser[]) => {
+  ticketProcedureOrigin.ticketUserResultList = TicketUser.fromList(tuListData)
 }
 
 defineExpose({ openModal })
@@ -77,14 +89,23 @@ defineExpose({ openModal })
         </div>
       </div>
       <form class="p-4 gap-4" @submit.prevent="(e) => handleSave()">
-        <div v-if="!ticketProcedure.ticketRegimenId">
+        <div v-if="!ticketProcedure.ticketRegimenId || ticketProcedure.ticketRegimenId === '0'">
           <TicketChangeTicketUserPosition
-            ref="ticketChangeTicketUserPosition"
             v-model:ticketUserList="ticketProcedure.ticketUserRequestList!"
             :positionType="PositionType.ProcedureRequest"
             :positionInteractId="ticketProcedure.procedureId"
             @fix:ticketUserList="handleFixTicketUserRequestList"
             title="Nhân viên tư vấn, chỉ định dịch vụ"
+          />
+        </div>
+
+        <div class="mt-4" v-if="!!ticketProcedure.id">
+          <TicketChangeTicketUserPosition
+            v-model:ticketUserList="ticketProcedure.ticketUserResultList!"
+            :positionType="PositionType.ProcedureResult"
+            :positionInteractId="ticketProcedure.procedureId"
+            @fix:ticketUserList="handleFixTicketUserResultList"
+            title="Nhân viên thực hiện"
           />
         </div>
 

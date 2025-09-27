@@ -77,7 +77,7 @@ watch(
             <td>
               <LinkAndStatusTicket :ticket="ticket!" />
               <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ ESTimer.timeToText(ticket.startedAt, 'hh:mm DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(ticket.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td>

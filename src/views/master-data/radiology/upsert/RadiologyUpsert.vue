@@ -52,7 +52,7 @@ const radiologyGroupAll = ref<RadiologyGroup[]>([])
 
 const ticketDemo = Ticket.blank()
 ticketDemo.note = 'Viêm mũi dị ứng'
-ticketDemo.startedAt = Date.now()
+ticketDemo.createdAt = Date.now()
 ticketDemo.customer = Customer.example()
 
 let systemVarLog = {}

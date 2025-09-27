@@ -13,7 +13,7 @@ const ticket = ref<Ticket>(Ticket.blank())
 
 const tbReturnList = ref<
   {
-    ticketBatchId: number
+    ticketBatchId: string
     quantityReturn: number
     tbRoot: TicketBatch
   }[]

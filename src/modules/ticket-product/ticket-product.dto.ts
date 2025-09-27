@@ -12,7 +12,7 @@ export class TicketProductGetQuery {
   }
 
   filter?: {
-    ticketId?: number
+    ticketId?: string
     customerId?: number
     productId?: number
     deliveryStatus?: DeliveryStatus | ConditionEnum<DeliveryStatus>

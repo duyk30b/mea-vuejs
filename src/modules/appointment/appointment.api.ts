@@ -31,7 +31,7 @@ export class AppointmentApi {
     return Appointment.fromList(data.appointmentList)
   }
 
-  static async detail(id: number, options: AppointmentDetailQuery): Promise<Appointment> {
+  static async detail(id: string, options: AppointmentDetailQuery): Promise<Appointment> {
     const params = AppointmentGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get(`/appointment/detail/${id}`, { params })
@@ -74,8 +74,8 @@ export class AppointmentApi {
     return Appointment.from(data.appointment)
   }
 
-  static async updateOne(id: number, body: { appointment: Appointment }) {
-    const response = await AxiosInstance.patch(`/appointment/update/${id}`, {
+  static async updateOne(appointmentId: string, body: { appointment: Appointment }) {
+    const response = await AxiosInstance.patch(`/appointment/update/${appointmentId}`, {
       registeredAt: body.appointment.registeredAt,
       reason: body.appointment.reason,
       customerSourceId: body.appointment.customerSourceId,
@@ -86,15 +86,15 @@ export class AppointmentApi {
     return Appointment.from(data.appointment)
   }
 
-  static async delete(id: number) {
-    const response = await AxiosInstance.delete(`/appointment/delete/${id}`)
+  static async delete(appointmentId: string) {
+    const response = await AxiosInstance.delete(`/appointment/delete/${appointmentId}`)
     const { data } = response.data as BaseResponse<{ appointmentId: any }>
     return data
   }
 
   static async registerTicketClinic(
-    appointmentId: number,
-    body: { roomId: number; registeredAt: number },
+    appointmentId: string,
+    body: { toTicketId: string; roomId: number; receptionAt: number; isPaymentEachItem: number },
   ) {
     const response = await AxiosInstance.post(
       `/appointment/${appointmentId}/register-ticket-clinic`,

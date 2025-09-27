@@ -170,7 +170,7 @@ defineExpose({ openModal })
                 <td>
                   <LinkAndStatusTicket :ticket="ticketPayment.ticket" />
                   <div>
-                    {{ ESTimer.timeToText(ticketPayment.ticket.startedAt, 'DD/MM/YYYY hh:mm') }}
+                    {{ ESTimer.timeToText(ticketPayment.ticket.createdAt, 'DD/MM/YYYY hh:mm') }}
                   </div>
                 </td>
                 <td class="text-right">

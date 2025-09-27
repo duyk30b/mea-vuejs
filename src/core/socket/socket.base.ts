@@ -3,6 +3,7 @@ import { CONFIG } from '../../config'
 import { REFRESH_TOKEN } from '../local-storage.service'
 import { SocketService } from './socket.service'
 import { SOCKET_EVENT } from './socket.variable'
+import { SocketTicketService } from './socket-ticket.service'
 
 let SocketBase: Socket
 
@@ -33,6 +34,10 @@ export const socketInit = () => {
 
   SocketBase.on(SOCKET_EVENT.SERVER_EMIT_DEMO, (data) => {
     SocketService.listenServerEmitDemo(data)
+  })
+
+  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE, (data) => {
+    SocketTicketService.listenSocketTicketChange(data)
   })
 
   SocketBase.on(SOCKET_EVENT.SOCKET_ORGANIZATION_UPDATE, (data) => {
@@ -83,43 +88,8 @@ export const socketInit = () => {
     SocketService.listenDiscountListChange(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE, (data) => {
-    SocketService.listenSocketTicketChange(data)
-  })
-
   SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_LIST_CHANGE, (data) => {
     SocketService.listenSocketTicketListChange(data)
-  })
-
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_ATTRIBUTE, (data) => {
-    SocketService.listenSocketTicketAttributeChange(data)
-  })
-
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_PROCEDURE, (data) => {
-    SocketService.listenSocketTicketProcedureListChange(data)
-  })
-
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_RADIOLOGY, (data) => {
-    SocketService.listenSocketTicketRadiologyListChange(data)
-  })
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_LABORATORY, (data) => {
-    SocketService.listenSocketTicketLaboratoryListChange(data)
-  })
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_CONSUMABLE, (data) => {
-    SocketService.listenSocketTicketConsumableChange(data)
-  })
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_PRESCRIPTION, (data) => {
-    SocketService.listenSocketTicketPrescriptionChange(data)
-  })
-
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_BATCH, (data) => {
-    SocketService.listenTicketBatchListChange(data)
-  })
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_USER, (data) => {
-    SocketService.listenSocketTicketUserListChange(data)
-  })
-  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE_IMAGE, (data) => {
-    SocketService.listenTicketChangeImage(data)
   })
 }
 

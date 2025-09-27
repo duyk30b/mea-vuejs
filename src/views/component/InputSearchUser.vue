@@ -2,6 +2,7 @@
 import { InputOptionsValue, InputSearch } from '@/common/vue-form'
 import type { ItemOption } from '@/common/vue-form/InputSearch.vue'
 import { CONFIG } from '@/config'
+import { useSettingStore } from '@/modules/_me/setting.store'
 import { CommissionCalculatorType, Position, PositionService } from '@/modules/position'
 import { RoleService } from '@/modules/role'
 import { User, UserService } from '@/modules/user'
@@ -29,7 +30,10 @@ const props = withDefaults(
   },
 )
 
-const inputOptionsUser = ref<InstanceType<typeof InputOptionsValue>>()
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
+
+const inputSearchUser = ref<InstanceType<typeof InputOptionsValue>>()
 
 const userOptions = ref<ItemOption<User>[]>([])
 const position = ref(Position.blank())
@@ -76,9 +80,12 @@ const logicFilter = (item: ItemOption<User>, text: string) => {
   <div class="flex gap-1 flex-wrap">
     <div>{{ position.role?.name || 'Nhân viên' }}</div>
     <div v-if="CONFIG.MODE === 'development'" style="color: violet">
-      (P{{ positionId }} - R{{ position.roleId }} - U{{ userId }} -
+      (P{{ positionId }} - R{{ position.roleId }} - U{{ userId }})
+    </div>
+    <div v-if="position.commissionValue || CONFIG.MODE === 'development'" class="flex">
+      <span>(</span>
       <span v-if="position.commissionCalculatorType === CommissionCalculatorType.VND">
-        {{ position.commissionValue }}
+        {{ formatMoney(position.commissionValue) }}
       </span>
       <span v-if="position.commissionCalculatorType === CommissionCalculatorType.PercentActual">
         {{ position.commissionValue }}% TT
@@ -86,12 +93,12 @@ const logicFilter = (item: ItemOption<User>, text: string) => {
       <span v-if="position.commissionCalculatorType === CommissionCalculatorType.PercentExpected">
         {{ position.commissionValue }}% NY
       </span>
-      )
+      <span>)</span>
     </div>
   </div>
   <div>
     <InputSearch
-      ref="inputOptionsUser"
+      ref="inputSearchUser"
       :value="userId"
       :disabled="disabled"
       :maxHeight="320"

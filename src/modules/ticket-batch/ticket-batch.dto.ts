@@ -13,7 +13,7 @@ export class TicketBatchGetQuery {
   }
 
   filter?: {
-    ticketId?: number
+    ticketId?: string
     customerId?: number
     productId?: number
     batchId?: number

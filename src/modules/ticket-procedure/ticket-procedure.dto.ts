@@ -1,6 +1,12 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { ConditionDate, ConditionEnum, ConditionNumber } from '../_base/base-condition'
+import type {
+  ConditionDate,
+  ConditionEnum,
+  ConditionNumber,
+  ConditionString,
+} from '../_base/base-condition'
 import type { PaymentMoneyStatus } from '../enum'
+import type { TicketProcedureStatus, TicketProcedureType } from './ticket-procedure.model'
 
 export class TicketProcedureGetQuery {
   page: number
@@ -15,14 +21,20 @@ export class TicketProcedureGetQuery {
   }
 
   filter?: {
-    paymentMoneyStatus?: PaymentMoneyStatus | ConditionEnum<PaymentMoneyStatus>
-    procedureId?: number
+    ticketId?: string | ConditionString
+    ticketRegimenId?: string | ConditionString
     customerId?: number
-    ticketId?: number | ConditionNumber
+    procedureId?: number
+    ticketProcedureType?: TicketProcedureType | ConditionEnum<TicketProcedureType>
+    paymentMoneyStatus?: PaymentMoneyStatus | ConditionEnum<PaymentMoneyStatus>
+    status?: TicketProcedureStatus | ConditionEnum<TicketProcedureStatus>
     createdAt?: ConditionDate
   }
 
-  sort?: { id?: 'ASC' | 'DESC' }
+  sort?: {
+    id?: 'ASC' | 'DESC'
+    completedAt?: 'ASC' | 'DESC'
+  }
 
   static toQuery(instance: Partial<TicketProcedureGetQuery>) {
     return {

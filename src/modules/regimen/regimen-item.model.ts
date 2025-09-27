@@ -7,7 +7,7 @@ export class RegimenItem extends BaseModel {
   procedureId: number
 
   quantity: number
-
+  gapDay: number
   procedure?: Procedure
 
   static init() {
@@ -18,6 +18,7 @@ export class RegimenItem extends BaseModel {
     ins.regimenId = 0
     ins.procedureId = 0
     ins.quantity = 1
+    ins.gapDay = 1
 
     return ins
   }
@@ -61,6 +62,7 @@ export class RegimenItem extends BaseModel {
 
   static equal(a: RegimenItem, b: RegimenItem) {
     if (a.id != b.id) return false
+    if (a.procedureId != b.procedureId) return false
     if (a.procedureId != b.procedureId) return false
 
     if (a.quantity != b.quantity) return false

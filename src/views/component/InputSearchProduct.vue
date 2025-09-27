@@ -24,6 +24,7 @@ const props = withDefaults(
     required?: boolean
     showQuantity?: boolean
     showEditProduct?: boolean
+    removeLabelWrapper?: boolean
   }>(),
   {
     productId: 0,
@@ -34,6 +35,7 @@ const props = withDefaults(
     required: false,
     showQuantity: true,
     showEditProduct: true,
+    removeLabelWrapper: false,
   },
 )
 
@@ -57,9 +59,7 @@ watch(
   async (newValue) => {
     if (newValue != product.value.id) {
       const productData = await ProductService.getOne(newValue)
-      if (productData) {
-        setProductFromParent(productData)
-      }
+      setProductFromParent(productData)
     }
   },
   { immediate: true },
@@ -124,9 +124,16 @@ const setProductFromCurrent = async (productData: Product) => {
   emit('selectProduct', productData)
 }
 
-const setProductFromParent = async (productData: Product) => {
-  product.value = Product.from(productData)
-  productOptions.value = [{ value: productData.id, text: productData.brandName, data: productData }]
+const setProductFromParent = async (productData?: Product) => {
+  if (productData) {
+    product.value = Product.from(productData)
+    productOptions.value = [
+      { value: productData.id, text: productData.brandName, data: productData },
+    ]
+  } else {
+    product.value = Product.blank()
+    productOptions.value = []
+  }
 }
 
 const handleModalProductUpsertSuccess = (productData?: Product) => {
@@ -139,12 +146,12 @@ const handleModalProductUpsertSuccess = (productData?: Product) => {
   <ModalProductDetail ref="modalProductDetail" />
   <ModalProductUpsert ref="modalProductUpsert" @success="handleModalProductUpsertSuccess" />
 
-  <div class="flex gap-1 flex-wrap">
+  <div v-if="!removeLabelWrapper" class="flex gap-1 flex-wrap">
     <span>Tên sản phẩm</span>
-    <a v-if="product.id" @click="modalProductDetail?.openModal(product)">
+    <a v-if="productId" @click="modalProductDetail?.openModal(product)">
       <IconFileSearch />
     </a>
-    <div v-if="showQuantity && product.id">
+    <div v-if="showQuantity && productId">
       (
       <span
         v-if="product.warehouseIds !== '[]'"
@@ -164,7 +171,7 @@ const handleModalProductUpsertSuccess = (productData?: Product) => {
     </div>
     <a
       v-if="showEditProduct && userPermission[PermissionId.PRODUCT_UPDATE] && product?.id"
-      @click="modalProductUpsert?.openModal(product.id)"
+      @click="modalProductUpsert?.openModal(productId)"
     >
       Sửa thông tin sản phẩm
     </a>
@@ -173,7 +180,7 @@ const handleModalProductUpsertSuccess = (productData?: Product) => {
   <div>
     <InputSearch
       ref="inputOptionsProduct"
-      :value="product.id"
+      :value="productId"
       :disabled="disabled"
       :maxHeight="320"
       :options="productOptions"

@@ -25,11 +25,11 @@ export const MovementTypeText = {
 }
 
 export class ProductMovement {
-  id: number
+  id: string
   movementType: MovementType
   contactId: number
-  voucherId: number // ticketId hoặc purchaseOrderId
-  voucherProductId: number // ticketProductId hoặc purchaseOrderItemId
+  voucherId: string // ticketId hoặc purchaseOrderId
+  voucherProductId: string // ticketProductId hoặc purchaseOrderItemId
   warehouseId: number
   productId: number
   batchId: number

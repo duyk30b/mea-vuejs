@@ -12,6 +12,7 @@ import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatu
 import TicketLaboratoryStatusTooltip from '@/views/room/room-laboratory/TicketLaboratoryStatusTooltip.vue'
 import { computed, onMounted, ref } from 'vue'
 import ModalTicketLaboratoryUpdateMoney from '../laboratory/ModalTicketLaboratoryUpdateMoney.vue'
+import { TicketLaboratoryService } from '@/modules/ticket-laboratory'
 
 const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
@@ -21,7 +22,11 @@ const { formatMoney, isMobile } = settingStore
 const { userPermission, organization } = MeService
 
 onMounted(async () => {
-  await ticketRoomRef.value.refreshLaboratory()
+  await Promise.all([
+    TicketLaboratoryService.refreshRelationGroup(ticketRoomRef.value.ticketLaboratoryGroupList),
+    TicketLaboratoryService.refreshRelation(ticketRoomRef.value.ticketLaboratoryList),
+  ])
+  ticketRoomRef.value.refreshTicketLaboratory()
 })
 
 const laboratoryDiscount = computed(() => {
@@ -52,6 +57,7 @@ const laboratoryCostAmount = computed(() => {
         <th>Giá</th>
         <th>Chiết khấu</th>
         <th v-if="CONFIG.MODE === 'development'">Vốn</th>
+        <th v-if="CONFIG.MODE === 'development'">H.Hồng</th>
         <th>Tổng tiền</th>
         <th></th>
       </tr>
@@ -97,6 +103,7 @@ const laboratoryCostAmount = computed(() => {
           <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
             {{ formatMoney(tl.costPrice) }}
           </td>
+          <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet"></td>
           <td class="text-right whitespace-nowrap">
             {{ formatMoney(tl.actualPrice) }}
           </td>
@@ -104,9 +111,7 @@ const laboratoryCostAmount = computed(() => {
             <a
               v-if="
                 ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                  tl.paymentMoneyStatus,
-                ) &&
+                tl.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
                 userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
               "
               class="text-orange-500"
@@ -130,6 +135,8 @@ const laboratoryCostAmount = computed(() => {
         <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
           {{ formatMoney(laboratoryCostAmount) }}
         </td>
+        <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet"></td>
+
         <td class="font-bold text-right whitespace-nowrap">
           {{ formatMoney(ticketRoomRef.laboratoryMoney) }}
         </td>

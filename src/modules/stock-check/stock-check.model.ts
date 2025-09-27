@@ -20,7 +20,7 @@ export const StockCheckStatusText = {
 }
 
 export class StockCheck {
-  id: number
+  id: string
   createdAt: number
   updatedAt: number
   createdByUserId: number
@@ -35,7 +35,7 @@ export class StockCheck {
 
   static init(): StockCheck {
     const ins = new StockCheck()
-    ins.id = 0
+    ins.id = ''
     ins.status = StockCheckStatus.Draft
 
     return ins

@@ -15,7 +15,7 @@ export class OrganizationService {
     organizationInfo: Organization
     imagesChange?: {
       files: File[]
-      imageIdsWait: number[]
+      imageIdWaitList: number[]
       externalUrlList: string[]
     }
   }) {

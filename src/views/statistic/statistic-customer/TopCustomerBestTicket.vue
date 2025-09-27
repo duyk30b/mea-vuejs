@@ -69,7 +69,7 @@ const startFetchStatisticTicketGroupByCustomer = async (options: {
 
   const fetchResponse = await StatisticTicketApi.groupByCustomer({
     filter: {
-      startedAt:
+      createdAt:
         fromTime.value || toTime.value
           ? {
               GTE: fromTime.value ? fromTime.value : undefined,

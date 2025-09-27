@@ -14,7 +14,7 @@ export class OrganizationApi {
     organizationInfo: Organization
     imagesChange?: {
       files: File[]
-      imageIdsWait: number[]
+      imageIdWaitList: number[]
       externalUrlList: string[]
     }
   }) {
@@ -32,7 +32,7 @@ export class OrganizationApi {
     if (imagesChange) {
       // imagesChange.files.forEach((file) => formData.append('files', file))
       const imagesChangeStr = JSON.stringify({
-        imageIdsWait: imagesChange.imageIdsWait,
+        imageIdWaitList: imagesChange.imageIdWaitList,
         externalUrlList: imagesChange.externalUrlList,
       })
       formData.append('imagesChange', imagesChangeStr)

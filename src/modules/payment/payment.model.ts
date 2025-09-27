@@ -54,9 +54,9 @@ export enum MoneyDirection {
 }
 
 export class Payment {
-  id: number
+  id: string
   voucherType: PaymentVoucherType
-  voucherId: number
+  voucherId: string
   personType: PaymentPersonType
   personId: number
 
@@ -84,9 +84,9 @@ export class Payment {
 
   static init(): Payment {
     const ins = new Payment()
-    ins.id = 0
+    ins.id = ''
     ins.voucherType = PaymentVoucherType.Other
-    ins.voucherId = 0
+    ins.voucherId = ''
     ins.personType = PaymentPersonType.Other
     ins.personId = 0
 
@@ -172,7 +172,7 @@ export class Payment {
           i.ticketItemType === TicketItemType.TicketProductPrescription
         )
       })
-      .map((i) => i.ticketItemId)
+      .map((i) => i.interactId)
 
     const [productMap, procedureMap, laboratoryMap, radiologyMap, userMap] = await Promise.all([
       ProductService.map({ filter: { id: { IN: productIdList } } }),

@@ -102,7 +102,7 @@ defineExpose({ openModal })
                     :class="ticket.id === ticketItem.id ? 'active' : ''"
                     @click="clickTicketHistory(ticketItem)"
                   >
-                    <td>{{ ESTimer.timeToText(ticketItem.registeredAt, 'DD/MM/YY') }}</td>
+                    <td>{{ ESTimer.timeToText(ticketItem.createdAt, 'DD/MM/YY') }}</td>
                     <td>{{ ticketItem.note }}</td>
                   </tr>
                 </tbody>

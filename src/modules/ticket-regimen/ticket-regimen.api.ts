@@ -21,10 +21,12 @@ export class TicketRegimenApi {
     }
   }
 
-  static async detail(id: number, options: TicketRegimenDetailQuery) {
+  static async detail(ticketRegimenId: string, options: TicketRegimenDetailQuery) {
     const params = TicketRegimenGetQuery.toQuery(options)
 
-    const response = await AxiosInstance.get(`/ticket-regimen/detail/${id}`, { params })
+    const response = await AxiosInstance.get(`/ticket-regimen/detail/${ticketRegimenId}`, {
+      params,
+    })
     const { data } = response.data as BaseResponse<{ ticketRegimen: any }>
     return TicketRegimen.from(data.ticketRegimen)
   }

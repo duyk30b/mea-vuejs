@@ -147,7 +147,7 @@ const downloadTicketList = (menu: { key: string }) => {
       await FileTicketApi.downloadExcelTicketList({
         filter: {
           roomId: roomId.value ? roomId.value : undefined,
-          registeredAt:
+          createdAt:
             fromTime || toTime
               ? { GTE: fromTime ? fromTime : undefined, LTE: toTime ? toTime : undefined }
               : undefined,

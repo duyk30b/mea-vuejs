@@ -104,8 +104,11 @@ export enum AttributeLayoutType {
 }
 
 export enum PaymentMoneyStatus {
-  TicketPaid = 1,
-  NoEffect = 2,
-  PendingPayment = 3,
-  Paid = 4,
+  PendingPaid = 1,
+  Paid = 2,
+}
+
+export enum PaymentEffect {
+  SelfPayment = 1,
+  RelationPayment = 2,
 }

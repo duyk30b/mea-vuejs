@@ -21,10 +21,13 @@ export class TicketLaboratoryGroupApi {
     }
   }
 
-  static async detail(id: number, options: TicketLaboratoryGroupDetailQuery) {
+  static async detail(ticketLaboratoryGroupId: string, options: TicketLaboratoryGroupDetailQuery) {
     const params = TicketLaboratoryGroupGetQuery.toQuery(options)
 
-    const response = await AxiosInstance.get(`/ticket-laboratory-group/detail/${id}`, { params })
+    const response = await AxiosInstance.get(
+      `/ticket-laboratory-group/detail/${ticketLaboratoryGroupId}`,
+      { params },
+    )
     const { data } = response.data as BaseResponse<{ ticketLaboratoryGroup: any }>
     return TicketLaboratoryGroup.from(data.ticketLaboratoryGroup)
   }

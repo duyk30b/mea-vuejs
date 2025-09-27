@@ -1,4 +1,5 @@
-import { TicketRegimen } from '@/modules/ticket-regimen'
+import type { TicketProduct } from '@/modules/ticket-product'
+import { TicketRegimen, TicketRegimenItem } from '@/modules/ticket-regimen'
 import { AxiosInstance } from '../../../core/axios.instance'
 import type { BaseResponse } from '../../_base/base-dto'
 import { TicketProcedure } from '../../ticket-procedure'
@@ -6,58 +7,46 @@ import { TicketUser } from '../../ticket-user'
 
 export class TicketChangeProcedureApi {
   static async addTicketProcedureList(obj: {
-    ticketId: number
-    ticketRegimenAddWrapList: {
+    ticketId: string
+    ticketRegimenWrapList: {
       ticketRegimenAdd: TicketRegimen
       ticketUserRequestAddList: TicketUser[]
-      ticketProcedureRegimenAddWrapList: {
-        totalSession: number
-        ticketProcedureAdd: TicketProcedure
-      }[]
+      ticketRegimenItemAddList: TicketRegimenItem[]
     }[]
-    ticketProcedureNormalWrapList: {
+    ticketProcedureWrapList: {
       ticketProcedureAdd: TicketProcedure
       ticketUserRequestAddList: TicketUser[]
     }[]
   }) {
-    const { ticketId, ticketRegimenAddWrapList, ticketProcedureNormalWrapList } = obj
+    const { ticketId, ticketRegimenWrapList, ticketProcedureWrapList } = obj
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/procedure/add-ticket-procedure-list`,
       {
-        ticketRegimenAddWrapList: ticketRegimenAddWrapList.map((trWrap) => {
-          const { ticketRegimenAdd, ticketProcedureRegimenAddWrapList, ticketUserRequestAddList } =
-            trWrap
+        ticketRegimenWrapList: ticketRegimenWrapList.map((trWrap) => {
+          const { ticketRegimenAdd, ticketRegimenItemAddList, ticketUserRequestAddList } = trWrap
           return {
             ticketRegimenAdd: {
               regimenId: ticketRegimenAdd.regimenId,
-              paymentMoneyStatus: ticketRegimenAdd.paymentMoneyStatus,
 
-              expectedPrice: ticketRegimenAdd.expectedPrice,
-              discountMoney: ticketRegimenAdd.discountMoney,
-              discountPercent: ticketRegimenAdd.discountPercent,
+              expectedPrice: Math.floor(ticketRegimenAdd.expectedPrice),
+              discountMoney: Math.floor(ticketRegimenAdd.discountMoney),
+              discountPercent: Math.floor(ticketRegimenAdd.discountPercent),
               discountType: ticketRegimenAdd.discountType,
-              actualPrice: ticketRegimenAdd.actualPrice,
+              actualPrice: Math.floor(ticketRegimenAdd.actualPrice),
             },
-            ticketProcedureRegimenAddWrapList: (ticketProcedureRegimenAddWrapList || [])
-              .filter((tpWrap) => tpWrap.totalSession > 0)
-              .map((tpWrap, index) => {
-                const { ticketProcedureAdd } = tpWrap
+            ticketRegimenItemAddList: (ticketRegimenItemAddList || [])
+              .filter((tri) => tri.quantityTotal > 0)
+              .map((tri, index) => {
                 return {
-                  ticketProcedureAdd: {
-                    priority: ticketProcedureAdd.priority,
-                    procedureId: ticketProcedureAdd.procedureId,
-                    status: ticketProcedureAdd.status,
-                    paymentMoneyStatus: ticketProcedureAdd.paymentMoneyStatus,
+                  procedureId: tri.procedureId,
+                  quantityTotal: tri.quantityTotal,
+                  gapDay: tri.gapDay,
 
-                    quantity: ticketProcedureAdd.quantity,
-
-                    expectedPrice: ticketProcedureAdd.expectedPrice,
-                    discountMoney: ticketProcedureAdd.discountMoney,
-                    discountPercent: ticketProcedureAdd.discountPercent,
-                    discountType: ticketProcedureAdd.discountType,
-                    actualPrice: ticketProcedureAdd.actualPrice,
-                  },
-                  totalSession: tpWrap.totalSession,
+                  expectedPrice: Math.floor(tri.expectedPrice),
+                  discountMoney: Math.floor(tri.discountMoney),
+                  discountPercent: Math.floor(tri.discountPercent),
+                  discountType: tri.discountType,
+                  actualPrice: Math.floor(tri.actualPrice),
                 }
               }),
             ticketUserRequestAddList: (ticketUserRequestAddList || [])
@@ -68,22 +57,21 @@ export class TicketChangeProcedureApi {
               })),
           }
         }),
-        ticketProcedureNormalWrapList: ticketProcedureNormalWrapList.map((tp) => {
+        ticketProcedureWrapList: ticketProcedureWrapList.map((tp) => {
           const { ticketProcedureAdd, ticketUserRequestAddList } = tp
           return {
             ticketProcedureAdd: {
               priority: ticketProcedureAdd.priority,
               procedureId: ticketProcedureAdd.procedureId,
               status: ticketProcedureAdd.status,
-              paymentMoneyStatus: ticketProcedureAdd.paymentMoneyStatus,
 
               quantity: ticketProcedureAdd.quantity,
 
-              expectedPrice: ticketProcedureAdd.expectedPrice,
-              discountMoney: ticketProcedureAdd.discountMoney,
-              discountPercent: ticketProcedureAdd.discountPercent,
+              expectedPrice: Math.floor(ticketProcedureAdd.expectedPrice),
+              discountMoney: Math.floor(ticketProcedureAdd.discountMoney),
+              discountPercent: Math.floor(ticketProcedureAdd.discountPercent),
               discountType: ticketProcedureAdd.discountType,
-              actualPrice: ticketProcedureAdd.actualPrice,
+              actualPrice: Math.floor(ticketProcedureAdd.actualPrice),
             },
             ticketUserRequestAddList: (ticketUserRequestAddList || [])
               .filter((i) => !!i.userId)
@@ -102,50 +90,51 @@ export class TicketChangeProcedureApi {
     }>
   }
 
-  static async destroyTicketProcedure(body: { ticketId: number; ticketProcedureId: number }) {
+  static async destroyTicketProcedure(body: { ticketId: string; ticketProcedureId: string }) {
     const { ticketId, ticketProcedureId } = body
     const response = await AxiosInstance.delete(
       `/ticket/${ticketId}/procedure/destroy-ticket-procedure/${ticketProcedureId}`,
     )
-    const { data } = response.data as BaseResponse<{ ticketId: any; ticketProcedureId: number }>
+    const { data } = response.data as BaseResponse<{ ticketId: any; ticketProcedureId: string }>
   }
 
-  static async destroyTicketRegimen(body: { ticketId: number; ticketRegimenId: number }) {
+  static async destroyTicketRegimen(body: { ticketId: string; ticketRegimenId: string }) {
     const { ticketId, ticketRegimenId } = body
     const response = await AxiosInstance.delete(
       `/ticket/${ticketId}/procedure/destroy-ticket-regimen/${ticketRegimenId}`,
     )
-    const { data } = response.data as BaseResponse<{ ticketId: any; ticketRegimenId: number }>
+    const { data } = response.data as BaseResponse<{ ticketId: any; ticketRegimenId: string }>
   }
 
   static async updateMoneyTicketProcedure(body: {
-    ticketId: number
-    ticketProcedureId: number
+    ticketId: string
+    ticketProcedureId: string
     ticketProcedure: TicketProcedure
   }) {
     const { ticketId, ticketProcedureId, ticketProcedure } = body
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/procedure/update-money-ticket-procedure/${ticketProcedureId}`,
       {
-        expectedPrice: ticketProcedure.expectedPrice,
-        discountMoney: ticketProcedure.discountMoney,
-        discountPercent: ticketProcedure.discountPercent,
+        expectedPrice: Math.floor(ticketProcedure.expectedPrice),
+        discountMoney: Math.floor(ticketProcedure.discountMoney),
+        discountPercent: Math.floor(ticketProcedure.discountPercent),
         discountType: ticketProcedure.discountType,
-        actualPrice: ticketProcedure.actualPrice,
+        actualPrice: Math.floor(ticketProcedure.actualPrice),
       },
     )
     const { data } = response.data as BaseResponse<{ ticketProcedureModified: any }>
     return TicketProcedure.from(data.ticketProcedureModified)
   }
 
-  static async updateUserRequestTicketProcedure(body: {
-    ticketId: number
-    ticketProcedureId: number
+  static async updateUserTicketProcedure(body: {
+    ticketId: string
+    ticketProcedureId: string
     ticketUserRequestList: TicketUser[]
+    ticketUserResultList: TicketUser[]
   }) {
     const { ticketId, ticketProcedureId } = body
     const response = await AxiosInstance.post(
-      `/ticket/${ticketId}/procedure/update-user-request-ticket-procedure/${ticketProcedureId}`,
+      `/ticket/${ticketId}/procedure/update-user-ticket-procedure/${ticketProcedureId}`,
       {
         ticketUserRequestList: body.ticketUserRequestList
           .filter((i) => !!i.userId)
@@ -153,20 +142,6 @@ export class TicketChangeProcedureApi {
             positionId: i.positionId,
             userId: i.userId,
           })),
-      },
-    )
-    const { data } = response.data as BaseResponse<{ ticketProcedureModified: any }>
-  }
-
-  static async updateUserResultTicketProcedure(body: {
-    ticketId: number
-    ticketProcedureId: number
-    ticketUserResultList: TicketUser[]
-  }) {
-    const { ticketId, ticketProcedureId } = body
-    const response = await AxiosInstance.post(
-      `/ticket/${ticketId}/procedure/update-user-result-ticket-procedure/${ticketProcedureId}`,
-      {
         ticketUserResultList: body.ticketUserResultList
           .filter((i) => !!i.userId)
           .map((i) => ({
@@ -179,7 +154,7 @@ export class TicketChangeProcedureApi {
   }
 
   static async updatePriorityTicketProcedure(body: {
-    ticketId: number
+    ticketId: string
     ticketProcedureList: TicketProcedure[]
   }) {
     const { ticketId, ticketProcedureList } = body
@@ -195,42 +170,9 @@ export class TicketChangeProcedureApi {
     const { data } = response.data as BaseResponse<{ ticketProcedureList: any[] }>
   }
 
-  static async updateMoneyTicketRegimen(body: {
-    ticketId: number
-    ticketRegimenId: number
-    ticketRegimen: TicketRegimen
-    ticketProcedureList: TicketProcedure[]
-  }) {
-    const { ticketId, ticketRegimenId, ticketRegimen, ticketProcedureList } = body
-    const response = await AxiosInstance.post(
-      `/ticket/${ticketId}/procedure/update-money-ticket-regimen/${ticketRegimenId}`,
-      {
-        ticketRegimen: {
-          expectedPrice: ticketRegimen.expectedPrice,
-          discountMoney: ticketRegimen.discountMoney,
-          discountPercent: ticketRegimen.discountPercent,
-          discountType: ticketRegimen.discountType,
-          actualPrice: ticketRegimen.actualPrice,
-        },
-        ticketProcedureList: ticketProcedureList.map((i, index) => ({
-          id: i.id || 0,
-          quantity: i.quantity,
-
-          expectedPrice: i.expectedPrice,
-          discountMoney: i.discountMoney,
-          discountPercent: i.discountPercent,
-          discountType: i.discountType,
-          actualPrice: i.actualPrice,
-        })),
-      },
-    )
-    const { data } = response.data as BaseResponse<{ ticketRegimenModified: any }>
-    return TicketRegimen.from(data.ticketRegimenModified)
-  }
-
   static async updateUserRequestTicketRegimen(body: {
-    ticketId: number
-    ticketRegimenId: number
+    ticketId: string
+    ticketRegimenId: string
     ticketUserRequestList: TicketUser[]
   }) {
     const { ticketId, ticketRegimenId, ticketUserRequestList } = body
@@ -248,53 +190,90 @@ export class TicketChangeProcedureApi {
     const { data } = response.data as BaseResponse<{ ticketRegimenModified: any }>
   }
 
-  static async updateResultTicketProcedure(options: {
-    ticketId: number
-    ticketProcedureId: number
-    ticketProcedure: {
-      completedAt: number
-      result: string
-    }
+  static async processResultTicketProcedure(options: {
+    ticketId: string
+    ticketProcedureResult: TicketProcedure
+    ticketUserResultList: TicketUser[]
+    ticketProductProcedureResultList: TicketProduct[]
     imagesChange?: {
       files: File[]
-      imageIdsWait: number[]
+      imageIdWaitList: number[]
       externalUrlList: string[]
     }
   }) {
-    const { ticketId, ticketProcedureId, ticketProcedure, imagesChange } = options
+    const {
+      ticketId,
+      imagesChange,
+      ticketProcedureResult,
+      ticketUserResultList,
+      ticketProductProcedureResultList,
+    } = options
 
     const formData = new FormData()
 
     if (imagesChange) {
       // imagesChange.files.forEach((file) => formData.append('files', file))
       const imagesChangeStr = JSON.stringify({
-        imageIdsWait: imagesChange.imageIdsWait,
+        imageIdWaitList: imagesChange.imageIdWaitList,
         externalUrlList: imagesChange.externalUrlList,
       })
       formData.append('imagesChange', imagesChangeStr)
     }
 
-    formData.append('ticketProcedure', JSON.stringify(ticketProcedure))
+    formData.append(
+      'ticketProcedureResult',
+      JSON.stringify({
+        ticketProcedureId: ticketProcedureResult.id,
+        quantity: ticketProcedureResult.quantity,
+        completedAt: ticketProcedureResult.completedAt,
+        result: ticketProcedureResult.result || '',
+      }),
+    )
+
+    formData.append(
+      'ticketUserResultList',
+      JSON.stringify(
+        ticketUserResultList
+          .filter((i) => !!i.userId)
+          .map((i) => ({
+            positionId: i.positionId,
+            userId: i.userId,
+          })),
+      ),
+    )
+
+    formData.append(
+      'ticketProductProcedureResultList',
+      JSON.stringify(
+        ticketProductProcedureResultList.map((i) => {
+          return {
+            quantity: i.quantity,
+            productId: i.productId,
+            pickupStrategy: i.pickupStrategy,
+            warehouseIds: i.warehouseIds,
+          }
+        }),
+      ),
+    )
 
     const response = await AxiosInstance.post(
-      `ticket/${ticketId}/procedure/update-result-ticket-procedure/${ticketProcedureId}`,
+      `ticket/${ticketId}/procedure/process-result-ticket-procedure`,
       formData,
       {
         headers: { 'Content-Type': 'multipart/form-data' },
       },
     )
-    const { data } = response.data as BaseResponse<{ ticketProcedureModified: any }>
-
-    return TicketProcedure.from(data.ticketProcedureModified)
+    const { data } = response.data as BaseResponse<any>
+    return data
   }
 
-  static async cancelResultTicketProcedure(body: { ticketId: number; ticketProcedureId: number }) {
+  static async cancelResultTicketProcedure(body: { ticketId: string; ticketProcedureId: string }) {
     const { ticketId, ticketProcedureId } = body
     const response = await AxiosInstance.post(
       `ticket/${ticketId}/procedure/cancel-result-ticket-procedure/${ticketProcedureId}`,
     )
-    const { data } = response.data as BaseResponse<{ ticketProcedureModified: any }>
+    const { data } = response.data as BaseResponse<any>
 
-    return TicketProcedure.from(data.ticketProcedureModified)
+    return data
   }
 }

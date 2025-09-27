@@ -28,11 +28,11 @@ export class PurchaseOrderReceptionApi {
         listPrice: i.listPrice,
       })),
     })
-    const { data } = response.data as BaseResponse<{ purchaseOrderId: number }>
+    const { data } = response.data as BaseResponse<{ purchaseOrderId: string }>
     return data
   }
 
-  static async updateDraft(purchaseOrderId: number, purchaseOrder: PurchaseOrder) {
+  static async updateDraft(purchaseOrderId: string, purchaseOrder: PurchaseOrder) {
     const response = await AxiosInstance.patch(`/purchase-order/${purchaseOrderId}/update-draft`, {
       distributorId: purchaseOrder.distributorId, // sửa thì không cho thay đổi distributor
       purchaseOrder: {
@@ -57,11 +57,11 @@ export class PurchaseOrderReceptionApi {
         listPrice: i.listPrice,
       })),
     })
-    const { data } = response.data as BaseResponse<{ purchaseOrderId: number }>
+    const { data } = response.data as BaseResponse<{ purchaseOrderId: string }>
     return data
   }
 
-  static async depositedUpdate(purchaseOrderId: number, purchaseOrder: PurchaseOrder) {
+  static async depositedUpdate(purchaseOrderId: string, purchaseOrder: PurchaseOrder) {
     const response = await AxiosInstance.patch(`/purchase-order/${purchaseOrderId}/deposited-update`, {
       distributorId: purchaseOrder.distributorId, // sửa thì không cho thay đổi distributor
       purchaseOrder: {
@@ -86,7 +86,7 @@ export class PurchaseOrderReceptionApi {
         listPrice: i.listPrice,
       })),
     })
-    const { data } = response.data as BaseResponse<{ purchaseOrderId: number }>
+    const { data } = response.data as BaseResponse<{ purchaseOrderId: string }>
     return data
   }
 }

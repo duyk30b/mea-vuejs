@@ -17,15 +17,15 @@ export const AppointmentStatusText = {
 }
 
 export class Appointment {
-  id: number
+  id: string
   customerId: number
   customerSourceId: number
 
   status: AppointmentStatus
   registeredAt: number
 
-  fromTicketId: number
-  toTicketId: number
+  fromTicketId: string
+  toTicketId: string
 
   reason: string // Ghi chú
   cancelReason: string // Lý do hủy
@@ -36,7 +36,7 @@ export class Appointment {
 
   static init(): Appointment {
     const ins = new Appointment()
-    ins.id = 0
+    ins.id = ''
     ins.status = AppointmentStatus.Waiting
     ins.customerId = 0
     ins.customerSourceId = 0

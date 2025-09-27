@@ -44,10 +44,10 @@ onMounted(async () => {
           v-if="
             roomIdMap[room.id] &&
             room.roomType === RoomType.Ticket &&
-            [RoomTicketStyle.TicketReception].includes(room.roomStyle)
+            [RoomTicketStyle.TicketOrder].includes(room.roomStyle)
           "
           class="card"
-          @click="router.push({ name: 'RoomTicketReception', params: { roomId: room.id } })"
+          @click="router.push({ name: 'RoomTicketOrder', params: { roomId: room.id } })"
         >
           <div class="card-icon">
             <IconApartment />

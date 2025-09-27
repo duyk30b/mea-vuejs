@@ -15,7 +15,7 @@ const radiologyMap = RadiologyService.radiologyMap
 
 const editable = ref(true)
 
-const openModal = async (ticketRadiologyId: number, options?: { noEdit: boolean }) => {
+const openModal = async (ticketRadiologyId: string, options?: { noEdit: boolean }) => {
   showModal.value = true
   ticketRadiology.value = await TicketRadiologyApi.detail(ticketRadiologyId, {
     relation: { imageList: true, ticketUserRequestList: true, ticket: true, customer: true },

@@ -40,7 +40,7 @@ const saveLoading = ref(false)
 
 const loadingProcess = ref(false)
 
-const startFetchData = async (stockCheckId: number) => {
+const startFetchData = async (stockCheckId: string) => {
   try {
     stockCheck.value = await StockCheckApi.detail(stockCheckId, {
       relation: {
@@ -55,7 +55,7 @@ const startFetchData = async (stockCheckId: number) => {
 }
 
 onBeforeMount(async () => {
-  const stockCheckId = Number(route.params.id)
+  const stockCheckId = route.params.id as string
   if (stockCheckId) {
     await startFetchData(stockCheckId)
   }

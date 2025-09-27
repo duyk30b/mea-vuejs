@@ -5,7 +5,7 @@ export class RoleGetQuery {
   page?: number
   limit?: number
   relation?: {
-    userRoleList?: { user?: boolean } | false
+    userRoleList?: { user?: boolean }
   }
 
   filter?: {

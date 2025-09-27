@@ -30,10 +30,15 @@ export class PurchaseOrderQueryApi {
     return PurchaseOrder.fromList(data.purchaseOrderList)
   }
 
-  static async detail(id: number, options: PurchaseOrderDetailQuery): Promise<PurchaseOrder> {
+  static async detail(
+    purchaseOrderId: string,
+    options: PurchaseOrderDetailQuery,
+  ): Promise<PurchaseOrder> {
     const params = PurchaseOrderGetQuery.toQuery(options)
 
-    const response = await AxiosInstance.get(`/purchase-order/${id}/detail`, { params })
+    const response = await AxiosInstance.get(`/purchase-order/${purchaseOrderId}/detail`, {
+      params,
+    })
     const { data } = response.data as BaseResponse<{ purchaseOrder: any }>
     return PurchaseOrder.from(data.purchaseOrder)
   }

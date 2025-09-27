@@ -1,34 +1,42 @@
 import { ESArray } from '@/utils'
 import { Batch } from '../batch'
 import type { Customer } from '../customer'
-import { DeliveryStatus, DiscountType, PaymentMoneyStatus, PickupStrategy } from '../enum'
+import {
+  DeliveryStatus,
+  DiscountType,
+  PaymentEffect,
+  PaymentMoneyStatus,
+  PickupStrategy,
+} from '../enum'
 import { Product } from '../product'
 import { TicketBatch } from '../ticket-batch'
 import type { Ticket } from '../ticket/ticket.model'
 
 export enum TicketProductType {
-  Other = 0,
   Prescription = 1,
   Consumable = 2,
+  Procedure = 3,
 }
 export class TicketProduct {
-  id: number
+  id: string
   priority: number
+  ticketId: string
   customerId: number
-  ticketId: number
-  warehouseIds: string
   productId: number
   batchId: number
+  warehouseIds: string
+  ticketProcedureId: string
+
   type: TicketProductType
-
   pickupStrategy: PickupStrategy
-  paymentMoneyStatus: PaymentMoneyStatus
   deliveryStatus: DeliveryStatus
+  paymentMoneyStatus: PaymentMoneyStatus
+  paymentEffect: PaymentEffect
 
-  unitRate: number
+  quantity: number
   quantityPrescription: number
   printPrescription: number
-  quantity: number
+  unitRate: number
   costAmount: number // không thể có costPrice, vì có thể bao gồm nhiều lô với vốn khác nhau
   expectedPrice: number
   discountMoney: number
@@ -92,27 +100,32 @@ export class TicketProduct {
 
   static init(): TicketProduct {
     const ins = new TicketProduct()
-    ins.id = 0
-    ins.ticketId = 0
+    ins.id = ''
+    ins.priority = 0
+    ins.ticketId = ''
     ins.customerId = 0
     ins.productId = 0
     ins.batchId = 0
+    ins.warehouseIds = JSON.stringify([0])
+    ins.ticketProcedureId = ''
 
+    ins.type = TicketProductType.Prescription
     ins.pickupStrategy = PickupStrategy.AutoWithFIFO
     ins.deliveryStatus = DeliveryStatus.Pending
-    ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
+    ins.paymentMoneyStatus = PaymentMoneyStatus.PendingPaid
+    ins.paymentEffect = PaymentEffect.SelfPayment
 
     ins.quantity = 0
     ins.quantityPrescription = 0
     ins.printPrescription = 1
     ins.unitRate = 1
+    ins.costAmount = 0
     ins.expectedPrice = 0
     ins.discountMoney = 0
     ins.discountPercent = 0
     ins.discountType = DiscountType.Percent
     ins.actualPrice = 0
     ins.hintUsage = ''
-    ins.warehouseIds = JSON.stringify([0])
     return ins
   }
 
@@ -177,21 +190,23 @@ export class TicketProduct {
   static equal(a: TicketProduct, b: TicketProduct) {
     if (a.id != b.id) return false
     if (a.priority != b.priority) return false
-    if (a.customerId != b.customerId) return false
     if (a.ticketId != b.ticketId) return false
-    if (a.warehouseIds != b.warehouseIds) return false
+    if (a.customerId != b.customerId) return false
     if (a.productId != b.productId) return false
     if (a.batchId != b.batchId) return false
+    if (a.warehouseIds != b.warehouseIds) return false
+    if (a.ticketProcedureId != b.ticketProcedureId) return false
+
     if (a.type != b.type) return false
-
     if (a.pickupStrategy != b.pickupStrategy) return false
-    if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
     if (a.deliveryStatus != b.deliveryStatus) return false
+    if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
+    if (a.paymentEffect != b.paymentEffect) return false
 
-    if (a.unitRate != b.unitRate) return false
+    if (a.quantity != b.quantity) return false
     if (a.quantityPrescription != b.quantityPrescription) return false
     if (a.printPrescription != b.printPrescription) return false
-    if (a.quantity != b.quantity) return false
+    if (a.unitRate != b.unitRate) return false
     if (a.costAmount != b.costAmount) return false
     if (a.expectedPrice != b.expectedPrice) return false
     if (a.discountMoney != b.discountMoney) return false

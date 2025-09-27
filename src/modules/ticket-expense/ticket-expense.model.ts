@@ -2,8 +2,8 @@ import { BaseModel } from '../_base/base.model'
 import { Expense } from '../expense'
 
 export class TicketExpense extends BaseModel {
-  id: number
-  ticketId: number
+  id: string
+  ticketId: string
   expenseId: number
   money: number
 
@@ -12,7 +12,7 @@ export class TicketExpense extends BaseModel {
   static init() {
     const ins = new TicketExpense()
     ins._localId = Math.random().toString(36).substring(2)
-    ins.id = 0
+    ins.id = ''
     ins.expenseId = 0
     ins.money = 0
     return ins

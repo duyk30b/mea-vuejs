@@ -20,7 +20,7 @@ const props = withDefaults(
   }>(),
   {
     ticketUserList: () => [],
-    positionType: PositionType.TicketReception,
+    positionType: PositionType.Reception,
     positionInteractId: 0,
     title: '',
   },
@@ -85,7 +85,7 @@ const handleSelectUser = (index: number, userData?: User) => {
 }
 </script>
 <template>
-  <template v-if="currentTicketUserList.length">
+  <div v-if="currentTicketUserList.length">
     <div v-if="title" class="font-bold italic flex items-center gap-2">
       <IconDoubleRight />
       <span>{{ title }}</span>
@@ -103,5 +103,5 @@ const handleSelectUser = (index: number, userData?: User) => {
         ></InputSearchUser>
       </div>
     </div>
-  </template>
+  </div>
 </template>

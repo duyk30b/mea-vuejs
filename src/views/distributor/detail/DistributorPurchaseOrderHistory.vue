@@ -52,7 +52,7 @@ watch(
   { immediate: true },
 )
 
-const openBlankPurchaseOrderDetail = (purchaseOrderId: number) => {
+const openBlankPurchaseOrderDetail = (purchaseOrderId: string) => {
   const route = router.resolve({
     name: 'PurchaseOrderDetailContainer',
     params: { id: purchaseOrderId },

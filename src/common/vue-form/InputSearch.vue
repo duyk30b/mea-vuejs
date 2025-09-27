@@ -95,12 +95,18 @@ watch(
 )
 
 let optionsStringify = ''
+let optionsLength = 0
 watch(
   () => props.options,
   (newValue, oldValue) => {
-    const optionsStringifyNew = JSON.stringify(props.options)
-    if (optionsStringify === optionsStringifyNew) return
-    optionsStringify = optionsStringifyNew
+    // không so sánh bằng JSON.stringify vì dễ gây lỗi
+    // const optionsStringifyNew = JSON.stringify(props.options)
+    // if (optionsStringify === optionsStringifyNew) return
+    // optionsStringify = optionsStringifyNew
+
+    // // so sánh bằng độ dài của mảng là cũng ok rồi mà
+    if (optionsLength === props.options.length) return
+    optionsLength = props.options.length
 
     if (!props.value) return
 

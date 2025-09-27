@@ -50,7 +50,7 @@ AxiosInstance.interceptors.request.use(
     AxiosLoading.loading = true
     return config
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 )
 
 AxiosInstance.interceptors.response.use(
@@ -74,13 +74,17 @@ AxiosInstance.interceptors.response.use(
     }
     const message = error?.response?.data?.message || error.message || error?.config.signal?.reason
     if (message !== 'canceled') {
-      AlertStore.add({ type: 'error', message, time: 5000 })
+      if (error?.response?.status === 422) {
+        AlertStore.add({ type: 'warning', message, time: 5000 })
+      } else {
+        AlertStore.add({ type: 'error', message, time: 5000 })
+      }
       AxiosLoading.percent = 0
       AxiosLoading.loading = false
     }
 
     return Promise.reject(error)
-  }
+  },
 )
 
 export { AxiosInstance, AxiosLoading }

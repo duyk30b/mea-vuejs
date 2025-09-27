@@ -73,38 +73,17 @@ const totalMoney = computed(() => {
   return procedureMoney + prescriptionMoney + consumableMoney + laboratoryMoney + radiologyMoney
 })
 
-const openModal = async (options: { ticketId: number; customer: Customer }) => {
+const openModal = async (options: { ticketId: string; customer: Customer }) => {
   showModal.value = true
   const { ticketId } = options
   try {
     dataLoading.value = true
     const ticketResponse = await TicketService.detail(ticketId, {
       relation: {
-        ticketProcedureList: {
-          filter: {
-            paymentMoneyStatus: PaymentMoneyStatus.Paid,
-          },
-        },
-        ticketProductConsumableList: {
-          filter: {
-            paymentMoneyStatus: PaymentMoneyStatus.Paid,
-          },
-        },
-        ticketProductPrescriptionList: {
-          filter: {
-            paymentMoneyStatus: PaymentMoneyStatus.Paid,
-          },
-        },
-        ticketLaboratoryList: {
-          filter: {
-            paymentMoneyStatus: PaymentMoneyStatus.Paid,
-          },
-        },
-        ticketRadiologyList: {
-          filter: {
-            paymentMoneyStatus: PaymentMoneyStatus.Paid,
-          },
-        },
+        ticketProcedureList: true,
+        ticketProductList: true,
+        ticketLaboratoryList: true,
+        ticketRadiologyList: true,
       },
     })
     ticketResponse.customer = Customer.from(options.customer)

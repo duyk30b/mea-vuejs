@@ -96,6 +96,9 @@ const handleClickModalRegisterAppointment = () => {
               <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
                 {{ formatMoney(ticketRoomRef.itemsCostAmount) }}
               </td>
+              <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
+                {{ formatMoney(ticketRoomRef.commissionMoney) }}
+              </td>
               <td class="font-bold text-right whitespace-nowrap">
                 {{ formatMoney(ticketRoomRef.itemsActualMoney) }}
               </td>
@@ -103,7 +106,8 @@ const handleClickModalRegisterAppointment = () => {
             </tr>
             <tr>
               <td v-if="CONFIG.MODE === 'development'"></td>
-              <td class="text-right" colspan="9">Chiết khấu</td>
+              <td class="text-right" colspan="8">Chiết khấu</td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="text-center" style="width: 40px">
                 <VueTag v-if="ticketRoomRef.discountType === 'VNĐ'" color="green">
@@ -125,10 +129,12 @@ const handleClickModalRegisterAppointment = () => {
                   <IconEditSquare width="20" height="20" />
                 </a>
               </td>
+              <td></td>
             </tr>
             <tr>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="uppercase text-right font-bold" colspan="9">Tổng tiền</td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="font-bold text-right whitespace-nowrap">
                 {{ formatMoney(ticketRoomRef.totalMoney) }}
@@ -139,6 +145,7 @@ const handleClickModalRegisterAppointment = () => {
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="uppercase text-right font-bold" colspan="9">Đã thanh toán</td>
               <td v-if="CONFIG.MODE === 'development'"></td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="font-bold text-right whitespace-nowrap">
                 {{ formatMoney(ticketRoomRef.paid) }}
               </td>
@@ -148,6 +155,7 @@ const handleClickModalRegisterAppointment = () => {
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="uppercase text-right font-bold" colspan="9">Còn thiếu</td>
               <td v-if="CONFIG.MODE === 'development'"></td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="font-bold text-right whitespace-nowrap">
                 {{ formatMoney(ticketRoomRef.debt) }}
               </td>
@@ -155,25 +163,8 @@ const handleClickModalRegisterAppointment = () => {
             </tr>
             <tr v-if="CONFIG.MODE === 'development'" style="color: violet">
               <td v-if="CONFIG.MODE === 'development'"></td>
-              <td class="text-right" colspan="9">itemsCostAmount</td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
-              <td class="text-right whitespace-nowrap">
-                {{ formatMoney(ticketRoomRef.itemsCostAmount) }}
-              </td>
-              <td></td>
-            </tr>
-            <tr v-if="CONFIG.MODE === 'development'" style="color: violet">
-              <td v-if="CONFIG.MODE === 'development'"></td>
-              <td class="text-right" colspan="9">commissionMoney</td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
-              <td class="text-right whitespace-nowrap">
-                {{ formatMoney(ticketRoomRef.commissionMoney) }}
-              </td>
-              <td></td>
-            </tr>
-            <tr v-if="CONFIG.MODE === 'development'" style="color: violet">
-              <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="text-right" colspan="9">profit</td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="text-right whitespace-nowrap">
                 {{ formatMoney(ticketRoomRef.profit) }}
@@ -224,7 +215,7 @@ const handleClickModalRegisterAppointment = () => {
             <td>Thời gian</td>
             <td>:</td>
             <td style="font-style: italic">
-              {{ ESTimer.timeToText(ticketRoomRef.registeredAt, 'hh:mm DD/MM/YYYY') }}
+              {{ ESTimer.timeToText(ticketRoomRef.createdAt, 'hh:mm DD/MM/YYYY') }}
             </td>
           </tr>
           <tr>

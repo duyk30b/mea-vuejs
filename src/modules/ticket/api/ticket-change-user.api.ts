@@ -1,9 +1,9 @@
-import { AxiosInstance } from '../../../core/axios.instance'
-import type { BaseResponse } from '../../_base/base-dto'
-import { TicketUser } from '../../ticket-user'
+import { AxiosInstance } from '../../../core/axios.instance';
+import type { BaseResponse } from '../../_base/base-dto';
+import { TicketUser } from '../../ticket-user';
 
 export class TicketChangeUserApi {
-  static async destroyTicketUser(body: { ticketId: number; ticketUserId: number }) {
+  static async destroyTicketUser(body: { ticketId: string; ticketUserId: string }) {
     const { ticketId, ticketUserId } = body
     const response = await AxiosInstance.delete(
       `/ticket/${ticketId}/user/destroy-ticket-user/${ticketUserId}`,
@@ -13,8 +13,8 @@ export class TicketChangeUserApi {
   }
 
   static async updateTicketUserCommission(body: {
-    ticketId: number
-    ticketUserId: number
+    ticketId: string
+    ticketUserId: string
     ticketUser: TicketUser
   }) {
     const { ticketId, ticketUser, ticketUserId } = body
@@ -32,10 +32,10 @@ export class TicketChangeUserApi {
   }
 
   static async updateTicketUserPosition(body: {
-    ticketId: number
+    ticketId: string
     positionInteractId: number
     positionType: number
-    ticketItemId: number
+    ticketItemId: string
     quantity: number
     ticketUserList: TicketUser[]
   }) {

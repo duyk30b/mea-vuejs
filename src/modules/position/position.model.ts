@@ -8,12 +8,13 @@ import { Regimen } from '../regimen'
 import { Role } from '../role/role.model'
 
 export enum PositionType {
-  TicketReception = 1,
-  ProductRequest = 2,
-  TicketPrescriptionRequest = 3,
-  ProcedureRequest = 4,
-  ProcedureResult = 5,
-  RegimenRequest = 6,
+  Reception = 1,
+  TicketClinic = 2,
+  ProductRequest = 3,
+  TicketPrescriptionRequest = 4,
+  ProcedureRequest = 5,
+  ProcedureResult = 6,
+  RegimenRequest = 7,
   LaboratoryRequest = 8,
   LaboratoryGroupRequest = 9,
   LaboratoryGroupResult = 10,
@@ -22,7 +23,8 @@ export enum PositionType {
 }
 
 export const PositionTypeText = {
-  [PositionType.TicketReception]: 'Phòng khám',
+  [PositionType.Reception]: 'Tiếp đón',
+  [PositionType.TicketClinic]: 'Phòng khám',
   [PositionType.ProductRequest]: 'Chỉ định sản phẩm',
   [PositionType.TicketPrescriptionRequest]: 'Kê đơn thuốc',
   [PositionType.ProcedureRequest]: 'Chỉ định dịch vụ',
@@ -74,7 +76,7 @@ export class Position extends BaseModel {
     ins.id = 0
     ins.roleId = 0
     ins.priority = 0
-    ins.positionType = PositionType.TicketReception
+    ins.positionType = PositionType.Reception
     ins.positionInteractId = 0
     ins.commissionCalculatorType = CommissionCalculatorType.VND
     ins.commissionValue = 0

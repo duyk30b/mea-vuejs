@@ -119,7 +119,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const startPrintPurchaseOrderDetail = async (purchaseOrderId: number) => {
+const startPrintPurchaseOrderDetail = async (purchaseOrderId: string) => {
   const purchaseOrderData = await PurchaseOrderQueryApi.detail(purchaseOrderId, {
     relation: {
       distributor: true,

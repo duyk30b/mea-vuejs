@@ -109,11 +109,11 @@ const updateResult = async (options: { print: boolean }) => {
     if (!ticketRadiology.value.completedAt) {
       ticketRadiology.value.completedAt = Date.now()
     }
-    const { filesPosition, imageIdsKeep, files, imageUrls, imageIdsWait } =
+    const { filesPosition, imageIdListKeep, files, imageUrls, imageIdWaitList } =
       imageUploadMultipleRef.value?.getData() || {
         filesPosition: [],
-        imageIdsWait: [],
-        imageIdsKeep: [],
+        imageIdWaitList: [],
+        imageIdListKeep: [],
         files: [],
         imageUrls: [],
       }
@@ -124,7 +124,7 @@ const updateResult = async (options: { print: boolean }) => {
       ticketRadiology: ticketRadiology.value,
       ticketUserResultList: ticketRadiology.value.ticketUserResultList || [],
       imagesChange: hasChangeImageList.value
-        ? { files, imageIdsWait, externalUrlList: imageUrls }
+        ? { files, imageIdWaitList, externalUrlList: imageUrls }
         : undefined,
     })
 

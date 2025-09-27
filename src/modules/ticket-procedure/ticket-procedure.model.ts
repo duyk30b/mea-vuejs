@@ -1,8 +1,9 @@
 import { BaseModel } from '../_base/base.model'
 import { Customer } from '../customer'
-import { DiscountType, PaymentMoneyStatus } from '../enum'
+import { DiscountType, PaymentEffect, PaymentMoneyStatus } from '../enum'
 import { Image } from '../image/image.model'
 import { Procedure } from '../procedure'
+import { TicketProduct } from '../ticket-product'
 import type { TicketRegimen } from '../ticket-regimen'
 import { TicketUser } from '../ticket-user'
 import { Ticket } from '../ticket/ticket.model'
@@ -19,16 +20,17 @@ export enum TicketProcedureType {
 }
 
 export class TicketProcedure extends BaseModel {
-  id: number
+  id: string
   priority: number
   ticketProcedureType: TicketProcedureType
 
-  ticketId: number
+  ticketId: string
   customerId: number
   procedureId: number
-  ticketRegimenId: number
+  ticketRegimenId: string
+  ticketRegimenItemId: string
+  indexSession: number
 
-  sessionIndex: number
   quantity: number
 
   expectedPrice: number // Giá dự kiến
@@ -49,31 +51,25 @@ export class TicketProcedure extends BaseModel {
   commissionAmount: number
 
   customer?: Customer
-  ticket?: Ticket
+  ticketProcess?: Ticket
   procedure?: Procedure
 
   ticketRegimen: TicketRegimen
   imageList: Image[]
   ticketUserRequestList?: TicketUser[]
-  ticketUserResultList: TicketUser[]
-
-  get remainMoney() {
-    if (this.paymentMoneyStatus === PaymentMoneyStatus.NoEffect) {
-      return 0
-    }
-    return this.actualPrice * this.quantity
-  }
+  ticketUserResultList?: TicketUser[]
+  ticketProductProcedureList?: TicketProduct[]
 
   static init(): TicketProcedure {
     const ins = new TicketProcedure()
     ins._localId = Math.random().toString(36).substring(2)
-    ins.id = 0
+    ins.id = ''
 
     ins.priority = 1
-    ins.ticketId = 0
+    ins.ticketId = ''
     ins.customerId = 0
     ins.procedureId = 0
-    ins.ticketRegimenId = 0
+    ins.ticketRegimenId = ''
 
     ins.quantity = 1
 
@@ -83,7 +79,7 @@ export class TicketProcedure extends BaseModel {
     ins.discountPercent = 0
     ins.actualPrice = 0
 
-    ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
+    ins.paymentMoneyStatus = PaymentMoneyStatus.PendingPaid
     ins.status = TicketProcedureStatus.NoEffect
 
     return ins
@@ -120,8 +116,10 @@ export class TicketProcedure extends BaseModel {
     if (Object.prototype.hasOwnProperty.call(source, 'procedure')) {
       target.procedure = source.procedure ? Procedure.basic(source.procedure) : source.procedure
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'ticket')) {
-      target.ticket = source.ticket ? Ticket.basic(source.ticket) : source.ticket
+    if (Object.prototype.hasOwnProperty.call(source, 'ticketProcess')) {
+      target.ticketProcess = source.ticketProcess
+        ? Ticket.basic(source.ticketProcess)
+        : source.ticketProcess
     }
     if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
       target.customer = source.customer ? Customer.basic(source.customer) : source.customer
@@ -134,6 +132,11 @@ export class TicketProcedure extends BaseModel {
     }
     if (source.ticketUserResultList) {
       target.ticketUserResultList = TicketUser.basicList(source.ticketUserResultList)
+    }
+    if (source.ticketProductProcedureList) {
+      target.ticketProductProcedureList = TicketProduct.basicList(
+        source.ticketProductProcedureList,
+      )
     }
     return target
   }
@@ -152,7 +155,6 @@ export class TicketProcedure extends BaseModel {
     if (a.procedureId != b.procedureId) return false
     if (a.ticketRegimenId != b.ticketRegimenId) return false
 
-    if (a.sessionIndex != b.sessionIndex) return false
     if (a.quantity != b.quantity) return false
 
     if (a.expectedPrice != b.expectedPrice) return false
@@ -161,8 +163,8 @@ export class TicketProcedure extends BaseModel {
     if (a.discountType != b.discountType) return false
     if (a.actualPrice != b.actualPrice) return false
 
-    if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
     if (a.status != b.status) return false
+    if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
 
     if (a.createdAt != b.createdAt) return false
     if (a.completedAt != b.completedAt) return false
@@ -171,6 +173,7 @@ export class TicketProcedure extends BaseModel {
 
     if (a.costAmount != b.costAmount) return false
     if (a.commissionAmount != b.commissionAmount) return false
+    if (a.indexSession != b.indexSession) return false
 
     return true
   }

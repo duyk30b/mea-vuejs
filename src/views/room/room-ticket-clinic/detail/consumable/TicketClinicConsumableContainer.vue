@@ -10,7 +10,7 @@ import { PermissionId } from '@/modules/permission/permission.enum'
 import type { Product } from '@/modules/product'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketStatus } from '@/modules/ticket'
-import { TicketProduct } from '@/modules/ticket-product'
+import { TicketProduct, TicketProductService } from '@/modules/ticket-product'
 import { TicketUser } from '@/modules/ticket-user'
 import { TicketChangeProductApi } from '@/modules/ticket/api/ticket-change-product.api'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
@@ -42,7 +42,8 @@ watch(
 )
 
 onMounted(async () => {
-  await ticketRoomRef.value.refreshProduct()
+  TicketProductService.refreshRelation(ticketRoomRef.value.ticketProductList)
+  await ticketRoomRef.value.refreshTicketProduct()
 })
 
 const hasChangePriority = computed(() => {
@@ -225,9 +226,7 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
               <a
                 v-else-if="
                   tpItem.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
-                  [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                    tpItem.paymentMoneyStatus,
-                  ) &&
+                  tpItem.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
                   userPermission[PermissionId.TICKET_CHANGE_PRODUCT_CONSUMABLE]
                 "
                 class="text-orange-500"

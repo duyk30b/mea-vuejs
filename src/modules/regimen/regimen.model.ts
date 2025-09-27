@@ -24,9 +24,6 @@ export class Regimen extends BaseModel {
   code: string
   name: string // Tên dịch vụ
 
-  gapHours: number
-  gapHoursType: RegimenGapHoursType
-
   isActive: 0 | 1
 
   regimenItemList?: RegimenItem[]
@@ -73,9 +70,6 @@ export class Regimen extends BaseModel {
     ins.id = 0
     ins.code = ''
     ins.name = ''
-
-    ins.gapHours = 24
-    ins.gapHoursType = 24
 
     ins.isActive = 1
     ins._localId = Math.random().toString(36).substring(2)
@@ -145,9 +139,6 @@ export class Regimen extends BaseModel {
     if (a.id != b.id) return false
     if (a.code != b.code) return false
     if (a.name != b.name) return false
-
-    if (a.gapHours != b.gapHours) return false
-    if (a.gapHoursType != b.gapHoursType) return false
 
     if (a.isActive != b.isActive) return false
 

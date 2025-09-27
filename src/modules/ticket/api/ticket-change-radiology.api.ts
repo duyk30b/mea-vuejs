@@ -5,7 +5,7 @@ import type { TicketUser } from '../../ticket-user'
 
 export class TicketChangeRadiologyApi {
   static async addTicketRadiology(obj: {
-    ticketId: number
+    ticketId: string
     ticketRadiologyWrapList: {
       ticketRadiology: TicketRadiology
       ticketUserRequestList: TicketUser[]
@@ -31,7 +31,6 @@ export class TicketChangeRadiologyApi {
               customerId: ticketRadiology.customerId,
               roomId: ticketRadiology.roomId,
 
-              paymentMoneyStatus: ticketRadiology.paymentMoneyStatus,
               createdAt: ticketRadiology.createdAt,
 
               costPrice: ticketRadiology.costPrice,
@@ -55,7 +54,7 @@ export class TicketChangeRadiologyApi {
     return TicketRadiology.fromList(data.ticketRadiologyCreatedList)
   }
 
-  static async destroyTicketRadiology(body: { ticketId: number; ticketRadiologyId: number }) {
+  static async destroyTicketRadiology(body: { ticketId: string; ticketRadiologyId: string }) {
     const { ticketId, ticketRadiologyId } = body
     const response = await AxiosInstance.delete(
       `/ticket/${ticketId}/radiology/destroy-ticket-radiology/${ticketRadiologyId}`,
@@ -64,8 +63,8 @@ export class TicketChangeRadiologyApi {
   }
 
   static async updateRequestTicketRadiology(body: {
-    ticketId: number
-    ticketRadiologyId: number
+    ticketId: string
+    ticketRadiologyId: string
     ticketRadiology?: TicketRadiology
     ticketUserRequestList?: TicketUser[]
   }) {
@@ -97,7 +96,7 @@ export class TicketChangeRadiologyApi {
   }
 
   static async updatePriorityTicketRadiology(body: {
-    ticketId: number
+    ticketId: string
     ticketRadiologyList: TicketRadiology[]
   }) {
     const { ticketId, ticketRadiologyList } = body
@@ -114,13 +113,13 @@ export class TicketChangeRadiologyApi {
   }
 
   static async updateResult(options: {
-    ticketId: number
-    ticketRadiologyId: number
+    ticketId: string
+    ticketRadiologyId: string
     ticketRadiology: TicketRadiology
     ticketUserResultList?: TicketUser[]
     imagesChange?: {
       files: File[]
-      imageIdsWait: number[]
+      imageIdWaitList: number[]
       externalUrlList: string[]
     }
   }) {
@@ -130,7 +129,7 @@ export class TicketChangeRadiologyApi {
     if (imagesChange) {
       // imagesChange.files.forEach((file) => formData.append('files', file))
       const imagesChangeStr = JSON.stringify({
-        imageIdsWait: imagesChange.imageIdsWait,
+        imageIdWaitList: imagesChange.imageIdWaitList,
         externalUrlList: imagesChange.externalUrlList,
       })
       formData.append('imagesChange', imagesChangeStr)
@@ -170,8 +169,8 @@ export class TicketChangeRadiologyApi {
   }
 
   static async cancelResult(object: {
-    ticketId: number
-    ticketRadiologyId: number
+    ticketId: string
+    ticketRadiologyId: string
     body: {
       printHtmlId: number
       description: string

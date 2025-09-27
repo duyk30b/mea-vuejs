@@ -15,7 +15,7 @@ const emit = defineEmits<{
   (e: 'success'): void
 }>()
 const settingStore = useSettingStore()
-const registeredAt = ref<number>(Date.now())
+const receptionAt = ref<number>(Date.now())
 const roomId = ref(0)
 const saveLoading = ref(false)
 const showModal = ref(false)
@@ -25,7 +25,7 @@ const appointment = ref<Appointment>(Appointment.blank())
 const openModal = async (appointmentProp: Appointment) => {
   showModal.value = true
   appointment.value = Appointment.from(appointmentProp)
-  registeredAt.value = Date.now()
+  receptionAt.value = Date.now()
 
   const roomList = await RoomService.list({ filter: { roomType: RoomType.Ticket } })
   roomId.value = roomList[0].id
@@ -33,7 +33,7 @@ const openModal = async (appointmentProp: Appointment) => {
 
 const closeModal = () => {
   appointment.value = Appointment.blank()
-  registeredAt.value = Date.now()
+  receptionAt.value = Date.now()
   showModal.value = false
 }
 
@@ -41,8 +41,10 @@ const handleRegisterTicketClinic = async () => {
   saveLoading.value = true
   try {
     await AppointmentApi.registerTicketClinic(appointment.value.id, {
-      registeredAt: registeredAt.value,
+      receptionAt: receptionAt.value,
       roomId: roomId.value,
+      toTicketId: '',
+      isPaymentEachItem: settingStore.TICKET_CLINIC_LIST.isPaymentEachItem,
     })
     emit('success')
     saveLoading.value = false
@@ -75,7 +77,7 @@ defineExpose({ openModal })
         <div style="flex-basis: 300px; flex-grow: 1">
           <div>Thời gian đăng ký</div>
           <div>
-            <InputDate v-model:value="registeredAt" type-parser="number" class="w-full" show-time />
+            <InputDate v-model:value="receptionAt" type-parser="number" class="w-full" show-time />
           </div>
         </div>
 

@@ -79,13 +79,13 @@ const startFetchData = async () => {
       relation: {
         customer: true,
         ticketProductList: settingStore.SCREEN_TICKET_ORDER_LIST.ticketProductList
-          ? { relation: { product: true } }
+          ? true
           : undefined,
       },
       filter: {
         roomId: currentRoom.value.isCommon ? undefined : currentRoom.value.id || 0,
         customerId: customerId.value ? customerId.value : undefined,
-        registeredAt:
+        createdAt:
           fromTime.value || toTime.value
             ? {
                 GTE: fromTime.value ? fromTime.value : undefined,
@@ -330,7 +330,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
                 </a>
               </div>
               <div class="text-xs">
-                {{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(ticket.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
               <div v-if="ticket.customer?.note" class="text-xs italic">
                 {{ ticket.customer?.note }}
@@ -412,7 +412,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             </td>
             <td><TicketStatusTag :ticket="ticket" /></td>
             <td class="text-center">
-              {{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+              {{ ESTimer.timeToText(ticket.createdAt, 'hh:mm DD/MM/YYYY') }}
             </td>
             <td>
               <div>

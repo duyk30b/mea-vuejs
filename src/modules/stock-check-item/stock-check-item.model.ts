@@ -3,8 +3,8 @@ import { Product } from '../product'
 import { StockCheck } from '../stock-check/stock-check.model'
 
 export class StockCheckItem {
-  id: number
-  stockCheckId: number
+  id: string
+  stockCheckId: string
   productId: number
   batchId: number
 
@@ -22,7 +22,7 @@ export class StockCheckItem {
 
   static init() {
     const ins = new StockCheckItem()
-    ins.id = 0
+    ins.id = ''
     ins.batchId = 0
     ins.productId = 0
     ins.systemQuantity = 0

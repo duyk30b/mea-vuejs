@@ -91,6 +91,7 @@ const logicFilter = (item: ItemOption<Customer>, text: string) => {
   if (!customerItem.isActive) return false
   return (
     ESString.customFilter(customerItem.fullName, text) ||
+    ESString.customFilter(customerItem.phone, text) ||
     ESString.customFilter(customerItem.customerCode, text)
   )
 }

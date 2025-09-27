@@ -10,7 +10,7 @@ import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { CustomerService } from '@/modules/customer'
+import { Customer, CustomerService } from '@/modules/customer'
 import { DeliveryStatus, PaymentViewType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PositionType } from '@/modules/position'
@@ -18,7 +18,6 @@ import { RoleService } from '@/modules/role'
 import { Room, RoomService, RoomType } from '@/modules/room'
 import { roomTicketPaginationMapRoomId } from '@/modules/room/room.ref'
 import { Ticket, TicketActionApi, TicketQueryApi, TicketStatus } from '@/modules/ticket'
-import { TicketProcedure } from '@/modules/ticket-procedure'
 import { TicketUser } from '@/modules/ticket-user'
 import { UserService } from '@/modules/user'
 import { ESString, ESTimer } from '@/utils'
@@ -28,16 +27,16 @@ import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue
 import ModalTicketChangeAllMoney from '@/views/finance/finance-ticket/modal/ModalTicketChangeAllMoney.vue'
 import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
-import ModalTicketClinicCreate from '@/views/room/room-ticket-reception/create/ModalTicketClinicCreate.vue'
 import { onBeforeMount, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import ModalReceptionCreate from '../../reception/create/ModalReceptionCreate.vue'
 import ModalTicketClinicPayment from '../../room-ticket-base/ModalTicketPayment.vue'
 import TicketLink from '../../room-ticket-base/TicketLink.vue'
 import { fromTime, toTime } from '../../room-ticket-base/room-ticket.ref'
 import ModalTicketClinicListSetting from './ModalTicketClinicListSetting.vue'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
-const modalTicketClinicCreate = ref<InstanceType<typeof ModalTicketClinicCreate>>()
+const modalReceptionCreate = ref<InstanceType<typeof ModalReceptionCreate>>()
 const modalTicketClinicListSetting = ref<InstanceType<typeof ModalTicketClinicListSetting>>()
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
@@ -54,17 +53,21 @@ const dataLoading = ref(false)
 
 const roomMap = RoomService.roomMap
 const currentRoom = ref<Room>(Room.blank())
-const status = ref<TicketStatus | null>(null)
 
 const roleMap = RoleService.roleMap
 const userMap = UserService.userMap
 
-const filter = reactive({
+const filter = reactive<{
+  customerId: number
+  filterDateType: 'createdAt' | 'receptionAt'
+  status: TicketStatus | null
+}>({
   customerId: 0,
-  includePendingStatus: settingStore.TICKET_CLINIC_LIST.includePendingStatus,
+  filterDateType: 'receptionAt',
+  status: null,
 })
 
-const sortColumn = ref<'registeredAt' | 'id' | ''>('')
+const sortColumn = ref<'receptionAt' | 'id' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const page = ref(1)
@@ -81,42 +84,46 @@ const startFetchData = async () => {
       relation: {
         customer: true,
         // ticketAttributeList: true,
+        ticketReceptionList: true,
         ticketUserList:
           settingStore.TICKET_CLINIC_LIST.roleIdList.length ||
           settingStore.TICKET_CLINIC_LIST.procedure
-            ? {}
+            ? true
             : undefined,
       },
       filter: {
         roomId: currentRoom.value.isCommon ? undefined : currentRoom.value.id || 0,
         customerId: filter.customerId ? filter.customerId : undefined,
-        $OR: [
-          {
-            registeredAt:
-              fromTime.value || toTime.value
-                ? {
-                    GTE: fromTime.value ? fromTime.value : undefined,
-                    LT: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
-                  }
-                : undefined,
-            status: status.value ? status.value : undefined,
-          },
-          ...(filter.includePendingStatus
-            ? [{ status: { NOT_IN: [TicketStatus.Completed] } }]
-            : []),
-        ],
+        createdAt:
+          filter.filterDateType === 'createdAt' && (fromTime.value || toTime.value)
+            ? {
+                GTE: fromTime.value ? fromTime.value : undefined,
+                LT: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
+              }
+            : undefined,
+        receptionAt:
+          filter.filterDateType === 'receptionAt' && (fromTime.value || toTime.value)
+            ? {
+                GTE: fromTime.value ? fromTime.value : undefined,
+                LT: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
+              }
+            : undefined,
+        status: filter.status ? filter.status : undefined,
       },
       sort: sortValue.value
         ? {
             id: sortColumn.value === 'id' ? sortValue.value : undefined,
-            registeredAt: sortColumn.value === 'registeredAt' ? sortValue.value : undefined,
+            receptionAt: sortColumn.value === 'receptionAt' ? sortValue.value : undefined,
           }
-        : { registeredAt: 'DESC' },
+        : { receptionAt: 'DESC' },
     })
 
     for (let i = 0; i < paginationResult.ticketList.length; i++) {
       const ticketItem = paginationResult.ticketList[i]
-      ticketItem.refreshTicketUserTree()
+      ticketItem.ticketReceptionList?.forEach((tr) => {
+        tr.customer = Customer.from(ticketItem.customer)
+      })
+      ticketItem.refreshTreeData()
     }
 
     roomTicketPaginationMapRoomId.value[currentRoom.value.id] = paginationResult.ticketList
@@ -157,7 +164,7 @@ const startFilter = async () => {
   await startFetchData()
 }
 
-const changeSort = async (column: 'id' | 'registeredAt') => {
+const changeSort = async (column: 'id' | 'receptionAt') => {
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
     sortValue.value = ''
@@ -180,18 +187,14 @@ const changeLimit = async (limitSelect: any) => {
   await startFetchData()
 }
 
-const changeIncludePendingStatus = async (v: number | boolean) => {
-  await startFetchData()
-}
-
-const handleModalTicketClinicCreateSuccess = async (
+const handleModalReceptionCreateSuccess = async (
   type: 'CREATE' | 'UPDATE' | 'DESTROY',
-  ticketId: number,
+  data: { ticketId: string },
 ) => {
   if (type === 'CREATE' && settingStore.TICKET_CLINIC_LIST.goRoomAfterReception) {
     router.push({
       name: 'TicketClinicDetailContainer',
-      params: { roomId: currentRoom.value.id, ticketId },
+      params: { roomId: currentRoom.value.id, ticketId: data.ticketId },
     })
   } else {
     // await startFetchData()
@@ -204,7 +207,7 @@ const handleModalTicketClinicListSettingSuccess = async () => {
 
 const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
 
-const startCloseTicket = async (ticketId: number) => {
+const startCloseTicket = async (ticketId: string) => {
   await TicketActionApi.close({ ticketId })
 }
 
@@ -242,28 +245,11 @@ const clickCloseTicket = (ticket: Ticket) => {
 
   startCloseTicket(ticket.id)
 }
-
-const handleUpdateTicketProcedure = async (data: { ticketProcedure: TicketProcedure }) => {
-  const findTicket = roomTicketPaginationMapRoomId.value[currentRoom.value.id].find(
-    (i) => i.id === data.ticketProcedure.ticketId,
-  )
-  if (!findTicket) return
-
-  const findTicketProcedure = findTicket.ticketProcedureList?.find((i) => {
-    return i.id === data.ticketProcedure.id
-  })
-  if (findTicketProcedure) {
-    Object.assign(findTicketProcedure, data)
-  }
-}
 </script>
 
 <template>
   <ModalProcedureDetail ref="modalProcedureDetail" />
-  <ModalTicketClinicCreate
-    ref="modalTicketClinicCreate"
-    @success="handleModalTicketClinicCreateSuccess"
-  />
+  <ModalReceptionCreate ref="modalReceptionCreate" @success="handleModalReceptionCreateSuccess" />
   <ModalTicketChangeAllMoney
     ref="modalTicketChangeAllMoney"
     @success="handleModalTicketChangeAllMoneySuccess"
@@ -290,13 +276,13 @@ const handleUpdateTicketProcedure = async (data: { ticketProcedure: TicketProced
           color="blue"
           icon="plus"
           @click="
-            modalTicketClinicCreate?.openModal({
+            modalReceptionCreate?.openModal({
               roomId: currentRoom.id,
               ticketStatusRegister: TicketStatus.Executing,
             })
           "
         >
-          Khám mới
+          TIẾP ĐÓN MỚI
         </VueButton>
       </div>
     </div>
@@ -342,13 +328,13 @@ const handleUpdateTicketProcedure = async (data: { ticketProcedure: TicketProced
         <div>Chọn trạng thái</div>
         <div>
           <VueSelect
-            v-model:value="status"
+            v-model:value="filter.status"
             :options="[
               { value: null, text: 'Tất cả' },
               { value: TicketStatus.Schedule, text: 'Hẹn khám' },
               { value: TicketStatus.Draft, text: 'Chờ khám' },
               { value: TicketStatus.Deposited, text: 'Tạm ứng' },
-              { value: TicketStatus.Executing, text: 'Đang khám' },
+              { value: TicketStatus.Executing, text: 'Đang điều trị' },
               { value: TicketStatus.Debt, text: 'Nợ' },
               { value: TicketStatus.Completed, text: 'Hoàn thành' },
             ]"
@@ -357,48 +343,22 @@ const handleUpdateTicketProcedure = async (data: { ticketProcedure: TicketProced
         </div>
       </div>
     </div>
-    <div class="flex justify-end mt-2 px-4">
-      <InputCheckbox
-        v-model:value="filter.includePendingStatus"
-        typeParser="number"
-        @update:value="changeIncludePendingStatus"
-        label="Bao gồm tất cả phiếu chưa hoàn thành"
-      />
-    </div>
-
-    <div class="px-4 table-wrapper">
+    <div class="mt-4 px-4 table-wrapper">
       <table>
         <thead>
           <tr>
             <th v-if="CONFIG.MODE === 'development'" class="">Id-RoomId</th>
-            <th class="cursor-pointer" @click="changeSort('id')">
+            <th class="cursor-pointer">
               <div class="flex items-center gap-1 justify-center">
                 <span>Hồ Sơ</span>
-                <IconSort v-if="sortColumn !== 'id'" style="opacity: 0.4" />
-                <IconSortUp
-                  v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                  style="opacity: 0.4"
-                />
-                <IconSortDown
-                  v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                  style="opacity: 0.4"
-                />
               </div>
             </th>
-            <th class="cursor-pointer" @click="changeSort('registeredAt')">
+            <th class="cursor-pointer">
               <div class="flex items-center gap-1 justify-center">
                 <span>T.Thái</span>
-                <IconSort v-if="sortColumn !== 'registeredAt'" style="opacity: 0.4" />
-                <IconSortUp
-                  v-if="sortColumn === 'registeredAt' && sortValue === 'ASC'"
-                  style="opacity: 0.4"
-                />
-                <IconSortDown
-                  v-if="sortColumn === 'registeredAt' && sortValue === 'DESC'"
-                  style="opacity: 0.4"
-                />
               </div>
             </th>
+            <th>Thời gian</th>
             <th style="min-width: 150px">Khách hàng</th>
             <th v-if="settingStore.TICKET_CLINIC_LIST.phoneAndAddress" style="white-space: nowrap">
               T.Tin
@@ -410,8 +370,8 @@ const handleUpdateTicketProcedure = async (data: { ticketProcedure: TicketProced
             <th v-for="(roleId, i) in settingStore.TICKET_CLINIC_LIST.roleIdList" :key="i">
               {{ roleMap[roleId]?.name || '' }}
             </th>
-            <th v-if="settingStore.TICKET_CLINIC_LIST.payment"></th>
-            <th>Thanh toán</th>
+            <th v-if="settingStore.TICKET_CLINIC_LIST.payment">Thanh toán</th>
+            <th></th>
             <th></th>
           </tr>
         </thead>
@@ -440,36 +400,49 @@ const handleUpdateTicketProcedure = async (data: { ticketProcedure: TicketProced
             <td>
               <div class="flex gap-4 justify-between items-center">
                 <TicketLink :ticket="ticket" />
-                <a
-                  v-if="
-                    [
-                      TicketStatus.Schedule,
-                      TicketStatus.Draft,
-                      TicketStatus.Deposited,
-                      TicketStatus.Executing,
-                    ].includes(ticket.status)
-                  "
-                  style="color: #eca52b"
-                  class="text-xl"
-                  @click="
-                    modalTicketClinicCreate?.openModal({
-                      roomId: ticket.roomId,
-                      ticketId: ticket.id,
-                    })
-                  "
-                >
-                  <IconEditSquare />
-                </a>
               </div>
-              <div class="text-xs italic">{{ roomMap[ticket.roomId]?.name || '' }}</div>
             </td>
             <td>
               <div>
                 <TicketStatusTag :ticket="ticket" />
               </div>
-              <div class="text-xs italic whitespace-nowrap">
-                {{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
-              </div>
+            </td>
+            <td style="width: 160px">
+              <template v-if="ticket.ticketReceptionList?.length">
+                <div
+                  v-for="tr in ticket.ticketReceptionList"
+                  :key="tr.id"
+                  class="flex flex-wrap items-center gap-x-2 italic whitespace-nowrap"
+                >
+                  <span>
+                    {{ ESTimer.timeToText(tr.receptionAt, 'hh:mm DD/MM/YYYY') }}
+                  </span>
+                  <a
+                    v-if="
+                      [
+                        TicketStatus.Schedule,
+                        TicketStatus.Draft,
+                        TicketStatus.Deposited,
+                        TicketStatus.Executing,
+                      ].includes(ticket.status)
+                    "
+                    style="color: #eca52b"
+                    class="text-xl"
+                    @click="
+                      modalReceptionCreate?.openModal({
+                        roomId: ticket.roomId,
+                        ticketReception: tr,
+                        customer: ticket.customer,
+                      })
+                    "
+                  >
+                    <IconEditSquare />
+                  </a>
+                </div>
+              </template>
+              <template v-else>
+                <div>{{ ESTimer.timeToText(ticket.createdAt, 'hh:mm DD/MM/YYYY') }}</div>
+              </template>
             </td>
             <td>
               <div>
@@ -513,7 +486,7 @@ const handleUpdateTicketProcedure = async (data: { ticketProcedure: TicketProced
               <span v-if="CONFIG.MODE === 'development'" style="color: violet">
                 ({{
                   ticket.ticketUserList?.find((i: TicketUser) => {
-                    return i.positionType === PositionType.TicketReception && i.roleId === roleId
+                    return i.positionType === PositionType.Reception && i.roleId === roleId
                   })?.userId
                 }})
               </span>
@@ -521,7 +494,7 @@ const handleUpdateTicketProcedure = async (data: { ticketProcedure: TicketProced
                 {{
                   userMap[
                     ticket.ticketUserList?.find((i: TicketUser) => {
-                      return i.positionType === PositionType.TicketReception && i.roleId === roleId
+                      return i.positionType === PositionType.Reception && i.roleId === roleId
                     })?.userId || 0
                   ]?.fullName
                 }}

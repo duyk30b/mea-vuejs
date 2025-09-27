@@ -7,8 +7,8 @@ import { Ticket } from '../ticket/ticket.model'
 import { User } from '../user'
 
 export class TicketUser extends BaseModel {
-  id: number
-  ticketId: number
+  id: string
+  ticketId: string
   roleId: number
   userId: number
   positionId: number
@@ -16,8 +16,7 @@ export class TicketUser extends BaseModel {
   positionType: PositionType
   positionInteractId: number // procedureId hoặc productId hoặc radiologyId
 
-  ticketItemId: number // ticketProcedureId hoặc ticketProductId hoặc ticketRadiologyId
-  ticketItemChildId: number // ticketProcedureItemId
+  ticketItemId: string // ticketProcedureId hoặc ticketProductId hoặc ticketRadiologyId
 
   ticketItemExpectedPrice: number
   ticketItemActualPrice: number
@@ -44,14 +43,13 @@ export class TicketUser extends BaseModel {
     // ins.id = 0
     ins._localId = Math.random().toString(36).substring(2)
 
-    ins.ticketId = 0
+    ins.ticketId = ''
     ins.userId = 0
     ins.roleId = 0
 
-    ins.positionType = PositionType.TicketReception
+    ins.positionType = PositionType.Reception
     ins.positionInteractId = 0
-    ins.ticketItemId = 0
-    ins.ticketItemChildId = 0
+    ins.ticketItemId = ''
 
     ins.commissionCalculatorType = CommissionCalculatorType.VND
     ins.commissionMoney = 0
@@ -107,7 +105,6 @@ export class TicketUser extends BaseModel {
     if (a.positionType != b.positionType) return false
     if (a.positionInteractId != b.positionInteractId) return false
     if (a.ticketItemId != b.ticketItemId) return false
-    if (a.ticketItemChildId != b.ticketItemChildId) return false
 
     if (a.quantity != b.quantity) return false
 

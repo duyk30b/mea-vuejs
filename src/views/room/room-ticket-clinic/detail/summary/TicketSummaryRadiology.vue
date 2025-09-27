@@ -14,6 +14,7 @@ import ModalRadiologyDetail from '@/views/master-data/radiology/detail/ModalRadi
 import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadiologyStatusTooltip.vue'
 import { computed, onMounted, ref } from 'vue'
 import ModalTicketRadiologyUpdate from '../radiology/ModalTicketRadiologyUpdate.vue'
+import { TicketRadiologyService } from '@/modules/ticket-radiology'
 
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalTicketRadiologyUpdate = ref<InstanceType<typeof ModalTicketRadiologyUpdate>>()
@@ -23,7 +24,8 @@ const { formatMoney, isMobile } = settingStore
 const { userPermission } = MeService
 
 onMounted(async () => {
-  await ticketRoomRef.value.refreshRadiology()
+  await TicketRadiologyService.refreshRelation(ticketRoomRef.value.ticketRadiologyList)
+  ticketRoomRef.value.refreshTicketRadiology()
 })
 
 const radiologyDiscount = computed(() => {
@@ -56,6 +58,7 @@ const radiologyCostAmount = computed(() => {
         <th>Giá</th>
         <th>Chiết khấu</th>
         <th v-if="CONFIG.MODE === 'development'">Vốn</th>
+        <th v-if="CONFIG.MODE === 'development'">H.Hồng</th>
         <th>Tổng tiền</th>
         <th></th>
       </tr>
@@ -104,6 +107,7 @@ const radiologyCostAmount = computed(() => {
         <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: right">
           {{ formatMoney(ticketRadiology.costPrice) }}
         </td>
+        <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: right"></td>
         <td class="text-right whitespace-nowrap">
           <div v-if="ticketRadiology.discountMoney" class="text-xs italic text-red-500">
             <del>
@@ -116,9 +120,7 @@ const radiologyCostAmount = computed(() => {
           <a
             v-if="
               ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-              [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                ticketRadiology.paymentMoneyStatus,
-              ) &&
+              ticketRadiology.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
               userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_REQUEST]
             "
             class="text-orange-500"
@@ -141,6 +143,7 @@ const radiologyCostAmount = computed(() => {
         <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
           {{ formatMoney(radiologyCostAmount) }}
         </td>
+        <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet"></td>
         <td class="font-bold text-right whitespace-nowrap">
           {{ formatMoney(ticketRoomRef.radiologyMoney) }}
         </td>

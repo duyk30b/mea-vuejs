@@ -16,6 +16,7 @@ import {
 import { ESTypescript, timeToText } from '@/utils'
 import PurchaseOrderStatusTag from '@/views/purchase-order/PurchaseOrderStatusTag.vue'
 import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
+import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 import StockCheckStatusTag from '@/views/stock-check/StockCheckStatusTag.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -104,7 +105,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const openBlankPurchaseOrderDetail = async (voucherId: number) => {
+const openBlankPurchaseOrderDetail = async (voucherId: string) => {
   const route = router.resolve({
     name: 'PurchaseOrderDetailContainer',
     params: { id: voucherId },
@@ -112,7 +113,7 @@ const openBlankPurchaseOrderDetail = async (voucherId: number) => {
   window.open(route.href, '_blank')
 }
 
-const openBlankStockCheckDetail = async (voucherId: number) => {
+const openBlankStockCheckDetail = async (voucherId: string) => {
   const route = router.resolve({
     name: 'StockCheckDetail',
     params: { id: voucherId },
@@ -169,7 +170,7 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
               <div>
                 {{ productMovement.customer?.fullName }}
               </div>
-              <LinkAndStatusTicket :ticket="productMovement.ticket!" />
+              <TicketLink :ticket="productMovement.ticket!" />
               <div style="font-size: 0.8rem; white-space: nowrap">
                 {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
@@ -282,10 +283,7 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
             </td>
             <td>
               <div>
-                <LinkAndStatusTicket
-                  :ticket="productMovement.ticket!"
-                  :ticketId="productMovement.voucherId"
-                />
+                <TicketLink :ticket="productMovement.ticket!" />
               </div>
               <div>{{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}</div>
             </td>

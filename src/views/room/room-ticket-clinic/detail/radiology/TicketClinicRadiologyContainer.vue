@@ -13,7 +13,11 @@ import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import { Radiology, RadiologyService } from '@/modules/radiology'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeRadiologyApi, TicketStatus } from '@/modules/ticket'
-import { TicketRadiology, TicketRadiologyStatus } from '@/modules/ticket-radiology'
+import {
+  TicketRadiology,
+  TicketRadiologyService,
+  TicketRadiologyStatus,
+} from '@/modules/ticket-radiology'
 import IndexAndSort from '@/views/component/IndexAndSort.vue'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import ModalRadiologyDetail from '@/views/master-data/radiology/detail/ModalRadiologyDetail.vue'
@@ -57,7 +61,8 @@ const hasChangePriority = computed(() => {
 onMounted(async () => {
   try {
     const radiologyAll = await RadiologyService.list({})
-    ticketRoomRef.value.refreshRadiology()
+    await TicketRadiologyService.refreshRelation(ticketRoomRef.value.ticketRadiologyList)
+    ticketRoomRef.value.refreshTicketRadiology()
     radiologyOptions.value = radiologyAll.map((i) => ({ value: i.id, text: i.name, data: i }))
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
@@ -108,6 +113,13 @@ const openModalResult = (data: { ticketRadiology: TicketRadiology; noEdit?: bool
     noEdit: data.noEdit,
   })
 }
+
+const startPrintParaClinicalRequest = async () => {
+  await PrintHtmlAction.startPrintParaClinicalRequest({
+    ticket: ticketRoomRef.value,
+    customer: ticketRoomRef.value.customer!,
+  })
+}
 </script>
 <template>
   <ModalRadiologyDetail ref="modalRadiologyDetail" />
@@ -118,6 +130,9 @@ const openModalResult = (data: { ticketRadiology: TicketRadiology; noEdit?: bool
   <div class="mt-4">
     <div class="flex flex-wrap items-baseline justify-between">
       <div class="italic">Danh sách các phiếu đã chỉ định</div>
+      <VueButton icon="print" @click="startPrintParaClinicalRequest">
+        In phiếu chỉ định CLS
+      </VueButton>
     </div>
     <div class="table-wrapper mt-2">
       <table>
@@ -237,9 +252,7 @@ const openModalResult = (data: { ticketRadiology: TicketRadiology; noEdit?: bool
               <a
                 v-else-if="
                   ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                  [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                    tp.paymentMoneyStatus,
-                  ) &&
+                  tp.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
                   userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_REQUEST]
                 "
                 @click="modalTicketRadiologyUpdate?.openModal({ ticketRadiology: tp })"

@@ -228,26 +228,26 @@ const handleLoadImage = (src: string) => {
 }
 
 const getData = () => {
-  const imageIdsKeep: number[] = []
+  const imageIdListKeep: number[] = []
 
   const filesPosition: number[] = []
   const files: File[] = []
   const imageUrls: string[] = []
-  const imageIdsWait: number[] = []
+  const imageIdWaitList: number[] = []
 
   imageDataList.value.forEach((imageData, index) => {
-    imageIdsWait.push(imageData.id || 0)
+    imageIdWaitList.push(imageData.id || 0)
 
     if (imageData.id === 0) {
       filesPosition.push(index)
       files.push(imageData.file)
       imageUrls.push(imageData.thumbnail)
     } else {
-      imageIdsKeep.push(imageData.id)
+      imageIdListKeep.push(imageData.id)
     }
   })
 
-  return { files, imageIdsKeep, filesPosition, imageUrls, imageIdsWait }
+  return { files, imageIdListKeep, filesPosition, imageUrls, imageIdWaitList }
 }
 
 defineExpose({ imageDataList, getData })

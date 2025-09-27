@@ -11,14 +11,14 @@ export enum TicketLaboratoryStatus {
   Completed = 3,
 }
 export class TicketLaboratory {
-  id: number
+  id: string
   priority: number
-  ticketId: number
+  ticketId: string
   customerId: number
   laboratoryId: number
   roomId: number
   laboratoryGroupId: number
-  ticketLaboratoryGroupId: number
+  ticketLaboratoryGroupId: string
 
   costPrice: number
   expectedPrice: number
@@ -41,8 +41,8 @@ export class TicketLaboratory {
 
   static init(): TicketLaboratory {
     const ins = new TicketLaboratory()
-    ins.id = 0
-    ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
+    ins.id = ''
+    ins.paymentMoneyStatus = PaymentMoneyStatus.PendingPaid
     return ins
   }
 

@@ -1,84 +1,91 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
-import { IconClose } from '@/common/icon-antd'
+import { IconClose, IconDelete, IconDoubleRight } from '@/common/icon-antd'
 import ImageUploadCloudinary from '@/common/image-upload/ImageUploadCloudinary.vue'
-import { InputDate, InputText } from '@/common/vue-form'
+import { AlertStore } from '@/common/vue-alert'
+import { InputDate, InputNumber, InputText } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { MeService } from '@/modules/_me/me.service'
+import { PickupStrategy } from '@/modules/enum'
 import type { Image } from '@/modules/image/image.model'
+import { PositionType } from '@/modules/position'
+import type { Product } from '@/modules/product'
 import { TicketChangeProcedureApi } from '@/modules/ticket'
-import { TicketProcedure, TicketProcedureStatus } from '@/modules/ticket-procedure'
+import {
+  TicketProcedure,
+  TicketProcedureStatus,
+  TicketProcedureType,
+} from '@/modules/ticket-procedure'
+import { TicketProduct } from '@/modules/ticket-product'
+import { TicketRegimen } from '@/modules/ticket-regimen'
+import { TicketUser } from '@/modules/ticket-user'
 import { ESImage } from '@/utils'
-import { computed, ref } from 'vue'
+import InputSearchProduct from '@/views/component/InputSearchProduct.vue'
+import TicketChangeTicketUserPosition from '@/views/room/room-user/TicketChangeTicketUserPosition.vue'
+import { nextTick, ref } from 'vue'
 
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadCloudinary>>()
 
 const emit = defineEmits<{
-  (e: 'success', value: { ticketProcedure: TicketProcedure }): void
+  (e: 'success', value: { ticketRegimen: TicketRegimen }): void
 }>()
 
 const { userPermission, organization } = MeService
 
-let ticketProcedureOrigin = TicketProcedure.blank()
 const ticketProcedure = ref<TicketProcedure>(TicketProcedure.blank())
+const ticketUserResultList = ref<TicketUser[]>([])
+const ticketProductProcedureList = ref<TicketProduct[]>([])
+const productId = ref(0)
 
 const hasChangeImageList = ref(false)
 const loadingImage = ref(false)
 const saveLoading = ref(false)
 const showModal = ref(false)
 
-let ticketIdAction = 0
+const openModal = async (data: { ticketProcedure: TicketProcedure }) => {
+  ticketProcedure.value = TicketProcedure.from(data.ticketProcedure)
 
-const openModal = async (data: { ticketProcedure: TicketProcedure; ticketId: number }) => {
-  ticketProcedureOrigin = data.ticketProcedure
-  ticketIdAction = data.ticketId
+  ticketUserResultList.value = TicketUser.fromList(data.ticketProcedure.ticketUserResultList || [])
+  ticketProductProcedureList.value = TicketProduct.fromList(
+    data.ticketProcedure.ticketProductProcedureList || [],
+  )
 
-  ticketProcedure.value = TicketProcedure.from(ticketProcedureOrigin)
-  if (ticketProcedure.value.status !== TicketProcedureStatus.Completed) {
+  if (ticketProcedure.value.status === TicketProcedureStatus.Pending) {
     ticketProcedure.value.completedAt = Date.now()
   }
+
   showModal.value = true
 }
 
 const closeModal = () => {
-  ticketProcedure.value = TicketProcedure.blank()
   showModal.value = false
+  ticketProcedure.value = TicketProcedure.blank()
+  ticketUserResultList.value = []
+  ticketProductProcedureList.value = []
 }
-
-const hasChangeTicketProcedure = computed(() => {
-  const result = !TicketProcedure.equal(ticketProcedureOrigin, ticketProcedure.value)
-  return result
-})
-
-const hasChangeData = computed(() => {
-  const result = hasChangeTicketProcedure.value || hasChangeImageList.value
-  return result
-})
 
 const handleSave = async () => {
   try {
     saveLoading.value = true
-    const { filesPosition, imageIdsKeep, files, imageUrls, imageIdsWait } =
+    const { filesPosition, imageIdListKeep, files, imageUrls, imageIdWaitList } =
       imageUploadMultipleRef.value?.getData() || {
         filesPosition: [],
-        imageIdsWait: [],
-        imageIdsKeep: [],
+        imageIdWaitList: [],
+        imageIdListKeep: [],
         files: [],
         imageUrls: [],
       }
 
-    const ticketProcedureResponse = await TicketChangeProcedureApi.updateResultTicketProcedure({
-      ticketId: ticketIdAction,
-      ticketProcedureId: ticketProcedure.value.id,
-      ticketProcedure: {
-        completedAt: ticketProcedure.value.completedAt,
-        result: ticketProcedure.value.result,
-      },
+    await TicketChangeProcedureApi.processResultTicketProcedure({
+      ticketId: ticketProcedure.value.ticketId,
+      ticketProcedureResult: ticketProcedure.value,
       imagesChange: hasChangeImageList.value
-        ? { files, imageIdsWait, externalUrlList: imageUrls }
+        ? { files, imageIdWaitList, externalUrlList: imageUrls }
         : undefined,
+      ticketUserResultList: ticketUserResultList.value,
+      ticketProductProcedureResultList: ticketProductProcedureList.value,
     })
-    emit('success', { ticketProcedure: ticketProcedureResponse })
+
     closeModal()
   } catch (error) {
     console.log('🚀 ~ file: ModalAppointmentClinicSuccess.vue:41  ~ error:', error)
@@ -87,20 +94,54 @@ const handleSave = async () => {
   }
 }
 
-const handleClickCancelResult = async () => {
+const cancelResultTicketProcedure = async () => {
   try {
-    saveLoading.value = true
-
-    const ticketProcedureResponse = await TicketChangeProcedureApi.cancelResultTicketProcedure({
-      ticketId: ticketIdAction,
+    await TicketChangeProcedureApi.cancelResultTicketProcedure({
+      ticketId: ticketProcedure.value.ticketId,
       ticketProcedureId: ticketProcedure.value.id,
     })
-    emit('success', { ticketProcedure: ticketProcedureResponse })
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalAppointmentClinicSuccess.vue:41  ~ error:', error)
-  } finally {
-    saveLoading.value = false
+    console.log('🚀 ~ ModalProcessTicketProcedure.vue:100 ~  ~ error:', error)
+  }
+}
+
+const handleFixTicketUserResultList = (tuListData: TicketUser[]) => {
+  ticketUserResultList.value = TicketUser.fromList(tuListData)
+}
+
+const selectProduct = async (productData: Product) => {
+  if (productData) {
+    if (productData.quantity <= 0) {
+      AlertStore.addError('Không đủ số lượng tồn kho')
+    } else {
+      const findIndex = ticketProductProcedureList.value.findIndex((i) => {
+        return i.productId === productData.id
+      })
+      if (findIndex === -1) {
+        const temp = new TicketProduct()
+        temp.quantity = 1
+        temp.productId = productData.id
+        temp.product = productData
+        temp.warehouseIds = '[]'
+        temp.pickupStrategy = PickupStrategy.AutoWithFIFO
+        ticketProductProcedureList.value.push(temp)
+      } else {
+        ticketProductProcedureList.value[findIndex].quantity++
+      }
+    }
+  }
+
+  await nextTick()
+  productId.value = 0
+}
+
+const removeConsumable = (productId: number) => {
+  const findIndex = ticketProductProcedureList.value.findIndex((i) => {
+    return i.productId === productId
+  })
+  if (findIndex !== -1) {
+    ticketProductProcedureList.value.splice(findIndex, 1)
   }
 }
 
@@ -108,7 +149,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="margin-top: 50px; width: 800px">
+  <VueModal v-model:show="showModal" style="margin-top: 50px; width: 800px" @close="closeModal">
     <form class="bg-white pb-2" @submit.prevent="handleSave">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
@@ -119,55 +160,138 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="px-4 mt-4">
-        <div class="mt-4" style="flex-basis: 300px; flex-grow: 1">
-          <div>Thời gian thực hiện</div>
-          <div>
-            <InputDate
-              v-model:value="ticketProcedure.completedAt"
-              type-parser="number"
-              class="w-full"
-              show-time
+      <div class="mx-4 mt-4">
+        <div class="flex flex-wrap gap-4">
+          <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
+            <div>Số lượng</div>
+            <div>
+              <InputNumber
+                v-model:value="ticketProcedure.quantity"
+                type-parser="number"
+                class="w-full"
+                show-time
+                :disabled="!!ticketProcedure.id"
+              />
+            </div>
+          </div>
+
+          <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
+            <div>Thời gian thực hiện</div>
+            <div>
+              <InputDate
+                v-model:value="ticketProcedure.completedAt"
+                type-parser="number"
+                class="w-full"
+                show-time
+              />
+            </div>
+          </div>
+
+          <div style="flex-basis: 90%; flex-grow: 1; min-width: 300px">
+            <div>Kết luận</div>
+            <div>
+              <InputText v-model:value="ticketProcedure.result" />
+            </div>
+          </div>
+
+          <div style="flex-basis: 90%; flex-grow: 1; min-width: 300px">
+            <div>Hình ảnh</div>
+            <ImageUploadCloudinary
+              ref="imageUploadMultipleRef"
+              :height="100"
+              :oid="organization.id"
+              :customerId="ticketProcedure.customerId"
+              @changeImage="hasChangeImageList = true"
+              @loading="(v) => (loadingImage = v)"
+              :rootImageList="
+                (ticketProcedure.imageList || []).map((i: Image) => ({
+                  thumbnail: ESImage.getImageLink(i, { size: 200 }),
+                  enlarged: ESImage.getImageLink(i, { size: 1000 }),
+                  id: i.id,
+                }))
+              "
             />
           </div>
         </div>
 
         <div class="mt-4">
-          <div>Kết luận</div>
-          <div>
-            <InputText v-model:value="ticketProcedure.result" />
-          </div>
+          <TicketChangeTicketUserPosition
+            ref="ticketChangeTicketUserPosition"
+            v-model:ticketUserList="ticketUserResultList!"
+            :positionType="PositionType.ProcedureResult"
+            :positionInteractId="ticketProcedure.procedureId"
+            @fix:ticketUserList="handleFixTicketUserResultList"
+            title="Nhân viên thực hiện dịch vụ"
+          />
         </div>
 
         <div class="mt-4">
-          <div>Hình ảnh</div>
-          <ImageUploadCloudinary
-            ref="imageUploadMultipleRef"
-            :height="100"
-            :oid="organization.id"
-            :customerId="ticketProcedure.customerId"
-            @changeImage="hasChangeImageList = true"
-            @loading="(v) => (loadingImage = v)"
-            :rootImageList="
-              (ticketProcedure.imageList || []).map((i: Image) => ({
-                thumbnail: ESImage.getImageLink(i, { size: 200 }),
-                enlarged: ESImage.getImageLink(i, { size: 1000 }),
-                id: i.id,
-              }))
-            "
-          />
+          <div class="font-bold">
+            <IconDoubleRight />
+            Vật tư tiêu hao sử dụng khi thực hiện
+          </div>
+          <div>
+            <InputSearchProduct
+              v-model:productId="productId"
+              :searchIncludeZeroQuantity="false"
+              @selectProduct="selectProduct"
+              removeLabelWrapper
+            />
+          </div>
+          <div class="mt-2 table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Tên sản phẩm</th>
+                  <th style="width: 200px">Số lượng</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="!ticketProductProcedureList.length">
+                  <td class="text-center" colspan="100">Không sử dụng vật tư</td>
+                </tr>
+                <tr
+                  v-for="(consumable, index) in ticketProductProcedureList"
+                  :key="consumable.productId"
+                >
+                  <td class="text-center">{{ index + 1 }}</td>
+                  <td>
+                    <div class="flex flex-wrap gap-1">
+                      <span>{{ consumable.product?.brandName }}</span>
+                      <span style="font-weight: 500">(Tồn {{ consumable.product?.quantity }})</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="flex justify-center">
+                      <InputNumber
+                        v-model:value="consumable.quantity"
+                        textAlign="right"
+                        :buttonControl="true"
+                      />
+                    </div>
+                  </td>
+                  <td>
+                    <div class="flex items-center justify-center">
+                      <a
+                        style="color: var(--text-red); font-size: 18px"
+                        @click="removeConsumable(consumable.productId)"
+                      >
+                        <IconDelete />
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <div class="p-4 mt-4 flex flex-wrap gap-4 justify-between">
-        <div>
-          <VueButton
-            v-if="ticketProcedure.status === TicketProcedureStatus.Completed"
-            icon="close"
-            color="red"
-            :loading="saveLoading"
-            @click="handleClickCancelResult"
-          >
+      <div class="p-4 mt-4 flex flex-wrap gap-10 justify-center">
+        <div v-if="ticketProcedure.status === TicketProcedureStatus.Completed">
+          <VueButton color="red" type="button" icon="close" @click="cancelResultTicketProcedure">
             Hủy kết quả
           </VueButton>
         </div>
@@ -177,9 +301,9 @@ defineExpose({ openModal })
             icon="save"
             type="submit"
             :loading="saveLoading"
-            :disabled="!hasChangeData || loadingImage"
+            :disabled="loadingImage"
           >
-            THỰC HIỆN
+            Lưu kết quả
           </VueButton>
         </div>
       </div>

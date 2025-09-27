@@ -28,7 +28,7 @@ const openModal = async () => {
 
   const fetchData = await Promise.all([
     RoleService.getMap(),
-    PositionService.list({ filter: { positionType: PositionType.TicketReception } }),
+    PositionService.list({ filter: { positionType: PositionType.Reception } }),
   ])
   const roleMap = fetchData[0]
   roleOptions.value = fetchData[1].map((i) => ({ value: i.roleId, label: roleMap[i.roleId]?.name }))
@@ -80,7 +80,7 @@ defineExpose({ openModal })
               <td>
                 <div>
                   <InputSelect
-                    v-model:value="settingDisplay.requiredPaymentItem"
+                    v-model:value="settingDisplay.isPaymentEachItem"
                     :options="[
                       { value: 0, label: '(Mặc định) Thanh toán chung ---' },
                       { value: 1, label: 'Bắt buộc thanh toán cho từng dịch vụ lẻ' },

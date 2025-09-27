@@ -6,8 +6,7 @@ import type { Payment } from '../payment/payment.model'
 import { PrintHtmlSettingService } from '../print-html-setting'
 import type { PurchaseOrder } from '../purchase-order'
 import type { Ticket } from '../ticket'
-import type { TicketLaboratory } from '../ticket-laboratory'
-import type { TicketLaboratoryGroup } from '../ticket-laboratory-group'
+import type { TicketLaboratoryGroup } from '../ticket-laboratory'
 import type { TicketRadiology } from '../ticket-radiology'
 import { PrintHtmlCompile } from './print-html.compiled'
 import { PrintHtml, PrintHtmlType } from './print-html.model'
@@ -109,11 +108,17 @@ export class PrintHtmlAction {
   }
 
   static async startPrintPurchaseOrderDetail(data: { purchaseOrder: PurchaseOrder }) {
-    await PrintHtmlAction.startPrintCommon({ data, printHtmlType: PrintHtmlType.PurchaseOrderDetail })
+    await PrintHtmlAction.startPrintCommon({
+      data,
+      printHtmlType: PrintHtmlType.PurchaseOrderDetail,
+    })
   }
 
-  static async startPrintAllRequest(data: { ticket: Ticket; customer: Customer }) {
-    await PrintHtmlAction.startPrintCommon({ data, printHtmlType: PrintHtmlType.AllRequest })
+  static async startPrintParaClinicalRequest(data: { ticket: Ticket; customer: Customer }) {
+    await PrintHtmlAction.startPrintCommon({
+      data,
+      printHtmlType: PrintHtmlType.ParaClinicalRequest,
+    })
   }
 
   static async startPrintAllMoney(data: { ticket: Ticket; customer: Customer }) {

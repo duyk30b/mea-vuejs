@@ -2,7 +2,7 @@
 import VueButton from '@/common/VueButton.vue'
 import VueTinyMCE from '@/common/VueTinyMCE.vue'
 import ImageUploadCloudinary from '@/common/image-upload/ImageUploadCloudinary.vue'
-import { InputOptions, InputOptionsText, InputText } from '@/common/vue-form'
+import { InputArea, InputOptions, InputOptionsText, InputText } from '@/common/vue-form'
 import type { ItemOption } from '@/common/vue-form/InputOptions.vue'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
@@ -144,10 +144,10 @@ const saveTicketDiagnosis = async () => {
     saveLoading.value = true
     const imgData = imageUploadMultipleRef.value?.getData() || {
       filesPosition: [],
-      imageIdsKeep: [],
+      imageIdListKeep: [],
       files: [],
       imageUrls: [],
-      imageIdsWait: [],
+      imageIdWaitList: [],
     }
 
     let ticketAttributeChangeList = undefined
@@ -164,7 +164,7 @@ const saveTicketDiagnosis = async () => {
         imagesChange: hasChangeImage.value
           ? {
               files: imgData.files,
-              imageIdsWait: imgData.imageIdsWait,
+              imageIdWaitList: imgData.imageIdWaitList,
               externalUrlList: imgData.imageUrls,
             }
           : undefined,
@@ -225,20 +225,19 @@ defineExpose({ getDataTicketDiagnosis })
       <div class="flex flex-col" style="flex-grow: 3; flex-basis: 200px; min-height: 200px">
         <div>Tiền sử</div>
         <div class="flex-1 healthHistory">
-          <VueTinyMCE v-model="ticketAttributeMap.healthHistory" />
+          <InputArea v-model:value="ticketAttributeMap.healthHistory" />
         </div>
       </div>
       <div class="flex flex-col" style="flex-grow: 3; flex-basis: 200px; min-height: 200px">
         <div>Tóm tắt</div>
         <div class="flex-1 summary">
-          <VueTinyMCE v-model="ticketAttributeMap.summary" />
+          <InputArea v-model:value="ticketAttributeMap.summary" />
         </div>
       </div>
       <div style="flex-grow: 1; flex-basis: 200px">
         <DiagnosisVitalSigns :ticketAttributeMap="ticketAttributeMap" />
       </div>
     </div>
-
     <div v-if="currentRoom.roomStyle === RoomTicketStyle.TicketClinicObstetric" class="mt-4">
       <DiagnosisObstetric :ticketAttributeMap="ticketAttributeMap" />
     </div>

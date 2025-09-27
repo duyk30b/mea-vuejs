@@ -40,7 +40,7 @@ const paymentStatus = ref<'prepayment' | 'payDebt' | ''>('prepayment')
 
 const roomMap = RoomService.roomMap
 
-const sortColumn = ref<'registeredAt' | 'id' | ''>('')
+const sortColumn = ref<'createdAt' | 'id' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const page = ref(1)
@@ -59,11 +59,11 @@ const startFetchData = async (options?: { dataLoading: boolean }) => {
       relation: {
         customer: true,
         // ticketAttributeList: true,
-        ticketUserList: settingStore.TICKET_CLINIC_LIST.roleIdList.length ? {} : undefined,
+        // ticketUserList: settingStore.TICKET_CLINIC_LIST.roleIdList.length ? true : undefined,
       },
       filter: {
         customerId: customerId.value ? customerId.value : undefined,
-        registeredAt:
+        createdAt:
           fromTime.value || toTime.value
             ? {
                 GTE: fromTime.value ? fromTime.value : undefined,
@@ -90,9 +90,9 @@ const startFetchData = async (options?: { dataLoading: boolean }) => {
       sort: sortValue.value
         ? {
             id: sortColumn.value === 'id' ? sortValue.value : undefined,
-            registeredAt: sortColumn.value === 'registeredAt' ? sortValue.value : undefined,
+            createdAt: sortColumn.value === 'createdAt' ? sortValue.value : undefined,
           }
-        : { registeredAt: 'DESC' },
+        : { createdAt: 'DESC' },
     })
 
     roomFinancePagination.value = paginationResult.ticketList
@@ -120,7 +120,7 @@ const startFilter = async () => {
   await startFetchData()
 }
 
-const changeSort = async (column: 'id' | 'registeredAt') => {
+const changeSort = async (column: 'id' | 'createdAt') => {
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
     sortValue.value = ''
@@ -306,7 +306,7 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
             <td>
               <div><TicketStatusTag :ticket="ticket" /></div>
               <div style="font-size: 0.9em">
-                {{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(ticket.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
 

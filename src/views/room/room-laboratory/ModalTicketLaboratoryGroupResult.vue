@@ -8,8 +8,11 @@ import { LaboratoryService, LaboratoryValueType } from '@/modules/laboratory'
 import { LaboratoryGroupService } from '@/modules/laboratory-group'
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import { TicketChangeLaboratoryApi } from '@/modules/ticket'
-import { TicketLaboratoryGroup, TicketLaboratoryGroupApi } from '@/modules/ticket-laboratory-group'
-import { TicketLaboratoryResult } from '@/modules/ticket-laboratory-result'
+import {
+  TicketLaboratoryGroup,
+  TicketLaboratoryGroupApi,
+  TicketLaboratoryResult,
+} from '@/modules/ticket-laboratory'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import { computed, ref } from 'vue'
 
@@ -23,13 +26,13 @@ const laboratoryGroupMap = LaboratoryGroupService.laboratoryGroupMap
 const ticketLaboratoryResultOriginTree = ref<Record<string, TicketLaboratoryResult>>({})
 const ticketLaboratoryResultTree = ref<Record<string, TicketLaboratoryResult>>({})
 
-const ticketLaboratoryGroupId = ref<number>(0)
+const ticketLaboratoryGroupId = ref<string>('')
 const ticketLaboratoryGroup = ref<TicketLaboratoryGroup>(TicketLaboratoryGroup.blank())
 const completedAt = ref<number>(Date.now())
 
 const saveLoading = ref(false)
 
-const openModal = async (tlgIdProp: number, options?: { noEdit: boolean; query?: boolean }) => {
+const openModal = async (tlgIdProp: string, options?: { noEdit: boolean; query?: boolean }) => {
   showModal.value = true
   ticketLaboratoryGroup.value = await TicketLaboratoryGroupApi.detail(tlgIdProp, {
     relation: {
@@ -157,7 +160,7 @@ const closeModal = () => {
   showModal.value = false
   ticketLaboratoryResultTree.value = {}
   ticketLaboratoryResultOriginTree.value = {}
-  ticketLaboratoryGroupId.value = 0
+  ticketLaboratoryGroupId.value = ''
   ticketLaboratoryGroup.value = TicketLaboratoryGroup.blank()
 }
 

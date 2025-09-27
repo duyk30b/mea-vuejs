@@ -18,14 +18,10 @@ export const roomRouter: RouteRecordRaw = {
       meta: { title: 'Hẹn khám' },
     },
     {
-      path: 'room-ticket-reception/:roomId',
-      name: 'RoomTicketReception',
-      component: () => import('../views/room/room-ticket-reception/list/TicketReceptionList.vue'),
-      meta: {
-        menuKey: (route: RouteLocationNormalizedLoaded, params: { roomId: any }) => {
-          return route.name?.toString() + '_' + params?.roomId
-        },
-      },
+      path: 'reception-list',
+      name: 'ReceptionList',
+      component: () => import('../views/room/reception/list/TicketReceptionList.vue'),
+      meta: { title: 'Tiếp đón' },
     },
     {
       path: 'room-ticket-order/:roomId',

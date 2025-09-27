@@ -1,7 +1,5 @@
 import { CustomerDB } from '../../core/indexed-db/repository/customer.repository'
-import { MeService } from '../_me/me.service'
 import { Customer } from '../customer'
-import { PermissionId } from '../permission/permission.enum'
 import { TicketQueryApi } from './api/ticket-query.api'
 import type { TicketDetailQuery } from './ticket.dto'
 import type { Ticket } from './ticket.model'
@@ -9,8 +7,8 @@ import type { Ticket } from './ticket.model'
 export class TicketService {
   static ticketMap: Record<string, Ticket> = {} // lưu history
 
-  static async detail(id: number, options: TicketDetailQuery) {
-    const { ticket } = await TicketQueryApi.detail(id, options)
+  static async detail(ticketId: string, options: TicketDetailQuery) {
+    const { ticket } = await TicketQueryApi.detail(ticketId, options)
 
     if (ticket.customer) {
       const customer = Customer.from(ticket.customer)
@@ -23,19 +21,19 @@ export class TicketService {
   static async getTicket(ticket: Ticket) {
     if (
       !TicketService.ticketMap[ticket.id] ||
-      TicketService.ticketMap[ticket.id].updatedAt !== ticket.updatedAt
+      TicketService.ticketMap[ticket.id].createdAt !== ticket.createdAt
     ) {
       const ticketResponse = await TicketService.detail(ticket.id, {
         relation: {
           customer: true,
           imageList: true,
           ticketAttributeList: true,
-          ticketProductConsumableList: {},
-          ticketProductPrescriptionList: {},
-          ticketProcedureList: {},
-          ticketRadiologyList: { relation: { imageList: true } },
-          ticketLaboratoryList: {},
-          ticketLaboratoryGroupList: {},
+          ticketProcedureList: true,
+          ticketRegimenList: true,
+          ticketRegimenItemList: true,
+          ticketRadiologyList: true,
+          ticketLaboratoryList: true,
+          ticketLaboratoryGroupList: true,
           ticketLaboratoryResultList: true,
         },
       })

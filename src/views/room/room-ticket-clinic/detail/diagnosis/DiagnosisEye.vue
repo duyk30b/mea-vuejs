@@ -87,13 +87,13 @@ const hasChangeData = computed(() => {
 const saveTicketDiagnosis = async () => {
   try {
     saveLoading.value = true
-    const { filesPosition, imageIdsKeep, files, imageUrls, imageIdsWait } =
+    const { filesPosition, imageIdListKeep, files, imageUrls, imageIdWaitList } =
       imageUploadMultipleRef.value?.getData() || {
         filesPosition: [],
-        imageIdsKeep: [],
+        imageIdListKeep: [],
         files: [],
         imageUrls: [],
-        imageIdsWait: [],
+        imageIdWaitList: [],
       }
 
     let ticketAttributeChangeList = undefined
@@ -108,7 +108,7 @@ const saveTicketDiagnosis = async () => {
         ticketId: ticketRoomRef.value.id,
         note: note.value,
         imagesChange: hasChangeImage.value
-          ? { files, imageIdsWait, externalUrlList: imageUrls }
+          ? { files, imageIdWaitList, externalUrlList: imageUrls }
           : undefined,
         ticketAttributeChangeList,
         ticketAttributeKeyList: TicketAttributeKeyEyeList as any,

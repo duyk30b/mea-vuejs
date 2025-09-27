@@ -16,11 +16,11 @@ export enum TicketItemType {
 }
 
 export class PaymentTicketItem {
-  id: number
-  paymentId: number
-  ticketId: number
+  id: string
+  paymentId: string
+  ticketId: string
   ticketItemType: TicketItemType
-  ticketItemId: number
+  ticketItemId: string
   interactId: number
 
   expectedPrice: number
@@ -42,11 +42,11 @@ export class PaymentTicketItem {
 
   static init(): PaymentTicketItem {
     const ins = new PaymentTicketItem()
-    ins.id = 0
-    ins.paymentId = 0
-    ins.ticketId = 0
+    ins.id = ''
+    ins.paymentId = ''
+    ins.ticketId = ''
     ins.ticketItemType = TicketItemType.Other
-    ins.ticketItemId = 0
+    ins.ticketItemId = ''
     ins.interactId = 0
     ins.expectedPrice = 0
     ins.discountMoney = 0

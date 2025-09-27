@@ -24,6 +24,7 @@ const handleInput = (e: Event) => {
   <div :class="{ 'vue-input': true, 'disabled': disabled }">
     <div class="input-area">
       <textarea
+        style="width: 100%; height: 100%"
         :value="value"
         @input="handleInput"
         :placeholder="placeholder"

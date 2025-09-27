@@ -75,6 +75,11 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <span><router-link :to="{ name: 'AppointmentList' }">Lịch hẹn</router-link></span>
     </a-menu-item>
 
+    <a-menu-item key="ReceptionList">
+      <template #icon><IconDoorOpen /></template>
+      <span><router-link :to="{ name: 'ReceptionList' }">Tiếp đón</router-link></span>
+    </a-menu-item>
+
     <template v-for="room in roomList" :key="room.id">
       <a-menu-item
         v-if="
@@ -96,22 +101,6 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         v-if="
           roomIdMap[room.id] &&
           room.roomType === RoomType.Ticket &&
-          [RoomTicketStyle.TicketReception].includes(room.roomStyle)
-        "
-        :key="'RoomTicketReception' + '_' + room.id"
-      >
-        <template #icon><IconDoorOpen /></template>
-        <span>
-          <router-link :to="{ name: 'RoomTicketReception', params: { roomId: room.id } }">
-            {{ room.name }}
-          </router-link>
-        </span>
-      </a-menu-item>
-
-      <a-menu-item
-        v-if="
-          roomIdMap[room.id] &&
-          room.roomType === RoomType.Ticket &&
           [
             RoomTicketStyle.TicketClinicGeneral,
             RoomTicketStyle.TicketClinicObstetric,
@@ -123,22 +112,6 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <template #icon><IconApartment /></template>
         <span>
           <router-link :to="{ name: 'RoomTicketClinic', params: { roomId: room.id } }">
-            {{ room.name }}
-          </router-link>
-        </span>
-      </a-menu-item>
-
-      <a-menu-item
-        v-if="
-          roomIdMap[room.id] &&
-          room.roomType === RoomType.Ticket &&
-          [RoomTicketStyle.TicketSpa].includes(room.roomStyle)
-        "
-        :key="'RoomTicketSpa' + '_' + room.id"
-      >
-        <template #icon><IconApartment /></template>
-        <span>
-          <router-link :to="{ name: 'RoomTicketSpa', params: { roomId: room.id } }">
             {{ room.name }}
           </router-link>
         </span>

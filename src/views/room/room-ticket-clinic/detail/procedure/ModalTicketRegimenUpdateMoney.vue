@@ -5,7 +5,7 @@ import { AlertStore } from '@/common/vue-alert'
 import { InputMoney, InputNumber, VueSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
+import { DiscountType, PaymentEffect, PaymentMoneyStatus } from '@/modules/enum'
 import { TicketChangeProcedureApi } from '@/modules/ticket'
 import { TicketProcedure } from '@/modules/ticket-procedure'
 import { TicketRegimen, TicketRegimenStatus } from '@/modules/ticket-regimen'
@@ -20,9 +20,6 @@ const { formatMoney, isMobile } = settingStore
 
 let ticketRegimenOrigin = TicketRegimen.blank()
 const ticketRegimen = ref<TicketRegimen>(TicketRegimen.blank())
-
-const paymentEachSession = ref(0)
-const requiredPaymentItem = settingStore.TICKET_CLINIC_LIST.requiredPaymentItem
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -94,29 +91,6 @@ const handleChangeActualPrice = (data: number) => {
   ticketRegimen.value.actualPrice = actualPrice
 }
 
-const handleChangePaymentAllItem = () => {
-  if (paymentEachSession.value) {
-    ticketRegimen.value.paymentMoneyStatus = PaymentMoneyStatus.NoEffect
-    ticketRegimen.value.ticketProcedureWrapList?.forEach((tpWrap) => {
-      if (requiredPaymentItem) {
-        tpWrap.ticketProcedure.paymentMoneyStatus = PaymentMoneyStatus.PendingPayment
-      } else {
-        tpWrap.ticketProcedure.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
-      }
-    })
-  }
-  if (!paymentEachSession.value) {
-    ticketRegimen.value.ticketProcedureWrapList?.forEach((tpWrap) => {
-      tpWrap.ticketProcedure.paymentMoneyStatus = PaymentMoneyStatus.NoEffect
-    })
-    if (requiredPaymentItem) {
-      ticketRegimen.value.paymentMoneyStatus = PaymentMoneyStatus.PendingPayment
-    } else {
-      ticketRegimen.value.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
-    }
-  }
-}
-
 const closeModal = () => {
   showModal.value = false
   ticketRegimen.value = TicketRegimen.blank()
@@ -131,32 +105,25 @@ const handleSave = async () => {
     }
 
     if (hasChangeTicketRegimen.value) {
-      ticketRegimen.value.ticketProcedureWrapList?.forEach((tpWrap) => {
-        const tp = tpWrap.ticketProcedure
-        tp.expectedPrice =
-          (tp.expectedPrice * ticketRegimen.value.expectedPrice) / ticketRegimenOrigin.expectedPrice
-        tp.discountPercent = ticketRegimen.value.discountPercent
-        tp.discountMoney = (tp.expectedPrice * tp.discountPercent) / 100
-        tp.actualPrice = tp.expectedPrice - tp.discountMoney
-      })
-      ticketRegimen.value.ticketProcedureList?.forEach((tp) => {
-        tp.expectedPrice =
-          (tp.expectedPrice * ticketRegimen.value.expectedPrice) / ticketRegimenOrigin.expectedPrice
-        tp.discountPercent = ticketRegimen.value.discountPercent
-        tp.discountMoney = (tp.expectedPrice * tp.discountPercent) / 100
-        tp.actualPrice = tp.expectedPrice - tp.discountMoney
+      ticketRegimen.value.ticketRegimenItemList?.forEach((tri) => {
+        tri.expectedPrice =
+          (tri.expectedPrice * ticketRegimen.value.expectedPrice) /
+          ticketRegimenOrigin.expectedPrice
+        tri.discountPercent = ticketRegimen.value.discountPercent
+        tri.discountMoney = (tri.expectedPrice * tri.discountPercent) / 100
+        tri.actualPrice = tri.expectedPrice - tri.discountMoney
       })
     }
 
-    if (ticketRegimen.value.id) {
-      const ticketRegimenResponse = await TicketChangeProcedureApi.updateMoneyTicketRegimen({
-        ticketId: ticketRegimen.value.ticketId,
-        ticketRegimenId: ticketRegimen.value.id,
-        ticketRegimen: ticketRegimen.value,
-        ticketProcedureList: ticketRegimen.value.ticketProcedureList || [],
-      })
-      Object.assign(ticketRegimen.value, ticketRegimenResponse)
-    }
+    // if (ticketRegimen.value.id) {
+    //   const ticketRegimenResponse = await TicketChangeProcedureApi.updateMoneyTicketRegimen({
+    //     ticketId: ticketRegimen.value.ticketId,
+    //     ticketRegimenId: ticketRegimen.value.id,
+    //     ticketRegimen: ticketRegimen.value,
+    //     ticketRegimenItemList: ticketRegimen.value.ticketRegimenItemList || [],
+    //   })
+    //   Object.assign(ticketRegimen.value, ticketRegimenResponse)
+    // }
 
     emit('success', ticketRegimen.value)
     closeModal()
@@ -238,25 +205,6 @@ defineExpose({ openModal })
                 :disabled="ticketRegimen.paymentMoneyStatus === PaymentMoneyStatus.Paid"
                 @update:value="handleChangeActualPrice"
               />
-            </div>
-          </div>
-          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-            <div>Kiểu thanh toán</div>
-            <div style="width: 100%">
-              <VueSelect
-                v-model:value="paymentEachSession"
-                :options="[
-                  { value: 0, text: 'Thanh toán hết 1 lần' },
-                  { value: 1, text: 'Thanh toán từng buổi lẻ' },
-                ]"
-                @update:value="handleChangePaymentAllItem"
-              />
-            </div>
-          </div>
-          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-            <div>Số tiền phải thanh toán</div>
-            <div style="width: 100%">
-              <InputMoney v-model:value="ticketRegimen.remainMoney" disabled />
             </div>
           </div>
         </div>

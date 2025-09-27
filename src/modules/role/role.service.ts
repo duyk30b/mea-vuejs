@@ -5,6 +5,7 @@ import { UserRole, UserRoleService } from '../user-role'
 import { RoleApi } from './role.api'
 import type { RoleDetailQuery, RoleGetQuery, RoleListQuery, RolePaginationQuery } from './role.dto'
 import { Role } from './role.model'
+import { User, UserService } from '../user'
 
 const RoleDBQuery = new IndexedDBQuery<Role>()
 
@@ -62,8 +63,9 @@ export class RoleService {
     try {
       const roleIdList = roleList.map((i) => i.id)
 
-      const [userRoleAll] = await Promise.all([
+      const [userRoleAll, userMap] = await Promise.all([
         relation?.userRoleList ? UserRoleService.getAll() : <UserRole[]>[],
+        relation?.userRoleList?.user ? UserService.getMap() : <Record<string, User>>{},
       ])
 
       roleList.forEach((role) => {
@@ -71,6 +73,11 @@ export class RoleService {
           role.userRoleList = userRoleAll.filter((i) => {
             return i.roleId === role.id
           })
+          if (relation?.userRoleList?.user) {
+            role.userRoleList.forEach((userRole) => {
+              userRole.user = userMap[userRole.userId]
+            })
+          }
         }
       })
     } catch (error) {

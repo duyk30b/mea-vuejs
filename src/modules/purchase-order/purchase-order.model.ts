@@ -16,7 +16,7 @@ export enum PurchaseOrderStatus {
 }
 
 export class PurchaseOrder {
-  id: number
+  id: string
   distributorId: number
   status: PurchaseOrderStatus
   deliveryStatus: DeliveryStatus
@@ -38,7 +38,7 @@ export class PurchaseOrder {
 
   static init(): PurchaseOrder {
     const ins = new PurchaseOrder()
-    ins.id = 0
+    ins.id = ''
     ins.status = PurchaseOrderStatus.Draft
     ins.itemsActualMoney = 0
     ins.discountMoney = 0

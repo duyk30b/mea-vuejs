@@ -80,9 +80,9 @@ watch(
               <div class="font-medium">
                 {{ ticketProcedure.procedure!.name }}
               </div>
-              <LinkAndStatusTicket :ticket="ticketProcedure.ticket!" />
+              <LinkAndStatusTicket :ticket="ticketProcedure.ticketProcess!" />
               <div style="font-size: 0.8rem">
-                {{ ESTimer.timeToText(ticketProcedure.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
+                {{ ESTimer.timeToText(ticketProcedure.ticketProcess?.createdAt, 'DD/MM/YYYY hh:mm') }}
               </div>
             </td>
             <td class="text-center">
@@ -125,9 +125,9 @@ watch(
           </tr>
           <tr v-for="(ticketProcedure, index) in ticketProcedureList" :key="index">
             <td>
-              <LinkAndStatusTicket :ticket="ticketProcedure.ticket!" />
+              <LinkAndStatusTicket :ticket="ticketProcedure.ticketProcess!" />
               <div style="font-size: 0.8rem">
-                {{ ESTimer.timeToText(ticketProcedure.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(ticketProcedure.ticketProcess?.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td>{{ ticketProcedure.procedure?.name }}</td>

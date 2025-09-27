@@ -8,7 +8,7 @@ import { Ticket } from '../ticket.model'
 
 export class TicketMoneyApi {
   static async prepaymentMoney(object: {
-    ticketId: number
+    ticketId: string
     body: {
       customerId: number
       paymentMethodId: number
@@ -36,7 +36,7 @@ export class TicketMoneyApi {
     paymentMethodId: number
     paidAmount: number
     note: string
-    dataList: { ticketId: number; paidAmount: number }[]
+    dataList: { ticketId: string; paidAmount: number }[]
   }) {
     const response = await AxiosInstance.post('/ticket/pay-debt', body)
     const { data } = response.data as BaseResponse<{
@@ -53,7 +53,7 @@ export class TicketMoneyApi {
   }
 
   static async refundMoney(object: {
-    ticketId: number
+    ticketId: string
     body: {
       customerId: number
       paymentMethodId: number
@@ -80,7 +80,7 @@ export class TicketMoneyApi {
   }
 
   static async prepaymentTicketItemList(object: {
-    ticketId: number
+    ticketId: string
     body: {
       customerId: number
       paymentMethodId: number
@@ -88,7 +88,7 @@ export class TicketMoneyApi {
       note: string
       ticketItemList: {
         ticketItemType: TicketItemType
-        ticketItemId: number
+        ticketItemId: string
         interactId: number
         expectedPrice: number
         discountMoney: number
@@ -121,14 +121,14 @@ export class TicketMoneyApi {
   }
 
   static async refundTicketItemList(object: {
-    ticketId: number
+    ticketId: string
     body: {
       customerId: number
       paymentMethodId: number
       refundAmount: number
       note: string
       ticketItemList: {
-        ticketItemId: number
+        ticketItemId: string
         ticketItemType: TicketItemType
         interactId: number
         expectedPrice: number

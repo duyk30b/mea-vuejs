@@ -38,7 +38,7 @@ export class MeApi {
     userInfo: { fullName: string; phone?: string; birthday?: number; gender?: number }
     imagesChange?: {
       files: File[]
-      imageIdsWait: number[]
+      imageIdWaitList: number[]
       externalUrlList: string[]
     }
   }) {
@@ -50,7 +50,7 @@ export class MeApi {
     if (imagesChange) {
       // imagesChange.files.forEach((file) => formData.append('files', file))
       const imagesChangeStr = JSON.stringify({
-        imageIdsWait: imagesChange.imageIdsWait,
+        imageIdWaitList: imagesChange.imageIdWaitList,
         externalUrlList: imagesChange.externalUrlList,
       })
       formData.append('imagesChange', imagesChangeStr)

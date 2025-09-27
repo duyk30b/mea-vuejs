@@ -53,7 +53,7 @@ const openModal = async (options: { ticket: Ticket; queryTicketProduct?: boolean
   }
 }
 
-const handleChangeInput = (e: Event, tpId: number) => {
+const handleChangeInput = (e: Event, tpId: string) => {
   const target = e.target as HTMLInputElement
   if (target.checked) {
     ticketProductIdSelect.value[tpId] = true
@@ -126,7 +126,7 @@ const startSendProduct = async () => {
 
   const ticketProductIdList = Object.entries(ticketProductIdSelect.value)
     .filter(([key, value]) => !!value)
-    .map(([key, value]) => Number(key))
+    .map(([key, value]) => key)
 
   if (!ticketProductIdList.length) {
     return AlertStore.addError('Cần chọn ít nhất 1 sản phẩm xuất hàng')

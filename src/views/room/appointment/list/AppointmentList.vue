@@ -149,7 +149,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const handleClickDeleteAppointment = async (appointmentId: number) => {
+const handleClickDeleteAppointment = async (appointmentId: string) => {
   ModalStore.confirm({
     title: 'Bạn có chắc muốn xóa lịch hẹn này ?',
     content: 'Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',

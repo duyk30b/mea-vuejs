@@ -52,6 +52,7 @@ onMounted(async () => {
       :value="customerSourceId"
       :options="customerSourceOptions"
       :required="required"
+      :disabled="disabled"
       @update:value="handleUpdateValue"
       @selectItem="(item: any) => handleSelectItem(item.data)"
     />

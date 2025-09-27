@@ -7,7 +7,7 @@ import VueTag from '../../../common/VueTag.vue'
 import { IconApartment, IconForm } from '../../../common/icon-antd'
 import { InputSelect } from '../../../common/vue-form'
 import { MeService } from '../../../modules/_me/me.service'
-import { RoleApi, type Role } from '../../../modules/role'
+import { RoleApi, RoleService, type Role } from '../../../modules/role'
 
 const roleList = ref<Role[]>([])
 
@@ -18,15 +18,19 @@ const limit = ref(Number(localStorage.getItem('DISTRIBUTOR_PAGINATION_LIMIT')) |
 const total = ref(0)
 const { userPermission } = MeService
 
-const startFetchData = async () => {
+const startFetchData = async (options?: { refetch?: boolean }) => {
   try {
-    const { data, meta } = await RoleApi.pagination({
-      relation: { userRoleList: { user: true } },
-      page: page.value,
-      limit: limit.value,
-      filter: {},
-      sort: { id: 'DESC' },
-    })
+    dataLoading.value = true
+    const { data, meta } = await RoleService.pagination(
+      {
+        relation: { userRoleList: { user: true } },
+        page: page.value,
+        limit: limit.value,
+        filter: {},
+        sort: { id: 'DESC' },
+      },
+      { refetch: !!options?.refetch },
+    )
     roleList.value = data
     total.value = meta.total
   } catch (error) {
@@ -35,14 +39,7 @@ const startFetchData = async () => {
 }
 
 onBeforeMount(async () => {
-  try {
-    dataLoading.value = true
-    await startFetchData()
-  } catch (error) {
-    console.log('🚀 ~ onBeforeMount ~ error:', error)
-  } finally {
-    dataLoading.value = false
-  }
+  await startFetchData({ refetch: true })
 })
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
@@ -90,7 +87,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
               {{ role.id }}
             </td>
-            <td>{{ role.roleCode }}</td>
+            <td class="text-center">{{ role.roleCode }}</td>
             <td>{{ role.name }}</td>
             <td>
               {{ role.userRoleList?.map((i) => i.user?.fullName).join(', ') }}

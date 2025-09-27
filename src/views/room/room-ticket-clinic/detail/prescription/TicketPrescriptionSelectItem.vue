@@ -10,6 +10,7 @@ import { Batch, BatchService } from '@/modules/batch'
 import {
   DeliveryStatus,
   DiscountType,
+  PaymentEffect,
   PaymentMoneyStatus,
   PickupStrategy,
   ProductType,
@@ -120,11 +121,6 @@ const selectProduct = async (productSelect: Product) => {
 
   temp.type = TicketProductType.Prescription
   temp.deliveryStatus = DeliveryStatus.Pending
-  if (settingStore.TICKET_CLINIC_LIST.requiredPaymentItem) {
-    temp.paymentMoneyStatus = PaymentMoneyStatus.PendingPayment
-  } else {
-    temp.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
-  }
   temp.unitRate = productSelect.unitDefaultRate
 
   temp.expectedPrice = productSelect.retailPrice

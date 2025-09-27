@@ -5,26 +5,26 @@ import { Payment } from '../../payment'
 import { PurchaseOrder } from '../purchase-order.model'
 
 export class PurchaseOrderActionApi {
-  static async draftDestroy(purchaseOrderId: number) {
+  static async draftDestroy(purchaseOrderId: string) {
     const response = await AxiosInstance.delete(`/purchase-order/${purchaseOrderId}/draft-destroy`)
-    const { data } = response.data as BaseResponse<{ purchaseOrderId: number }>
+    const { data } = response.data as BaseResponse<{ purchaseOrderId: string }>
     return data
   }
 
-  static async depositedDestroy(purchaseOrderId: number) {
+  static async depositedDestroy(purchaseOrderId: string) {
     const response = await AxiosInstance.delete(`/purchase-order/${purchaseOrderId}/deposited-destroy`)
-    const { data } = response.data as BaseResponse<{ purchaseOrderId: number }>
+    const { data } = response.data as BaseResponse<{ purchaseOrderId: string }>
     return data
   }
 
-  static async cancelledDestroy(purchaseOrderId: number) {
+  static async cancelledDestroy(purchaseOrderId: string) {
     const response = await AxiosInstance.delete(`/purchase-order/${purchaseOrderId}/cancelled-destroy`)
-    const { data } = response.data as BaseResponse<{ purchaseOrderId: number }>
+    const { data } = response.data as BaseResponse<{ purchaseOrderId: string }>
     return data
   }
 
   static async sendProductAndPaymentAndClose(
-    purchaseOrderId: number,
+    purchaseOrderId: string,
     body: {
       distributorId: number
       paymentMethodId: number
@@ -50,7 +50,7 @@ export class PurchaseOrderActionApi {
     }
   }
 
-  static async sendProduct(options: { purchaseOrderId: number }) {
+  static async sendProduct(options: { purchaseOrderId: string }) {
     const { purchaseOrderId } = options
     const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/send-product`)
     const { data } = response.data as BaseResponse<{ purchaseOrderModified: any }>
@@ -59,7 +59,7 @@ export class PurchaseOrderActionApi {
     }
   }
 
-  static async close(options: { purchaseOrderId: number }) {
+  static async close(options: { purchaseOrderId: string }) {
     const { purchaseOrderId } = options
     const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/close`)
     const { data } = response.data as BaseResponse<{
@@ -76,7 +76,7 @@ export class PurchaseOrderActionApi {
     }
   }
 
-  static async terminate(purchaseOrderId: number) {
+  static async terminate(purchaseOrderId: string) {
     const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/terminate`)
     const { data } = response.data as BaseResponse<{
       purchaseOrderModified: any

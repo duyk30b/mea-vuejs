@@ -32,18 +32,18 @@ const saveUser = async () => {
   try {
     saveLoading.value = true
 
-    const { filesPosition, imageIdsKeep, files, imageUrls, imageIdsWait } =
+    const { filesPosition, imageIdListKeep, files, imageUrls, imageIdWaitList } =
       imageUploadMultipleRef.value?.getData() || {
         filesPosition: [],
-        imageIdsKeep: [],
+        imageIdListKeep: [],
         files: [],
         imageUrls: [],
-        imageIdsWait: [],
+        imageIdWaitList: [],
       }
 
     const userModified = await MeApi.updateInfo({
       imagesChange: hasChangeImage.value
-        ? { files, imageIdsWait, externalUrlList: imageUrls }
+        ? { files, imageIdWaitList, externalUrlList: imageUrls }
         : undefined,
       userInfo: {
         fullName: user.value.fullName,

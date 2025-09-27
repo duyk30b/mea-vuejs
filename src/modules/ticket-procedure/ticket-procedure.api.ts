@@ -21,10 +21,12 @@ export class TicketProcedureApi {
     }
   }
 
-  static async detail(id: number, options: TicketProcedureDetailQuery) {
+  static async detail(ticketProcedureId: string, options: TicketProcedureDetailQuery) {
     const params = TicketProcedureGetQuery.toQuery(options)
 
-    const response = await AxiosInstance.get(`/ticket-procedure/detail/${id}`, { params })
+    const response = await AxiosInstance.get(`/ticket-procedure/detail/${ticketProcedureId}`, {
+      params,
+    })
     const { data } = response.data as BaseResponse<{ ticketProcedure: any }>
     return TicketProcedure.from(data.ticketProcedure)
   }

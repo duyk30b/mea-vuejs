@@ -5,10 +5,10 @@ import { Product } from '../product'
 import type { Ticket } from '../ticket/ticket.model'
 
 export class TicketBatch {
-  id: number
+  id: string
   customerId: number
-  ticketId: number
-  ticketProductId: number
+  ticketId: string
+  ticketProductId: string
   warehouseId: number
   productId: number
   batchId: number
@@ -54,8 +54,8 @@ export class TicketBatch {
 
   static init(): TicketBatch {
     const ins = new TicketBatch()
-    ins.id = 0
-    ins.ticketId = 0
+    ins.id = ''
+    ins.ticketId = ''
     ins.customerId = 0
     ins.productId = 0
     ins.batchId = 0

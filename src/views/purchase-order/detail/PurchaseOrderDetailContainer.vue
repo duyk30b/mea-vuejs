@@ -53,7 +53,7 @@ const saveLoading = ref(false)
 
 const loadingProcess = ref(false)
 
-const startFetchData = async (purchaseOrderId: number) => {
+const startFetchData = async (purchaseOrderId: string) => {
   try {
     purchaseOrder.value = await PurchaseOrderQueryApi.detail(purchaseOrderId, {
       relation: {
@@ -68,7 +68,7 @@ const startFetchData = async (purchaseOrderId: number) => {
 }
 
 onBeforeMount(async () => {
-  const purchaseOrderId = Number(route.params.id)
+  const purchaseOrderId = route.params.id as string
   if (purchaseOrderId) {
     await startFetchData(purchaseOrderId)
   }

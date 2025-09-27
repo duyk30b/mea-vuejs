@@ -5,7 +5,7 @@ import { TicketProduct } from '../../ticket-product'
 import { Ticket } from '../ticket.model'
 
 export class TicketOrderApi {
-  static async draftUpsert(options: { ticketId: number; ticket: Ticket }) {
+  static async draftUpsert(options: { ticketId: string; ticket: Ticket }) {
     const { ticketId, ticket } = options
     const response = await AxiosInstance.post('/ticket/order/draft-upsert', {
       ticketId,
@@ -26,7 +26,7 @@ export class TicketOrderApi {
         // debt: ticket.debt, // nháp ko gửi paid và debt
         expense: ticket.expense,
         profit: ticket.profit,
-        registeredAt: ticket.registeredAt,
+        createdAt: ticket.createdAt,
         note: ticket.note || '',
       },
       ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i, index) => ({
@@ -75,7 +75,7 @@ export class TicketOrderApi {
     return Ticket.from(data.ticket)
   }
 
-  static async depositedUpdate(options: { ticketId: number; ticket: Ticket }) {
+  static async depositedUpdate(options: { ticketId: string; ticket: Ticket }) {
     const { ticketId, ticket } = options
     const response = await AxiosInstance.patch(`/ticket/order/${ticketId}/deposited-update`, {
       ticketOrderDraftApprovedUpdate: {
@@ -94,7 +94,7 @@ export class TicketOrderApi {
         // debt: ticket.debt, // nháp ko gửi paid và debt
         expense: ticket.expense,
         profit: ticket.profit,
-        registeredAt: ticket.registeredAt,
+        createdAt: ticket.createdAt,
         note: ticket.note || '',
       },
       ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i, index) => ({
@@ -164,7 +164,7 @@ export class TicketOrderApi {
         // debt: ticket.debt, // backend tự tính
         expense: ticket.expense,
         profit: ticket.profit,
-        registeredAt: ticket.registeredAt,
+        createdAt: ticket.createdAt,
       },
       ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i, index) => ({
         priority: index + 1,
@@ -212,7 +212,7 @@ export class TicketOrderApi {
     return Ticket.from(data.ticket)
   }
 
-  static async debtSuccessUpdate(options: { ticketId: number; ticket: Ticket }) {
+  static async debtSuccessUpdate(options: { ticketId: string; ticket: Ticket }) {
     const { ticket, ticketId } = options
     const response = await AxiosInstance.patch(`/ticket/order/${ticketId}/debt-success-update`, {
       ticketOrderDebtSuccessUpdate: {
@@ -233,7 +233,7 @@ export class TicketOrderApi {
         // debt: ticket.debt, // backend tự tính
         expense: ticket.expense,
         profit: ticket.profit,
-        registeredAt: ticket.registeredAt,
+        createdAt: ticket.createdAt,
         note: ticket.note,
       },
       ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i, index) => ({
@@ -283,26 +283,26 @@ export class TicketOrderApi {
   }
 
   // ================= ACTION ================= //
-  static async draftDestroy(ticketId: number) {
+  static async draftDestroy(ticketId: string) {
     const response = await AxiosInstance.delete(`/ticket/order/${ticketId}/draft-destroy`)
-    const { data } = response.data as BaseResponse<{ ticketId: number }>
+    const { data } = response.data as BaseResponse<{ ticketId: string }>
     return data
   }
 
-  static async depositedDestroy(ticketId: number) {
+  static async depositedDestroy(ticketId: string) {
     const response = await AxiosInstance.delete(`/ticket/order/${ticketId}/deposited-destroy`)
-    const { data } = response.data as BaseResponse<{ ticketId: number }>
+    const { data } = response.data as BaseResponse<{ ticketId: string }>
     return data
   }
 
-  static async cancelledDestroy(ticketId: number) {
+  static async cancelledDestroy(ticketId: string) {
     const response = await AxiosInstance.delete(`/ticket/order/${ticketId}/cancelled-destroy`)
-    const { data } = response.data as BaseResponse<{ ticketId: number }>
+    const { data } = response.data as BaseResponse<{ ticketId: string }>
     return data
   }
 
   static async sendProductAndPaymentAndClose(
-    ticketId: number,
+    ticketId: string,
     body: {
       paidAmount: number
       customerId: number

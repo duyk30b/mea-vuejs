@@ -3,11 +3,11 @@ import type { BaseResponse } from '../../_base/base-dto'
 
 export class TicketChangeAttributeApi {
   static async updateDiagnosis(options: {
-    ticketId: number
+    ticketId: string
     note: string
     imagesChange?: {
       files: File[]
-      imageIdsWait: number[]
+      imageIdWaitList: number[]
       externalUrlList: string[]
     }
     ticketAttributeChangeList?: { key: string; value: any }[]
@@ -22,7 +22,7 @@ export class TicketChangeAttributeApi {
     if (imagesChange) {
       // imagesChange.files.forEach((file) => formData.append('files', file))
       const imagesChangeStr = JSON.stringify({
-        imageIdsWait: imagesChange.imageIdsWait,
+        imageIdWaitList: imagesChange.imageIdWaitList,
         externalUrlList: imagesChange.externalUrlList,
       })
       formData.append('imagesChange', imagesChangeStr)
@@ -49,7 +49,7 @@ export class TicketChangeAttributeApi {
   }
 
   static async updateTicketAttributeList(body: {
-    ticketId: number
+    ticketId: string
     ticketAttributeList: { key: string; value: any }[]
   }) {
     const { ticketId, ticketAttributeList } = body

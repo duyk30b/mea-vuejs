@@ -239,45 +239,11 @@ defineExpose({ openModal })
                     <InputText v-model:value="regimen.code" placeholder="Tạo tự động" />
                   </div>
                 </div>
-
-                <div style="flex-grow: 1; flex-basis: 90%">
-                  <div class="flex flex-wrap items-center gap-3">
-                    <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-                      <div>Khoảng cách mỗi buổi</div>
-                      <div>
-                        <InputNumber
-                          :value="regimen.gapHours / regimen.gapHoursType"
-                          @update:value="(v) => (regimen.gapHours = v * regimen.gapHoursType)"
-                        />
-                      </div>
-                    </div>
-                    <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-                      <div>Khoảng cách tính theo</div>
-                      <div>
-                        <InputSelect
-                          v-model:value="regimen.gapHoursType"
-                          :options="gapHoursTypeOptions"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style="flex-grow: 1; flex-basis: 90%" class="flex flex-wrap gap-4">
-                  <div style="width: 100px">Trạng thái:</div>
-                  <div class="w-[60px] flex-none">
-                    <VueSwitch v-model="regimen.isActive" type-parser="number" />
-                  </div>
-                  <div>
-                    <span v-if="regimen.isActive">Hoạt động</span>
-                    <span v-else>Inactive (Ngừng sử dụng)</span>
-                  </div>
-                </div>
               </div>
-              <div class="mt-4 font-bold flex items-center gap-1">
+              <!-- <div class="mt-4 font-bold flex items-center gap-1">
                 <IconDoubleRight />
                 <span>Các dịch vụ trong liệu trình</span>
-              </div>
+              </div> -->
               <div class="mt-2 table-wrapper">
                 <table>
                   <thead>
@@ -285,8 +251,9 @@ defineExpose({ openModal })
                       <th v-if="CONFIG.MODE === 'development'">#</th>
                       <th>#</th>
                       <th>Tên</th>
-                      <th style="width: 150px">Số lượng</th>
-                      <th style="width: 150px">Giá</th>
+                      <th style="width: 120px">Số lượng</th>
+                      <th style="width: 50px">KC ngày</th>
+                      <th style="width: 100px">Giá</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -312,6 +279,10 @@ defineExpose({ openModal })
                           :step="1"
                         ></InputNumber>
                       </td>
+
+                      <td>
+                        <InputNumber v-model:value="regimenItem.gapDay" />
+                      </td>
                       <td class="text-right">
                         {{ formatMoney(regimenItem.procedure?.price) }}
                       </td>
@@ -326,7 +297,8 @@ defineExpose({ openModal })
                     </tr>
                     <tr style="font-weight: 500">
                       <td v-if="CONFIG.MODE === 'development'"></td>
-                      <td colspan="3" class="text-right">TỔNG TIỀN</td>
+                      <td colspan="4" class="text-right">TỔNG TIỀN</td>
+
                       <td class="text-right">
                         {{ formatMoney(regimen.totalMoney) }}
                       </td>
@@ -334,7 +306,7 @@ defineExpose({ openModal })
                     </tr>
                     <tr>
                       <td v-if="CONFIG.MODE === 'development'"></td>
-                      <td colspan="3" class="text-right">Khuyến mại</td>
+                      <td colspan="4" class="text-right">Khuyến mại</td>
                       <td class="text-right">
                         <VueTag
                           v-if="
@@ -360,7 +332,7 @@ defineExpose({ openModal })
                     </tr>
                     <tr style="font-weight: 500">
                       <td v-if="CONFIG.MODE === 'development'"></td>
-                      <td colspan="3" class="text-right">THÀNH TIỀN</td>
+                      <td colspan="4" class="text-right">THÀNH TIỀN</td>
                       <td class="text-right">
                         {{ formatMoney(regimen.totalMoneyAfterDiscount) }}
                       </td>
@@ -373,6 +345,16 @@ defineExpose({ openModal })
                     </tr>
                   </tbody>
                 </table>
+              </div>
+              <div class="mt-4 flex flex-wrap gap-4">
+                <div style="width: 100px">Trạng thái:</div>
+                <div class="w-[60px] flex-none">
+                  <VueSwitch v-model="regimen.isActive" type-parser="number" />
+                </div>
+                <div>
+                  <span v-if="regimen.isActive">Hoạt động</span>
+                  <span v-else>Inactive (Ngừng sử dụng)</span>
+                </div>
               </div>
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.DISCOUNT">

@@ -8,8 +8,6 @@ import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { SettingKey } from '@/modules/_me/store.variable'
 import { OrganizationService } from '@/modules/organization'
-import { PositionType, PositionService } from '@/modules/position'
-import { RoleService } from '@/modules/role'
 import { ref } from 'vue'
 
 const TABS_KEY = {
@@ -24,8 +22,6 @@ const settingDisplay = ref<typeof store.TICKET_CLINIC_CREATE>(
   JSON.parse(JSON.stringify(store.TICKET_CLINIC_CREATE)),
 )
 
-const roleOptions = ref<{ value: number; label: string }[]>([])
-
 const activeTab = ref(TABS_KEY.BASIC)
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -33,12 +29,6 @@ const saveLoading = ref(false)
 const openModal = async () => {
   showModal.value = true
   settingDisplay.value = JSON.parse(JSON.stringify(store.TICKET_CLINIC_CREATE))
-  const fetchData = await Promise.all([
-    RoleService.getMap(),
-    PositionService.list({ filter: { positionType: PositionType.TicketReception } }),
-  ])
-  const roleMap = fetchData[0]
-  roleOptions.value = fetchData[1].map((i) => ({ value: i.roleId, label: roleMap[i.roleId]?.name }))
 }
 
 const closeModal = () => {
@@ -92,34 +82,6 @@ defineExpose({ openModal })
                   </thead>
                   <tbody>
                     <tr>
-                      <td style="width: 30%">Hiển thị vai trò</td>
-                      <td>
-                        <div>
-                          <a-select
-                            v-model:value="settingDisplay.roleIdList"
-                            mode="multiple"
-                            style="width: 100%"
-                            placeholder="Chọn vai trò hiển thị"
-                            :options="roleOptions"
-                          ></a-select>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td colspan="2">
-                        <InputCheckbox v-model:checked="settingDisplay.facebook">
-                          Hiển thị điền link facebook
-                        </InputCheckbox>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td colspan="2">
-                        <InputCheckbox v-model:checked="settingDisplay.zalo">
-                          Hiển thị điền link zalo
-                        </InputCheckbox>
-                      </td>
-                    </tr>
-                    <tr>
                       <td colspan="2">
                         <InputCheckbox v-model:checked="settingDisplay.birthday">
                           Hiển thị điền ngày sinh
@@ -137,20 +99,6 @@ defineExpose({ openModal })
                       <td colspan="2">
                         <InputCheckbox v-model:checked="settingDisplay.address">
                           Hiển thị điền địa chỉ
-                        </InputCheckbox>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td colspan="2">
-                        <InputCheckbox v-model:checked="settingDisplay.relative">
-                          Hiển thị điền liên hệ khác
-                        </InputCheckbox>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td colspan="2">
-                        <InputCheckbox v-model:checked="settingDisplay.note">
-                          Hiển thị điền ghi chú
                         </InputCheckbox>
                       </td>
                     </tr>

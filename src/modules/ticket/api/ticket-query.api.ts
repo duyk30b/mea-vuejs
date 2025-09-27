@@ -35,10 +35,10 @@ export class TicketQueryApi {
     return { ticketList: Ticket.fromList(data.ticketList) }
   }
 
-  static async detail(id: number, options: TicketDetailQuery) {
+  static async detail(ticketId: string, options: TicketDetailQuery) {
     const params = TicketGetQuery.toQuery(options)
 
-    const response = await AxiosInstance.get(`/ticket/detail/${id}`, { params })
+    const response = await AxiosInstance.get(`/ticket/detail/${ticketId}`, { params })
     const { data } = response.data as BaseResponse<{ ticket: any }>
     return { ticket: Ticket.from(data.ticket) }
   }

@@ -4,8 +4,8 @@ import { Batch } from '../batch'
 import { Product } from '../product'
 
 export class PurchaseOrderItem extends BaseModel {
-  id: number
-  purchaseOrderId: number
+  id: string
+  purchaseOrderId: string
   distributorId: number
   warehouseId: number
   productId: number
@@ -59,7 +59,7 @@ export class PurchaseOrderItem extends BaseModel {
     const ins = new PurchaseOrderItem()
     ins._localId = Math.random().toString(36).substring(2)
 
-    ins.id = 0
+    ins.id = ''
     ins.batchId = 0
     ins.productId = 0
     ins.distributorId = 0

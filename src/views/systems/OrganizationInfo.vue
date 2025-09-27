@@ -83,7 +83,7 @@ const saveOrganization = async () => {
     const organizationUpdate = await OrganizationService.updateInfo({
       organizationInfo: organization.value,
       imagesChange: hasChangeImage.value
-        ? { files: [imageData!.file!], imageIdsWait: [0], externalUrlList: [imageData!.src!] }
+        ? { files: [imageData!.file!], imageIdWaitList: [0], externalUrlList: [imageData!.src!] }
         : undefined,
     })
     Object.assign(organization.value, organizationUpdate)

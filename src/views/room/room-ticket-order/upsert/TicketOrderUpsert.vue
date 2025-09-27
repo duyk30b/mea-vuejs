@@ -70,7 +70,7 @@ const saveLoading = ref(false)
 
 onMounted(async () => {
   try {
-    const ticketId = Number(route.params.ticketId)
+    const ticketId = route.params.ticketId as string
     const roomId = Number(route.params.roomId)
     const customerId = Number(route.query.customer_id)
     let customerDefault = Customer.blank()
@@ -82,8 +82,8 @@ onMounted(async () => {
         relation: {
           customer: true,
           // ticketAttributeList: true,
-          ticketProductList: { relation: { product: true } },
-          ticketProcedureList: { relation: { procedure: true } },
+          ticketProductList: true,
+          ticketProcedureList: true,
           ticketSurchargeList: true,
           ticketExpenseList: true,
         },
@@ -115,15 +115,15 @@ onMounted(async () => {
     }
 
     if (mode.value === ETicketOrderUpsertMode.CREATE) {
-      ticketOrderUpsertRef.value.registeredAt = Date.now()
+      ticketOrderUpsertRef.value.createdAt = Date.now()
     }
     if (mode.value === ETicketOrderUpsertMode.COPY) {
-      ticketOrderUpsertRef.value.registeredAt = Date.now()
-      ticketOrderUpsertRef.value.id = 0
+      ticketOrderUpsertRef.value.createdAt = Date.now()
+      ticketOrderUpsertRef.value.id = ''
       ticketOrderUpsertRef.value.status = TicketStatus.Draft
     }
     if (mode.value === ETicketOrderUpsertMode.UPDATE) {
-      ticketOrderUpsertRef.value.registeredAt ||= Date.now()
+      ticketOrderUpsertRef.value.createdAt ||= Date.now()
     }
     customer.value = customerDefault
     ticketOrderUpsertRef.value.customer = customerDefault
@@ -238,7 +238,7 @@ const saveInvoice = async (type: ETicketOrderSave) => {
       ticketOrderUpsertRef.value.ticketAttributeMap || {},
     )
       .map(([key, value]) => ({
-        id: 0,
+        id: '',
         ticketId: ticketOrderUpsertRef.value.id,
         key: key as any,
         value,
@@ -248,7 +248,7 @@ const saveInvoice = async (type: ETicketOrderSave) => {
     switch (type) {
       case ETicketOrderSave.CREATE_DRAFT: {
         const ticketResponse = await TicketOrderApi.draftUpsert({
-          ticketId: 0,
+          ticketId: '',
           ticket: ticketOrderUpsertRef.value,
         })
         router.push({
@@ -490,7 +490,7 @@ const handleChangeTabs = (activeKey: any) => {
           <div class="mt-3">Thời gian tạo đơn</div>
           <div>
             <InputDate
-              v-model:value="ticketOrderUpsertRef.registeredAt"
+              v-model:value="ticketOrderUpsertRef.createdAt"
               typeParser="number"
               show-time
             />

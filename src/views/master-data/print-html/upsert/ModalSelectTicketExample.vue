@@ -8,7 +8,7 @@ import { Ticket, TicketQueryApi } from '@/modules/ticket'
 import { ESTimer } from '@/utils'
 
 const emit = defineEmits<{
-  (e: 'select', value: number): void
+  (e: 'select', value: string): void
 }>()
 
 const showModal = ref(false)
@@ -28,7 +28,7 @@ const startFetchData = async () => {
       relation: {
         customer: true,
       },
-      sort: { registeredAt: 'DESC' },
+      sort: { createdAt: 'DESC' },
     })
 
     ticketClinicList.value = paginationResult.ticketList
@@ -56,7 +56,7 @@ const closeModal = () => {
   showModal.value = false
 }
 
-const selectTicketDemo = (ticketDemoId: number) => {
+const selectTicketDemo = (ticketDemoId: string) => {
   emit('select', ticketDemoId)
   closeModal()
 }
@@ -94,7 +94,7 @@ defineExpose({ openModal })
                 <td class="text-center">KB{{ ticket.id }}</td>
                 <td>{{ ticket.customer?.fullName }}</td>
                 <td class="text-center">
-                  {{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+                  {{ ESTimer.timeToText(ticket.createdAt, 'hh:mm DD/MM/YYYY') }}
                 </td>
                 <td>{{ ticket.note }}</td>
                 <td class="text-center">

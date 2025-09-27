@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { VueTag } from '@/common'
+import { IconDelete, IconSpin } from '@/common/icon-antd'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import {
   Discount,
   DiscountInteractType,
@@ -6,6 +9,7 @@ import {
   DiscountRepeatType,
   DiscountService,
 } from '@/modules/discount'
+import { DiscountType } from '@/modules/enum'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import VuePagination from '../../../../common/VuePagination.vue'
@@ -14,19 +18,10 @@ import { IconEditSquare } from '../../../../common/icon-google'
 import { InputSelect } from '../../../../common/vue-form'
 import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { LaboratoryService } from '../../../../modules/laboratory'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { ProcedureService } from '../../../../modules/procedure'
-import { ProductService } from '../../../../modules/product'
-import { RadiologyService } from '../../../../modules/radiology'
-import { ESArray, ESFunction, ESNumber, ESTimer, ESTypescript } from '../../../../utils'
+import { ESNumber, ESTimer, ESTypescript } from '../../../../utils'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalDiscountUpsert from '../upsert/ModalDiscountUpsert.vue'
-import { DiscountType } from '@/modules/enum'
-import { CONFIG } from '@/config'
-import { IconDelete, IconSpin } from '@/common/icon-antd'
-import { ModalStore } from '@/common/vue-modal/vue-modal.store'
-import { VueTag } from '@/common'
 
 const modalDiscountUpsert = ref<InstanceType<typeof ModalDiscountUpsert>>()
 

@@ -20,8 +20,12 @@ import { LaboratoryGroup, LaboratoryGroupService } from '@/modules/laboratory-gr
 import { LaboratorySample, LaboratorySampleService } from '@/modules/laboratory-sample'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { TicketChangeLaboratoryApi, TicketStatus } from '@/modules/ticket'
-import { TicketLaboratory, TicketLaboratoryStatus } from '@/modules/ticket-laboratory'
-import { TicketLaboratoryGroup } from '@/modules/ticket-laboratory-group'
+import {
+  TicketLaboratory,
+  TicketLaboratoryService,
+  TicketLaboratoryStatus,
+} from '@/modules/ticket-laboratory'
+import { TicketLaboratoryGroup } from '@/modules/ticket-laboratory'
 import { ESArray, ESString } from '@/utils'
 import ModalTicketLaboratoryUpdateMoney from './ModalTicketLaboratoryUpdateMoney.vue'
 
@@ -91,8 +95,11 @@ onMounted(async () => {
       LaboratorySampleService.list({}),
       LaboratoryGroupService.getMap(),
       LaboratoryService.getMap(),
+      TicketLaboratoryService.refreshRelationGroup(ticketRoomRef.value.ticketLaboratoryGroupList),
+      TicketLaboratoryService.refreshRelation(ticketRoomRef.value.ticketLaboratoryList),
+      TicketLaboratoryService.refreshRelationResult(ticketRoomRef.value.ticketLaboratoryResultList),
     ])
-    await ticketRoomRef.value.refreshLaboratory()
+    ticketRoomRef.value.refreshTicketLaboratory()
 
     laboratoryGroupAll.forEach((g) => {
       laboratoryOptions.value = []
@@ -233,13 +240,6 @@ const clear = () => {
 }
 
 const saveLaboratorySelected = async () => {
-  let paymentMoneyStatus: PaymentMoneyStatus
-  if (settingStore.TICKET_CLINIC_LIST.requiredPaymentItem) {
-    paymentMoneyStatus = PaymentMoneyStatus.PendingPayment
-  } else {
-    paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
-  }
-
   try {
     const ticketLaboratoryGroupAddList = Object.keys(laboratoryGroupSelects.value)
       .filter((key) => {
@@ -255,14 +255,12 @@ const saveLaboratorySelected = async () => {
           laboratoryGroupId: Number(i),
           createdAt: createdAt.value,
           roomId: laboratoryGroupSelects.value[i].laboratoryGroup.roomId,
-          paymentMoneyStatus,
           ticketLaboratoryList: laboratoryGroupSelects.value[i].laboratoryList.map((i, index) => {
             const ins = TicketLaboratory.blank()
             ins.laboratory = Laboratory.from(i)
             ins.priority = index + 1
             ins.laboratoryId = i.id
             ins.laboratoryGroupId = i.laboratoryGroupId
-            ins.paymentMoneyStatus = paymentMoneyStatus
 
             ins.costPrice = i.costPrice
             ins.expectedPrice = i.price
@@ -333,8 +331,10 @@ const saveLaboratorySelected = async () => {
   }
 }
 
-const clickChangeLaboratoryGroup = (tlgEditId: number) => {
-  const tlgFind = ticketRoomRef.value.ticketLaboratoryGroupList?.find((i) => i.id === tlgEditId)
+const clickChangeLaboratoryGroup = (tlgEditId: string) => {
+  const tlgFind = ticketRoomRef.value.ticketLaboratoryGroupList?.find((i) => {
+    return i.id === tlgEditId
+  })
   if (!tlgFind) return
 
   tlgEdit.value = tlgFind
@@ -359,7 +359,7 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
   reloadIndeterminateCheckbox()
 }
 
-const clickDestroy = async (ticketLaboratoryGroupId: number) => {
+const clickDestroy = async (ticketLaboratoryGroupId: string) => {
   ModalStore.confirm({
     title: 'Xác nhận xóa phiếu xét nghiệm?',
     content: [
@@ -614,7 +614,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                     <IconPrint width="18px" height="18px" />
                   </a>
                   <span
-                    v-if="tlgEdit.id !== 0 && tlg.id === tlgEdit.id"
+                    v-if="tlgEdit.id && tlg.id === tlgEdit.id"
                     style="color: var(--text-red); font-style: italic"
                   >
                     (Đang sửa)
@@ -626,9 +626,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   <VueButton
                     v-if="
                       ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                      [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                        tlg.paymentMoneyStatus,
-                      ) &&
+                      tlg.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
                       userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
                     "
                     size="small"
@@ -650,9 +648,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   v-if="
                     tlg.id &&
                     tlg.status === TicketLaboratoryStatus.Pending &&
-                    [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                      tlg.paymentMoneyStatus,
-                    ) &&
+                    tlg.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
                     userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
                   "
                   style="color: var(--text-red)"

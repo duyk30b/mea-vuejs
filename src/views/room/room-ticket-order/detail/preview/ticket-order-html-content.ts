@@ -218,7 +218,7 @@ export const ticketOrderHtmlContent = (ticket: Ticket) => {
         </tbody>
       </table>
       <div style="text-align:right; font-style:italic; margin-top: 1rem">
-        ${ESTimer.timeToText(ticket.registeredAt, 'hh:mm:ss DD/MM/YYYY')}
+        ${ESTimer.timeToText(ticket.createdAt, 'hh:mm:ss DD/MM/YYYY')}
       </div>
       <table style="margin-top: 0.5rem">
         <tr>

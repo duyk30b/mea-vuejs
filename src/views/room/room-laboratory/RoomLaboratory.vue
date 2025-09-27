@@ -14,7 +14,7 @@ import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtmlService } from '@/modules/print-html'
 import { Room, RoomType, roomLaboratory, RoomService } from '@/modules/room'
 import { TicketLaboratoryStatus } from '@/modules/ticket-laboratory'
-import { TicketLaboratoryGroup, TicketLaboratoryGroupApi } from '@/modules/ticket-laboratory-group'
+import { TicketLaboratoryGroup, TicketLaboratoryGroupApi } from '@/modules/ticket-laboratory'
 import { ESString, ESTimer } from '@/utils'
 import Breadcrumb from '@/views/component/Breadcrumb.vue'
 import { onBeforeMount, ref, watch } from 'vue'
@@ -297,8 +297,7 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
             v-model:value="paymentMoneyStatus"
             :options="[
               { value: null, text: 'Tất cả' },
-              { value: PaymentMoneyStatus.TicketPaid, text: 'Không áp dụng' },
-              { value: PaymentMoneyStatus.PendingPayment, text: 'Chờ thanh toán' },
+              { value: PaymentMoneyStatus.PendingPaid, text: 'Chờ thanh toán' },
               { value: PaymentMoneyStatus.Paid, text: 'Đã thanh toán' },
             ]"
             @update:value="startFilter"

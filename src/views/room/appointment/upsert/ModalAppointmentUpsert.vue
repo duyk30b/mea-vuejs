@@ -100,7 +100,7 @@ const handleUpsertAppointment = async () => {
 
   try {
     if (!appointment.value.id) {
-      appointment.value.fromTicketId = 0
+      appointment.value.fromTicketId = ''
       appointment.value.customerId = currentCustomer.value.id
       await AppointmentApi.createOne({
         appointment: appointment.value,

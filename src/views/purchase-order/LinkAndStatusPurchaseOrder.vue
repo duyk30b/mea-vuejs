@@ -7,20 +7,20 @@ import PurchaseOrderStatusTag from './PurchaseOrderStatusTag.vue'
 const props = withDefaults(
   defineProps<{
     purchaseOrder?: PurchaseOrder
-    purchaseOrderId?: number
+    purchaseOrderId?: string
     link?: boolean
     status?: boolean
   }>(),
   {
     purchaseOrder: () => PurchaseOrder.blank(),
-    purchaseOrderId: 0,
+    purchaseOrderId: '',
     link: true,
     status: true,
   },
 )
 const router = useRouter()
 
-const openBlankPurchaseOrderDetail = async (purchaseOrderId: number) => {
+const openBlankPurchaseOrderDetail = async (purchaseOrderId: string) => {
   const route = router.resolve({
     name: 'PurchaseOrderDetailContainer',
     params: { id: purchaseOrderId },

@@ -3,7 +3,7 @@ import {
   SplitBatchByCostPrice,
   SplitBatchByDistributor,
   SplitBatchByExpiryDate,
-  SplitBatchByWarehouse
+  SplitBatchByWarehouse,
 } from '../enum'
 
 export const SETTING_DEFAULT = {
@@ -261,13 +261,9 @@ export const SETTING_DEFAULT = {
   },
 
   TICKET_CLINIC_CREATE: {
-    facebook: false,
-    zalo: false,
     birthday: true,
     gender: true,
     address: true,
-    relative: false,
-    note: false,
     customerSource: false,
     roleIdList: [],
     requestProcedure: false,
@@ -278,7 +274,7 @@ export const SETTING_DEFAULT = {
   },
 
   TICKET_CLINIC_LIST: {
-    requiredPaymentItem: 0,
+    isPaymentEachItem: 0,
     includePendingStatus: false,
     goRoomAfterReception: true,
     procedure: false,

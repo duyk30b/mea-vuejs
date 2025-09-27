@@ -3,13 +3,13 @@ import { Laboratory } from '../laboratory'
 import { Ticket } from '../ticket/ticket.model'
 
 export class TicketLaboratoryResult {
-  id: number
-  ticketId: number
+  id: string
+  ticketId: string
   customerId: number
   laboratoryId: number
   laboratoryGroupId: number
-  ticketLaboratoryId: number
-  ticketLaboratoryGroupId: number
+  ticketLaboratoryId: string
+  ticketLaboratoryGroupId: string
 
   result: string
   attention: number
@@ -20,7 +20,7 @@ export class TicketLaboratoryResult {
 
   static init(): TicketLaboratoryResult {
     const ins = new TicketLaboratoryResult()
-    ins.id = 0
+    ins.id = ''
     return ins
   }
 

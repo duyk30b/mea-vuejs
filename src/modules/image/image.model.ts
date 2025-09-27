@@ -3,8 +3,18 @@ export enum ImageHostType {
   Cloudinary = 'Cloudinary',
 }
 
+export enum ImageInteractType {
+  Organization = 1,
+  User = 2,
+  Customer = 3,
+}
+
 export class Image {
   id: number
+  imageInteractType: ImageInteractType // Loại hình ảnh
+  imageInteractId: number // customerId, UserId, OrganizationId
+  ticketId: string
+  ticketItemId: string
   name: string
   mimeType: string
   hostType: ImageHostType

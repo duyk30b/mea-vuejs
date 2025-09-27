@@ -16,6 +16,7 @@ import TicketDeliveryStatusTooltip from '@/views/room/room-ticket-base/TicketDel
 import { computed, onMounted, ref } from 'vue'
 import ModalTicketClinicConsumableUpdate from '../consumable/ModalTicketConsumableUpdate.vue'
 import ModalTicketPrescriptionUpdate from '../prescription/ModalTicketPrescriptionUpdate.vue'
+import { TicketProductService } from '@/modules/ticket-product'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalTicketClinicConsumableUpdate =
@@ -28,7 +29,8 @@ const { formatMoney, isMobile } = settingStore
 const { userPermission, organization } = MeService
 
 onMounted(async () => {
-  await ticketRoomRef.value.refreshProduct()
+  await TicketProductService.refreshRelation(ticketRoomRef.value.ticketProductList || [])
+  ticketRoomRef.value.refreshTicketProduct()
 })
 
 const consumableDiscount = computed(() => {
@@ -73,124 +75,6 @@ const prescriptionCostAmount = computed(() => {
   <ModalTicketClinicConsumableUpdate ref="modalTicketClinicConsumableUpdate" />
   <ModalTicketPrescriptionUpdate ref="modalTicketClinicPrescriptionUpdate" />
 
-  <template v-if="ticketRoomRef.ticketProductList?.length">
-    <thead>
-      <tr>
-        <th v-if="CONFIG.MODE === 'development'">ID</th>
-        <th>#</th>
-        <th style="width: 32px"></th>
-        <th style="width: 32px"></th>
-        <th colspan="1">SẢN PHẨM</th>
-        <th></th>
-        <th>Đ.Vị</th>
-        <th>SL</th>
-        <th>Giá</th>
-        <th>Chiết khấu</th>
-        <th v-if="CONFIG.MODE === 'development'">Vốn</th>
-        <th>Tổng tiền</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="(tp, tpIndex) in ticketRoomRef.ticketProductList" :key="tp.id + '_' + tpIndex">
-        <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-          {{ tp.id }}
-        </td>
-        <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-          {{ tpIndex + 1 }}
-        </td>
-        <td>
-          <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />
-        </td>
-        <td class="text-center">
-          <TicketDeliveryStatusTooltip :deliveryStatus="tp.deliveryStatus" />
-        </td>
-        <td colspan="2">
-          <div class="flex items-center gap-1" style="font-weight: 500">
-            <span>{{ tp.product?.brandName }}</span>
-            <a style="line-height: 0" @click="modalProductDetail?.openModal(tp.product!)">
-              <IconFileSearch />
-            </a>
-          </div>
-          <div v-if="tp.product?.substance" class="text-xs italic">
-            {{ tp.product.substance }}
-          </div>
-          <div v-for="tb in tp.ticketBatchList || []" :key="tb.id">
-            <div
-              v-if="tb.batchId && tb.batch?.lotNumber && tb.batch?.expiryDate"
-              class="text-xs italic"
-            >
-              Lô {{ tb.batch?.lotNumber }} - HSD
-              {{ ESTimer.timeToText(tb.batch?.expiryDate) }}
-            </div>
-          </div>
-        </td>
-        <td class="text-center">{{ tp.unitName }}</td>
-        <td class="text-center">{{ tp.unitQuantity }}</td>
-
-        <td class="text-right whitespace-nowrap">
-          <div v-if="tp.discountMoney" class="text-xs italic text-red-500">
-            <del>{{ formatMoney(tp.unitExpectedPrice) }}</del>
-          </div>
-          <div>{{ formatMoney(tp.unitActualPrice) }}</div>
-        </td>
-        <td class="text-center" style="width: 40px">
-          <div v-if="tp.discountMoney">
-            <VueTag v-if="tp.discountType === 'VNĐ'" color="green">
-              {{ formatMoney(tp.discountMoney * tp.unitRate) }}
-            </VueTag>
-            <VueTag v-if="tp.discountType === '%'" color="green">
-              {{ tp.discountPercent || 0 }}%
-            </VueTag>
-          </div>
-        </td>
-        <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: right">
-          {{ formatMoney(tp.costAmount) }}
-        </td>
-        <td class="text-right whitespace-nowrap">
-          <div v-if="tp.discountMoney" class="text-xs italic text-red-500">
-            <del>
-              {{ formatMoney(tp.unitExpectedPrice * tp.quantity) }}
-            </del>
-          </div>
-          {{ formatMoney(tp.actualPrice * tp.quantity) }}
-        </td>
-        <td class="text-center">
-          <a
-            v-if="
-              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-              [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                tp.paymentMoneyStatus,
-              ) &&
-              userPermission[PermissionId.TICKET_CHANGE_PRODUCT_CONSUMABLE]
-            "
-            class="text-orange-500"
-            @click="modalTicketClinicConsumableUpdate?.openModal(tp)"
-          >
-            <IconEditSquare width="20" height="20" />
-          </a>
-        </td>
-      </tr>
-      <tr>
-        <td v-if="CONFIG.MODE === 'development'"></td>
-        <td class="text-right" colspan="9">
-          <div class="flex items-center justify-end gap-2">
-            <span class="uppercase">Tiền vật tư</span>
-            <span v-if="consumableDiscount" class="italic" style="font-size: 13px">
-              (CK: {{ formatMoney(consumableDiscount) }})
-            </span>
-          </div>
-        </td>
-        <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
-          {{ formatMoney(consumableCostAmount) }}
-        </td>
-        <td class="font-bold text-right whitespace-nowrap">
-          {{ formatMoney(consumableMoney) }}
-        </td>
-        <td></td>
-      </tr>
-    </tbody>
-  </template>
   <template v-if="ticketRoomRef.ticketProductConsumableList?.length">
     <thead>
       <tr>
@@ -205,6 +89,7 @@ const prescriptionCostAmount = computed(() => {
         <th>Giá</th>
         <th>Chiết khấu</th>
         <th v-if="CONFIG.MODE === 'development'">Vốn</th>
+        <th v-if="CONFIG.MODE === 'development'">H.Hồng</th>
         <th>Tổng tiền</th>
         <th></th>
       </tr>
@@ -268,6 +153,7 @@ const prescriptionCostAmount = computed(() => {
         <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: right">
           {{ formatMoney(tpConsumable.costAmount) }}
         </td>
+        <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: right"></td>
         <td class="text-right whitespace-nowrap">
           <div v-if="tpConsumable.discountMoney" class="text-xs italic text-red-500">
             <del>
@@ -280,9 +166,7 @@ const prescriptionCostAmount = computed(() => {
           <a
             v-if="
               ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-              [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                tpConsumable.paymentMoneyStatus,
-              ) &&
+              tpConsumable.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
               userPermission[PermissionId.TICKET_CHANGE_PRODUCT_CONSUMABLE]
             "
             class="text-orange-500"
@@ -305,6 +189,7 @@ const prescriptionCostAmount = computed(() => {
         <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
           {{ formatMoney(consumableCostAmount) }}
         </td>
+        <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet"></td>
         <td class="font-bold text-right whitespace-nowrap">
           {{ formatMoney(consumableMoney) }}
         </td>
@@ -326,6 +211,7 @@ const prescriptionCostAmount = computed(() => {
         <th>Giá</th>
         <th>Chiết khấu</th>
         <th v-if="CONFIG.MODE === 'development'">Vốn</th>
+        <th v-if="CONFIG.MODE === 'development'">H.Hồng</th>
         <th>Tổng tiền</th>
         <th></th>
       </tr>
@@ -393,6 +279,7 @@ const prescriptionCostAmount = computed(() => {
         <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: right">
           {{ formatMoney(tpPrescription.costAmount) }}
         </td>
+        <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: right"></td>
         <td class="text-right whitespace-nowrap">
           <div v-if="tpPrescription.discountMoney" class="text-xs italic text-red-500">
             <del>
@@ -405,9 +292,7 @@ const prescriptionCostAmount = computed(() => {
           <a
             v-if="
               ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-              [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                tpPrescription.paymentMoneyStatus,
-              ) &&
+              tpPrescription.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
               userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
             "
             class="text-orange-500"
@@ -430,6 +315,7 @@ const prescriptionCostAmount = computed(() => {
         <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
           {{ formatMoney(prescriptionCostAmount) }}
         </td>
+        <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet"></td>
         <td class="font-bold text-right whitespace-nowrap">
           {{ formatMoney(prescriptionMoney) }}
         </td>

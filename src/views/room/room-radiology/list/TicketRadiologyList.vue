@@ -284,8 +284,7 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
             v-model:value="paymentMoneyStatus"
             :options="[
               { value: null, text: 'Tất cả' },
-              { value: PaymentMoneyStatus.TicketPaid, text: 'Không áp dụng' },
-              { value: PaymentMoneyStatus.PendingPayment, text: 'Chờ thanh toán' },
+              { value: PaymentMoneyStatus.PendingPaid, text: 'Chờ thanh toán' },
               { value: PaymentMoneyStatus.Paid, text: 'Đã thanh toán' },
             ]"
             @update:value="startFilter"

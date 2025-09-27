@@ -224,7 +224,7 @@ const handleSelectItemFilterRole = (roleId: number) => {
             </td>
             <td
               :colspan="
-                [PositionType.TicketReception, PositionType.TicketPrescriptionRequest].includes(
+                [PositionType.Reception, PositionType.TicketPrescriptionRequest].includes(
                   position.positionType,
                 )
                   ? 2
@@ -240,7 +240,7 @@ const handleSelectItemFilterRole = (roleId: number) => {
             </td>
             <td
               v-if="
-                ![PositionType.TicketReception, PositionType.TicketPrescriptionRequest].includes(
+                ![PositionType.Reception, PositionType.TicketPrescriptionRequest].includes(
                   position.positionType,
                 )
               "

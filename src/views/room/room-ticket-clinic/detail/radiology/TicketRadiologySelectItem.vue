@@ -114,12 +114,7 @@ const selectRadiology = async (radiologyData: Radiology) => {
   temp.radiologyId = radiologyData.id
   temp.roomId = radiologyGroup.roomId || 0
   temp.radiology = radiologyData
-
-  if (settingStore.TICKET_CLINIC_LIST.requiredPaymentItem) {
-    temp.paymentMoneyStatus = PaymentMoneyStatus.PendingPayment
-  } else {
-    temp.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
-  }
+  temp.paymentMoneyStatus = PaymentMoneyStatus.PendingPaid
 
   temp.printHtmlId = radiologyData.printHtmlId
   temp.description = radiologyData.descriptionDefault
@@ -215,7 +210,7 @@ const handleModalTicketRadiologyUpdateSuccess = (
       style="flex-basis: 100px; flex-grow: 1; position: relative; min-height: 400px"
       class="shadow-sm"
     >
-      <div class="table-wrapper">
+      <div class="table-wrapper" style="overflow-y: scroll">
         <table>
           <thead>
             <tr>
@@ -252,17 +247,26 @@ const handleModalTicketRadiologyUpdateSuccess = (
           bottom: 0;
         "
       >
-        <div class="flex-0">
-          <InputText
-            v-model:value="searchText"
-            prepend="🔎"
-            placeholder="Tìm kiếm theo tên xét nghiệm"
-            @update:value="startFilterRadiology"
-          />
-        </div>
         <div class="table-wrapper flex-1" style="overflow-y: scroll">
           <table>
+            <thead>
+              <tr>
+                <th colspan="100">Tên xét nghiệm</th>
+              </tr>
+            </thead>
             <tbody>
+              <tr>
+                <td colspan="100" style="padding: 0">
+                  <div>
+                    <InputText
+                      v-model:value="searchText"
+                      prepend="🔎"
+                      placeholder="Tìm kiếm theo tên xét nghiệm"
+                      @update:value="startFilterRadiology"
+                    />
+                  </div>
+                </td>
+              </tr>
               <tr
                 v-for="radiology in radiologyFilter"
                 :key="radiology.id"

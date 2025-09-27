@@ -233,7 +233,7 @@ defineExpose({ openModal })
         </div>
         <div class="flex justify-end mt-4">
           Ngày tạo đơn:
-          {{ timeToText(ticket.registeredAt, 'hh:mm DD/MM/YY') }}
+          {{ timeToText(ticket.createdAt, 'hh:mm DD/MM/YY') }}
         </div>
       </div>
 

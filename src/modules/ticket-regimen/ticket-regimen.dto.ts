@@ -9,8 +9,8 @@ export class TicketRegimenGetQuery {
     ticket?: boolean
     customer?: boolean
     regimen?: boolean
+    ticketRegimenItemList?: boolean
     ticketProcedureList?: {
-      procedure?: boolean
       imageList?: boolean
       ticketUserResultList?: boolean
     }

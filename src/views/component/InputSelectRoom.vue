@@ -13,7 +13,7 @@ const props = withDefaults(
   defineProps<{
     roomId: number
     roomType?: RoomType
-    roomTicketStyle?: RoomTicketStyle
+    roomTicketStyle?: RoomTicketStyle[]
     disabled?: boolean
     required?: boolean
     label?: string
@@ -38,7 +38,7 @@ onMounted(async () => {
   const roomList = await RoomService.list({
     filter: {
       roomType: props.roomType ? props.roomType : undefined,
-      roomStyle: props.roomTicketStyle ? props.roomTicketStyle : undefined,
+      roomStyle: props.roomTicketStyle ? { IN: props.roomTicketStyle } : undefined,
     },
   })
   roomOptions.value = roomList.map((i) => {
@@ -72,6 +72,7 @@ const handleSelectItem = (item?: Room) => {
     <InputSelect
       :value="roomId"
       :options="roomOptions"
+      :disabled="disabled"
       :required="required"
       @update:value="handleUpdateValue"
       @selectItem="(item: any) => handleSelectItem(item.data)"

@@ -45,7 +45,7 @@ const batchOptions = ref<{ value: number; text?: string; data: Batch; disabled?:
 const saveLoading = ref(false)
 
 onMounted(async () => {
-  const stockCheckId = Number(route.params.id)
+  const stockCheckId = route.params.id as string
   if (!stockCheckId) {
     stockCheck.value.createdAt = Date.now()
   } else {

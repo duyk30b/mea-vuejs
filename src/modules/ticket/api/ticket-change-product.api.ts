@@ -5,7 +5,7 @@ import type { TicketUser } from '../../ticket-user'
 
 export class TicketChangeProductApi {
   static async addTicketProductConsumableList(body: {
-    ticketId: number
+    ticketId: string
     ticketProductList: TicketProduct[]
   }) {
     const { ticketId, ticketProductList } = body
@@ -19,7 +19,6 @@ export class TicketChangeProductApi {
           batchId: i.batchId,
 
           pickupStrategy: i.pickupStrategy,
-          paymentMoneyStatus: i.paymentMoneyStatus,
 
           unitRate: i.unitRate,
           quantityPrescription: i.quantityPrescription,
@@ -40,7 +39,7 @@ export class TicketChangeProductApi {
   }
 
   static async addTicketProductPrescriptionList(body: {
-    ticketId: number
+    ticketId: string
     ticketProductList: TicketProduct[]
   }) {
     const { ticketId, ticketProductList } = body
@@ -54,7 +53,6 @@ export class TicketChangeProductApi {
           batchId: i.batchId,
 
           pickupStrategy: i.pickupStrategy,
-          paymentMoneyStatus: i.paymentMoneyStatus,
 
           unitRate: i.unitRate,
           quantityPrescription: i.quantityPrescription,
@@ -75,7 +73,7 @@ export class TicketChangeProductApi {
     const { data } = response.data as BaseResponse<boolean>
   }
 
-  static async destroyTicketProductConsumable(body: { ticketId: number; ticketProductId: number }) {
+  static async destroyTicketProductConsumable(body: { ticketId: string; ticketProductId: string }) {
     const { ticketId, ticketProductId } = body
     const response = await AxiosInstance.delete(
       `/ticket/${ticketId}/consumable/destroy-ticket-product-consumable/${ticketProductId}`,
@@ -84,8 +82,8 @@ export class TicketChangeProductApi {
   }
 
   static async destroyTicketProductPrescription(body: {
-    ticketId: number
-    ticketProductId: number
+    ticketId: string
+    ticketProductId: string
   }) {
     const { ticketId, ticketProductId } = body
     const response = await AxiosInstance.delete(
@@ -95,7 +93,7 @@ export class TicketChangeProductApi {
   }
 
   static async updatePriorityTicketProductConsumable(body: {
-    ticketId: number
+    ticketId: string
     ticketProductList: TicketProduct[]
   }) {
     const { ticketId, ticketProductList } = body
@@ -112,7 +110,7 @@ export class TicketChangeProductApi {
   }
 
   static async updatePriorityTicketProductPrescription(body: {
-    ticketId: number
+    ticketId: string
     ticketProductList: TicketProduct[]
   }) {
     const { ticketId, ticketProductList } = body
@@ -129,8 +127,8 @@ export class TicketChangeProductApi {
   }
 
   static async updateTicketProductConsumable(body: {
-    ticketId: number
-    ticketProductId: number
+    ticketId: string
+    ticketProductId: string
     ticketProduct?: TicketProduct
     ticketUserRequestList?: TicketUser[]
   }) {
@@ -166,8 +164,8 @@ export class TicketChangeProductApi {
   }
 
   static async updateTicketProductPrescription(body: {
-    ticketId: number
-    ticketProductId: number
+    ticketId: string
+    ticketProductId: string
     ticketProduct?: TicketProduct
     ticketUserRequestList?: TicketUser[]
   }) {
