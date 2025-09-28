@@ -80,7 +80,7 @@ const prescriptionCostAmount = computed(() => {
       <tr>
         <th v-if="CONFIG.MODE === 'development'">ID</th>
         <th>#</th>
-        <th style="width: 32px"></th>
+        <th v-if="ticketRoomRef.isPaymentEachItem"></th>
         <th style="width: 32px"></th>
         <th colspan="1">VẬT TƯ</th>
         <th></th>
@@ -105,7 +105,7 @@ const prescriptionCostAmount = computed(() => {
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ tpConsumableIndex + 1 }}
         </td>
-        <td>
+        <td v-if="ticketRoomRef.isPaymentEachItem">
           <PaymentMoneyStatusTooltip :paymentMoneyStatus="tpConsumable.paymentMoneyStatus" />
         </td>
         <td class="text-center">
@@ -166,7 +166,9 @@ const prescriptionCostAmount = computed(() => {
           <a
             v-if="
               ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-              tpConsumable.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
+              [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                tpConsumable.paymentMoneyStatus,
+              ) &&
               userPermission[PermissionId.TICKET_CHANGE_PRODUCT_CONSUMABLE]
             "
             class="text-orange-500"
@@ -178,7 +180,8 @@ const prescriptionCostAmount = computed(() => {
       </tr>
       <tr>
         <td v-if="CONFIG.MODE === 'development'"></td>
-        <td class="text-right" colspan="9">
+        <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+        <td class="text-right" colspan="8">
           <div class="flex items-center justify-end gap-2">
             <span class="uppercase">Tiền vật tư</span>
             <span v-if="consumableDiscount" class="italic" style="font-size: 13px">
@@ -202,7 +205,7 @@ const prescriptionCostAmount = computed(() => {
       <tr>
         <th v-if="CONFIG.MODE === 'development'">ID</th>
         <th>#</th>
-        <th style="width: 32px"></th>
+        <th v-if="ticketRoomRef.isPaymentEachItem"></th>
         <th style="width: 32px"></th>
         <th>THUỐC</th>
         <th>Đ.Vị</th>
@@ -227,7 +230,7 @@ const prescriptionCostAmount = computed(() => {
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ tpPrescriptionIndex + 1 }}
         </td>
-        <td>
+        <td v-if="ticketRoomRef.isPaymentEachItem">
           <PaymentMoneyStatusTooltip :paymentMoneyStatus="tpPrescription.paymentMoneyStatus" />
         </td>
         <td class="text-center">
@@ -292,7 +295,9 @@ const prescriptionCostAmount = computed(() => {
           <a
             v-if="
               ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-              tpPrescription.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
+              [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                tpPrescription.paymentMoneyStatus,
+              ) &&
               userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
             "
             class="text-orange-500"
@@ -304,7 +309,8 @@ const prescriptionCostAmount = computed(() => {
       </tr>
       <tr>
         <td v-if="CONFIG.MODE === 'development'"></td>
-        <td class="text-right" colspan="9">
+        <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+        <td class="text-right" colspan="8">
           <div class="flex items-center justify-end gap-2">
             <span class="uppercase">Tiền thuốc</span>
             <span v-if="prescriptionDiscount" class="italic" style="font-size: 13px">

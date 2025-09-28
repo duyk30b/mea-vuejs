@@ -42,7 +42,7 @@ export class TicketLaboratory {
   static init(): TicketLaboratory {
     const ins = new TicketLaboratory()
     ins.id = ''
-    ins.paymentMoneyStatus = PaymentMoneyStatus.PendingPaid
+    ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
     return ins
   }
 

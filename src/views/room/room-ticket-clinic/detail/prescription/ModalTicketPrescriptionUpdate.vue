@@ -99,7 +99,11 @@ const clickDestroy = async () => {
       ],
     })
   }
-  if (ticketProductOrigin.paymentMoneyStatus === PaymentMoneyStatus.Paid) {
+  if (
+    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+      ticketProductOrigin.paymentMoneyStatus,
+    )
+  ) {
     return ModalStore.alert({
       title: 'Không thể xóa thuốc - vật tư ?',
       content: ['- Thuốc - vật tư đã được thanh toán sẽ không thể xóa'],

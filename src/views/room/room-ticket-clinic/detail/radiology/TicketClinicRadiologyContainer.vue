@@ -252,7 +252,9 @@ const startPrintParaClinicalRequest = async () => {
               <a
                 v-else-if="
                   ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                  tp.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
+                  [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                    tp.paymentMoneyStatus,
+                  ) &&
                   userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_REQUEST]
                 "
                 @click="modalTicketRadiologyUpdate?.openModal({ ticketRadiology: tp })"

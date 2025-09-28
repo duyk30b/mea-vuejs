@@ -49,12 +49,12 @@ const radiologyCostAmount = computed(() => {
       <tr>
         <th v-if="CONFIG.MODE === 'development'">ID</th>
         <th>#</th>
-        <th></th>
-        <th></th>
-        <th></th>
-        <th></th>
+        <th v-if="ticketRoomRef.isPaymentEachItem"></th>
         <th></th>
         <th colspan="1">CHẨN ĐOÁN HÌNH ẢNH</th>
+        <th></th>
+        <th></th>
+        <th></th>
         <th>Giá</th>
         <th>Chiết khấu</th>
         <th v-if="CONFIG.MODE === 'development'">Vốn</th>
@@ -71,7 +71,7 @@ const radiologyCostAmount = computed(() => {
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ index + 1 }}
         </td>
-        <td>
+        <td v-if="ticketRoomRef.isPaymentEachItem">
           <PaymentMoneyStatusTooltip :paymentMoneyStatus="ticketRadiology.paymentMoneyStatus" />
         </td>
         <td class="text-center">
@@ -120,7 +120,9 @@ const radiologyCostAmount = computed(() => {
           <a
             v-if="
               ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-              ticketRadiology.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
+              [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                ticketRadiology.paymentMoneyStatus,
+              ) &&
               userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_REQUEST]
             "
             class="text-orange-500"
@@ -132,7 +134,8 @@ const radiologyCostAmount = computed(() => {
       </tr>
       <tr>
         <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet"></td>
-        <td class="text-right" colspan="9">
+        <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+        <td class="text-right" colspan="8">
           <div class="flex items-center justify-end gap-2">
             <span class="uppercase">Tiền CĐHA</span>
             <span v-if="radiologyDiscount" class="italic" style="font-size: 13px">

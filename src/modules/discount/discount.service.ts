@@ -107,6 +107,17 @@ export class DiscountService {
     }
   }
 
+  static async refreshRelation(data?: Discount[]) {
+    if (!data?.length) return data
+    await DiscountService.executeRelation(data, {
+      laboratory: true,
+      procedure: true,
+      product: true,
+      radiology: true,
+      regimen: true,
+    })
+  }
+
   static async getMap(options?: { refetch: boolean }) {
     await DiscountService.fetchAll({ refetch: !!options?.refetch })
     return DiscountService.discountMap.value
@@ -150,16 +161,18 @@ export class DiscountService {
     return discount
   }
 
-  static async createOne(discount: Discount) {
-    const result = await DiscountApi.createOne(discount)
+  static async createOne(data: Discount) {
+    const discountResult = await DiscountApi.createOne(data)
+    await DiscountService.refreshRelation([discountResult])
     DiscountService.loadedAll = false
-    return result
+    return discountResult
   }
 
-  static async updateOne(id: number, discount: Discount) {
-    const result = await DiscountApi.updateOne(id, discount)
+  static async updateOne(id: number, data: Discount) {
+    const discountResult = await DiscountApi.updateOne(id, data)
+    await DiscountService.refreshRelation([discountResult])
     DiscountService.loadedAll = false
-    return result
+    return discountResult
   }
 
   static async destroyOne(id: number) {

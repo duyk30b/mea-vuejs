@@ -446,8 +446,9 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
               </a>
               <a
                 v-else-if="
-                  tpItem.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
-                  userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
+                  [PaymentMoneyStatus.PendingPayment, PaymentMoneyStatus.TicketPaid].includes(
+                    tpItem.paymentMoneyStatus,
+                  ) && userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
                 "
                 class="text-orange-500"
                 @click="modalTicketPrescriptionUpdate?.openModal(tpItem)"

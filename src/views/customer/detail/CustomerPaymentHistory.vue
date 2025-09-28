@@ -12,6 +12,7 @@ import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTick
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
+import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
 
@@ -160,11 +161,7 @@ defineExpose({ startFetchData })
               {{ payment.id }}
             </td>
             <td>
-              <LinkAndStatusTicket
-                :ticketId="payment.voucherId"
-                :ticket="payment.ticket!"
-                :status="false"
-              />
+              <TicketLink :ticketId="payment.voucherId" :ticket="payment.ticket!" />
               <div style="white-space: nowrap">
                 {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>

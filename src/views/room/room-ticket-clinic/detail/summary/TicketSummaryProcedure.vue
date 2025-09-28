@@ -5,20 +5,19 @@ import { IconEditSquare } from '@/common/icon-google'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType, PaymentEffect, PaymentMoneyStatus } from '@/modules/enum'
+import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { ProcedureType } from '@/modules/procedure'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketStatus } from '@/modules/ticket'
+import { TicketProcedureService, TicketProcedureType } from '@/modules/ticket-procedure'
+import { TicketRegimenService } from '@/modules/ticket-regimen'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProcedureDetail.vue'
+import ModalRegimenDetail from '@/views/master-data/regimen/detail/ModalRegimenDetail.vue'
 import ModalTicketProcedureUpdate from '@/views/room/room-ticket-clinic/detail/procedure/ModalTicketProcedureUpdateMoney.vue'
 import { computed, onMounted, ref } from 'vue'
 import TicketProcedureStatusTooltip from '../procedure/TicketProcedureStatusTooltip.vue'
-import { TicketProcedureService, TicketProcedureType } from '@/modules/ticket-procedure'
-import { TicketRegimenService } from '@/modules/ticket-regimen'
 import TicketRegimenStatusTooltip from '../procedure/TicketRegimenStatusTooltip.vue'
-import ModalRegimenDetail from '@/views/master-data/regimen/detail/ModalRegimenDetail.vue'
 
 const modalRegimenDetail = ref<InstanceType<typeof ModalRegimenDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
@@ -59,7 +58,7 @@ const procedureDiscount = computed(() => {
       <tr>
         <th v-if="CONFIG.MODE === 'development'">ID</th>
         <th>#</th>
-        <th></th>
+        <th v-if="ticketRoomRef.isPaymentEachItem"></th>
         <th></th>
         <th colspan="1">DỊCH VỤ - THỦ THUẬT</th>
         <th></th>
@@ -69,12 +68,11 @@ const procedureDiscount = computed(() => {
         <th>Chiết khấu</th>
         <th v-if="CONFIG.MODE === 'development'">Vốn</th>
         <th v-if="CONFIG.MODE === 'development'">H.Hồng</th>
-        <th>Tổng tiền</th>
+        <th>Tổng TT</th>
         <th></th>
       </tr>
     </thead>
     <tbody>
-      <!--       
       <template v-for="(ticketRegimen, index) in ticketRoomRef.ticketRegimenList" :key="index">
         <tr>
           <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
@@ -83,14 +81,12 @@ const procedureDiscount = computed(() => {
           <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
             {{ index + 1 }}
           </td>
-          <td v-if="ticketRoomRef.isPaymentEachItem">
-            <PaymentMoneyStatusTooltip :paymentMoneyStatus="ticketRegimen.paymentMoneyStatus" />
-          </td>
+          <td v-if="ticketRoomRef.isPaymentEachItem"></td>
           <td class="text-center">
             <TicketRegimenStatusTooltip :status="ticketRegimen.status" />
           </td>
-          <td :colspan="3">
-            <div class="flex items-center gap-1">
+          <td :colspan="4">
+            <div class="flex flex-wrap items-center gap-1">
               <span style="font-weight: 500">{{ ticketRegimen.regimen?.name }}</span>
               <a
                 style="line-height: 0"
@@ -98,10 +94,11 @@ const procedureDiscount = computed(() => {
               >
                 <IconFileSearch />
               </a>
+              <span v-if="ticketRegimen.isPaymentEachSession" style="color: var(--text-green)">
+                (Thanh toán theo buổi lẻ)
+              </span>
             </div>
           </td>
-          <td class="text-center"></td>
-
           <td class="text-right whitespace-nowrap">
             <div v-if="ticketRegimen.discountMoney" class="text-xs italic text-red-500">
               <del>{{ formatMoney(ticketRegimen.expectedPrice) }}</del>
@@ -109,16 +106,7 @@ const procedureDiscount = computed(() => {
             <div>{{ formatMoney(ticketRegimen.actualPrice) }}</div>
           </td>
 
-          <td class="text-center">
-            <div v-if="ticketRegimen.discountMoney">
-              <VueTag v-if="ticketRegimen.discountType === 'VNĐ'" color="green">
-                {{ formatMoney(ticketRegimen.discountMoney) }}
-              </VueTag>
-              <VueTag v-if="ticketRegimen.discountType === '%'" color="green">
-                {{ ticketRegimen.discountPercent || 0 }}%
-              </VueTag>
-            </div>
-          </td>
+          <td class="text-center"></td>
           <td
             v-if="CONFIG.MODE === 'development'"
             class="text-right whitespace-nowrap"
@@ -133,11 +121,7 @@ const procedureDiscount = computed(() => {
           >
             {{ formatMoney(ticketRegimen.commissionAmount) }}
           </td>
-          <td class="text-right whitespace-nowrap">
-            <span>
-              {{ formatMoney(ticketRegimen.actualPrice) }}
-            </span>
-          </td>
+          <td class="text-right whitespace-nowrap"></td>
           <td class="text-center"></td>
         </tr>
         <tr v-for="(tri, triIndex) in ticketRegimen.ticketRegimenItemList" :key="tri.id">
@@ -145,11 +129,20 @@ const procedureDiscount = computed(() => {
             {{ tri.id }}
           </td>
           <td></td>
-          <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+          <td v-if="ticketRoomRef.isPaymentEachItem">
+            <PaymentMoneyStatusTooltip :paymentMoneyStatus="tri.paymentMoneyStatus" />
+          </td>
           <td class="text-center"></td>
-          <td colspan="3">{{ triIndex + 1 }}. {{ tri.procedure?.name }}</td>
+          <td colspan="3">
+            <div class="flex gap-2">
+              <span>{{ triIndex + 1 }}. {{ tri.procedure?.name }}</span>
+              <span style="font-weight: 500">
+                ({{ tri.quantityFinish }} / {{ tri.quantityExpected }})
+              </span>
+            </div>
+          </td>
           <td style="font-weight: 700; text-align: center">
-            {{ tri.quantityFinish }} / {{ tri.quantityTotal }}
+            {{ tri.quantityPayment }}
           </td>
           <td class="text-right whitespace-nowrap">
             <div v-if="tri.discountMoney" class="text-xs italic text-red-500">
@@ -171,22 +164,21 @@ const procedureDiscount = computed(() => {
           <td v-if="CONFIG.MODE === 'development'"></td>
           <td class="text-right whitespace-nowrap">
             <span>
-               {{ formatMoney(tri.actualPrice * tri.quantityFinish) }} 
+              {{ formatMoney(tri.actualPrice * tri.quantityPayment) }}
             </span>
           </td>
           <td></td>
         </tr>
-      </template> 
-    -->
+      </template>
 
-      <tr v-for="(ticketProcedure, index) in ticketRoomRef.ticketProcedureList" :key="index">
+      <tr v-for="(ticketProcedure, index) in ticketRoomRef.ticketProcedureNormalList" :key="index">
         <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
           {{ ticketProcedure.id }}
         </td>
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-          {{ index + 1 }}
+          {{ index + (ticketRoomRef.ticketRegimenList?.length || 0) }}
         </td>
-        <td>
+        <td v-if="ticketRoomRef.isPaymentEachItem">
           <PaymentMoneyStatusTooltip :paymentMoneyStatus="ticketProcedure.paymentMoneyStatus" />
         </td>
         <td class="text-center">
@@ -251,7 +243,9 @@ const procedureDiscount = computed(() => {
           <a
             v-if="
               ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-              ticketProcedure.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
+              [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                ticketProcedure.paymentMoneyStatus,
+              ) &&
               userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
             "
             class="text-orange-500"
@@ -267,7 +261,8 @@ const procedureDiscount = computed(() => {
       </tr>
       <tr>
         <td v-if="CONFIG.MODE === 'development'"></td>
-        <td class="text-right" colspan="9">
+        <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+        <td class="text-right" colspan="8">
           <div class="flex items-center justify-end gap-2">
             <span class="uppercase">Tiền dịch vụ</span>
             <span v-if="procedureDiscount" class="italic" style="font-size: 13px">

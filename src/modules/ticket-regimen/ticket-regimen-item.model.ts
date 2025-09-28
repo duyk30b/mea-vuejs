@@ -1,5 +1,5 @@
 import { BaseModel } from '../_base/base.model'
-import { DiscountType, PaymentEffect, PaymentMoneyStatus } from '../enum'
+import { DiscountType, PaymentMoneyStatus } from '../enum'
 import { Procedure } from '../procedure'
 
 export class TicketRegimenItem extends BaseModel {
@@ -11,7 +11,11 @@ export class TicketRegimenItem extends BaseModel {
   procedureId: number
   ticketRegimenId: string
 
-  quantityTotal: number
+  isPaymentEachSession: number
+  paymentMoneyStatus: PaymentMoneyStatus
+
+  quantityPayment: number
+  quantityExpected: number
   quantityFinish: number
   gapDay: number
 
@@ -34,7 +38,9 @@ export class TicketRegimenItem extends BaseModel {
     ins.procedureId = 0
     ins.ticketRegimenId = ''
 
-    ins.quantityTotal = 0
+    ins.isPaymentEachSession = 0
+    ins.quantityPayment = 0
+    ins.quantityExpected = 0
     ins.quantityFinish = 0
     ins.gapDay = 1
 
@@ -88,17 +94,22 @@ export class TicketRegimenItem extends BaseModel {
     if (a.ticketId != b.ticketId) return false
     if (a.customerId != b.customerId) return false
     if (a.regimenId != b.regimenId) return false
-    if (a.ticketRegimenId != b.ticketRegimenId) return false
     if (a.procedureId != b.procedureId) return false
+    if (a.ticketRegimenId != b.ticketRegimenId) return false
+
+    if (a.isPaymentEachSession != b.isPaymentEachSession) return false
+    if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
+
+    if (a.quantityPayment != b.quantityPayment) return false
+    if (a.quantityExpected != b.quantityExpected) return false
+    if (a.quantityFinish != b.quantityFinish) return false
+    if (a.gapDay != b.gapDay) return false
 
     if (a.expectedPrice != b.expectedPrice) return false
     if (a.discountMoney != b.discountMoney) return false
     if (a.discountPercent != b.discountPercent) return false
     if (a.discountType != b.discountType) return false
     if (a.actualPrice != b.actualPrice) return false
-
-    if (a.quantityTotal != b.quantityTotal) return false
-    if (a.quantityFinish != b.quantityFinish) return false
 
     return true
   }

@@ -85,7 +85,8 @@ const handleClickModalRegisterAppointment = () => {
           <tbody>
             <tr>
               <td v-if="CONFIG.MODE === 'development'"></td>
-              <td class="text-right" colspan="9">
+              <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+              <td class="text-right" colspan="8">
                 <div class="flex items-center justify-end gap-2">
                   <span>Tổng thành phần</span>
                   <span v-if="ticketRoomRef.itemsDiscount" class="italic" style="font-size: 13px">
@@ -106,6 +107,7 @@ const handleClickModalRegisterAppointment = () => {
             </tr>
             <tr>
               <td v-if="CONFIG.MODE === 'development'"></td>
+              <td v-if="ticketRoomRef.isPaymentEachItem"></td>
               <td class="text-right" colspan="8">Chiết khấu</td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>
@@ -129,11 +131,11 @@ const handleClickModalRegisterAppointment = () => {
                   <IconEditSquare width="20" height="20" />
                 </a>
               </td>
-              <td></td>
             </tr>
             <tr>
               <td v-if="CONFIG.MODE === 'development'"></td>
-              <td class="uppercase text-right font-bold" colspan="9">Tổng tiền</td>
+              <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+              <td class="uppercase text-right font-bold" colspan="8">Tổng tiền</td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="font-bold text-right whitespace-nowrap">
@@ -143,7 +145,8 @@ const handleClickModalRegisterAppointment = () => {
             </tr>
             <tr>
               <td v-if="CONFIG.MODE === 'development'"></td>
-              <td class="uppercase text-right font-bold" colspan="9">Đã thanh toán</td>
+              <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+              <td class="uppercase text-right font-bold" colspan="8">Đã thanh toán</td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="font-bold text-right whitespace-nowrap">
@@ -153,7 +156,8 @@ const handleClickModalRegisterAppointment = () => {
             </tr>
             <tr>
               <td v-if="CONFIG.MODE === 'development'"></td>
-              <td class="uppercase text-right font-bold" colspan="9">Còn thiếu</td>
+              <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+              <td class="uppercase text-right font-bold" colspan="8">Còn thiếu</td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="font-bold text-right whitespace-nowrap">
@@ -163,7 +167,8 @@ const handleClickModalRegisterAppointment = () => {
             </tr>
             <tr v-if="CONFIG.MODE === 'development'" style="color: violet">
               <td v-if="CONFIG.MODE === 'development'"></td>
-              <td class="text-right" colspan="9">profit</td>
+              <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+              <td class="text-right" colspan="8">profit</td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="text-right whitespace-nowrap">

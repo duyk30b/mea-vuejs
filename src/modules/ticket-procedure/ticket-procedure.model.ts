@@ -1,6 +1,6 @@
 import { BaseModel } from '../_base/base.model'
 import { Customer } from '../customer'
-import { DiscountType, PaymentEffect, PaymentMoneyStatus } from '../enum'
+import { DiscountType, PaymentMoneyStatus } from '../enum'
 import { Image } from '../image/image.model'
 import { Procedure } from '../procedure'
 import { TicketProduct } from '../ticket-product'
@@ -79,7 +79,7 @@ export class TicketProcedure extends BaseModel {
     ins.discountPercent = 0
     ins.actualPrice = 0
 
-    ins.paymentMoneyStatus = PaymentMoneyStatus.PendingPaid
+    ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
     ins.status = TicketProcedureStatus.NoEffect
 
     return ins

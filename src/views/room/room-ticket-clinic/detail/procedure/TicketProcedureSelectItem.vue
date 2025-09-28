@@ -76,7 +76,7 @@ const startFilter = (text: string) => {
 
 const handleChangeCheckboxProcedure = async (checked: boolean, procedureData: Procedure) => {
   if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
-    return
+    return AlertStore.addWarning('Phiếu đã kết thúc không thể chỉ định')
   }
   procedureIdCheckbox.value[procedureData.id] = checked
 
@@ -103,7 +103,7 @@ const handleChangeCheckboxProcedure = async (checked: boolean, procedureData: Pr
 
 const handleChangeCheckboxRegimen = async (checked: boolean, regimenData: Regimen) => {
   if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
-    return
+    return AlertStore.addWarning('Phiếu đã kết thúc không thể chỉ định')
   }
   regimenIdCheckbox.value[regimenData.id] = checked
 
@@ -147,7 +147,7 @@ const handleSave = async () => {
   })
   ticketRegimenListDraft.value.forEach((tr) => {
     tr.ticketRegimenItemList?.forEach((tri) => {
-      if (tri.quantityTotal < 0) {
+      if (tri.quantityExpected < 0) {
         AlertStore.addError('Không thể chọn số lượng < 0')
         throw new Error('Không thể chọn số lượng < 0')
       }

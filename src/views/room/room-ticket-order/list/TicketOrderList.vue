@@ -408,7 +408,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
               {{ ticket.id }} - {{ ticket.roomId }}
             </td>
             <td class="text-center">
-              <TicketLink :ticket="ticket" />
+              <TicketLink :ticket="ticket" :ticketId="ticket.id" />
             </td>
             <td><TicketStatusTag :ticket="ticket" /></td>
             <td class="text-center">

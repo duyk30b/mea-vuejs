@@ -54,7 +54,7 @@ export class TicketRadiology extends BaseModel {
     ins._localId = Math.random().toString(36).substring(2)
 
     ins.radiologyId = 0
-    ins.paymentMoneyStatus = PaymentMoneyStatus.PendingPaid
+    ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
     ins.printHtmlId = 0
     ins.imageIds = '[]'
     ins.description = ''

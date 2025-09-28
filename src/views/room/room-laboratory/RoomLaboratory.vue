@@ -42,7 +42,10 @@ const dataLoading = ref(false)
 
 const customerId = ref<number>()
 const status = ref<TicketLaboratoryStatus | null>(null)
-const paymentMoneyStatus = ref<PaymentMoneyStatus | null>(PaymentMoneyStatus.Paid)
+const paymentMoneyStatus = ref<PaymentMoneyStatus[]>([
+  PaymentMoneyStatus.FullPaid,
+  PaymentMoneyStatus.PartialPaid,
+])
 
 const sortColumn = ref<'registeredAt' | 'id' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
@@ -75,7 +78,9 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
         customerId: customerId.value ? customerId.value : undefined,
         roomId: currentRoom.value.isCommon ? undefined : currentRoom.value.id || 0,
         status: status.value ? status.value : undefined,
-        paymentMoneyStatus: paymentMoneyStatus.value ? paymentMoneyStatus.value : undefined,
+        paymentMoneyStatus: paymentMoneyStatus.value.length
+          ? { IN: paymentMoneyStatus.value }
+          : undefined,
         registeredAt:
           fromTime.value || toTime.value
             ? {
@@ -296,9 +301,15 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
           <VueSelect
             v-model:value="paymentMoneyStatus"
             :options="[
-              { value: null, text: 'Tất cả' },
-              { value: PaymentMoneyStatus.PendingPaid, text: 'Chờ thanh toán' },
-              { value: PaymentMoneyStatus.Paid, text: 'Đã thanh toán' },
+              { value: [], text: 'Tất cả' },
+              {
+                value: [PaymentMoneyStatus.PendingPayment, PaymentMoneyStatus.PartialPaid],
+                text: 'Chờ thanh toán',
+              },
+              {
+                value: [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid],
+                text: 'Đã thanh toán',
+              },
             ]"
             @update:value="startFilter"
           />

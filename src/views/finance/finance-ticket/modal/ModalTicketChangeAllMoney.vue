@@ -49,9 +49,7 @@ const openModal = async (options: { ticketId: string; customer: Customer }) => {
 
     ticket.value = ticketData
     ticket.value.customer = Customer.from(options.customer)
-  } catch (error) {
-    console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
-  }
+  } catch (error) {}
 }
 
 const procedureActualMoney = computed(() => {
@@ -104,7 +102,12 @@ const startChangeAllMoney = async () => {
     changeLoading.value = true
     const ticketResponse = await TicketActionApi.changeAllMoney(ticket.value.id, {
       ticketProcedureList: (ticket.value.ticketProcedureList || [])
-        .filter((i) => i.paymentMoneyStatus !== PaymentMoneyStatus.Paid)
+        .filter(
+          (i) =>
+            ![PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+              i.paymentMoneyStatus,
+            ),
+        )
         .map((i) => ({
           id: i.id,
           quantity: i.quantity,
@@ -119,8 +122,9 @@ const startChangeAllMoney = async () => {
       ]
         .filter(
           (i) =>
-            i.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
-            i.deliveryStatus !== DeliveryStatus.Delivered,
+            ![PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+              i.paymentMoneyStatus,
+            ) && i.deliveryStatus !== DeliveryStatus.Delivered,
         )
         .map((i) => ({
           id: i.id,
@@ -131,7 +135,12 @@ const startChangeAllMoney = async () => {
           actualPrice: i.actualPrice,
         })),
       ticketLaboratoryList: (ticket.value.ticketLaboratoryList || [])
-        .filter((i) => i.paymentMoneyStatus !== PaymentMoneyStatus.Paid)
+        .filter(
+          (i) =>
+            ![PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+              i.paymentMoneyStatus,
+            ),
+        )
         .map((i) => ({
           id: i.id,
           quantity: 1,
@@ -142,7 +151,12 @@ const startChangeAllMoney = async () => {
         })),
       ticketRadiologyList:
         (ticket.value.ticketRadiologyList || [])
-          .filter((i) => i.paymentMoneyStatus !== PaymentMoneyStatus.Paid)
+          .filter(
+            (i) =>
+              ![PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                i.paymentMoneyStatus,
+              ),
+          )
           .map((i) => ({
             id: i.id,
             quantity: 1,
@@ -156,7 +170,6 @@ const startChangeAllMoney = async () => {
     emit('success', ticketResponse)
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalVisitReturn.vue:90 ~ startChangeAllMoney ~ error:', error)
   } finally {
     changeLoading.value = false
   }
@@ -261,7 +274,9 @@ defineExpose({ openModal })
                   v-for="(ticketProcedure, index) in ticket.ticketProcedureList"
                   :key="ticketProcedure.id"
                   :style="
-                    ticketProcedure.paymentMoneyStatus === PaymentMoneyStatus.Paid
+                    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                      ticketProcedure.paymentMoneyStatus,
+                    )
                       ? 'font-style: italic; opacity: 0.7'
                       : ''
                   "
@@ -285,7 +300,13 @@ defineExpose({ openModal })
                     <div>{{ formatMoney(ticketProcedure.expectedPrice) }}</div>
                   </td>
                   <td class="text-right">
-                    <span v-if="ticketProcedure.paymentMoneyStatus == PaymentMoneyStatus.Paid">
+                    <span
+                      v-if="
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketProcedure.paymentMoneyStatus,
+                        )
+                      "
+                    >
                       {{ ticketProcedure.discountPercent }}
                     </span>
                     <input
@@ -300,7 +321,13 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
-                    <span v-if="ticketProcedure.paymentMoneyStatus == PaymentMoneyStatus.Paid">
+                    <span
+                      v-if="
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketProcedure.paymentMoneyStatus,
+                        )
+                      "
+                    >
                       {{ ticketProcedure.discountMoney }}
                     </span>
                     <input
@@ -314,7 +341,13 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
-                    <span v-if="ticketProcedure.paymentMoneyStatus == PaymentMoneyStatus.Paid">
+                    <span
+                      v-if="
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketProcedure.paymentMoneyStatus,
+                        )
+                      "
+                    >
                       {{ ticketProcedure.actualPrice }}
                     </span>
                     <input
@@ -326,7 +359,13 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
-                    <span v-if="ticketProcedure.paymentMoneyStatus == PaymentMoneyStatus.Paid">
+                    <span
+                      v-if="
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketProcedure.paymentMoneyStatus,
+                        )
+                      "
+                    >
                       {{ ticketProcedure.quantity }}
                     </span>
                     <input
@@ -376,8 +415,9 @@ defineExpose({ openModal })
                   v-for="(ticketConsumable, index) in ticket.ticketProductConsumableList"
                   :key="ticketConsumable.id"
                   :style="
-                    ticketConsumable.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
-                    ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
+                    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                      ticketConsumable.paymentMoneyStatus,
+                    ) || ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
                       ? 'font-style: italic; opacity: 0.7'
                       : ''
                   "
@@ -407,8 +447,9 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        ticketConsumable.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
-                        ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketConsumable.paymentMoneyStatus,
+                        ) || ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
                       "
                     >
                       {{ ticketConsumable.discountPercent }}
@@ -428,8 +469,9 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        ticketConsumable.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
-                        ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketConsumable.paymentMoneyStatus,
+                        ) || ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
                       "
                     >
                       {{ ticketConsumable.discountMoney }}
@@ -448,8 +490,9 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        ticketConsumable.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
-                        ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketConsumable.paymentMoneyStatus,
+                        ) || ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
                       "
                     >
                       {{ ticketConsumable.actualPrice }}
@@ -468,8 +511,9 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        ticketConsumable.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
-                        ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketConsumable.paymentMoneyStatus,
+                        ) || ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
                       "
                     >
                       {{ ticketConsumable.quantity }}
@@ -524,8 +568,9 @@ defineExpose({ openModal })
                   v-for="(ticketPrescription, index) in ticket.ticketProductPrescriptionList"
                   :key="ticketPrescription.id"
                   :style="
-                    ticketPrescription.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
-                    ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
+                    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                      ticketPrescription.paymentMoneyStatus,
+                    ) || ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
                       ? 'font-style: italic; opacity: 0.7'
                       : ''
                   "
@@ -555,8 +600,9 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        ticketPrescription.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
-                        ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketPrescription.paymentMoneyStatus,
+                        ) || ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
                       "
                     >
                       {{ ticketPrescription.discountPercent }}
@@ -580,8 +626,9 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        ticketPrescription.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
-                        ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketPrescription.paymentMoneyStatus,
+                        ) || ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
                       "
                     >
                       {{ ticketPrescription.discountMoney }}
@@ -600,8 +647,9 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        ticketPrescription.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
-                        ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketPrescription.paymentMoneyStatus,
+                        ) || ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
                       "
                     >
                       {{ ticketPrescription.actualPrice }}
@@ -620,8 +668,9 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        ticketPrescription.paymentMoneyStatus === PaymentMoneyStatus.Paid ||
-                        ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketPrescription.paymentMoneyStatus,
+                        ) || ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
                       "
                     >
                       {{ ticketPrescription.quantity }}
@@ -676,7 +725,9 @@ defineExpose({ openModal })
                   v-for="(ticketLaboratory, index) in ticket.ticketLaboratoryList"
                   :key="ticketLaboratory.id"
                   :style="
-                    ticketLaboratory.paymentMoneyStatus === PaymentMoneyStatus.Paid
+                    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                      ticketLaboratory.paymentMoneyStatus,
+                    )
                       ? 'font-style: italic; opacity: 0.7'
                       : ''
                   "
@@ -702,7 +753,13 @@ defineExpose({ openModal })
                     <div>{{ formatMoney(ticketLaboratory.expectedPrice) }}</div>
                   </td>
                   <td class="text-right">
-                    <span v-if="ticketLaboratory.paymentMoneyStatus === PaymentMoneyStatus.Paid">
+                    <span
+                      v-if="
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketLaboratory.paymentMoneyStatus,
+                        )
+                      "
+                    >
                       {{ ticketLaboratory.discountPercent }}
                     </span>
                     <input
@@ -717,7 +774,13 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
-                    <span v-if="ticketLaboratory.paymentMoneyStatus === PaymentMoneyStatus.Paid">
+                    <span
+                      v-if="
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketLaboratory.paymentMoneyStatus,
+                        )
+                      "
+                    >
                       {{ ticketLaboratory.discountMoney }}
                     </span>
                     <input
@@ -731,7 +794,13 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
-                    <span v-if="ticketLaboratory.paymentMoneyStatus === PaymentMoneyStatus.Paid">
+                    <span
+                      v-if="
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketLaboratory.paymentMoneyStatus,
+                        )
+                      "
+                    >
                       {{ ticketLaboratory.actualPrice }}
                     </span>
                     <input
@@ -785,7 +854,9 @@ defineExpose({ openModal })
                   v-for="(ticketRadiology, index) in ticket.ticketRadiologyList"
                   :key="ticketRadiology.id"
                   :style="
-                    ticketRadiology.paymentMoneyStatus === PaymentMoneyStatus.Paid
+                    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                      ticketRadiology.paymentMoneyStatus,
+                    )
                       ? 'font-style: italic; opacity: 0.7'
                       : ''
                   "
@@ -811,7 +882,13 @@ defineExpose({ openModal })
                     <div>{{ formatMoney(ticketRadiology.expectedPrice) }}</div>
                   </td>
                   <td class="text-right">
-                    <span v-if="ticketRadiology.paymentMoneyStatus === PaymentMoneyStatus.Paid">
+                    <span
+                      v-if="
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketRadiology.paymentMoneyStatus,
+                        )
+                      "
+                    >
                       {{ ticketRadiology.discountPercent }}
                     </span>
                     <input
@@ -826,7 +903,13 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
-                    <span v-if="ticketRadiology.paymentMoneyStatus === PaymentMoneyStatus.Paid">
+                    <span
+                      v-if="
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketRadiology.paymentMoneyStatus,
+                        )
+                      "
+                    >
                       {{ ticketRadiology.discountMoney }}
                     </span>
                     <input
@@ -840,7 +923,13 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td class="text-right">
-                    <span v-if="ticketRadiology.paymentMoneyStatus === PaymentMoneyStatus.Paid">
+                    <span
+                      v-if="
+                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                          ticketRadiology.paymentMoneyStatus,
+                        )
+                      "
+                    >
                       {{ ticketRadiology.actualPrice }}
                     </span>
                     <input

@@ -9,11 +9,7 @@ import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import {
-  Appointment,
-  AppointmentApi,
-  AppointmentStatus
-} from '@/modules/appointment'
+import { Appointment, AppointmentApi, AppointmentStatus } from '@/modules/appointment'
 import { CustomerService, type Customer } from '@/modules/customer'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { ESString, ESTimer } from '@/utils'
@@ -392,7 +388,7 @@ const handleFocusFirstSearchCustomer = async () => {
               </div>
               <div v-if="[AppointmentStatus.Completed].includes(appointment.status)">
                 <div v-if="appointment.toTicket">
-                  <TicketLink :ticket="appointment.toTicket" />
+                  <TicketLink :ticket="appointment.toTicket" :ticketId="appointment.toTicketId" />
                 </div>
               </div>
             </td>

@@ -2,11 +2,10 @@
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert'
-import { InputMoney, InputNumber, VueSelect } from '@/common/vue-form'
+import { InputMoney, InputNumber, InputSelect, VueSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType, PaymentEffect, PaymentMoneyStatus } from '@/modules/enum'
-import { TicketChangeProcedureApi } from '@/modules/ticket'
+import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
 import { TicketProcedure } from '@/modules/ticket-procedure'
 import { TicketRegimen, TicketRegimenStatus } from '@/modules/ticket-regimen'
 import { computed, ref } from 'vue'
@@ -89,6 +88,17 @@ const handleChangeActualPrice = (data: number) => {
   ticketRegimen.value.discountMoney = discountMoney
   ticketRegimen.value.discountType = DiscountType.VND
   ticketRegimen.value.actualPrice = actualPrice
+}
+
+const handleChangeIsPaymentEachSession = () => {
+  ticketRegimen.value.ticketRegimenItemList?.forEach((tri) => {
+    tri.isPaymentEachSession = ticketRegimen.value.isPaymentEachSession
+    if (ticketRegimen.value.isPaymentEachSession) {
+      tri.quantityPayment = 0
+    } else {
+      tri.quantityPayment = tri.quantityExpected
+    }
+  })
 }
 
 const closeModal = () => {
@@ -183,14 +193,12 @@ defineExpose({ openModal })
                 <InputMoney
                   v-if="ticketRegimen.discountType === DiscountType.VND"
                   :value="ticketRegimen.discountMoney"
-                  :disabled="ticketRegimen.paymentMoneyStatus === PaymentMoneyStatus.Paid"
                   @update:value="handleChangeUnitDiscountMoney"
                   :validate="{ gte: 0 }"
                 />
                 <InputNumber
                   v-else
                   :value="ticketRegimen.discountPercent"
-                  :disabled="ticketRegimen.paymentMoneyStatus === PaymentMoneyStatus.Paid"
                   @update:value="handleChangeDiscountPercent"
                   :validate="{ gte: 0, lte: 100 }"
                 />
@@ -202,8 +210,20 @@ defineExpose({ openModal })
             <div style="width: 100%">
               <InputMoney
                 :value="ticketRegimen.actualPrice"
-                :disabled="ticketRegimen.paymentMoneyStatus === PaymentMoneyStatus.Paid"
                 @update:value="handleChangeActualPrice"
+              />
+            </div>
+          </div>
+          <div style="flex-grow: 1; flex-basis: 300px">
+            <div>Kiểu thanh toán</div>
+            <div style="width: 100%">
+              <InputSelect
+                v-model:value="ticketRegimen.isPaymentEachSession"
+                @update:value="handleChangeIsPaymentEachSession"
+                :options="[
+                  { value: 0, label: 'Thanh toán toàn bộ liệu trình' },
+                  { value: 1, label: 'Thanh toán theo từng buổi lẻ' },
+                ]"
               />
             </div>
           </div>

@@ -2,15 +2,16 @@
 import { RoomService, RoomTicketStyle } from '@/modules/room'
 import { Ticket } from '@/modules/ticket'
 
-const props = withDefaults(defineProps<{ ticket?: Ticket | undefined }>(), {
+const props = withDefaults(defineProps<{ ticket?: Ticket | undefined; ticketId: string }>(), {
   ticket: () => Ticket.blank(),
+  ticketId: '0',
 })
 
 const roomMap = RoomService.roomMap
 </script>
 
 <template>
-  <span v-if="!ticket?.id"></span>
+  <span v-if="!ticket?.id" style="color: #555; font-weight: bold">T{{ ticketId.slice(0, 8) }}</span>
   <span v-else-if="roomMap[ticket.roomId]?.roomStyle === RoomTicketStyle.TicketOrder">
     <router-link
       :to="{

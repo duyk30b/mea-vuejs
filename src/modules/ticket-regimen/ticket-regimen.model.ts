@@ -1,6 +1,6 @@
 import { BaseModel } from '../_base/base.model'
 import type { Customer } from '../customer'
-import { DiscountType, PaymentEffect, PaymentMoneyStatus } from '../enum'
+import { DiscountType, PaymentMoneyStatus } from '../enum'
 import { Procedure } from '../procedure'
 import { Regimen } from '../regimen'
 import { TicketProcedure } from '../ticket-procedure'
@@ -31,7 +31,7 @@ export class TicketRegimen extends BaseModel {
   customerId: number
   regimenId: number
 
-  paymentMoneyStatus: PaymentMoneyStatus
+  isPaymentEachSession: number
   status: TicketRegimenStatus
   costAmount: number
   commissionAmount: number // Giá thực tế
@@ -63,8 +63,8 @@ export class TicketRegimen extends BaseModel {
     ins.customerId = 0
     ins.regimenId = 0
 
-    ins.paymentMoneyStatus = PaymentMoneyStatus.PendingPaid
     ins.status = TicketRegimenStatus.Pending
+    ins.isPaymentEachSession = 0
 
     ins.expectedPrice = 0
     ins.discountMoney = 0
@@ -143,10 +143,10 @@ export class TicketRegimen extends BaseModel {
     if (a.customerId != b.customerId) return false
     if (a.regimenId != b.regimenId) return false
 
-    if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
     if (a.status != b.status) return false
     if (a.costAmount != b.costAmount) return false
     if (a.commissionAmount != b.commissionAmount) return false
+    if (a.isPaymentEachSession != b.isPaymentEachSession) return false
 
     if (a.expectedPrice != b.expectedPrice) return false
     if (a.discountMoney != b.discountMoney) return false

@@ -48,7 +48,7 @@ const laboratoryCostAmount = computed(() => {
       <tr>
         <th v-if="CONFIG.MODE === 'development'">ID</th>
         <th>#</th>
-        <th></th>
+        <th v-if="ticketRoomRef.isPaymentEachItem"></th>
         <th></th>
         <th colspan="1" style="text-transform: uppercase">Xét nghiệm</th>
         <th></th>
@@ -65,7 +65,12 @@ const laboratoryCostAmount = computed(() => {
     <tbody>
       <template v-for="tlg in ticketRoomRef.ticketLaboratoryGroupList || []" :key="tlg.id">
         <tr>
-          <td colspan="100" class="font-bold">{{ tlg.laboratoryGroup?.name }}</td>
+          <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+            {{ tlg.laboratoryGroupId }}
+          </td>
+          <td colspan="100" class="font-bold">
+            {{ tlg.laboratoryGroup?.name || 'Chưa phân nhóm xét nghiệm ' }}
+          </td>
         </tr>
         <tr v-for="(tl, index) in tlg.ticketLaboratoryList" :key="tl.id">
           <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
@@ -74,7 +79,7 @@ const laboratoryCostAmount = computed(() => {
           <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
             {{ index + 1 }}
           </td>
-          <td>
+          <td v-if="ticketRoomRef.isPaymentEachItem">
             <PaymentMoneyStatusTooltip :paymentMoneyStatus="tl.paymentMoneyStatus" />
           </td>
           <td class="text-center">
@@ -111,7 +116,9 @@ const laboratoryCostAmount = computed(() => {
             <a
               v-if="
                 ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                tl.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
+                [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                  tl.paymentMoneyStatus,
+                ) &&
                 userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
               "
               class="text-orange-500"
@@ -124,7 +131,8 @@ const laboratoryCostAmount = computed(() => {
       </template>
       <tr>
         <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet"></td>
-        <td class="text-right" colspan="9">
+        <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+        <td class="text-right" colspan="8">
           <div class="flex items-center justify-end gap-2">
             <span class="uppercase">Tiền xét nghiệm</span>
             <span v-if="laboratoryDiscount" class="italic" style="font-size: 13px">

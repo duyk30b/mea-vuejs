@@ -148,7 +148,11 @@ const clickDestroy = async () => {
       ],
     })
   }
-  if (ticketProductOrigin.paymentMoneyStatus === PaymentMoneyStatus.Paid) {
+  if (
+    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+      ticketProductOrigin.paymentMoneyStatus,
+    )
+  ) {
     return ModalStore.alert({
       title: 'Không thể xóa vật tư ?',
       content: ['- Vật tư đã được thanh toán sẽ không thể xóa'],

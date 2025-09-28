@@ -7,14 +7,7 @@ import { InputHint, InputNumber, InputOptions, VueSelect } from '@/common/vue-fo
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Batch, BatchService } from '@/modules/batch'
-import {
-  DeliveryStatus,
-  DiscountType,
-  PaymentEffect,
-  PaymentMoneyStatus,
-  PickupStrategy,
-  ProductType,
-} from '@/modules/enum'
+import { DeliveryStatus, DiscountType, PickupStrategy, ProductType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { Product, ProductService } from '@/modules/product'
 import { TicketStatus } from '@/modules/ticket'

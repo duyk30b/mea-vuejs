@@ -6,10 +6,7 @@ import {
   IconClockCircle,
   IconDelete,
   IconDollar,
-  IconDoubleRight,
-  IconExclamationCircle,
   IconFileSearch,
-  IconSpin,
   IconTeam,
 } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
@@ -17,7 +14,7 @@ import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { PaymentEffect, PaymentMoneyStatus } from '@/modules/enum'
+import { PaymentMoneyStatus } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeProcedureApi, TicketStatus } from '@/modules/ticket'
@@ -27,6 +24,7 @@ import {
   TicketProcedureStatus,
   TicketProcedureType,
 } from '@/modules/ticket-procedure'
+import { TicketProductService } from '@/modules/ticket-product'
 import {
   TicketRegimen,
   TicketRegimenItem,
@@ -36,6 +34,7 @@ import {
 import { ESTimer } from '@/utils'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProcedureDetail.vue'
+import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import ModalProcessTicketProcedure from '@/views/room/room-ticket-clinic/detail/procedure/ModalProcessTicketProcedure.vue'
 import ModalTicketProcedureUpdateMoney from '@/views/room/room-ticket-clinic/detail/procedure/ModalTicketProcedureUpdateMoney.vue'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -46,8 +45,7 @@ import ModalTicketRegimenUpdateMoney from './ModalTicketRegimenUpdateMoney.vue'
 import ModalTicketRegimenUpdateUser from './ModalTicketRegimenUpdateUser.vue'
 import TicketProcedureSelectItem from './TicketProcedureSelectItem.vue'
 import TicketRegimenStatusTooltip from './TicketRegimenStatusTooltip.vue'
-import { TicketProductService } from '@/modules/ticket-product'
-import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
+import TicketProcedureStatusTooltip from './TicketProcedureStatusTooltip.vue'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
@@ -129,6 +127,19 @@ const clickDestroyTicketProcedure = async (ticketProcedureId: string) => {
 }
 
 const clickDestroyTicketRegimen = async (ticketRegimenId: string) => {
+  const trCurrent = ticketRegimenList.value.find((i) => i.id === ticketRegimenId)
+  if (!trCurrent) return
+  for (let i = 0; i < (trCurrent.ticketRegimenItemList || []).length; i++) {
+    const element = trCurrent.ticketRegimenItemList![i]
+    if (
+      [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+        element.paymentMoneyStatus,
+      )
+    ) {
+      return AlertStore.addError('Phiếu đã thanh toán không thể xóa')
+    }
+  }
+
   ModalStore.confirm({
     title: 'Xác nhận xóa liệu trình ?',
     content: [
@@ -173,6 +184,18 @@ const handleProcessTicketRegimenItem = (props: {
 
   modalProcessTicketProcedure.value?.openModal({ ticketProcedure: temp })
 }
+
+const totalMoney = computed(() => {
+  return (
+    ticketProcedureNormalList.value.reduce((acc, i) => acc + i.actualPrice * i.quantity, 0) +
+    ticketRegimenList.value.reduce(
+      (acc, i) =>
+        acc +
+        (i.ticketRegimenItemList || []).reduce((a, i) => a + i.quantityPayment * i.actualPrice, 0),
+      0,
+    )
+  )
+})
 </script>
 <template>
   <ModalProcedureDetail ref="modalProcedureDetail" />
@@ -201,8 +224,9 @@ const handleProcessTicketRegimenItem = (props: {
             <th style="min-width: 60px">SL</th>
             <th>Thời gian</th>
             <th>Hành động</th>
-            <th>T.Tiền</th>
-            <th>T.Toán</th>
+            <th>Đơn Giá</th>
+            <th>Tổng TT</th>
+            <th>Sửa Giá</th>
             <th>Vật tư</th>
             <th>Nhân viên</th>
             <th></th>
@@ -277,17 +301,20 @@ const handleProcessTicketRegimenItem = (props: {
                   </div>
                   <div>
                     <div v-if="tp.discountMoney" class="text-xs italic text-red-500">
-                      <del>{{ formatMoney(tp.expectedPrice * tp.quantity) }}</del>
+                      <del>{{ formatMoney(tp.expectedPrice) }}</del>
                     </div>
-                    <div>{{ formatMoney(tp.actualPrice * tp.quantity) }}</div>
+                    <div>{{ formatMoney(tp.actualPrice) }}</div>
                   </div>
                 </div>
               </td>
+              <td class="text-right">{{ formatMoney(tp.actualPrice * tp.quantity) }}</td>
               <td>
                 <div
                   v-if="
                     ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                    tp.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
+                    [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                      tp.paymentMoneyStatus,
+                    ) &&
                     userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
                   "
                   class="flex justify-center cursor-pointer"
@@ -295,13 +322,6 @@ const handleProcessTicketRegimenItem = (props: {
                   @click="modalTicketProcedureUpdateMoney?.openModal({ ticketProcedure: tp })"
                 >
                   <IconDollar />
-                </div>
-                <div
-                  v-if="
-                    !tp.ticketRegimenId && [PaymentMoneyStatus.Paid].includes(tp.paymentMoneyStatus)
-                  "
-                >
-                  <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />
                 </div>
               </td>
               <td>
@@ -364,7 +384,9 @@ const handleProcessTicketRegimenItem = (props: {
                 <div
                   v-if="
                     ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                    tp.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
+                    [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                      tp.paymentMoneyStatus,
+                    ) &&
                     [TicketProcedureStatus.Pending, TicketProcedureStatus.NoEffect].includes(
                       tp.status,
                     ) &&
@@ -387,21 +409,24 @@ const handleProcessTicketRegimenItem = (props: {
               <td>
                 <TicketRegimenStatusTooltip :status="tr.status" />
               </td>
-              <td colspan="2">
-                <div class="font-bold flex gap-1">
-                  <span>{{ tr.regimen?.name }}</span>
+              <td colspan="4">
+                <div class="flex flex-wrap gap-1">
+                  <span class="font-bold">{{ tr.regimen?.name }}</span>
+                  <span v-if="tr.isPaymentEachSession" style="color: var(--text-green)">
+                    (Thanh toán theo từng buổi lẻ)
+                  </span>
                 </div>
                 <template v-for="tri in tr.ticketRegimenItemList" :key="tri.id">
                   <div class="flex gap-2" style="font-size: 0.9em; color: #555">
                     <span>- {{ tri.procedure?.name }}</span>
                     <span class="font-bold">
-                      ({{ tri.quantityFinish }} / {{ tri.quantityTotal }})
+                      ({{ tri.quantityFinish }} / {{ tri.quantityExpected }})
                     </span>
                   </div>
                 </template>
               </td>
-              <td>
-                <!-- <div
+              <!-- <td>
+                <div
                   class="font-bold italic flex gap-2 cursor-pointer items-center justify-center"
                   style="color: var(--text-green); margin-left: auto"
                   @click="modalShowTicketRegimen?.openModal({ ticketRegimen: tr })"
@@ -419,8 +444,8 @@ const handleProcessTicketRegimenItem = (props: {
                     v-if="tr.status === TicketRegimenStatus.Completed"
                     style="font-size: 18px"
                   />
-                </div> -->
-              </td>
+                </div>
+              </td> -->
               <td>
                 <div class="flex gap-2 justify-between items-center">
                   <div>
@@ -436,12 +461,15 @@ const handleProcessTicketRegimenItem = (props: {
                   </div>
                 </div>
               </td>
+              <td></td>
 
               <td class="text-center">
                 <!-- <a
                   v-if="
                     ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                    tr.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
+                    [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                    tr.paymentMoneyStatus,
+                  ) &&
                     userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
                   "
                   @click="modalTicketRegimenUpdateMoney?.openModal({ ticketRegimen: tr })"
@@ -449,11 +477,13 @@ const handleProcessTicketRegimenItem = (props: {
                 >
                   <IconDollar width="20" height="20" />
                 </a>
-                <a v-if="[PaymentMoneyStatus.Paid].includes(tr.paymentMoneyStatus)">
+                <a v-if="  [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                        tr.paymentMoneyStatus,
+                      )">
                   <TicketRegimenStatusTooltip :status="tr.status" />
                 </a> -->
               </td>
-              <td></td>
+
               <td>
                 <div v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: right">
                   Σ {{ formatMoney(tr.costAmount) }}
@@ -485,7 +515,6 @@ const handleProcessTicketRegimenItem = (props: {
                 <a
                   v-if="
                     ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                    tr.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
                     [TicketRegimenStatus.Pending].includes(tr.status) &&
                     userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
                   "
@@ -496,14 +525,14 @@ const handleProcessTicketRegimenItem = (props: {
                 </a>
               </td>
             </tr>
-            <template v-for="(tp, tpIndex) in tr.ticketProcedureList" :key="tp.id">
+            <template v-for="tp in tr.ticketProcedureList" :key="tp.id">
               <tr>
                 <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
                   {{ tp.id }}
                 </td>
 
                 <td class="text-center">
-                  {{ tpIndex + 1 }}
+                  <TicketProcedureStatusTooltip :status="tp.status" />
                 </td>
                 <td>
                   <div class="flex flex-wrap items-center gap-2">
@@ -541,7 +570,11 @@ const handleProcessTicketRegimenItem = (props: {
                 </td>
                 <td>
                   <div
-                    v-if="tp.status === TicketProcedureStatus.Pending"
+                    v-if="
+                      [TicketProcedureStatus.NoEffect, TicketProcedureStatus.Pending].includes(
+                        tp.status,
+                      )
+                    "
                     class="flex justify-center"
                   >
                     <VueButton
@@ -573,11 +606,18 @@ const handleProcessTicketRegimenItem = (props: {
                     </div>
                   </div>
                 </td>
+                <td class="text-right">
+                  <span v-if="tp.status !== TicketProcedureStatus.NoEffect">
+                    {{ tp.actualPrice }}
+                  </span>
+                </td>
                 <td>
                   <div
                     v-if="
                       ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                      tp.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
+                      [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                        tp.paymentMoneyStatus,
+                      ) &&
                       userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
                     "
                     class="flex justify-center cursor-pointer"
@@ -641,7 +681,6 @@ const handleProcessTicketRegimenItem = (props: {
                   <div
                     v-if="
                       ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                      tp.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
                       [TicketProcedureStatus.Pending, TicketProcedureStatus.NoEffect].includes(
                         tp.status,
                       ) &&
@@ -659,20 +698,13 @@ const handleProcessTicketRegimenItem = (props: {
           </template>
           <tr>
             <td v-if="CONFIG.MODE === 'development'"></td>
-            <td colspan="4" class="text-right uppercase">
+            <td colspan="6" class="text-right uppercase">
               <b>Tổng tiền</b>
             </td>
 
             <td class="text-right">
               <b>
-                {{
-                  formatMoney(
-                    ticketProcedureNormalList.reduce(
-                      (acc, i) => acc + i.actualPrice * i.quantity,
-                      0,
-                    ) + ticketRegimenList.reduce((acc, i) => acc + i.actualPrice, 0),
-                  )
-                }}
+                {{ formatMoney(totalMoney) }}
               </b>
             </td>
             <td></td>

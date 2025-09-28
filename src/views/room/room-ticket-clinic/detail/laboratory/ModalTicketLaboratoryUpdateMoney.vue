@@ -103,7 +103,11 @@ const closeModal = () => {
 }
 
 const clickDestroy = async () => {
-  if (ticketLaboratoryOrigin.value.paymentMoneyStatus === PaymentMoneyStatus.Paid) {
+  if (
+    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+      ticketLaboratoryOrigin.value.paymentMoneyStatus,
+    )
+  ) {
     return ModalStore.alert({
       title: 'Không thể xóa xét nghiệm ?',
       content: ['- Xét nghiệm đã được thanh toán sẽ không thể xóa'],

@@ -54,7 +54,10 @@ const page = ref(1)
 const limit = ref(Number(localStorage.getItem('TICKET_RADIOLOGY_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
-const paymentMoneyStatus = ref<PaymentMoneyStatus | null>(PaymentMoneyStatus.Paid)
+const paymentMoneyStatus = ref<PaymentMoneyStatus[]>([
+  PaymentMoneyStatus.FullPaid,
+  PaymentMoneyStatus.PartialPaid,
+])
 
 const radiologyMap = RadiologyService.radiologyMap
 const ticketRadiologyList = ref<TicketRadiology[]>([])
@@ -79,7 +82,9 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
         roomId: currentRoom.value.isCommon ? undefined : currentRoom.value.id || 0,
         customerId: customerId.value ? customerId.value : undefined,
         status: status.value ? status.value : undefined,
-        paymentMoneyStatus: paymentMoneyStatus.value ? paymentMoneyStatus.value : undefined,
+        paymentMoneyStatus: paymentMoneyStatus.value.length
+          ? { IN: paymentMoneyStatus.value }
+          : undefined,
         createdAt:
           fromTime.value || toTime.value
             ? {
@@ -283,9 +288,15 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
           <VueSelect
             v-model:value="paymentMoneyStatus"
             :options="[
-              { value: null, text: 'Tất cả' },
-              { value: PaymentMoneyStatus.PendingPaid, text: 'Chờ thanh toán' },
-              { value: PaymentMoneyStatus.Paid, text: 'Đã thanh toán' },
+              { value: [], text: 'Tất cả' },
+              {
+                value: [PaymentMoneyStatus.PendingPayment, PaymentMoneyStatus.PartialPaid],
+                text: 'Chờ thanh toán',
+              },
+              {
+                value: [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid],
+                text: 'Đã thanh toán',
+              },
             ]"
             @update:value="startFilter"
           />

@@ -264,7 +264,10 @@ const handleClickDestroy = async (obj: { ticketId: string; ticketReceptionId: st
             <td class="">
               <template v-if="ticketReception?.ticket?.roomId">
                 <div v-if="ticketReception.ticket">
-                  <TicketLink :ticket="ticketReception.ticket" />
+                  <TicketLink
+                    :ticket="ticketReception.ticket"
+                    :ticketId="ticketReception.ticketId"
+                  />
                 </div>
                 <div class="text-xs italic">{{ roomMap[ticketReception.roomId]?.name || '' }}</div>
               </template>

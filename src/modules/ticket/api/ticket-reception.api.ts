@@ -74,40 +74,6 @@ export class TicketChangeReceptionApi {
         .filter((i) => !!i.userId)
         .map((i) => ({ userId: i.userId, positionId: i.positionId })),
 
-      ticketRegimenWrapList: obj.ticketRegimenWrapList.map((trWrap) => {
-        const { ticketRegimenAdd, ticketRegimenItemAddList, ticketUserRequestAddList } = trWrap
-        return {
-          ticketRegimenAdd: {
-            regimenId: ticketRegimenAdd.regimenId,
-
-            expectedPrice: ticketRegimenAdd.expectedPrice,
-            discountMoney: ticketRegimenAdd.discountMoney,
-            discountPercent: ticketRegimenAdd.discountPercent,
-            discountType: ticketRegimenAdd.discountType,
-            actualPrice: ticketRegimenAdd.actualPrice,
-          },
-          ticketRegimenItemAddList: (ticketRegimenItemAddList || [])
-            .filter((tri) => tri.quantityTotal > 0)
-            .map((tri, index) => {
-              return {
-                procedureId: tri.procedureId,
-                quantityTotal: tri.quantityTotal,
-                
-                expectedPrice: tri.expectedPrice,
-                discountMoney: tri.discountMoney,
-                discountPercent: tri.discountPercent,
-                discountType: tri.discountType,
-                actualPrice: tri.actualPrice,
-              }
-            }),
-          ticketUserRequestAddList: (ticketUserRequestAddList || [])
-            .filter((i) => !!i.userId)
-            .map((i) => ({
-              positionId: i.positionId || 0,
-              userId: i.userId || 0,
-            })),
-        }
-      }),
       ticketProcedureWrapList: obj.ticketProcedureWrapList.map((tp) => {
         const { ticketProcedureAdd, ticketUserRequestAddList } = tp
         return {

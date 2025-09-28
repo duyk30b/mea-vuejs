@@ -85,7 +85,11 @@ const closeModal = () => {
 }
 
 const clickDestroy = async () => {
-  if (ticketRadiologyOrigin.value.paymentMoneyStatus === PaymentMoneyStatus.Paid) {
+  if (
+    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+      ticketRadiologyOrigin.value.paymentMoneyStatus,
+    )
+  ) {
     return ModalStore.alert({
       title: 'Không thể xóa phiếu chỉ định CĐHA ?',
       content: ['- Phiếu CĐHA đã được thanh toán sẽ không thể xóa'],

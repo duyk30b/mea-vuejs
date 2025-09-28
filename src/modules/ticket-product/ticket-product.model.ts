@@ -1,13 +1,7 @@
 import { ESArray } from '@/utils'
 import { Batch } from '../batch'
 import type { Customer } from '../customer'
-import {
-  DeliveryStatus,
-  DiscountType,
-  PaymentEffect,
-  PaymentMoneyStatus,
-  PickupStrategy,
-} from '../enum'
+import { DeliveryStatus, DiscountType, PaymentMoneyStatus, PickupStrategy } from '../enum'
 import { Product } from '../product'
 import { TicketBatch } from '../ticket-batch'
 import type { Ticket } from '../ticket/ticket.model'
@@ -31,7 +25,6 @@ export class TicketProduct {
   pickupStrategy: PickupStrategy
   deliveryStatus: DeliveryStatus
   paymentMoneyStatus: PaymentMoneyStatus
-  paymentEffect: PaymentEffect
 
   quantity: number
   quantityPrescription: number
@@ -112,8 +105,7 @@ export class TicketProduct {
     ins.type = TicketProductType.Prescription
     ins.pickupStrategy = PickupStrategy.AutoWithFIFO
     ins.deliveryStatus = DeliveryStatus.Pending
-    ins.paymentMoneyStatus = PaymentMoneyStatus.PendingPaid
-    ins.paymentEffect = PaymentEffect.SelfPayment
+    ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
 
     ins.quantity = 0
     ins.quantityPrescription = 0
@@ -201,7 +193,6 @@ export class TicketProduct {
     if (a.pickupStrategy != b.pickupStrategy) return false
     if (a.deliveryStatus != b.deliveryStatus) return false
     if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
-    if (a.paymentEffect != b.paymentEffect) return false
 
     if (a.quantity != b.quantity) return false
     if (a.quantityPrescription != b.quantityPrescription) return false

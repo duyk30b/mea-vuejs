@@ -149,14 +149,22 @@ defineExpose({ openModal })
                 <InputMoney
                   v-if="ticketProcedure.discountType === DiscountType.VND"
                   :value="ticketProcedure.discountMoney"
-                  :disabled="ticketProcedure.paymentMoneyStatus === PaymentMoneyStatus.Paid"
+                  :disabled="
+                    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                      ticketProcedure.paymentMoneyStatus,
+                    )
+                  "
                   @update:value="handleChangeUnitDiscountMoney"
                   :validate="{ gte: 0 }"
                 />
                 <InputNumber
                   v-else
                   :value="ticketProcedure.discountPercent"
-                  :disabled="ticketProcedure.paymentMoneyStatus === PaymentMoneyStatus.Paid"
+                  :disabled="
+                    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                      ticketProcedure.paymentMoneyStatus,
+                    )
+                  "
                   @update:value="handleChangeDiscountPercent"
                   :validate="{ gte: 0, lte: 100 }"
                 />
@@ -168,7 +176,11 @@ defineExpose({ openModal })
             <div style="width: 100%">
               <InputMoney
                 :value="ticketProcedure.actualPrice"
-                :disabled="ticketProcedure.paymentMoneyStatus === PaymentMoneyStatus.Paid"
+                :disabled="
+                  [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+                    ticketProcedure.paymentMoneyStatus,
+                  )
+                "
                 @update:value="handleChangeActualPrice"
               />
             </div>

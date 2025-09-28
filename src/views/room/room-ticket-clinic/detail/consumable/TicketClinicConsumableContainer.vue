@@ -225,9 +225,9 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
               </a>
               <a
                 v-else-if="
-                  tpItem.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
-                  tpItem.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
-                  userPermission[PermissionId.TICKET_CHANGE_PRODUCT_CONSUMABLE]
+                  [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                    tpItem.paymentMoneyStatus,
+                  ) && userPermission[PermissionId.TICKET_CHANGE_PRODUCT_CONSUMABLE]
                 "
                 class="text-orange-500"
                 @click="modalTicketClinicConsumableUpdate?.openModal(tpItem)"

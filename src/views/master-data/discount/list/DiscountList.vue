@@ -116,6 +116,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 }
 
 const discountIdAction = ref(0)
+
 const handleModalDiscountUpsertSuccess = async (
   discountData: Discount,
   mode: 'CREATE' | 'UPDATE',
@@ -125,6 +126,7 @@ const handleModalDiscountUpsertSuccess = async (
   await DiscountService.executeRelation([discountData], {
     product: true,
     procedure: true,
+    regimen: true,
     laboratory: true,
     radiology: true,
   })

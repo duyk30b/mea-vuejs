@@ -52,6 +52,7 @@ import TicketClinicRadiologyContainer from './radiology/TicketClinicRadiologyCon
 import TicketClinicSummaryContainer from './summary/TicketClinicSummaryContainer.vue'
 import TicketClinicUserContainer from './user/TicketClinicUserContainer.vue'
 import { TicketUserService } from '@/modules/ticket-user'
+import { TicketProcedureStatus } from '@/modules/ticket-procedure'
 
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
@@ -331,14 +332,24 @@ const clickDestroyTicket = () => {
       content: ['- Bắt buộc HOÀN TRẢ thuốc và vật tư trước khi HỦY phiếu khám'],
     })
   }
-  if (
-    (ticketRoomRef.value.ticketRadiologyList || []).find(
-      (i) => i.status == TicketRadiologyStatus.Completed,
-    )
-  ) {
+
+  const ticketRadiologyComplete = (ticketRoomRef.value.ticketRadiologyList || []).find((i) => {
+    return i.status == TicketRadiologyStatus.Completed
+  })
+  if (ticketRadiologyComplete) {
     return ModalStore.alert({
-      title: 'Phiếu chẩn đoán hình ảnh đã được thực hiện ?',
+      title: `Phiếu CĐHA ${ticketRadiologyComplete.radiology?.name} đã được thực hiện ?`,
       content: 'Cần XÓA tất phiếu CĐHA đã hoàn thành trước khi HỦY phiếu khám',
+    })
+  }
+
+  const ticketProcedureComplete = (ticketRoomRef.value.ticketProcedureList || []).find((i) => {
+    return i.status == TicketProcedureStatus.Completed
+  })
+  if (ticketProcedureComplete) {
+    return ModalStore.alert({
+      title: `Dịch vụ ${ticketProcedureComplete.procedure?.name} đã được thực hiện ?`,
+      content: 'Cần XÓA tất dịch vụ đã hoàn thành trước khi HỦY phiếu khám',
     })
   }
 

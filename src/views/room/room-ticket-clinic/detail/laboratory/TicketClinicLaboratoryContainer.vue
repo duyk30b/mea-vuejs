@@ -626,7 +626,9 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   <VueButton
                     v-if="
                       ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                      tlg.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
+                      [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                        tlg.paymentMoneyStatus,
+                      ) &&
                       userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
                     "
                     size="small"
@@ -648,7 +650,9 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   v-if="
                     tlg.id &&
                     tlg.status === TicketLaboratoryStatus.Pending &&
-                    tlg.paymentMoneyStatus === PaymentMoneyStatus.PendingPaid &&
+                    [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                      tlg.paymentMoneyStatus,
+                    ) &&
                     userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
                   "
                   style="color: var(--text-red)"
@@ -702,8 +706,9 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   </a>
                   <a
                     v-else-if="
-                      tlItem.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
-                      userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
+                      [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                        tlItem.paymentMoneyStatus,
+                      ) && userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
                     "
                     class="text-orange-500"
                     @click="modalTicketLaboratoryUpdateMoney?.openModal(tlItem)"

@@ -21,7 +21,6 @@ export class TicketRegimenGetQuery {
     ticketId?: number | ConditionNumber
     customerId?: number
     regimenId?: number
-    paymentMoneyStatus?: PaymentMoneyStatus | ConditionEnum<PaymentMoneyStatus>
     createdAt?: ConditionDate
   }
 

@@ -170,7 +170,7 @@ const openBlankStockCheckDetail = async (voucherId: string) => {
               <div>
                 {{ productMovement.customer?.fullName }}
               </div>
-              <TicketLink :ticket="productMovement.ticket!" />
+              <TicketLink :ticket="productMovement.ticket!" :ticketId="productMovement.voucherId" />
               <div style="font-size: 0.8rem; white-space: nowrap">
                 {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
@@ -283,7 +283,10 @@ const openBlankStockCheckDetail = async (voucherId: string) => {
             </td>
             <td>
               <div>
-                <TicketLink :ticket="productMovement.ticket!" />
+                <TicketLink
+                  :ticket="productMovement.ticket!"
+                  :ticketId="productMovement.voucherId"
+                />
               </div>
               <div>{{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}</div>
             </td>

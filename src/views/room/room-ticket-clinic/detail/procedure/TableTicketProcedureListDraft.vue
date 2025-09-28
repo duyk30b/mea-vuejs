@@ -1,23 +1,22 @@
 <!-- eslint-disable vue/no-mutating-props -->
 <script setup lang="ts">
+import { VueTag } from '@/common'
 import { IconDelete, IconDollar, IconFileSearch, IconTeam } from '@/common/icon-antd'
 import { InputNumber } from '@/common/vue-form'
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType, PaymentEffect, PaymentMoneyStatus } from '@/modules/enum'
+import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
 import { ProcedureService, ProcedureType, type Procedure } from '@/modules/procedure'
+import type { Regimen } from '@/modules/regimen'
 import { TicketProcedure, TicketProcedureStatus } from '@/modules/ticket-procedure'
+import { TicketRegimen, TicketRegimenItem, TicketRegimenStatus } from '@/modules/ticket-regimen'
 import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProcedureDetail.vue'
-import { ref } from 'vue'
+import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
+import { computed, ref } from 'vue'
 import ModalTicketProcedureUpdateMoney from './ModalTicketProcedureUpdateMoney.vue'
 import ModalTicketProcedureUpdateUser from './ModalTicketProcedureUpdateUser.vue'
-import { TicketRegimen, TicketRegimenItem, TicketRegimenStatus } from '@/modules/ticket-regimen'
 import ModalTicketRegimenUpdateMoney from './ModalTicketRegimenUpdateMoney.vue'
 import ModalTicketRegimenUpdateUser from './ModalTicketRegimenUpdateUser.vue'
-import type { Regimen } from '@/modules/regimen'
-import { VueTag } from '@/common'
-import ModalTicketProcedureUpdateUserRequest from './ModalTicketProcedureUpdateUser.vue'
-import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
@@ -65,7 +64,6 @@ const selectProcedure = async (data: { procedure: Procedure }) => {
   temp.discountType = DiscountType.Percent
   temp.actualPrice = procedureData.price
 
-  temp.paymentMoneyStatus = PaymentMoneyStatus.PendingPaid
   if (procedureData.procedureType === ProcedureType.Basic) {
     temp.status = TicketProcedureStatus.NoEffect
   }
@@ -121,17 +119,20 @@ const selectRegimen = async (data: { regimen: Regimen }) => {
   }
   temp.actualPrice = temp.expectedPrice - temp.discountMoney
 
-  temp.paymentMoneyStatus = PaymentMoneyStatus.PendingPaid
   temp.status = TicketRegimenStatus.Pending
   temp.createdAt = Date.now()
 
   temp.regimen = regimenData
+  temp.isPaymentEachSession = 0
 
   temp.ticketRegimenItemList = (regimenData.regimenItemList || []).map((ri) => {
     const tri = TicketRegimenItem.blank()
     tri.regimenId = ri.regimenId
     tri.procedureId = ri.procedureId
-    tri.quantityTotal = ri.quantity
+    tri.isPaymentEachSession = temp.isPaymentEachSession
+
+    tri.quantityExpected = ri.quantity
+    tri.quantityPayment = ri.quantity
     tri.quantityFinish = 0
     tri.gapDay = 1
 
@@ -193,18 +194,30 @@ const handleModalTicketProcedureUpdateSuccess = (ticketProcedureData: TicketProc
 const handleChangeTicketRegimenItemQuantityTotal = (data: {
   trLocalId: string
   triLocalId: string
-  quantityTotal: number
+  quantityExpected: number
 }) => {
   const ticketRegimen = props.ticketRegimenListDraft.find((i) => i._localId === data.trLocalId)
   if (!ticketRegimen) return
 
   ticketRegimen.expectedPrice = ticketRegimen.ticketRegimenItemList!.reduce((acc, item) => {
-    return acc + item.quantityTotal * item.expectedPrice
+    return acc + item.quantityExpected * item.expectedPrice
   }, 0)
   ticketRegimen.actualPrice = ticketRegimen.ticketRegimenItemList!.reduce((acc, item) => {
-    return acc + item.quantityTotal * item.actualPrice
+    return acc + item.quantityExpected * item.actualPrice
   }, 0)
 }
+
+const totalMoney = computed(() => {
+  return (
+    props.ticketProcedureListDraft.reduce((acc, i) => acc + i.actualPrice * i.quantity, 0) +
+    props.ticketRegimenListDraft.reduce(
+      (acc, i) =>
+        acc +
+        (i.ticketRegimenItemList || []).reduce((a, i) => a + i.quantityPayment * i.actualPrice, 0),
+      0,
+    )
+  )
+})
 
 defineExpose({ selectProcedure, selectRegimen })
 </script>
@@ -241,7 +254,7 @@ defineExpose({ selectProcedure, selectRegimen })
           <th style="width: 150px">Số lượng</th>
           <th v-if="ticketRegimenListDraft.length" style="width: 100px">Cách ngày</th>
           <th>Giá</th>
-          <th>T.Tiền</th>
+          <th>Tổng TT</th>
           <th></th>
           <th>NV Chỉ định</th>
           <th></th>
@@ -276,9 +289,7 @@ defineExpose({ selectProcedure, selectRegimen })
                 </div>
               </div>
             </td>
-            <td class="text-right">
-              {{ formatMoney(tr.actualPrice) }}
-            </td>
+            <td class="text-right"></td>
             <td>
               <a
                 class="flex justify-center cursor-pointer"
@@ -323,7 +334,7 @@ defineExpose({ selectProcedure, selectRegimen })
             <td>{{ tri.procedure?.name }}</td>
             <td class="text-right">
               <InputNumber
-                v-model:value="tri.quantityTotal"
+                v-model:value="tri.quantityExpected"
                 buttonControl
                 textAlign="right"
                 @update:value="
@@ -331,7 +342,7 @@ defineExpose({ selectProcedure, selectRegimen })
                     handleChangeTicketRegimenItemQuantityTotal({
                       trLocalId: tr._localId,
                       triLocalId: tri._localId,
-                      quantityTotal: v,
+                      quantityExpected: v,
                     })
                 "
               />
@@ -358,9 +369,7 @@ defineExpose({ selectProcedure, selectRegimen })
               </div>
             </td>
             <td class="text-right">
-              <!-- <div v-if="tri.ticketProcedure.paymentMoneyStatus !== PaymentMoneyStatus.NoEffect">
-                {{ formatMoney(tri.ticketProcedure.actualPrice * tri.totalSession) }}
-              </div> -->
+              {{ formatMoney(tri.actualPrice * tri.quantityPayment) }}
             </td>
             <td></td>
             <td></td>
@@ -454,12 +463,7 @@ defineExpose({ selectProcedure, selectRegimen })
             Tổng tiền
           </td>
           <td class="font-bold text-right">
-            {{
-              formatMoney(
-                ticketProcedureListDraft.reduce((acc, i) => acc + i.actualPrice * i.quantity, 0) +
-                  ticketRegimenListDraft.reduce((acc, i) => acc + i.actualPrice, 0),
-              )
-            }}
+            {{ formatMoney(totalMoney) }}
           </td>
           <td></td>
           <td></td>

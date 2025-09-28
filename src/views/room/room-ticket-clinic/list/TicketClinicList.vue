@@ -372,7 +372,6 @@ const clickCloseTicket = (ticket: Ticket) => {
             </th>
             <th v-if="settingStore.TICKET_CLINIC_LIST.payment">Thanh toán</th>
             <th></th>
-            <th></th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -399,7 +398,7 @@ const clickCloseTicket = (ticket: Ticket) => {
             </td>
             <td>
               <div class="flex gap-4 justify-between items-center">
-                <TicketLink :ticket="ticket" />
+                <TicketLink :ticket="ticket" :ticketId="ticket.id" />
               </div>
             </td>
             <td>

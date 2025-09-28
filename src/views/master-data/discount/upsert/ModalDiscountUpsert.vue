@@ -26,6 +26,7 @@ import InputSearchLaboratory from '@/views/component/InputSearchLaboratory.vue'
 import InputSearchProcedure from '@/views/component/InputSearchProcedure.vue'
 import InputSearchProduct from '@/views/component/InputSearchProduct.vue'
 import InputSearchRadiology from '@/views/component/InputSearchRadiology.vue'
+import InputSearchRegimen from '@/views/component/InputSearchRegimen.vue'
 import { ref } from 'vue'
 
 const emit = defineEmits<{
@@ -181,6 +182,10 @@ defineExpose({ openModal })
                   label: DiscountInteractTypeText[DiscountInteractType.Procedure],
                 },
                 {
+                  value: DiscountInteractType.Regimen,
+                  label: DiscountInteractTypeText[DiscountInteractType.Regimen],
+                },
+                {
                   value: DiscountInteractType.Laboratory,
                   label: DiscountInteractTypeText[DiscountInteractType.Laboratory],
                 },
@@ -231,6 +236,13 @@ defineExpose({ openModal })
             <template v-if="discount.discountInteractType === DiscountInteractType.Procedure">
               <InputSearchProcedure
                 v-model:procedureId="discount.discountInteractId"
+                required
+                :disabled="!!discount.id || !!requiredInteract"
+              />
+            </template>
+            <template v-if="discount.discountInteractType === DiscountInteractType.Regimen">
+              <InputSearchRegimen
+                v-model:regimenId="discount.discountInteractId"
                 required
                 :disabled="!!discount.id || !!requiredInteract"
               />

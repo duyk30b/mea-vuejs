@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
-import { InputMoney, InputNumber, InputSelect, InputText, VueSwitch } from '@/common/vue-form'
+import { InputMoney, InputSelect, InputText, VueSwitch } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
-import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Discount, DiscountInteractType, DiscountService } from '@/modules/discount'
@@ -13,19 +12,15 @@ import { PermissionId } from '@/modules/permission/permission.enum'
 import { Position, PositionService, PositionType } from '@/modules/position'
 import { Procedure, ProcedureService, ProcedureType } from '@/modules/procedure'
 import { ProcedureGroup, ProcedureGroupService } from '@/modules/procedure-group'
-import { ESTypescript } from '@/utils'
 import PositionTableAction from '@/views/master-data/position/common/PositionTableAction.vue'
 import { computed, ref } from 'vue'
 import DiscountTableAction from '../../discount/common/DiscountTableAction.vue'
-import ModalDiscountUpsert from '../../discount/upsert/ModalDiscountUpsert.vue'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
   DISCOUNT: 'DISCOUNT',
   ROLE_AND_POSITION: 'ROLE_AND_POSITION',
 }
-
-const modalDiscountUpsert = ref<InstanceType<typeof ModalDiscountUpsert>>()
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 const settingStore = useSettingStore()
@@ -175,21 +170,6 @@ const handleSave = async () => {
     console.log('🚀 ~ file: ModalProcedureUpsert.vue:140 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
-  }
-}
-
-const handleModalDiscountUpsertSuccess = async (
-  discountData: Discount,
-  mode: 'CREATE' | 'UPDATE',
-) => {
-  if (mode === 'CREATE') {
-    procedure.value.discountList?.push(discountData)
-  }
-  if (mode === 'UPDATE') {
-    const findIndex = procedure.value.discountList!.findIndex((i) => {
-      return i._localId === discountData._localId
-    })
-    procedure.value.discountList![findIndex] = discountData
   }
 }
 
@@ -343,7 +323,6 @@ defineExpose({ openModal })
       </div>
     </form>
   </VueModal>
-  <ModalDiscountUpsert ref="modalDiscountUpsert" @success="handleModalDiscountUpsertSuccess" />
 </template>
 
 <style lang="scss" scoped>

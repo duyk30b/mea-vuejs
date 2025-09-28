@@ -21,7 +21,7 @@ import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus, DeliveryStatusText, PaymentViewType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { Ticket, TicketActionApi, TicketService, TicketStatus } from '@/modules/ticket'
-import { TicketProduct } from '@/modules/ticket-product'
+import { TicketProduct, TicketProductService } from '@/modules/ticket-product'
 import { timeToText } from '@/utils'
 import { Breadcrumb } from '@/views/component'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
@@ -37,6 +37,7 @@ import ModalTicketOrderPreview from './preview/ModalTicketOrderPreview.vue'
 import { ticketOrderHtmlContent } from './preview/ticket-order-html-content'
 import { ticketOrderDetailRef } from './ticket-order-detail.ref'
 import { TicketOrderApi } from '@/modules/ticket/api/ticket-order.api'
+import { TicketProcedureService } from '@/modules/ticket-procedure'
 
 const modalTicketOrderDetailSetting = ref<InstanceType<typeof ModalTicketOrderDetailSetting>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
@@ -67,6 +68,10 @@ const startFetchData = async (ticketId: string) => {
         ticketExpenseList: true,
       },
     })
+    await Promise.all([
+      TicketProductService.refreshRelation(ticketOrderDetailRef.value.ticketProductList),
+      TicketProcedureService.refreshRelation(ticketOrderDetailRef.value.ticketProcedureList),
+    ])
   } catch (error) {
     console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
   }

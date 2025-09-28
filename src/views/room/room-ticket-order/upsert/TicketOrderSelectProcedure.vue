@@ -51,7 +51,6 @@ const createTicketProcedure = async (procedureData?: Procedure) => {
     temp.procedure = Procedure.from(procedureData)
 
     temp.quantity = 1
-    temp.paymentMoneyStatus = PaymentMoneyStatus.PendingPaid
     if (procedureData.procedureType === ProcedureType.Basic) {
       temp.status = TicketProcedureStatus.Completed
     } else {

@@ -27,6 +27,7 @@ export class TicketChangeProcedureApi {
           return {
             ticketRegimenAdd: {
               regimenId: ticketRegimenAdd.regimenId,
+              isPaymentEachSession: ticketRegimenAdd.isPaymentEachSession,
 
               expectedPrice: Math.floor(ticketRegimenAdd.expectedPrice),
               discountMoney: Math.floor(ticketRegimenAdd.discountMoney),
@@ -35,12 +36,15 @@ export class TicketChangeProcedureApi {
               actualPrice: Math.floor(ticketRegimenAdd.actualPrice),
             },
             ticketRegimenItemAddList: (ticketRegimenItemAddList || [])
-              .filter((tri) => tri.quantityTotal > 0)
+              .filter((tri) => tri.quantityExpected > 0)
               .map((tri, index) => {
                 return {
                   procedureId: tri.procedureId,
-                  quantityTotal: tri.quantityTotal,
+                  isPaymentEachSession: tri.isPaymentEachSession,
                   gapDay: tri.gapDay,
+
+                  quantityPayment: tri.quantityPayment,
+                  quantityExpected: tri.quantityExpected,
 
                   expectedPrice: Math.floor(tri.expectedPrice),
                   discountMoney: Math.floor(tri.discountMoney),

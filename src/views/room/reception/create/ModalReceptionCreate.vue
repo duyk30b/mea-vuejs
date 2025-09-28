@@ -120,7 +120,9 @@ const closeModal = () => {
 
 const selectCustomer = async (customerSelect?: Customer) => {
   if (!customerSelect) {
+    const fullName = currentCustomer.value.fullName
     currentCustomer.value = Customer.blank()
+    currentCustomer.value.fullName = fullName // để fix lỗi mất tên khách hàng đã chọn
     return
   }
   currentCustomer.value = Customer.from(customerSelect)
@@ -321,6 +323,8 @@ defineExpose({ openModal })
           <IconClose />
         </div>
       </div>
+
+      <div>{{ currentCustomer.fullName }}</div>
 
       <div class="px-4 mt-4 flex flex-wrap gap-3">
         <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">

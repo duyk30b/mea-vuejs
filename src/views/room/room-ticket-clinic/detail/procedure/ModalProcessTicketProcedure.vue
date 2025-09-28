@@ -50,7 +50,11 @@ const openModal = async (data: { ticketProcedure: TicketProcedure }) => {
     data.ticketProcedure.ticketProductProcedureList || [],
   )
 
-  if (ticketProcedure.value.status === TicketProcedureStatus.Pending) {
+  if (
+    [TicketProcedureStatus.NoEffect, TicketProcedureStatus.Pending].includes(
+      ticketProcedure.value.status,
+    )
+  ) {
     ticketProcedure.value.completedAt = Date.now()
   }
 
@@ -96,6 +100,7 @@ const handleSave = async () => {
 
 const cancelResultTicketProcedure = async () => {
   try {
+    saveLoading.value = true
     await TicketChangeProcedureApi.cancelResultTicketProcedure({
       ticketId: ticketProcedure.value.ticketId,
       ticketProcedureId: ticketProcedure.value.id,
@@ -103,6 +108,8 @@ const cancelResultTicketProcedure = async () => {
     closeModal()
   } catch (error) {
     console.log('🚀 ~ ModalProcessTicketProcedure.vue:100 ~  ~ error:', error)
+  } finally {
+    saveLoading.value = false
   }
 }
 
@@ -162,7 +169,7 @@ defineExpose({ openModal })
 
       <div class="mx-4 mt-4">
         <div class="flex flex-wrap gap-4">
-          <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
+          <!-- <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
             <div>Số lượng</div>
             <div>
               <InputNumber
@@ -173,7 +180,7 @@ defineExpose({ openModal })
                 :disabled="!!ticketProcedure.id"
               />
             </div>
-          </div>
+          </div> -->
 
           <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
             <div>Thời gian thực hiện</div>
@@ -291,7 +298,13 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-4 flex flex-wrap gap-10 justify-center">
         <div v-if="ticketProcedure.status === TicketProcedureStatus.Completed">
-          <VueButton color="red" type="button" icon="close" @click="cancelResultTicketProcedure">
+          <VueButton
+            :loading="saveLoading"
+            color="red"
+            type="button"
+            icon="close"
+            @click="cancelResultTicketProcedure"
+          >
             Hủy kết quả
           </VueButton>
         </div>
