@@ -2,6 +2,7 @@
 import { VueButton } from '@/common'
 import { AlertStore } from '@/common/vue-alert'
 import { InputText } from '@/common/vue-form'
+import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { PermissionId } from '@/modules/permission/permission.enum'
@@ -221,10 +222,18 @@ const handleSave = async () => {
                   />
                 </td>
                 <td style="user-select: none">
-                  <div class="font-bold">{{ regimen.name }}</div>
+                  <div class="flex gap-1">
+                    <span class="font-bold">{{ regimen.name }}</span>
+                    <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                      ({{ regimen.id }})
+                    </span>
+                  </div>
                   <div v-for="regimenItem in regimen.regimenItemList" :key="regimenItem.id">
                     - {{ regimenItem.procedure?.name }}
                     <span style="font-style: italic">({{ regimenItem.quantity }} buổi)</span>
+                    <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                      ({{ regimenItem.procedureId }})
+                    </span>
                   </div>
                 </td>
                 <td class="text-right">
@@ -256,7 +265,14 @@ const handleSave = async () => {
                     "
                   />
                 </td>
-                <td style="user-select: none">{{ procedure.name }}</td>
+                <td style="user-select: none">
+                  <div class="flex flex-wrap gap-1">
+                    <span>{{ procedure.name }}</span>
+                    <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                      ({{ procedure.id }})
+                    </span>
+                  </div>
+                </td>
                 <td class="text-right">{{ formatMoney(procedure.price) }}</td>
               </tr>
             </template>

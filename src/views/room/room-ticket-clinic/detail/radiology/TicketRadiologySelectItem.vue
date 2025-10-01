@@ -250,17 +250,17 @@ const handleModalTicketRadiologyUpdateSuccess = (
           <table>
             <thead>
               <tr>
-                <th colspan="100">Tên xét nghiệm</th>
+                <th colspan="100">Chọn phiếu CĐHA</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td colspan="100" style="padding: 0">
-                  <div>
+                  <div style="margin: -1px;">
                     <InputText
                       v-model:value="searchText"
                       prepend="🔎"
-                      placeholder="Tìm kiếm theo tên xét nghiệm"
+                      placeholder="Tìm kiếm theo tên phiếu CĐHA"
                       @update:value="startFilterRadiology"
                     />
                   </div>

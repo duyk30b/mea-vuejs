@@ -73,7 +73,7 @@ export class TicketChangeReceptionApi {
       ticketUserReceptionAddList: obj.ticketUserReceptionList
         .filter((i) => !!i.userId)
         .map((i) => ({ userId: i.userId, positionId: i.positionId })),
-
+      ticketRegimenWrapList: [],
       ticketProcedureWrapList: obj.ticketProcedureWrapList.map((tp) => {
         const { ticketProcedureAdd, ticketUserRequestAddList } = tp
         return {

@@ -257,7 +257,12 @@ defineExpose({ openModal })
             color="red"
             icon="trash"
             @click="clickDestroy"
-            v-if="ticketLaboratory.status === TicketLaboratoryStatus.Pending"
+            v-if="
+              ticketLaboratory.status === TicketLaboratoryStatus.Pending &&
+              [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                ticketLaboratory.paymentMoneyStatus,
+              )
+            "
           >
             Xóa
           </VueButton>

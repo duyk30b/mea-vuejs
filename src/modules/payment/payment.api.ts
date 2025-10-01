@@ -28,7 +28,11 @@ export class PaymentApi {
 
   static async updateInfo(options: {
     paymentId: string
-    body: { paymentMethodId: number; note: string }
+    body: {
+      createdAt: number
+      paymentMethodId: number
+      note: string
+    }
   }) {
     const { paymentId, body } = options
     const response = await AxiosInstance.post(`/payment/update-info/${paymentId}`, body)

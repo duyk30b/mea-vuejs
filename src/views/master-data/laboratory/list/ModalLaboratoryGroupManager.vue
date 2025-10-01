@@ -126,7 +126,10 @@ defineExpose({ openModal })
                   />
                 </td>
                 <td class="text-center">
-                  <a style="color: var(--text-red)" @click="laboratoryGroupList.splice(index, 1)">
+                  <a
+                    style="font-size: 20px; color: var(--text-red)"
+                    @click="laboratoryGroupList.splice(index, 1)"
+                  >
                     <IconDelete />
                   </a>
                 </td>

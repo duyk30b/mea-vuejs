@@ -10,7 +10,13 @@ const props = withDefaults(defineProps<{ status: TicketProcedureStatus }>(), {
 
 <template>
   <div class="flex justify-center">
-    <span v-if="status === TicketProcedureStatus.NoEffect">
+    <VueTooltip v-if="status === TicketProcedureStatus.NoEffect">
+      <template #trigger>
+        <IconMinusCircle style="font-size: 18px; color: #666; cursor: not-allowed" />
+      </template>
+      <div>Nháp</div>
+    </VueTooltip>
+    <span v-else-if="status === TicketProcedureStatus.NoAction">
       <IconMinusCircle style="font-size: 18px; color: #666; cursor: not-allowed" />
     </span>
     <VueTooltip v-else-if="status === TicketProcedureStatus.Pending">

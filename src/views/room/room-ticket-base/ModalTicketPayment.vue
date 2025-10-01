@@ -228,7 +228,7 @@ defineExpose({ openModal })
             "
           >
             <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
-              Tạm ứng
+              Thanh toán
             </VueButton>
           </div>
         </div>

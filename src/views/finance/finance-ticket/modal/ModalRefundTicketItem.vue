@@ -81,7 +81,7 @@ const openModal = async (options: { ticketId: string; customer: Customer }) => {
     const ticketResponse = await TicketService.detail(ticketId, {
       relation: {
         ticketProcedureList: true,
-        ticketProductList: true,
+        ticketProductList: { batch: true, product: true },
         ticketLaboratoryList: true,
         ticketRadiologyList: true,
       },

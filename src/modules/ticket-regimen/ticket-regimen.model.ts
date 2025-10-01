@@ -1,6 +1,6 @@
 import { BaseModel } from '../_base/base.model'
 import type { Customer } from '../customer'
-import { DiscountType, PaymentMoneyStatus } from '../enum'
+import { DiscountType } from '../enum'
 import { Procedure } from '../procedure'
 import { Regimen } from '../regimen'
 import { TicketProcedure } from '../ticket-procedure'
@@ -31,16 +31,18 @@ export class TicketRegimen extends BaseModel {
   customerId: number
   regimenId: number
 
-  isPaymentEachSession: number
   status: TicketRegimenStatus
   costAmount: number
   commissionAmount: number // Giá thực tế
 
-  expectedPrice: number // Giá dự kiến
+  expectedMoney: number // Giá dự kiến
+  actualMoney: number // Giá thực tế
+  spentMoney: number // Tiền đã dùng
+  remainingMoney: number // Tiền còn lại, chi dùng trong trường hợp thanh toán lẻ
+
   discountMoney: number // tiền giảm giá
   discountPercent: number // % giảm giá
   discountType: DiscountType // Loại giảm giá
-  actualPrice: number // Giá thực tế
 
   createdAt: number
   completedAt: number
@@ -64,13 +66,14 @@ export class TicketRegimen extends BaseModel {
     ins.regimenId = 0
 
     ins.status = TicketRegimenStatus.Pending
-    ins.isPaymentEachSession = 0
 
-    ins.expectedPrice = 0
+    ins.expectedMoney = 0
+    ins.actualMoney = 0
+    ins.spentMoney = 0
+    ins.remainingMoney = 0
     ins.discountMoney = 0
     ins.discountPercent = 0
     ins.discountType = DiscountType.VND
-    ins.actualPrice = 0
 
     return ins
   }
@@ -146,13 +149,14 @@ export class TicketRegimen extends BaseModel {
     if (a.status != b.status) return false
     if (a.costAmount != b.costAmount) return false
     if (a.commissionAmount != b.commissionAmount) return false
-    if (a.isPaymentEachSession != b.isPaymentEachSession) return false
 
-    if (a.expectedPrice != b.expectedPrice) return false
+    if (a.expectedMoney != b.expectedMoney) return false
+    if (a.actualMoney != b.actualMoney) return false
+    if (a.spentMoney != b.spentMoney) return false
+    if (a.remainingMoney != b.remainingMoney) return false
     if (a.discountMoney != b.discountMoney) return false
     if (a.discountPercent != b.discountPercent) return false
     if (a.discountType != b.discountType) return false
-    if (a.actualPrice != b.actualPrice) return false
 
     if (a.createdAt != b.createdAt) return false
     if (a.completedAt != b.completedAt) return false

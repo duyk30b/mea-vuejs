@@ -137,12 +137,10 @@ const handleSave = async () => {
       .map(([key, value]) => Number(key))
     await LaboratoryService.systemCopy({ laboratoryIdList })
     emit('success')
-    showModal.value = false
     AlertStore.addSuccess('Sao chép thành công')
+    closeModal()
   } catch (error) {
     console.log('🚀 ~ file: ModalCopyLaboratorySystem.vue:124 ~ handleSave ~ error:', error)
-  } finally {
-    saveLoading.value = false
   }
 }
 

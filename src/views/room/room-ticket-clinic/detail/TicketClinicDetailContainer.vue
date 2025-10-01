@@ -34,8 +34,11 @@ import { DeliveryStatus, PaymentViewType, PickupStrategy } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { Room, RoomService, RoomTicketStyle, ticketRoomRef } from '@/modules/room'
 import { Ticket, TicketActionApi, TicketService, TicketStatus } from '@/modules/ticket'
+import { TicketProcedureStatus } from '@/modules/ticket-procedure'
 import { TicketRadiologyStatus } from '@/modules/ticket-radiology'
+import { TicketUserService } from '@/modules/ticket-user'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
+import ModalPrepaymentTicketItem from '@/views/finance/finance-ticket/modal/ModalPrepaymentTicketItem.vue'
 import { computed, onBeforeMount, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalTicketPayment from '../../room-ticket-base/ModalTicketPayment.vue'
@@ -51,11 +54,10 @@ import TicketClinicProcedureContainer from './procedure/TicketClinicProcedureCon
 import TicketClinicRadiologyContainer from './radiology/TicketClinicRadiologyContainer.vue'
 import TicketClinicSummaryContainer from './summary/TicketClinicSummaryContainer.vue'
 import TicketClinicUserContainer from './user/TicketClinicUserContainer.vue'
-import { TicketUserService } from '@/modules/ticket-user'
-import { TicketProcedureStatus } from '@/modules/ticket-procedure'
 
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
+const modalPrepaymentTicketItem = ref<InstanceType<typeof ModalPrepaymentTicketItem>>()
 const modalTicketPayment = ref<InstanceType<typeof ModalTicketPayment>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -114,7 +116,7 @@ const startFetchData = async (ticketId?: string) => {
         paymentList: false, // query khi bật modal thanh toán
 
         ticketAttributeList: true,
-        ticketProductList: true,
+        ticketProductList: { batch: true, product: true },
         ticketBatchList: CONFIG.MODE === 'development' ? { batch: true } : undefined,
         ticketProcedureList: true,
         ticketRegimenList: true,
@@ -174,16 +176,26 @@ const clickCloseTicket = () => {
       ],
     })
   }
-  if (
-    (ticketRoomRef.value.ticketRadiologyList || []).find(
-      (i) => i.status == TicketRadiologyStatus.Pending,
-    )
-  ) {
+
+  const ticketProcedurePending = (ticketRoomRef.value.ticketProcedureList || []).find((i) => {
+    return i.status == TicketProcedureStatus.Pending
+  })
+  if (ticketProcedurePending) {
     return ModalStore.alert({
-      title: 'Phiếu chẩn đoán hình ảnh vẫn chưa thực hiện ?',
-      content: 'Cần thực hiện phiếu CĐHA trước khi đóng phiếu khám',
+      title: `Dịch vụ ${ticketProcedurePending.procedure?.name} vẫn chưa thực hiện ?`,
+      content: 'Cần phải hoàn thành tất cả dịch vụ trước khi đóng phiếu khám',
     })
   }
+  // if (
+  //   (ticketRoomRef.value.ticketRadiologyList || []).find(
+  //     (i) => i.status == TicketRadiologyStatus.Pending,
+  //   )
+  // ) {
+  //   return ModalStore.alert({
+  //     title: 'Phiếu chẩn đoán hình ảnh vẫn chưa thực hiện ?',
+  //     content: 'Cần thực hiện phiếu CĐHA trước khi đóng phiếu khám',
+  //   })
+  // }
   // if (
   //   (ticketRoomRef.value.ticketLaboratoryList || []).find(
   //     (i) => i.status === TicketLaboratoryStatus.Pending
@@ -400,6 +412,7 @@ const clickReturnProduct = () => {
 <template>
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalTicketClinicDetailSetting ref="modalTicketClinicDetailSetting" />
+  <ModalPrepaymentTicketItem ref="modalPrepaymentTicketItem" />
   <ModalTicketPayment ref="modalTicketPayment" />
   <ModalTicketReturnProduct ref="modalTicketReturnProduct" />
   <ModalTicketClinicHistory ref="modalTicketClinicHistory" />
@@ -452,6 +465,18 @@ const clickReturnProduct = () => {
         VÀO PHÒNG
       </VueButton>
       <VueButton
+        color="green"
+        icon="dollar"
+        @click="
+          modalPrepaymentTicketItem?.openModal({
+            ticketId: ticketRoomRef.id,
+            customer: ticketRoomRef.customer!,
+          })
+        "
+      >
+        <span class="font-bold">THANH TOÁN ITEM</span>
+      </VueButton>
+      <VueButton
         v-if="
           [
             TicketStatus.Schedule,
@@ -469,7 +494,7 @@ const clickReturnProduct = () => {
           })
         "
       >
-        <span class="font-bold">TẠM ỨNG</span>
+        <span class="font-bold">THANH TOÁN</span>
       </VueButton>
       <VueButton
         v-if="[TicketStatus.Debt].includes(ticketRoomRef.status)"
@@ -485,10 +510,7 @@ const clickReturnProduct = () => {
         <span class="font-bold">TRẢ NỢ</span>
       </VueButton>
       <VueButton
-        v-if="
-          [TicketStatus.Completed, TicketStatus.Cancelled].includes(ticketRoomRef.status) &&
-          ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status)
-        "
+        v-if="[TicketStatus.Completed, TicketStatus.Cancelled].includes(ticketRoomRef.status)"
         color="green"
         icon="dollar"
         @click="
@@ -514,6 +536,7 @@ const clickReturnProduct = () => {
       </VueButton>
       <VueButton
         v-if="
+          ticketRoomRef.deliveryStatus !== DeliveryStatus.NoStock &&
           userPermission[PermissionId.TICKET_CHANGE_PRODUCT_SEND_PRODUCT] &&
           ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status)
         "
@@ -524,7 +547,15 @@ const clickReturnProduct = () => {
         icon="send"
         @click="startSendProduct"
       >
-        <span class="font-bold">XUẤT THUỐC - VẬT TƯ</span>
+        <span v-if="ticketRoomRef.deliveryStatus === DeliveryStatus.Pending" class="font-bold">
+          XUẤT THUỐC - VẬT TƯ
+        </span>
+        <span
+          v-else-if="ticketRoomRef.deliveryStatus === DeliveryStatus.Delivered"
+          class="font-bold"
+        >
+          ĐÃ XUẤT THUỐC - VẬT TƯ
+        </span>
       </VueButton>
       <VueButton
         v-if="userPermission[PermissionId.TICKET_CLOSE]"

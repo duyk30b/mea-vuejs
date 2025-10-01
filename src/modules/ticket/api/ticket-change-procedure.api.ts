@@ -27,30 +27,27 @@ export class TicketChangeProcedureApi {
           return {
             ticketRegimenAdd: {
               regimenId: ticketRegimenAdd.regimenId,
-              isPaymentEachSession: ticketRegimenAdd.isPaymentEachSession,
 
-              expectedPrice: Math.floor(ticketRegimenAdd.expectedPrice),
-              discountMoney: Math.floor(ticketRegimenAdd.discountMoney),
-              discountPercent: Math.floor(ticketRegimenAdd.discountPercent),
+              expectedMoney: ticketRegimenAdd.expectedMoney,
+              actualMoney: ticketRegimenAdd.actualMoney,
+              discountMoney: ticketRegimenAdd.discountMoney,
+              discountPercent: ticketRegimenAdd.discountPercent,
               discountType: ticketRegimenAdd.discountType,
-              actualPrice: Math.floor(ticketRegimenAdd.actualPrice),
             },
             ticketRegimenItemAddList: (ticketRegimenItemAddList || [])
               .filter((tri) => tri.quantityExpected > 0)
               .map((tri, index) => {
                 return {
                   procedureId: tri.procedureId,
-                  isPaymentEachSession: tri.isPaymentEachSession,
                   gapDay: tri.gapDay,
 
-                  quantityPayment: tri.quantityPayment,
                   quantityExpected: tri.quantityExpected,
 
-                  expectedPrice: Math.floor(tri.expectedPrice),
-                  discountMoney: Math.floor(tri.discountMoney),
-                  discountPercent: Math.floor(tri.discountPercent),
+                  expectedMoneyAmount: tri.expectedMoneyAmount,
+                  discountMoneyAmount: tri.discountMoneyAmount,
+                  discountPercent: tri.discountPercent,
                   discountType: tri.discountType,
-                  actualPrice: Math.floor(tri.actualPrice),
+                  actualMoneyAmount: tri.actualMoneyAmount,
                 }
               }),
             ticketUserRequestAddList: (ticketUserRequestAddList || [])
@@ -71,11 +68,11 @@ export class TicketChangeProcedureApi {
 
               quantity: ticketProcedureAdd.quantity,
 
-              expectedPrice: Math.floor(ticketProcedureAdd.expectedPrice),
-              discountMoney: Math.floor(ticketProcedureAdd.discountMoney),
-              discountPercent: Math.floor(ticketProcedureAdd.discountPercent),
+              expectedPrice: ticketProcedureAdd.expectedPrice,
+              discountMoney: ticketProcedureAdd.discountMoney,
+              discountPercent: ticketProcedureAdd.discountPercent,
               discountType: ticketProcedureAdd.discountType,
-              actualPrice: Math.floor(ticketProcedureAdd.actualPrice),
+              actualPrice: ticketProcedureAdd.actualPrice,
             },
             ticketUserRequestAddList: (ticketUserRequestAddList || [])
               .filter((i) => !!i.userId)
@@ -119,11 +116,11 @@ export class TicketChangeProcedureApi {
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/procedure/update-money-ticket-procedure/${ticketProcedureId}`,
       {
-        expectedPrice: Math.floor(ticketProcedure.expectedPrice),
-        discountMoney: Math.floor(ticketProcedure.discountMoney),
-        discountPercent: Math.floor(ticketProcedure.discountPercent),
+        expectedPrice: ticketProcedure.expectedPrice,
+        discountMoney: ticketProcedure.discountMoney,
+        discountPercent: ticketProcedure.discountPercent,
         discountType: ticketProcedure.discountType,
-        actualPrice: Math.floor(ticketProcedure.actualPrice),
+        actualPrice: ticketProcedure.actualPrice,
       },
     )
     const { data } = response.data as BaseResponse<{ ticketProcedureModified: any }>
@@ -172,6 +169,39 @@ export class TicketChangeProcedureApi {
       },
     )
     const { data } = response.data as BaseResponse<{ ticketProcedureList: any[] }>
+  }
+
+  static async updateMoneyTicketRegimen(body: {
+    ticketId: string
+    ticketRegimenId: string
+    ticketRegimen: TicketRegimen
+    ticketRegimenItemList: TicketRegimenItem[]
+  }) {
+    const { ticketId, ticketRegimenId, ticketRegimen, ticketRegimenItemList } = body
+    const response = await AxiosInstance.post(
+      `/ticket/${ticketId}/procedure/update-money-ticket-regimen/${ticketRegimenId}`,
+      {
+        ticketRegimenUpdate: {
+          expectedMoney: ticketRegimen.expectedMoney,
+          discountMoney: ticketRegimen.discountMoney,
+          discountPercent: ticketRegimen.discountPercent,
+          discountType: ticketRegimen.discountType,
+          actualMoney: ticketRegimen.actualMoney,
+        },
+        ticketRegimenItemUpdateList: ticketRegimenItemList.map((i) => {
+          return {
+            id: i.id,
+            quantityExpected: i.quantityExpected,
+            expectedMoneyAmount: i.expectedMoneyAmount,
+            discountMoneyAmount: i.discountMoneyAmount,
+            discountPercent: i.discountPercent,
+            discountType: i.discountType,
+            actualMoneyAmount: i.actualMoneyAmount,
+          }
+        }),
+      },
+    )
+    const { data } = response.data as BaseResponse<any>
   }
 
   static async updateUserRequestTicketRegimen(body: {

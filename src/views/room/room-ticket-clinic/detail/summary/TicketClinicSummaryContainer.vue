@@ -255,7 +255,7 @@ const handleClickModalRegisterAppointment = () => {
                       })
                     "
                   >
-                    <span class="font-bold">TẠM ỨNG</span>
+                    <span class="font-bold">THANH TOÁN</span>
                   </VueButton>
                   <VueButton
                     v-if="[TicketStatus.Debt].includes(ticketRoomRef.status)"

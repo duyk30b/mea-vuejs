@@ -46,6 +46,7 @@ import ModalTicketRegimenUpdateUser from './ModalTicketRegimenUpdateUser.vue'
 import TicketProcedureSelectItem from './TicketProcedureSelectItem.vue'
 import TicketRegimenStatusTooltip from './TicketRegimenStatusTooltip.vue'
 import TicketProcedureStatusTooltip from './TicketProcedureStatusTooltip.vue'
+import { IconEditSquare } from '@/common/icon-google'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
@@ -131,11 +132,7 @@ const clickDestroyTicketRegimen = async (ticketRegimenId: string) => {
   if (!trCurrent) return
   for (let i = 0; i < (trCurrent.ticketRegimenItemList || []).length; i++) {
     const element = trCurrent.ticketRegimenItemList![i]
-    if (
-      [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-        element.paymentMoneyStatus,
-      )
-    ) {
+    if (element.quantityPayment > 0) {
       return AlertStore.addError('Phiếu đã thanh toán không thể xóa')
     }
   }
@@ -160,40 +157,10 @@ const clickDestroyTicketRegimen = async (ticketRegimenId: string) => {
   })
 }
 
-const handleProcessTicketRegimenItem = (props: {
-  ticketRegimen: TicketRegimen
-  ticketRegimenItem: TicketRegimenItem
-}) => {
-  const temp = TicketProcedure.blank()
-  temp.id = ''
-  temp.ticketId = ticketRoomRef.value.id
-  temp.procedureId = props.ticketRegimenItem.procedureId
-  temp.ticketRegimenId = props.ticketRegimen.id
-  temp.ticketRegimenItemId = props.ticketRegimenItem.id
-  temp.ticketProcedureType = TicketProcedureType.InRegimen
-
-  temp.procedure = props.ticketRegimenItem.procedure
-  temp.expectedPrice = props.ticketRegimenItem.expectedPrice
-  temp.discountMoney = props.ticketRegimenItem.discountMoney
-  temp.discountPercent = props.ticketRegimenItem.discountPercent
-  temp.discountType = props.ticketRegimenItem.discountType
-  temp.actualPrice = props.ticketRegimenItem.actualPrice
-  temp.quantity = 1
-  temp.ticketProcedureType = TicketProcedureType.InRegimen
-  temp.status = TicketProcedureStatus.Pending
-
-  modalProcessTicketProcedure.value?.openModal({ ticketProcedure: temp })
-}
-
 const totalMoney = computed(() => {
   return (
     ticketProcedureNormalList.value.reduce((acc, i) => acc + i.actualPrice * i.quantity, 0) +
-    ticketRegimenList.value.reduce(
-      (acc, i) =>
-        acc +
-        (i.ticketRegimenItemList || []).reduce((a, i) => a + i.quantityPayment * i.actualPrice, 0),
-      0,
-    )
+    ticketRegimenList.value.reduce((acc, i) => acc + i.spentMoney, 0)
   )
 })
 </script>
@@ -219,14 +186,13 @@ const totalMoney = computed(() => {
         <thead>
           <tr>
             <th v-if="CONFIG.MODE === 'development'" style="width: 150px">ID</th>
-            <th></th>
+            <th v-if="ticketRoomRef.isPaymentEachItem">TT</th>
             <th>Dịch vụ</th>
-            <th style="min-width: 60px">SL</th>
             <th>Thời gian</th>
             <th>Hành động</th>
+            <th style="min-width: 60px">SL</th>
             <th>Đơn Giá</th>
-            <th>Tổng TT</th>
-            <th>Sửa Giá</th>
+            <th>Tiền sử dụng</th>
             <th>Vật tư</th>
             <th>Nhân viên</th>
             <th></th>
@@ -236,13 +202,15 @@ const totalMoney = computed(() => {
           <tr v-if="ticketProcedureNormalList!.length === 0 && ticketRegimenList!.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <template v-for="(tp, tpIndex) in ticketProcedureNormalList" :key="tp._localId">
+          <template v-for="tp in ticketProcedureNormalList" :key="tp._localId">
             <tr>
               <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
                 {{ tp.id }}
               </td>
+              <td v-if="ticketRoomRef.isPaymentEachItem">
+                <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />
+              </td>
 
-              <td class="text-center">{{ tpIndex + 1 }}</td>
               <td>
                 <div class="flex flex-wrap items-center gap-2">
                   <span>{{ tp.procedure?.name }}</span>
@@ -260,22 +228,6 @@ const totalMoney = computed(() => {
                   {{ tp.result }}
                 </div>
               </td>
-              <td class="text-center">{{ tp.quantity }}</td>
-              <td>
-                <div
-                  v-if="tp.status === TicketProcedureStatus.Completed"
-                  class="italic flex items-center justify-center gap-2 cursor-pointer"
-                  style="margin-left: auto"
-                  @click="
-                    modalProcessTicketProcedure?.openModal({
-                      ticketProcedure: tp,
-                    })
-                  "
-                >
-                  {{ ESTimer.timeToText(tp.completedAt, 'hh:mm DD/MM/YYYY') }}
-                  <IconCheckSquare width="16" height="16" style="color: var(--text-green)" />
-                </div>
-              </td>
               <td>
                 <div v-if="tp.status === TicketProcedureStatus.Pending" class="flex justify-center">
                   <VueButton
@@ -291,39 +243,52 @@ const totalMoney = computed(() => {
                   </VueButton>
                 </div>
               </td>
-
               <td>
-                <div class="flex flex-wrap gap-2 justify-between items-center">
+                <div
+                  v-if="tp.status === TicketProcedureStatus.Completed"
+                  class="italic flex items-center justify-center gap-2 cursor-pointer"
+                  style="margin-left: auto"
+                  @click="
+                    modalProcessTicketProcedure?.openModal({
+                      ticketProcedure: tp,
+                    })
+                  "
+                >
+                  {{ ESTimer.timeToText(tp.completedAt, 'hh:mm DD/MM/YYYY') }}
+                  <IconCheckSquare width="16" height="16" style="color: var(--text-green)" />
+                </div>
+              </td>
+
+              <td class="text-center">{{ tp.quantity }}</td>
+              <td>
+                <div class="flex flex-wrap gap-2 items-center">
                   <div>
                     <VueTag v-if="tp.discountMoney" color="green">
                       {{ tp.discountPercent + ' %' }}
                     </VueTag>
                   </div>
-                  <div>
+                  <div class="ml-auto">
                     <div v-if="tp.discountMoney" class="text-xs italic text-red-500">
                       <del>{{ formatMoney(tp.expectedPrice) }}</del>
                     </div>
                     <div>{{ formatMoney(tp.actualPrice) }}</div>
                   </div>
+                  <a
+                    v-if="
+                      ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                      [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                        tp.paymentMoneyStatus,
+                      ) &&
+                      userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
+                    "
+                    @click="modalTicketProcedureUpdateMoney?.openModal({ ticketProcedure: tp })"
+                    style="color: var(--text-orange); line-height: 0"
+                  >
+                    <IconEditSquare width="20" height="20" />
+                  </a>
                 </div>
               </td>
               <td class="text-right">{{ formatMoney(tp.actualPrice * tp.quantity) }}</td>
-              <td>
-                <div
-                  v-if="
-                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                    [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                      tp.paymentMoneyStatus,
-                    ) &&
-                    userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
-                  "
-                  class="flex justify-center cursor-pointer"
-                  style="font-size: 20px; color: var(--text-orange)"
-                  @click="modalTicketProcedureUpdateMoney?.openModal({ ticketProcedure: tp })"
-                >
-                  <IconDollar />
-                </div>
-              </td>
               <td>
                 <div
                   v-for="tpp in tp.ticketProductProcedureList"
@@ -387,9 +352,11 @@ const totalMoney = computed(() => {
                     [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
                       tp.paymentMoneyStatus,
                     ) &&
-                    [TicketProcedureStatus.Pending, TicketProcedureStatus.NoEffect].includes(
-                      tp.status,
-                    ) &&
+                    [
+                      TicketProcedureStatus.NoEffect,
+                      TicketProcedureStatus.NoAction,
+                      TicketProcedureStatus.Pending,
+                    ].includes(tp.status) &&
                     userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
                   "
                   class="flex justify-center cursor-pointer"
@@ -406,24 +373,87 @@ const totalMoney = computed(() => {
               <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
                 {{ tr.id }}
               </td>
-              <td>
+              <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+              <!-- <td>
                 <TicketRegimenStatusTooltip :status="tr.status" />
-              </td>
-              <td colspan="4">
-                <div class="flex flex-wrap gap-1">
-                  <span class="font-bold">{{ tr.regimen?.name }}</span>
-                  <span v-if="tr.isPaymentEachSession" style="color: var(--text-green)">
-                    (Thanh toán theo từng buổi lẻ)
-                  </span>
-                </div>
-                <template v-for="tri in tr.ticketRegimenItemList" :key="tri.id">
-                  <div class="flex gap-2" style="font-size: 0.9em; color: #555">
-                    <span>- {{ tri.procedure?.name }}</span>
-                    <span class="font-bold">
-                      ({{ tri.quantityFinish }} / {{ tri.quantityExpected }})
-                    </span>
+              </td> -->
+              <td colspan="7">
+                <div class="flex gap-4 justify-between">
+                  <div>
+                    <div class="font-bold">{{ tr.regimen?.name }}</div>
+                    <template v-for="tri in tr.ticketRegimenItemList" :key="tri.id">
+                      <div class="flex gap-2" style="font-size: 0.9em; color: #555">
+                        <span>- {{ tri.procedure?.name }}</span>
+                        <span class="font-bold">
+                          ({{ tri.quantityFinish }} / {{ tri.quantityExpected }})
+                        </span>
+                        <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                          ( {{ formatMoney(tri.paymentMoneyAmount) }} / {{ tri.quantityPayment }} )
+                        </span>
+                      </div>
+                    </template>
                   </div>
-                </template>
+                  <div class="text-right">
+                    <div>Giá tiền</div>
+                    <div v-if="tr.discountMoney" class="text-xs italic text-red-500">
+                      <del>{{ formatMoney(tr.expectedMoney) }}</del>
+                    </div>
+                    <div
+                      class="flex items-center gap-1 text-lg"
+                      style="font-weight: bold; color: var(--text-green)"
+                    >
+                      <span>{{ formatMoney(tr.actualMoney) }}</span>
+                      <a
+                        v-if="
+                          ![TicketStatus.Debt, TicketStatus.Completed].includes(
+                            ticketRoomRef.status,
+                          ) &&
+                          !tr.spentMoney &&
+                          userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
+                        "
+                        @click="modalTicketRegimenUpdateMoney?.openModal({ ticketRegimen: tr })"
+                        style="color: var(--text-orange); line-height: 0"
+                      >
+                        <IconEditSquare width="20" height="20" />
+                      </a>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div>Đã sử dụng</div>
+                    <div class="text-lg" style="font-weight: bold; color: var(--text-green)">
+                      {{ formatMoney(tr.spentMoney) }}
+                    </div>
+                  </div>
+                  <div v-if="ticketRegimenList.length == 1" class="text-right">
+                    <div v-if="ticketRoomRef.isPaymentEachItem">
+                      <div>Số tiền còn lại</div>
+                      <div class="text-lg" style="font-weight: bold; color: var(--text-green)">
+                        {{ formatMoney(tr.remainingMoney) }}
+                      </div>
+                    </div>
+                    <div v-else>
+                      <template v-if="ticketRoomRef.debt <= 0">
+                        <div>Số tiền còn lại</div>
+                        <div class="text-lg" style="font-weight: bold; color: var(--text-green)">
+                          {{ formatMoney(-ticketRoomRef.debt) }}
+                        </div>
+                      </template>
+                      <template v-else>
+                        <div>Số tiền còn thiếu</div>
+                        <div class="text-lg" style="font-weight: bold; color: var(--text-green)">
+                          {{ formatMoney(ticketRoomRef.debt) }}
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                  <div
+                    v-if="CONFIG.MODE === 'development'"
+                    style="color: violet; text-align: right"
+                  >
+                    <div>CostAmount</div>
+                    <div>Σ {{ formatMoney(tr.costAmount) }}</div>
+                  </div>
+                </div>
               </td>
               <!-- <td>
                 <div
@@ -446,49 +476,6 @@ const totalMoney = computed(() => {
                   />
                 </div>
               </td> -->
-              <td>
-                <div class="flex gap-2 justify-between items-center">
-                  <div>
-                    <VueTag v-if="tr.discountMoney" color="green">
-                      {{ tr.discountPercent + ' %' }}
-                    </VueTag>
-                  </div>
-                  <div>
-                    <div v-if="tr.discountMoney" class="text-xs italic text-red-500">
-                      <del>{{ formatMoney(tr.expectedPrice) }}</del>
-                    </div>
-                    <div>{{ formatMoney(tr.actualPrice) }}</div>
-                  </div>
-                </div>
-              </td>
-              <td></td>
-
-              <td class="text-center">
-                <!-- <a
-                  v-if="
-                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                    [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                    tr.paymentMoneyStatus,
-                  ) &&
-                    userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
-                  "
-                  @click="modalTicketRegimenUpdateMoney?.openModal({ ticketRegimen: tr })"
-                  style="color: var(--text-orange)"
-                >
-                  <IconDollar width="20" height="20" />
-                </a>
-                <a v-if="  [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                        tr.paymentMoneyStatus,
-                      )">
-                  <TicketRegimenStatusTooltip :status="tr.status" />
-                </a> -->
-              </td>
-
-              <td>
-                <div v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: right">
-                  Σ {{ formatMoney(tr.costAmount) }}
-                </div>
-              </td>
               <td>
                 <div class="flex justify-around items-center">
                   <div v-if="tr.ticketUserRequestList?.length">
@@ -530,10 +517,12 @@ const totalMoney = computed(() => {
                 <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
                   {{ tp.id }}
                 </td>
-
-                <td class="text-center">
-                  <TicketProcedureStatusTooltip :status="tp.status" />
+                <td v-if="ticketRoomRef.isPaymentEachItem">
+                  <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />
                 </td>
+                <!-- <td class="text-center">
+                  <TicketProcedureStatusTooltip :status="tp.status" />
+                </td> -->
                 <td>
                   <div class="flex flex-wrap items-center gap-2">
                     <span>{{ tp.procedure?.name }}</span>
@@ -552,7 +541,24 @@ const totalMoney = computed(() => {
                     {{ tp.result }}
                   </div>
                 </td>
-                <td class="text-center">{{ tp.quantity }}</td>
+                <td>
+                  <div
+                    v-if="
+                      [TicketProcedureStatus.NoEffect, TicketProcedureStatus.Pending].includes(
+                        tp.status,
+                      )
+                    "
+                    class="flex justify-center"
+                  >
+                    <VueButton
+                      size="small"
+                      @click="modalProcessTicketProcedure?.openModal({ ticketProcedure: tp })"
+                      :icon="IconClockCircle"
+                    >
+                      Thực hiện
+                    </VueButton>
+                  </div>
+                </td>
                 <td>
                   <div
                     v-if="tp.status === TicketProcedureStatus.Completed"
@@ -568,29 +574,8 @@ const totalMoney = computed(() => {
                     <IconCheckSquare width="16" height="16" style="color: var(--text-green)" />
                   </div>
                 </td>
-                <td>
-                  <div
-                    v-if="
-                      [TicketProcedureStatus.NoEffect, TicketProcedureStatus.Pending].includes(
-                        tp.status,
-                      )
-                    "
-                    class="flex justify-center"
-                  >
-                    <VueButton
-                      size="small"
-                      @click="
-                        modalProcessTicketProcedure?.openModal({
-                          ticketProcedure: tp,
-                        })
-                      "
-                      :icon="IconClockCircle"
-                    >
-                      Thực hiện
-                    </VueButton>
-                  </div>
-                </td>
 
+                <td class="text-center">{{ tp.quantity }}</td>
                 <td>
                   <div class="flex flex-wrap gap-2 justify-between items-center">
                     <div>
@@ -608,25 +593,10 @@ const totalMoney = computed(() => {
                 </td>
                 <td class="text-right">
                   <span v-if="tp.status !== TicketProcedureStatus.NoEffect">
-                    {{ tp.actualPrice }}
+                    {{ formatMoney(tp.actualPrice) }}
                   </span>
                 </td>
-                <td>
-                  <div
-                    v-if="
-                      ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                      [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                        tp.paymentMoneyStatus,
-                      ) &&
-                      userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
-                    "
-                    class="flex justify-center cursor-pointer"
-                    style="font-size: 20px; color: var(--text-orange)"
-                    @click="modalTicketProcedureUpdateMoney?.openModal({ ticketProcedure: tp })"
-                  >
-                    <IconDollar />
-                  </div>
-                </td>
+
                 <td>
                   <div
                     v-for="tpp in tp.ticketProductProcedureList"
@@ -649,7 +619,6 @@ const totalMoney = computed(() => {
                     Σ {{ formatMoney(tp.costAmount) }}
                   </div>
                 </td>
-
                 <td>
                   <div style="font-size: 0.9em; color: #555">
                     <div v-for="tu in tp.ticketUserRequestList" :key="tu.id" class="flex gap-1">
@@ -681,9 +650,11 @@ const totalMoney = computed(() => {
                   <div
                     v-if="
                       ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                      [TicketProcedureStatus.Pending, TicketProcedureStatus.NoEffect].includes(
-                        tp.status,
-                      ) &&
+                      [
+                        TicketProcedureStatus.NoEffect,
+                        TicketProcedureStatus.NoAction,
+                        TicketProcedureStatus.Pending,
+                      ].includes(tp.status) &&
                       userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
                     "
                     class="flex justify-center cursor-pointer"
@@ -698,7 +669,8 @@ const totalMoney = computed(() => {
           </template>
           <tr>
             <td v-if="CONFIG.MODE === 'development'"></td>
-            <td colspan="6" class="text-right uppercase">
+            <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+            <td colspan="5" class="text-right uppercase">
               <b>Tổng tiền</b>
             </td>
 
@@ -707,8 +679,6 @@ const totalMoney = computed(() => {
                 {{ formatMoney(totalMoney) }}
               </b>
             </td>
-            <td></td>
-            <td v-if="CONFIG.MODE === 'development'"></td>
             <td colspan="3"></td>
           </tr>
         </tbody>

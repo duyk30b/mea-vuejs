@@ -187,7 +187,7 @@ const handleModalSelectTicketDemoSuccess = async (ticketDemoId: string) => {
           paymentList: false,
 
           ticketAttributeList: true,
-          ticketProductList: true,
+          ticketProductList: { batch: true, product: true },
           ticketProcedureList: true,
           ticketLaboratoryList: true,
           ticketLaboratoryGroupList: true,

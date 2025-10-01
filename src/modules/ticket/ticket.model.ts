@@ -263,8 +263,8 @@ export class Ticket {
   refreshTicketProcedureAndRegimen() {
     if (!this.ticketProcedureList && !this.ticketRegimenList) return // không để !this.ticketProcedureList.length, vì thằng dưới còn filter
     this.ticketProcedureList?.forEach((tp) => {
-      tp.ticketUserRequestList = this.ticketUserTree[PositionType.ProcedureRequest]?.[tp.id] || []
-      tp.ticketUserResultList = this.ticketUserTree[PositionType.ProcedureResult]?.[tp.id] || []
+      tp.ticketUserRequestList = this.ticketUserTree?.[PositionType.ProcedureRequest]?.[tp.id] || []
+      tp.ticketUserResultList = this.ticketUserTree?.[PositionType.ProcedureResult]?.[tp.id] || []
       try {
         const imageIdList: number[] = JSON.parse(tp.imageIds || '[]')
         tp.imageList = imageIdList.map((imageId) => {
@@ -282,7 +282,7 @@ export class Ticket {
     })
 
     this.ticketRegimenList?.forEach((tr) => {
-      tr.ticketUserRequestList = this.ticketUserTree[PositionType.RegimenRequest]?.[tr.id] || []
+      tr.ticketUserRequestList = this.ticketUserTree?.[PositionType.RegimenRequest]?.[tr.id] || []
       tr.ticketRegimenItemList = (this.ticketRegimenItemList || []).filter((i) => {
         return i.ticketRegimenId === tr.id
       })
@@ -306,8 +306,8 @@ export class Ticket {
     if (!this.ticketRadiologyList?.length) return
 
     this.ticketRadiologyList.forEach((tr) => {
-      tr.ticketUserRequestList = this.ticketUserTree[PositionType.RadiologyRequest]?.[tr.id] || []
-      tr.ticketUserResultList = this.ticketUserTree[PositionType.RadiologyResult]?.[tr.id] || []
+      tr.ticketUserRequestList = this.ticketUserTree?.[PositionType.RadiologyRequest]?.[tr.id] || []
+      tr.ticketUserResultList = this.ticketUserTree?.[PositionType.RadiologyResult]?.[tr.id] || []
 
       try {
         const imageIdList: number[] = JSON.parse(tr.imageIds || '[]')
@@ -350,7 +350,7 @@ export class Ticket {
   async refreshRelation() {
     await Promise.all([
       TicketUserService.refreshRelation(this.ticketUserList || []),
-      TicketProductService.refreshRelation(this.ticketProductList || []),
+      // TicketProductService.refreshRelation(this.ticketProductList || []),
       TicketProcedureService.refreshRelation(this.ticketProcedureList || []),
       TicketRegimenService.refreshRelation(this.ticketRegimenList || []),
       TicketLaboratoryService.refreshRelation(this.ticketLaboratoryList || []),

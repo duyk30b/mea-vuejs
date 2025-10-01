@@ -2,7 +2,7 @@
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { InputMoney, InputText } from '@/common/vue-form'
+import { InputDate, InputMoney, InputText } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { PaymentApi } from '@/modules/payment/payment.api'
@@ -41,6 +41,7 @@ const handleUpdateInfo = async () => {
     await PaymentApi.updateInfo({
       paymentId: payment.value.id,
       body: {
+        createdAt: payment.value.createdAt,
         paymentMethodId: payment.value.paymentMethodId,
         note: payment.value.note,
       },
@@ -107,18 +108,22 @@ defineExpose({ openModal })
     </div>
     <form class="bg-white p-4" @submit.prevent="handleUpdateInfo">
       <div class="flex flex-wrap gap-4">
-        <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+        <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
+          <div>Thời gian thanh toán</div>
           <div>
-            <div>Phương thức thanh toán</div>
-            <div>
-              <InputSelectPaymentMethod v-model:paymentMethodId="payment.paymentMethodId" />
-            </div>
+            <InputDate v-model:value="payment.createdAt" showTime typeParser="number" />
           </div>
-          <div class="mt-4">
-            <div>Ghi chú</div>
-            <div>
-              <InputText v-model:value="payment.note" />
-            </div>
+        </div>
+        <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
+          <div>Phương thức thanh toán</div>
+          <div>
+            <InputSelectPaymentMethod v-model:paymentMethodId="payment.paymentMethodId" />
+          </div>
+        </div>
+        <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
+          <div>Ghi chú</div>
+          <div>
+            <InputText v-model:value="payment.note" />
           </div>
         </div>
       </div>

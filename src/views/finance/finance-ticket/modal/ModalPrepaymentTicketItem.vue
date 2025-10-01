@@ -25,6 +25,7 @@ import type { TicketProduct } from '@/modules/ticket-product'
 import type { TicketRadiology } from '@/modules/ticket-radiology'
 import { computed, onMounted, ref } from 'vue'
 import PaymentMoneyStatusTooltip from '../../payment/PaymentMoneyStatusTooltip.vue'
+import type { TicketRegimen } from '@/modules/ticket-regimen'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -42,6 +43,7 @@ const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
 const pickAll = ref(false)
 
 const checkboxProcedure = ref<Record<string, TicketProcedure | undefined>>({})
+const checkboxRegimen = ref<Record<string, TicketRegimen | undefined>>({})
 const checkboxPrescription = ref<Record<string, TicketProduct | undefined>>({})
 const checkboxConsumable = ref<Record<string, TicketProduct | undefined>>({})
 const checkboxLaboratory = ref<Record<string, TicketLaboratory | undefined>>({})
@@ -80,7 +82,9 @@ const openModal = async (options: { ticketId: string; customer: Customer }) => {
     const ticketResponse = await TicketService.detail(ticketId, {
       relation: {
         ticketProcedureList: true,
-        ticketProductList: true,
+        ticketRegimenList: true,
+        ticketRegimenItemList: true,
+        ticketProductList: { batch: true, product: true },
         ticketLaboratoryList: true,
         ticketRadiologyList: true,
       },
@@ -390,43 +394,95 @@ defineExpose({ openModal })
       <div class="p-4">
         <div class="table-wrapper">
           <table v-if="dataLoading">
-            <tbody v-if="dataLoading">
-              <tr>
-                <td colspan="100">
-                  <div class="vue-skeleton-loading"></div>
-                  <div class="vue-skeleton-loading mt-2"></div>
-                </td>
-              </tr>
-              <tr>
-                <td colspan="100">
-                  <div class="vue-skeleton-loading"></div>
-                  <div class="vue-skeleton-loading mt-2"></div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <table
-            v-else-if="
-              !ticket.ticketProcedureList?.length &&
-              !ticket.ticketProductPrescriptionList?.length &&
-              !ticket.ticketProductConsumableList?.length &&
-              !ticket.ticketLaboratoryList?.length &&
-              !ticket.ticketRadiologyList?.length
-            "
-          >
-            <thead>
-              <tr>
-                <th>#</th>
-              </tr>
-            </thead>
             <tbody>
               <tr>
-                <td>Không có dịch vụ nào cần thanh toán</td>
+                <td colspan="100">
+                  <div class="vue-skeleton-loading"></div>
+                  <div class="vue-skeleton-loading mt-2"></div>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="100">
+                  <div class="vue-skeleton-loading"></div>
+                  <div class="vue-skeleton-loading mt-2"></div>
+                </td>
               </tr>
             </tbody>
           </table>
           <table v-else>
-            <template v-if="ticket.ticketProcedureList?.length">
+            <tbody
+              v-if="
+                !ticket.ticketRegimenList?.length &&
+                !ticket.ticketProcedureList?.length &&
+                !ticket.ticketProductList?.length &&
+                !ticket.ticketLaboratoryList?.length &&
+                !ticket.ticketRadiologyList?.length
+              "
+            >
+              <tr>
+                <td colspan="100">Không có dịch vụ nào cần thanh toán</td>
+              </tr>
+            </tbody>
+            <template v-if="ticket.ticketRegimenList?.length">
+              <thead>
+                <tr>
+                  <th v-if="CONFIG.MODE === 'development'">ID</th>
+                  <th>Chọn</th>
+                  <th>#</th>
+                  <th></th>
+                  <th>
+                    <span>Liệu trình</span>
+                  </th>
+                  <th>Giá tiền</th>
+                  <th>Số lượng</th>
+                  <th>Tổng tiền</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(ticketRegimen, index) in ticket.ticketRegimenList"
+                  :key="ticketRegimen.id"
+                >
+                  <td
+                    v-if="CONFIG.MODE === 'development'"
+                    style="text-align: center; color: violet"
+                  >
+                    {{ ticketRegimen.id }}
+                  </td>
+                  <td>
+                    <div class="flex justify-center">
+                      <InputCheckbox
+                        :checked="!!checkboxRegimen[ticketRegimen.id]"
+                        @update:checked="
+                          (v) => (checkboxRegimen[ticketRegimen.id] = v ? ticketRegimen : undefined)
+                        "
+                      />
+                    </div>
+                  </td>
+                  <td class="text-center">{{ index + 1 }}</td>
+                  <td></td>
+                  <td>{{ ticketRegimen.regimen?.name }}</td>
+                  <td class="text-right whitespace-nowrap">
+                    <div v-if="ticketRegimen.discountMoney" class="text-xs italic text-red-500">
+                      <del>{{ formatMoney(ticketRegimen.expectedMoney) }}</del>
+                    </div>
+                    <div>{{ formatMoney(ticketRegimen.actualMoney) }}</div>
+                  </td>
+                  <td class="text-center"></td>
+                  <td class="text-right whitespace-nowrap">
+                    <div v-if="ticketRegimen.discountMoney" class="text-xs italic text-red-500">
+                      <del>
+                        {{ formatMoney(ticketRegimen.expectedMoney) }}
+                      </del>
+                    </div>
+                    <div>
+                      {{ formatMoney(ticketRegimen.actualMoney) }}
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </template>
+            <template v-if="ticket.ticketProcedureNormalList?.length">
               <thead>
                 <tr>
                   <th v-if="CONFIG.MODE === 'development'">ID</th>

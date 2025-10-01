@@ -5,7 +5,7 @@ import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { type Customer } from '@/modules/customer'
-import { Payment, PaymentActionTypeText, PaymentApi, PaymentPersonType } from '@/modules/payment'
+import { MoneyDirection, Payment, PaymentActionTypeText, PaymentApi, PaymentPersonType } from '@/modules/payment'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { ESTimer } from '@/utils'
 import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
@@ -145,11 +145,11 @@ defineExpose({ startFetchData })
             <th>Hóa đơn</th>
             <th>PT.Thanh Toán</th>
             <th>Note</th>
-            <th>Số tiền</th>
-            <th>Ghi nợ</th>
-            <th>Công nợ</th>
-            <th>Ghi quỹ</th>
-            <th>Ví</th>
+            <th>Tiền thu</th>
+            <th>Tiền chi</th>
+            <th>Nợ thêm</th>
+            <th>Trả nợ</th>
+            <th>Nợ hiện tại</th>
           </tr>
         </thead>
         <tbody>
@@ -175,37 +175,30 @@ defineExpose({ startFetchData })
                 {{ payment.note }}
               </div>
             </td>
-            <td style="white-space: nowrap; text-align: right">
-              {{ formatMoney(payment.paidAmount) }}
-            </td>
-            <td style="white-space: nowrap; text-align: right">
-              <span
-                v-if="payment.closeDebt > 0 || (payment.closeDebt == 0 && payment.openDebt >= 0)"
-              >
-                {{ formatMoney(payment.debtAmount) }}
+            <td class="text-right">
+              <span v-if="payment.moneyDirection === MoneyDirection.In">
+                {{ formatMoney(payment.paidAmount) }}
               </span>
             </td>
             <td class="text-right">
-              <span
-                v-if="payment.closeDebt > 0 || (payment.closeDebt == 0 && payment.openDebt >= 0)"
-              >
-                {{ formatMoney(payment.openDebt) }} ➞
-                {{ formatMoney(payment.closeDebt) }}
+              <span v-if="payment.moneyDirection === MoneyDirection.Out">
+                {{ formatMoney(payment.paidAmount) }}
               </span>
             </td>
             <td style="white-space: nowrap; text-align: right">
-              <span
-                v-if="payment.closeDebt < 0 || (payment.closeDebt == 0 && payment.openDebt < 0)"
-              >
+              <span v-if="payment.debtAmount > 0">
+                {{ formatMoney(payment.debtAmount) }}
+              </span>
+            </td>
+            <td style="white-space: nowrap; text-align: right">
+              <span v-if="payment.debtAmount < 0">
                 {{ formatMoney(-payment.debtAmount) }}
               </span>
             </td>
             <td class="text-right">
-              <span
-                v-if="payment.closeDebt < 0 || (payment.closeDebt == 0 && payment.openDebt < 0)"
-              >
-                {{ formatMoney(-payment.openDebt) }} ➞
-                {{ formatMoney(-payment.closeDebt) }}
+              <span>
+                {{ formatMoney(payment.openDebt) }} ➞
+                {{ formatMoney(payment.closeDebt) }}
               </span>
             </td>
           </tr>

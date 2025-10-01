@@ -346,7 +346,7 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderId: string) => {
               <router-link
                 :to="{ name: 'PurchaseOrderDetailContainer', params: { id: purchaseOrder.id } }"
               >
-                NH{{ purchaseOrder.id }}
+                PO{{ purchaseOrder.id.slice(0, 12) }}
                 <span class="text-lg ml-1">
                   <IconVisibility />
                 </span>

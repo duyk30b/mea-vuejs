@@ -6,7 +6,7 @@ import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatu
 import ModalTicketLaboratoryResult from '@/views/room/room-laboratory/ModalTicketLaboratoryGroupResult.vue'
 import TicketLaboratoryStatusTooltip from '@/views/room/room-laboratory/TicketLaboratoryStatusTooltip.vue'
 import { computed, onMounted, ref } from 'vue'
-import { IconPrint, IconSpin } from '@/common/icon-antd'
+import { IconDollar, IconPrint, IconSpin } from '@/common/icon-antd'
 import { IconDelete, IconEditSquare } from '@/common/icon-google'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputDate, InputText } from '@/common/vue-form'
@@ -298,32 +298,57 @@ const saveLaboratorySelected = async () => {
       }
     }
 
+    const ticketLaboratoryGroupUpdate = tlgEdit.value.id
+      ? {
+          id: tlgEdit.value.id,
+          createdAt: createdAt.value,
+          laboratoryGroupId: tlgEdit.value.laboratoryGroupId,
+          roomId: tlgEdit.value.roomId,
+          ticketLaboratoryList: laboratoryGroupSelects.value[
+            tlgEdit.value.laboratoryGroupId
+          ].laboratoryList.map((i, index) => {
+            const ins = TicketLaboratory.blank()
+            ins.priority = index + 1
+            ins.laboratoryId = i.id
+            ins.laboratoryGroupId = i.laboratoryGroupId
+            ins.costPrice = i.costPrice
+            ins.expectedPrice = i.price
+            ins.discountMoney = 0
+            ins.discountPercent = 0
+            ins.discountType = DiscountType.VND
+            ins.actualPrice = i.price
+            return ins
+          }),
+        }
+      : undefined
+    if (ticketLaboratoryGroupUpdate?.ticketLaboratoryList?.length) {
+      for (let j = 0; j < ticketLaboratoryGroupUpdate.ticketLaboratoryList.length; j++) {
+        const tpItem = ticketLaboratoryGroupUpdate.ticketLaboratoryList[j]
+
+        await LaboratoryService.executeRelation([tpItem.laboratory!], { discountList: true })
+        const discountApply = tpItem.laboratory?.discountApply
+        if (discountApply) {
+          let { discountType, discountPercent, discountMoney } = discountApply
+          const expectedPrice = tpItem.expectedPrice || 0
+          if (discountType === DiscountType.Percent) {
+            discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
+          }
+          if (discountType === DiscountType.VND) {
+            discountPercent =
+              expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+          }
+          tpItem.discountType = discountType
+          tpItem.discountPercent = discountPercent
+          tpItem.discountMoney = discountMoney
+          tpItem.actualPrice = expectedPrice - discountMoney
+        }
+      }
+    }
+
     await TicketChangeLaboratoryApi.upsertRequestLaboratoryGroup({
       ticketId: ticketRoomRef.value.id,
       ticketLaboratoryGroupAddList,
-      ticketLaboratoryGroupUpdate: tlgEdit.value.id
-        ? {
-            id: tlgEdit.value.id,
-            createdAt: createdAt.value,
-            laboratoryGroupId: tlgEdit.value.laboratoryGroupId,
-            roomId: tlgEdit.value.roomId,
-            ticketLaboratoryList: laboratoryGroupSelects.value[
-              tlgEdit.value.laboratoryGroupId
-            ].laboratoryList.map((i, index) => {
-              const ins = TicketLaboratory.blank()
-              ins.priority = index + 1
-              ins.laboratoryId = i.id
-              ins.laboratoryGroupId = i.laboratoryGroupId
-              ins.costPrice = i.costPrice
-              ins.expectedPrice = i.price
-              ins.discountMoney = 0
-              ins.discountPercent = 0
-              ins.discountType = DiscountType.VND
-              ins.actualPrice = i.price
-              return ins
-            }),
-          }
-        : undefined,
+      ticketLaboratoryGroupUpdate,
     })
     clear()
   } catch (error) {
@@ -359,9 +384,26 @@ const clickChangeLaboratoryGroup = (tlgEditId: string) => {
   reloadIndeterminateCheckbox()
 }
 
-const clickDestroy = async (ticketLaboratoryGroupId: string) => {
+const clickDestroyTlg = async (tlgData: TicketLaboratoryGroup) => {
+  if (
+    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+      tlgData.paymentMoneyStatus,
+    )
+  ) {
+    return ModalStore.alert({
+      title: `Không thể xóa xét nghiệm : ${tlgData.laboratoryGroup?.name}!`,
+      content: ['- Xét nghiệm đã được thanh toán sẽ không thể xóa'],
+    })
+  }
+  if (tlgData.status !== TicketLaboratoryStatus.Pending) {
+    return ModalStore.alert({
+      title: `Không thể xóa xét nghiệm : ${tlgData.laboratoryGroup?.name}!`,
+      content: ['- Xét nghiệm đã được thực hiện sẽ không thể xóa'],
+    })
+  }
+
   ModalStore.confirm({
-    title: 'Xác nhận xóa phiếu xét nghiệm?',
+    title: `Xác nhận xóa phiếu: ${tlgData.laboratoryGroup?.name}?`,
     content: [
       '- Hệ thống sẽ xóa tất cả xét nghiệm trên phiếu này khỏi phiếu khám',
       '- Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
@@ -370,10 +412,47 @@ const clickDestroy = async (ticketLaboratoryGroupId: string) => {
       try {
         await TicketChangeLaboratoryApi.destroyTicketLaboratoryGroup({
           ticketId: ticketRoomRef.value.id,
-          ticketLaboratoryGroupId,
+          ticketLaboratoryGroupId: tlgData.id,
         })
       } catch (error) {
         console.log('🚀 ~ file: TicketClinicLaboratory.vue:118 ~ onOk: ~ error:', error)
+      }
+    },
+  })
+}
+
+const clickDestroyTicketLaboratory = async (ticketLaboratoryData: TicketLaboratory) => {
+  if (
+    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+      ticketLaboratoryData.paymentMoneyStatus,
+    )
+  ) {
+    return ModalStore.alert({
+      title: `Không thể xóa xét nghiệm : ${ticketLaboratoryData.laboratory?.name}!`,
+      content: ['- Xét nghiệm đã được thanh toán sẽ không thể xóa'],
+    })
+  }
+  if (ticketLaboratoryData.status !== TicketLaboratoryStatus.Pending) {
+    return ModalStore.alert({
+      title: `Không thể xóa xét nghiệm : ${ticketLaboratoryData.laboratory?.name}!`,
+      content: ['- Xét nghiệm đã được thực hiện sẽ không thể xóa'],
+    })
+  }
+
+  ModalStore.confirm({
+    title: `Xác nhận xóa xét nghiệm: ${ticketLaboratoryData.laboratory?.name} ?`,
+    content: [
+      '- Hệ thống sẽ xóa xét nghiệm này khỏi phiếu khám',
+      '- Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
+    ],
+    onOk: async () => {
+      try {
+        await TicketChangeLaboratoryApi.destroyTicketLaboratory({
+          ticketId: ticketRoomRef.value.id,
+          ticketLaboratoryId: ticketLaboratoryData.id,
+        })
+      } catch (error) {
+        console.log('🚀 ~ file: TicketClinicRegimen.vue:185 ~ onOk: ~ error:', error)
       }
     },
   })
@@ -390,7 +469,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
 <template>
   <ModalTicketLaboratoryResult ref="modalTicketLaboratoryResult" />
   <ModalTicketLaboratoryUpdateMoney ref="modalTicketLaboratoryUpdateMoney" />
-  <div class="mt-4 flex flex-wrap gap-4">
+  <div class="mt-4 flex flex-wrap gap-y-4">
     <div
       style="
         flex-basis: 300px;
@@ -401,17 +480,26 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
       "
       class="flex flex-col"
     >
-      <div class="flex-0">
-        <InputText
-          v-model:value="searchText"
-          prepend="🔎"
-          placeholder="Tìm kiếm theo tên xét nghiệm"
-          @update:value="startFilterLaboratory"
-        />
-      </div>
       <div class="table-wrapper flex-1" style="overflow-y: scroll">
         <table>
+          <thead>
+            <tr>
+              <th colspan="100">Chọn xét nghiệm</th>
+            </tr>
+          </thead>
           <tbody>
+            <tr>
+              <td colspan="100" style="padding: 0">
+                <div class="flex-0" style="margin: -1px">
+                  <InputText
+                    v-model:value="searchText"
+                    prepend="🔎"
+                    placeholder="Tìm kiếm theo tên xét nghiệm"
+                    @update:value="startFilterLaboratory"
+                  />
+                </div>
+              </td>
+            </tr>
             <template
               v-for="laboratorySample in laboratorySampleOptions"
               :key="laboratorySample.id"
@@ -561,7 +649,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
           </tbody>
         </table>
       </div>
-      <div class="mt-4 flex-0">
+      <div class="mt-4 px-4 flex-0">
         <div>Thời gian chỉ định</div>
         <div><InputDate v-model:value="createdAt" show-time /></div>
       </div>
@@ -588,13 +676,14 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
           <tr>
             <th v-if="CONFIG.MODE === 'development'">ID</th>
             <th>#</th>
-            <th style="width: 32px"></th>
+            <th v-if="ticketRoomRef.isPaymentEachItem" style="width: 32px"></th>
             <th style="width: 32px"></th>
             <th>Tên</th>
             <th>Kết quả</th>
             <th>Tham chiếu</th>
             <th>Đơn vị</th>
             <th>Giá</th>
+            <th></th>
             <th></th>
           </tr>
         </thead>
@@ -607,9 +696,11 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
               <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
                 {{ tlg.id }}
               </td>
-              <td colspan="4" class="">
+              <td :colspan="ticketRoomRef.isPaymentEachItem ? 4 : 3" class="">
                 <div class="flex items-center gap-2">
-                  <span class="font-bold">{{ tlg.laboratoryGroup?.name }}</span>
+                  <span class="font-bold">
+                    {{ tlg.laboratoryGroup?.name || 'Chưa phân nhóm phiếu xét nghiệm' }}
+                  </span>
                   <a @click="startPrintResult(tlg)">
                     <IconPrint width="18px" height="18px" />
                   </a>
@@ -645,6 +736,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   </VueButton>
                 </div>
               </td>
+              <td></td>
               <td class="text-center">
                 <a
                   v-if="
@@ -657,7 +749,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   "
                   style="color: var(--text-red)"
                 >
-                  <IconDelete width="22" height="22" @click="clickDestroy(tlg.id)" />
+                  <IconDelete width="22" height="22" @click="clickDestroyTlg(tlg)" />
                 </a>
               </td>
             </tr>
@@ -673,7 +765,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   {{ tlItem.id }}
                 </td>
                 <td class="text-center">{{ index + 1 }}</td>
-                <td class="text-center">
+                <td v-if="ticketRoomRef.isPaymentEachItem" class="text-center">
                   <PaymentMoneyStatusTooltip :paymentMoneyStatus="tlItem.paymentMoneyStatus" />
                 </td>
                 <td class="text-center">
@@ -710,10 +802,28 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                         tlItem.paymentMoneyStatus,
                       ) && userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
                     "
-                    class="text-orange-500"
+                    style="color: var(--text-orange)"
                     @click="modalTicketLaboratoryUpdateMoney?.openModal(tlItem)"
                   >
-                    <IconEditSquare width="20" height="20" />
+                    <IconDollar width="20" height="20" />
+                  </a>
+                </td>
+                <td class="text-center">
+                  <a v-if="!tlItem.id">
+                    <IconSpin width="20" height="20" />
+                  </a>
+                  <a
+                    v-else-if="
+                      tlItem.status === TicketLaboratoryStatus.Pending &&
+                      [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                        tlItem.paymentMoneyStatus,
+                      ) &&
+                      userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
+                    "
+                    style="color: var(--text-red)"
+                    @click="clickDestroyTicketLaboratory(tlItem)"
+                  >
+                    <IconDelete width="22" height="22" />
                   </a>
                 </td>
               </tr>
@@ -725,10 +835,10 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                 "
               >
                 <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-                  L{{ laboratoryChild.id }}
+                  {{ laboratoryChild.id }}
                 </td>
                 <td></td>
-                <td></td>
+                <td v-if="ticketRoomRef.isPaymentEachItem"></td>
                 <td></td>
                 <td>{{ laboratoryChild?.name }}</td>
                 <td class="text-center">
@@ -743,12 +853,15 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                 <td class="text-center">{{ laboratoryChild?.unit }}</td>
                 <td class="text-right"></td>
                 <td class="text-center"></td>
+                <td class="text-center"></td>
               </tr>
             </template>
           </template>
 
           <tr>
-            <td :colspan="7 + (CONFIG.MODE === 'development' ? 1 : 0)" class="text-right">
+            <td v-if="CONFIG.MODE === 'development'"></td>
+            <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+            <td :colspan="6" class="text-right">
               <b>Tổng tiền</b>
             </td>
             <td class="text-right">
@@ -756,6 +869,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                 {{ formatMoney(ticketRoomRef.laboratoryMoney) }}
               </b>
             </td>
+            <td></td>
             <td></td>
           </tr>
         </tbody>

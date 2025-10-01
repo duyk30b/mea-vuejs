@@ -339,7 +339,6 @@ defineExpose({ openModal })
         </div>
 
         <div class="mt-6 flex justify-end gap-4">
-          <VueButton type="reset" icon="close" @click="closeModal">Đóng lại</VueButton>
           <VueButton icon="close" color="red" @click="cancelResult">Hủy kết quả</VueButton>
           <VueButton
             style="margin-left: auto"

@@ -9,7 +9,8 @@ import { TicketUser } from '../ticket-user'
 import { Ticket } from '../ticket/ticket.model'
 
 export enum TicketProcedureStatus {
-  NoEffect = 1,
+  NoEffect = -1,
+  NoAction = 1,
   Pending = 2,
   Completed = 3,
 }
@@ -80,7 +81,7 @@ export class TicketProcedure extends BaseModel {
     ins.actualPrice = 0
 
     ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
-    ins.status = TicketProcedureStatus.NoEffect
+    ins.status = TicketProcedureStatus.NoAction
 
     return ins
   }
@@ -134,9 +135,7 @@ export class TicketProcedure extends BaseModel {
       target.ticketUserResultList = TicketUser.basicList(source.ticketUserResultList)
     }
     if (source.ticketProductProcedureList) {
-      target.ticketProductProcedureList = TicketProduct.basicList(
-        source.ticketProductProcedureList,
-      )
+      target.ticketProductProcedureList = TicketProduct.basicList(source.ticketProductProcedureList)
     }
     return target
   }

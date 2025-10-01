@@ -275,13 +275,13 @@ export const SETTING_DEFAULT = {
 
   TICKET_CLINIC_LIST: {
     isPaymentEachItem: 0,
-    includePendingStatus: false,
     goRoomAfterReception: true,
     procedure: false,
     roleIdList: [],
     phoneAndAddress: true,
     note: true,
-    payment: false,
+    paymentList: false,
+    buttonPayment: false,
   },
   TICKET_CLINIC_DETAIL: {
     diagnosis: { icd10: 0 },

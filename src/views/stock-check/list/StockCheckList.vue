@@ -211,7 +211,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           <tr v-for="(stockCheck, index) in stockCheckList" :key="index">
             <td class="text-center" style="white-space: nowrap">
               <router-link :to="{ name: 'StockCheckDetail', params: { id: stockCheck.id } }">
-                SC{{ stockCheck.id }}
+                SC{{ stockCheck.id.slice(0, 12) }}
                 <span class="text-lg ml-1">
                   <IconVisibility />
                 </span>

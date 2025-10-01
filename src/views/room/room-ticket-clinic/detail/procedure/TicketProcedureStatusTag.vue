@@ -9,7 +9,8 @@ const props = withDefaults(defineProps<{ status: TicketProcedureStatus }>(), {
 
 <template>
   <div class="flex justify-center items-center">
-    <VueTag v-if="status === TicketProcedureStatus.NoEffect" icon="minus"></VueTag>
+    <VueTag v-if="status === TicketProcedureStatus.NoEffect" icon="minus">Nháp</VueTag>
+    <VueTag v-if="status === TicketProcedureStatus.NoAction" icon="minus"></VueTag>
     <VueTag v-else-if="status === TicketProcedureStatus.Pending" color="orange" icon="clock">
       Chờ thực hiện
     </VueTag>

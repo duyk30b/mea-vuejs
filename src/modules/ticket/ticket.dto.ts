@@ -27,7 +27,7 @@ export class TicketGetQuery {
     ticketSurchargeList?: boolean
     ticketExpenseList?: boolean
 
-    ticketProductList?: boolean
+    ticketProductList?: { product?: boolean; batch?: boolean }
     ticketBatchList?: { batch?: boolean }
 
     ticketProcedureList?: boolean
@@ -51,8 +51,8 @@ export class TicketGetQuery {
 
   sort?: {
     id?: 'ASC' | 'DESC'
-    receptionAt?: 'ASC' | 'DESC',
-    createdAt?: 'ASC' | 'DESC',
+    receptionAt?: 'ASC' | 'DESC'
+    createdAt?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<TicketGetQuery>) {

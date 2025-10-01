@@ -11,19 +11,17 @@ export class TicketRegimenItem extends BaseModel {
   procedureId: number
   ticketRegimenId: string
 
-  isPaymentEachSession: number
-  paymentMoneyStatus: PaymentMoneyStatus
-
   quantityPayment: number
   quantityExpected: number
   quantityFinish: number
   gapDay: number
 
-  expectedPrice: number // Giá dự kiến
-  discountMoney: number // tiền giảm giá
+  expectedMoneyAmount: number // Giá dự kiến
+  discountMoneyAmount: number // Giá dự kiến
   discountPercent: number // % giảm giá
   discountType: DiscountType // Loại giảm giá
-  actualPrice: number // Giá thực tế
+  actualMoneyAmount: number // Giá thực tế
+  paymentMoneyAmount: number // Giá thực tế
 
   procedure?: Procedure
 
@@ -38,17 +36,16 @@ export class TicketRegimenItem extends BaseModel {
     ins.procedureId = 0
     ins.ticketRegimenId = ''
 
-    ins.isPaymentEachSession = 0
     ins.quantityPayment = 0
     ins.quantityExpected = 0
     ins.quantityFinish = 0
     ins.gapDay = 1
 
-    ins.expectedPrice = 0
-    ins.discountMoney = 0
+    ins.expectedMoneyAmount = 0
     ins.discountPercent = 0
     ins.discountType = DiscountType.VND
-    ins.actualPrice = 0
+    ins.actualMoneyAmount = 0
+    ins.paymentMoneyAmount = 0
 
     return ins
   }
@@ -97,19 +94,16 @@ export class TicketRegimenItem extends BaseModel {
     if (a.procedureId != b.procedureId) return false
     if (a.ticketRegimenId != b.ticketRegimenId) return false
 
-    if (a.isPaymentEachSession != b.isPaymentEachSession) return false
-    if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
-
     if (a.quantityPayment != b.quantityPayment) return false
     if (a.quantityExpected != b.quantityExpected) return false
     if (a.quantityFinish != b.quantityFinish) return false
     if (a.gapDay != b.gapDay) return false
 
-    if (a.expectedPrice != b.expectedPrice) return false
-    if (a.discountMoney != b.discountMoney) return false
+    if (a.expectedMoneyAmount != b.expectedMoneyAmount) return false
     if (a.discountPercent != b.discountPercent) return false
     if (a.discountType != b.discountType) return false
-    if (a.actualPrice != b.actualPrice) return false
+    if (a.paymentMoneyAmount != b.paymentMoneyAmount) return false
+    if (a.actualMoneyAmount != b.actualMoneyAmount) return false
 
     return true
   }

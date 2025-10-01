@@ -324,8 +324,6 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div>{{ currentCustomer.fullName }}</div>
-
       <div class="px-4 mt-4 flex flex-wrap gap-3">
         <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
           <InputSearchCustomer

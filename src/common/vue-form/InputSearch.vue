@@ -128,7 +128,7 @@ watch(
 
 const updateDropdownPosition = async () => {
   if (!showOptions.value) return
-  // await nextTick()
+  await nextTick()
   if (!wrapperRef.value) return
   const rect = wrapperRef.value.getBoundingClientRect()
 

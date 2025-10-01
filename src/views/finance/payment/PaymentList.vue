@@ -32,6 +32,8 @@ import ModalCustomerPaymentMoneyIn from './ModalCustomerPaymentMoneyIn.vue'
 import ModalDistributorPaymentMoneyOut from './ModalDistributorPaymentMoneyOut.vue'
 import ModalOtherPaymentMoney from './ModalOtherPaymentMoney.vue'
 import ModalPaymentUpdateInfo from './ModalPaymentUpdateInfo.vue'
+import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
+import PurchaseOrderLink from '@/views/purchase-order/PurchaseOrderLink.vue'
 
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -370,21 +372,18 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
             </td>
             <td>
               <div v-if="payment.voucherType === PaymentVoucherType.Ticket">
-                <LinkAndStatusTicket
-                  :ticket="payment.ticket!"
-                  :ticketId="payment.voucherId"
-                  :status="false"
-                />
+                <TicketLink :ticket="payment.ticket!" :ticketId="payment.voucherId" />
               </div>
               <div v-if="payment.voucherType === PaymentVoucherType.PurchaseOrder">
-                <LinkAndStatusPurchaseOrder
+                <PurchaseOrderLink
                   :purchaseOrder="payment.purchaseOrder"
                   :purchaseOrderId="payment.voucherId"
-                  :status="false"
                 />
               </div>
               <div style="font-size: 0.9em">
-                {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
+                <span style="white-space: nowrap">
+                  {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
+                </span>
               </div>
             </td>
             <td>

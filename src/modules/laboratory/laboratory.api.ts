@@ -78,8 +78,6 @@ export class LaboratoryApi {
         return {
           name: i.name,
           priority: i.priority,
-          price: 0,
-          costPrice: 0,
           lowValue: i.lowValue,
           highValue: i.highValue,
           valueType: i.valueType,
@@ -147,8 +145,6 @@ export class LaboratoryApi {
           id: i.id,
           priority: i.priority,
           name: i.name,
-          price: 0,
-          costPrice: 0,
           lowValue: i.lowValue,
           highValue: i.highValue,
           valueType: i.valueType,

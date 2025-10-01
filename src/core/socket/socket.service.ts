@@ -1,18 +1,18 @@
 import { Batch } from '@/modules/batch'
 import { Discount, DiscountService } from '@/modules/discount'
-import { Expense, ExpenseService } from '@/modules/expense'
+import { ExpenseService } from '@/modules/expense'
 import { Laboratory, LaboratoryService } from '@/modules/laboratory'
 import { Procedure, ProcedureService } from '@/modules/procedure'
 import { Radiology, RadiologyService } from '@/modules/radiology'
-import { Regimen, RegimenService } from '@/modules/regimen'
+import { RegimenService } from '@/modules/regimen'
 import { RoomService } from '@/modules/room'
 import {
-    roomDeliveryPagination,
-    roomFinancePagination,
-    roomTicketPaginationMapRoomId,
-    ticketRoomRef,
+  roomDeliveryPagination,
+  roomFinancePagination,
+  roomTicketPaginationMapRoomId,
+  ticketRoomRef,
 } from '@/modules/room/room.ref'
-import { Surcharge, SurchargeService } from '@/modules/surcharge'
+import { SurchargeService } from '@/modules/surcharge'
 import { MeService } from '../../modules/_me/me.service'
 import { Customer } from '../../modules/customer'
 import { Distributor, DistributorService } from '../../modules/distributor'
@@ -23,11 +23,15 @@ import { Ticket } from '../../modules/ticket'
 import { BatchDB } from '../indexed-db/repository/batch.repository'
 import { CustomerDB } from '../indexed-db/repository/customer.repository'
 import { ProductDB } from '../indexed-db/repository/product.repository'
+import { LaboratoryGroupService } from '@/modules/laboratory-group'
+import { RadiologyGroupService } from '@/modules/radiology-group'
 
 export class SocketService {
   static listenServerEmitDemo(data: any) {
     console.log('🚀 ~ file: socket.service.ts:3 ~ listenServerEmitDemo ~ data:', data)
   }
+
+  static async masterDataChange(data: { laboratory: boolean; laboratoryGroup: boolean }) { }
 
   static async listenOrganizationUpdate(data: { organization: Organization }) {
     const organization = Organization.from(data.organization)
@@ -39,37 +43,29 @@ export class SocketService {
   }
 
   static async listenMasterDataChange(data: {
-    [Distributor.name]: boolean
-    [Procedure.name]: boolean
-    [Laboratory.name]: boolean
-    [Radiology.name]: boolean
-    [Regimen.name]: boolean
-    [Position.name]: boolean
-    [Discount.name]: boolean
-    [Surcharge.name]: boolean
-    [Expense.name]: boolean
+    distributor?: boolean
+    procedure?: boolean
+    regimen?: boolean
+    laboratory?: boolean
+    laboratoryGroup?: boolean
+    radiology?: boolean
+    radiologyGroup?: boolean
+    position?: boolean
+    discount?: boolean
+    surcharge?: boolean
+    expense?: boolean
   }) {
-    if (data[Distributor.name]) DistributorService.loadedAll = false
-    if (data[Procedure.name]) ProcedureService.loadedAll = false
-    if (data[Laboratory.name]) LaboratoryService.loadedAll = false
-    if (data[Radiology.name]) RadiologyService.loadedAll = false
-    if (data[Regimen.name]) RegimenService.loadedAll = false
-    if (data[Position.name]) PositionService.loadedAll = false
-    if (data[Discount.name]) DiscountService.loadedAll = false
-    if (data[Surcharge.name]) SurchargeService.loadedAll = false
-    if (data[Expense.name]) ExpenseService.loadedAll = false
-  }
-
-  static async listenDistributorUpsert(data: { distributor: any }) {
-    const distributor = Distributor.from(data.distributor)
-    const findIndex = DistributorService.distributorAll.findIndex((i) => {
-      return i.id === distributor.id
-    })
-    if (findIndex !== -1) {
-      DistributorService.distributorAll[findIndex] = distributor
-    } else {
-      DistributorService.distributorAll.push(distributor)
-    }
+    if (data.distributor) DistributorService.loadedAll = false
+    if (data.procedure) ProcedureService.loadedAll = false
+    if (data.regimen) RegimenService.loadedAll = false
+    if (data.laboratory) LaboratoryService.loadedAll = false
+    if (data.laboratoryGroup) LaboratoryGroupService.loadedAll = false
+    if (data.radiology) RadiologyService.loadedAll = false
+    if (data.radiologyGroup) RadiologyGroupService.loadedAll = false
+    if (data.position) PositionService.loadedAll = false
+    if (data.discount) DiscountService.loadedAll = false
+    if (data.surcharge) SurchargeService.loadedAll = false
+    if (data.expense) ExpenseService.loadedAll = false
   }
 
   static async listenCustomerUpsert(data: { customer: any }) {
@@ -106,66 +102,6 @@ export class SocketService {
     if (data.batchDestroyedList?.length) {
       const batchIdDestroyList = data.batchDestroyedList.map((i) => i.id)
       await BatchDB.deleteMany(batchIdDestroyList)
-    }
-  }
-
-  static async listenProcedureListChange(data: {
-    procedureDestroyedList?: Procedure[]
-    procedureUpsertedList?: Procedure[]
-  }) {
-    if (data.procedureUpsertedList?.length) {
-      ProcedureService.loadedAll = false
-    }
-    if (data.procedureDestroyedList?.length) {
-      ProcedureService.loadedAll = false
-    }
-  }
-
-  static async listenLaboratoryListChange(data: {
-    laboratoryDestroyedList?: Laboratory[]
-    laboratoryUpsertedList?: Laboratory[]
-  }) {
-    if (data.laboratoryUpsertedList?.length) {
-      LaboratoryService.loadedAll = false
-    }
-    if (data.laboratoryDestroyedList?.length) {
-      LaboratoryService.loadedAll = false
-    }
-  }
-
-  static async listenRadiologyListChange(data: {
-    radiologyDestroyedList?: Radiology[]
-    radiologyUpsertedList?: Radiology[]
-  }) {
-    if (data.radiologyUpsertedList?.length) {
-      RadiologyService.loadedAll = false
-    }
-    if (data.radiologyDestroyedList?.length) {
-      RadiologyService.loadedAll = false
-    }
-  }
-
-  static async listenPositionListChange(data: {
-    positionDestroyedList?: Position[]
-    positionUpsertedList?: Position[]
-  }) {
-    if (data.positionUpsertedList?.length) {
-      PositionService.loadedAll = false
-    }
-    if (data.positionDestroyedList?.length) {
-      PositionService.loadedAll = false
-    }
-  }
-
-  static async listenDiscountListChange(data: {
-    discountDestroyedList?: Discount[]
-    discountUpsertedList?: Discount[]
-  }) {
-    if (data.discountUpsertedList?.length) {
-      DiscountService.loadedAll = false
-    }
-    if (data.discountDestroyedList?.length) {
-      DiscountService.loadedAll = false
     }
   }
 

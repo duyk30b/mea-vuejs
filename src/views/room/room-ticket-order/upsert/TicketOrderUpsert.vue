@@ -82,7 +82,7 @@ onMounted(async () => {
         relation: {
           customer: true,
           // ticketAttributeList: true,
-          ticketProductList: true,
+          ticketProductList: { batch: true, product: true },
           ticketProcedureList: true,
           ticketSurchargeList: true,
           ticketExpenseList: true,

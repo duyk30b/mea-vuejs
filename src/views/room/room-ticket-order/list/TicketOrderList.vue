@@ -79,7 +79,7 @@ const startFetchData = async () => {
       relation: {
         customer: true,
         ticketProductList: settingStore.SCREEN_TICKET_ORDER_LIST.ticketProductList
-          ? true
+          ? { batch: true, product: true }
           : undefined,
       },
       filter: {
@@ -98,7 +98,7 @@ const startFetchData = async () => {
         ? {
             id: sortColumn.value === 'id' ? sortValue.value : undefined,
           }
-        : { id: 'DESC' },
+        : { receptionAt: 'DESC' },
     })
 
     roomTicketPaginationMapRoomId.value[currentRoom.value.id] = paginationResult.ticketList
@@ -412,7 +412,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             </td>
             <td><TicketStatusTag :ticket="ticket" /></td>
             <td class="text-center">
-              {{ ESTimer.timeToText(ticket.createdAt, 'hh:mm DD/MM/YYYY') }}
+              {{ ESTimer.timeToText(ticket.receptionAt, 'hh:mm DD/MM/YYYY') }}
             </td>
             <td>
               <div>

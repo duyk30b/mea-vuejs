@@ -34,6 +34,7 @@ import ModalTicketClinicPayment from '../../room-ticket-base/ModalTicketPayment.
 import TicketLink from '../../room-ticket-base/TicketLink.vue'
 import { fromTime, toTime } from '../../room-ticket-base/room-ticket.ref'
 import ModalTicketClinicListSetting from './ModalTicketClinicListSetting.vue'
+import { PaymentService } from '@/modules/payment'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalReceptionCreate = ref<InstanceType<typeof ModalReceptionCreate>>()
@@ -84,6 +85,7 @@ const startFetchData = async () => {
       relation: {
         customer: true,
         // ticketAttributeList: true,
+        paymentList: !!settingStore.TICKET_CLINIC_LIST.paymentList,
         ticketReceptionList: true,
         ticketUserList:
           settingStore.TICKET_CLINIC_LIST.roleIdList.length ||
@@ -123,6 +125,7 @@ const startFetchData = async () => {
       ticketItem.ticketReceptionList?.forEach((tr) => {
         tr.customer = Customer.from(ticketItem.customer)
       })
+      await PaymentService.refreshRelation(ticketItem.paymentList)
       ticketItem.refreshTreeData()
     }
 
@@ -370,7 +373,9 @@ const clickCloseTicket = (ticket: Ticket) => {
             <th v-for="(roleId, i) in settingStore.TICKET_CLINIC_LIST.roleIdList" :key="i">
               {{ roleMap[roleId]?.name || '' }}
             </th>
-            <th v-if="settingStore.TICKET_CLINIC_LIST.payment">Thanh toán</th>
+            <th>Đã thanh toán</th>
+            <th>Tổng tiền</th>
+            <th></th>
             <th></th>
           </tr>
         </thead>
@@ -499,8 +504,11 @@ const clickCloseTicket = (ticket: Ticket) => {
                 }}
               </span>
             </td>
-            <td v-if="settingStore.TICKET_CLINIC_LIST.payment">
-              <div class="flex flex-wrap justify-between items-center">
+            <td class="text-right">
+              <div
+                v-if="settingStore.TICKET_CLINIC_LIST.buttonPayment"
+                class="flex flex-wrap justify-between items-center"
+              >
                 <VueButton
                   v-if="
                     [
@@ -520,7 +528,7 @@ const clickCloseTicket = (ticket: Ticket) => {
                     })
                   "
                 >
-                  <span>Tạm ứng</span>
+                  <span>Thanh toán</span>
                 </VueButton>
                 <VueButton
                   v-if="
@@ -539,21 +547,26 @@ const clickCloseTicket = (ticket: Ticket) => {
                   <span>Trả nợ</span>
                 </VueButton>
               </div>
+              <div v-if="settingStore.TICKET_CLINIC_LIST.paymentList">
+                <div v-for="payment in ticket.paymentList" :key="payment.id">
+                  {{ payment.paymentMethod?.name }}: {{ payment.paidAmount }}
+                </div>
+              </div>
+              <div v-else>
+                <span
+                  v-if="ticket.paid !== ticket.totalMoney"
+                  style="font-weight: 500; color: var(--text-red)"
+                >
+                  {{ formatMoney(ticket.paid) }}
+                </span>
+                <span v-else>
+                  {{ formatMoney(ticket.paid) }}
+                </span>
+              </div>
             </td>
             <td class="text-right">
               <div>
-                <span
-                  v-if="
-                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticket.status) &&
-                    ticket.paid != ticket.totalMoney
-                  "
-                  style="font-weight: 500; color: var(--text-red)"
-                >
-                  {{ formatMoney(ticket.paid) }} /
-                </span>
-                <span>
-                  {{ formatMoney(ticket.totalMoney) }}
-                </span>
+                {{ formatMoney(ticket.totalMoney) }}
               </div>
               <div
                 v-if="ticket.status === TicketStatus.Debt"
@@ -563,6 +576,7 @@ const clickCloseTicket = (ticket: Ticket) => {
                 Nợ: {{ formatMoney(ticket.debt) }}
               </div>
             </td>
+            <td></td>
             <td>
               <div class="flex justify-center items-center">
                 <VueDropdown>

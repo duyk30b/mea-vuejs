@@ -105,13 +105,6 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td colspan="2">
-                <InputCheckbox v-model:checked="settingDisplay.includePendingStatus">
-                  Hiển thị bao gồm các phiếu chưa hoàn thành
-                </InputCheckbox>
-              </td>
-            </tr>
-            <tr>
-              <td colspan="2">
                 <InputCheckbox v-model:checked="settingDisplay.goRoomAfterReception">
                   Vào phòng sau khi tiếp đón mới
                 </InputCheckbox>
@@ -140,7 +133,14 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td colspan="2">
-                <InputCheckbox v-model:checked="settingDisplay.payment">
+                <InputCheckbox v-model:checked="settingDisplay.paymentList">
+                  Hiển thị thông tin thanh toán
+                </InputCheckbox>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <InputCheckbox v-model:checked="settingDisplay.buttonPayment">
                   Hiển thị nút thanh toán
                 </InputCheckbox>
               </td>

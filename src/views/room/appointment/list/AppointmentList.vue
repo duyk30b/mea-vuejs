@@ -321,7 +321,7 @@ const handleFocusFirstSearchCustomer = async () => {
             </td>
             <td>
               <div class="flex justify-between items-center gap-4">
-                <div>HK{{ appointment.id }}</div>
+                <div>HK{{ appointment.id.slice(0, 8) }}</div>
                 <div v-if="userPermission[PermissionId.APPOINTMENT_UPDATE]">
                   <a
                     style="color: #eca52b"

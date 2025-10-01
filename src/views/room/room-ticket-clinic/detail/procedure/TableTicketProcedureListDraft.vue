@@ -17,6 +17,7 @@ import ModalTicketProcedureUpdateMoney from './ModalTicketProcedureUpdateMoney.v
 import ModalTicketProcedureUpdateUser from './ModalTicketProcedureUpdateUser.vue'
 import ModalTicketRegimenUpdateMoney from './ModalTicketRegimenUpdateMoney.vue'
 import ModalTicketRegimenUpdateUser from './ModalTicketRegimenUpdateUser.vue'
+import { IconEditSquare } from '@/common/icon-google'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
@@ -65,7 +66,7 @@ const selectProcedure = async (data: { procedure: Procedure }) => {
   temp.actualPrice = procedureData.price
 
   if (procedureData.procedureType === ProcedureType.Basic) {
-    temp.status = TicketProcedureStatus.NoEffect
+    temp.status = TicketProcedureStatus.NoAction
   }
   if (procedureData.procedureType === ProcedureType.Process) {
     temp.status = TicketProcedureStatus.Pending
@@ -102,47 +103,63 @@ const selectRegimen = async (data: { regimen: Regimen }) => {
   temp.customerId = 0
   temp.regimenId = regimenData.id
 
-  temp.expectedPrice = regimenData.totalMoney
+  temp.expectedMoney = regimenData.totalMoney
   const discountApply = regimenData.discountApply
   if (discountApply?.discountType === DiscountType.VND) {
     temp.discountType = DiscountType.VND
     temp.discountMoney = discountApply?.discountMoney || 0
     temp.discountPercent =
-      temp.expectedPrice === 0
+      temp.expectedMoney === 0
         ? 0
-        : Math.round((temp.discountMoney / temp.expectedPrice) * 100 * 100) / 100 // thêm nhân chia với 100 để làm tròn sau 2 số thập phân
+        : Math.round((temp.discountMoney / temp.expectedMoney) * 100 * 100) / 100 // thêm nhân chia với 100 để làm tròn sau 2 số thập phân
   }
   if (discountApply?.discountType === DiscountType.Percent) {
     temp.discountType = DiscountType.Percent
     temp.discountPercent = discountApply?.discountPercent || 0
-    temp.discountMoney = (temp.discountPercent * temp.expectedPrice) / 100
+    temp.discountMoney = Math.round((temp.discountPercent * temp.expectedMoney) / 100)
   }
-  temp.actualPrice = temp.expectedPrice - temp.discountMoney
+  temp.actualMoney = temp.expectedMoney - temp.discountMoney
 
   temp.status = TicketRegimenStatus.Pending
   temp.createdAt = Date.now()
 
   temp.regimen = regimenData
-  temp.isPaymentEachSession = 0
 
-  temp.ticketRegimenItemList = (regimenData.regimenItemList || []).map((ri) => {
+  let totalExpectedMoneyRemain = temp.expectedMoney
+  let totalActualMoneyRemain = temp.actualMoney
+  let totalDiscountMoneyRemain = temp.discountMoney
+  let trLength = temp.ticketRegimenItemList?.length || 0
+  temp.ticketRegimenItemList = (regimenData.regimenItemList || []).map((ri, index) => {
     const tri = TicketRegimenItem.blank()
     tri.regimenId = ri.regimenId
     tri.procedureId = ri.procedureId
-    tri.isPaymentEachSession = temp.isPaymentEachSession
 
     tri.quantityExpected = ri.quantity
-    tri.quantityPayment = ri.quantity
+    tri.quantityPayment = 0
     tri.quantityFinish = 0
     tri.gapDay = 1
 
-    tri.expectedPrice = ri.procedure?.price || 0
-    tri.discountType = DiscountType.Percent
-    tri.discountPercent = temp.discountPercent
-    tri.discountMoney = ((ri.procedure?.price || 0) * temp.discountPercent) / 100
-    tri.actualPrice = tri.expectedPrice - tri.discountMoney
-
     tri.procedure = ri.procedure
+
+    if (index + 1 !== trLength) {
+      tri.expectedMoneyAmount = (ri.procedure?.price || 0) * ri.quantity
+      tri.discountType = DiscountType.Percent
+      tri.discountPercent = temp.discountPercent
+      tri.discountMoneyAmount =
+        Math.floor(((ri.procedure?.price || 0) * temp.discountPercent) / 100 / 1000) * 1000
+      tri.actualMoneyAmount = tri.expectedMoneyAmount - tri.discountMoneyAmount
+
+      totalExpectedMoneyRemain -= tri.expectedMoneyAmount
+      totalDiscountMoneyRemain -= tri.discountMoneyAmount
+      totalActualMoneyRemain -= tri.actualMoneyAmount
+    } else {
+      tri.expectedMoneyAmount = totalExpectedMoneyRemain
+      tri.discountMoneyAmount = totalDiscountMoneyRemain
+      tri.actualMoneyAmount = totalActualMoneyRemain
+      tri.discountType = DiscountType.Percent
+      tri.discountPercent = temp.discountPercent
+    }
+
     return tri
   })
 
@@ -191,31 +208,48 @@ const handleModalTicketProcedureUpdateSuccess = (ticketProcedureData: TicketProc
   }
 }
 
-const handleChangeTicketRegimenItemQuantityTotal = (data: {
+const handleChangeTicketRegimenItemQuantityExpected = (data: {
   trLocalId: string
   triLocalId: string
   quantityExpected: number
 }) => {
-  const ticketRegimen = props.ticketRegimenListDraft.find((i) => i._localId === data.trLocalId)
+  const { quantityExpected } = data
+  const ticketRegimen = props.ticketRegimenListDraft.find((i) => {
+    return i._localId === data.trLocalId
+  })
   if (!ticketRegimen) return
+  const ticketRegimenItem = (ticketRegimen.ticketRegimenItemList || []).find((i) => {
+    return i._localId === data.triLocalId
+  })
+  if (!ticketRegimenItem) return
 
-  ticketRegimen.expectedPrice = ticketRegimen.ticketRegimenItemList!.reduce((acc, item) => {
-    return acc + item.quantityExpected * item.expectedPrice
+  const oldQuantityExpected = ticketRegimenItem.quantityExpected
+  ticketRegimenItem.quantityExpected = quantityExpected
+
+  ticketRegimenItem.expectedMoneyAmount = Math.floor(
+    (ticketRegimenItem.expectedMoneyAmount / oldQuantityExpected) * quantityExpected,
+  )
+  ticketRegimenItem.discountMoneyAmount = Math.floor(
+    (ticketRegimenItem.discountMoneyAmount / oldQuantityExpected) * quantityExpected,
+  )
+  ticketRegimenItem.actualMoneyAmount = Math.floor(
+    (ticketRegimenItem.actualMoneyAmount / oldQuantityExpected) * quantityExpected,
+  )
+  ticketRegimen.expectedMoney = ticketRegimen.ticketRegimenItemList!.reduce((acc, item) => {
+    return acc + item.expectedMoneyAmount
   }, 0)
-  ticketRegimen.actualPrice = ticketRegimen.ticketRegimenItemList!.reduce((acc, item) => {
-    return acc + item.quantityExpected * item.actualPrice
+  ticketRegimen.discountMoney = ticketRegimen.ticketRegimenItemList!.reduce((acc, item) => {
+    return acc + item.discountMoneyAmount
+  }, 0)
+  ticketRegimen.actualMoney = ticketRegimen.ticketRegimenItemList!.reduce((acc, item) => {
+    return acc + item.actualMoneyAmount
   }, 0)
 }
 
 const totalMoney = computed(() => {
   return (
     props.ticketProcedureListDraft.reduce((acc, i) => acc + i.actualPrice * i.quantity, 0) +
-    props.ticketRegimenListDraft.reduce(
-      (acc, i) =>
-        acc +
-        (i.ticketRegimenItemList || []).reduce((a, i) => a + i.quantityPayment * i.actualPrice, 0),
-      0,
-    )
+    props.ticketRegimenListDraft.reduce((acc, i) => acc + i.actualMoney, 0)
   )
 })
 
@@ -245,17 +279,12 @@ defineExpose({ selectProcedure, selectRegimen })
     <table>
       <thead>
         <tr>
-          <th v-if="CONFIG.MODE === 'development'">
-            <div>RegimenId</div>
-            <div>ProcedureId</div>
-          </th>
           <th>#</th>
           <th>Dịch vụ</th>
           <th style="width: 150px">Số lượng</th>
           <th v-if="ticketRegimenListDraft.length" style="width: 100px">Cách ngày</th>
-          <th>Giá</th>
-          <th>Tổng TT</th>
-          <th></th>
+          <th>Đơn Giá</th>
+          <th>Tổng Tiền</th>
           <th>NV Chỉ định</th>
           <th></th>
         </tr>
@@ -266,38 +295,37 @@ defineExpose({ selectProcedure, selectRegimen })
         </tr>
         <template v-for="tr in ticketRegimenListDraft" :key="tr._localId">
           <tr>
-            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-              {{ tr.regimenId }}
-            </td>
             <td colspan="4">
               <div class="flex items-center gap-1 font-bold">
                 <span>{{ tr.regimen?.name }}</span>
+                <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                  ({{ tr.regimenId }})
+                </span>
               </div>
             </td>
             <td>
-              <div class="flex justify-between items-center">
+              <div class="flex gap-2 items-center">
                 <div>
                   <VueTag v-if="tr.discountMoney" color="green">
                     {{ tr.discountPercent + ' %' }}
                   </VueTag>
                 </div>
-                <div>
+                <div class="ml-auto">
                   <div v-if="tr.discountMoney" class="text-xs italic text-red-500">
-                    <del>{{ formatMoney(tr.expectedPrice) }}</del>
+                    <del>{{ formatMoney(tr.expectedMoney) }}</del>
                   </div>
-                  <div>{{ formatMoney(tr.actualPrice) }}</div>
+                  <div>{{ formatMoney(tr.actualMoney) }}</div>
                 </div>
+                <a
+                  style="font-size: 20px; color: var(--text-orange)"
+                  @click="modalTicketRegimenUpdateMoney?.openModal({ ticketRegimen: tr })"
+                >
+                  <IconEditSquare />
+                </a>
               </div>
             </td>
-            <td class="text-right"></td>
-            <td>
-              <a
-                class="flex justify-center cursor-pointer"
-                style="font-size: 20px; color: var(--text-orange)"
-                @click="modalTicketRegimenUpdateMoney?.openModal({ ticketRegimen: tr })"
-              >
-                <IconDollar />
-              </a>
+            <td class="text-right">
+              {{ formatMoney(tr.actualMoney) }}
             </td>
             <td>
               <div class="flex justify-around items-center">
@@ -329,17 +357,23 @@ defineExpose({ selectProcedure, selectRegimen })
             </td>
           </tr>
           <tr v-for="(tri, triIndex) in tr.ticketRegimenItemList" :key="tri._localId">
-            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center"></td>
             <td style="text-align: center">{{ triIndex + 1 }}</td>
-            <td>{{ tri.procedure?.name }}</td>
+            <td>
+              <div class="flex flex-wrap gap-1">
+                <span>{{ tri.procedure?.name }}</span>
+                <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                  ({{ tri.procedureId }})
+                </span>
+              </div>
+            </td>
             <td class="text-right">
               <InputNumber
-                v-model:value="tri.quantityExpected"
+                :value="tri.quantityExpected"
                 buttonControl
                 textAlign="right"
                 @update:value="
                   (v) =>
-                    handleChangeTicketRegimenItemQuantityTotal({
+                    handleChangeTicketRegimenItemQuantityExpected({
                       trLocalId: tr._localId,
                       triLocalId: tri._localId,
                       quantityExpected: v,
@@ -354,24 +388,27 @@ defineExpose({ selectProcedure, selectRegimen })
               <div class="flex justify-between items-center gap-4">
                 <div>
                   <VueTag
-                    v-if="tri.discountType === DiscountType.Percent && tri.discountMoney"
+                    v-if="tri.discountType === DiscountType.Percent && tri.discountMoneyAmount"
                     color="green"
                   >
                     {{ tri.discountPercent + ' %' }}
                   </VueTag>
                 </div>
                 <div>
-                  <div v-if="tri.discountMoney" class="text-xs italic text-red-500">
-                    <del>{{ formatMoney(tri.expectedPrice) }}</del>
+                  <div v-if="tri.discountMoneyAmount" class="text-xs italic text-red-500">
+                    <del>
+                      {{ formatMoney(Math.floor(tri.expectedMoneyAmount / tri.quantityExpected)) }}
+                    </del>
                   </div>
-                  <div>{{ formatMoney(tri.actualPrice) }}</div>
+                  <div>
+                    {{ formatMoney(Math.floor(tri.actualMoneyAmount / tri.quantityExpected)) }}
+                  </div>
                 </div>
               </div>
             </td>
             <td class="text-right">
-              {{ formatMoney(tri.actualPrice * tri.quantityPayment) }}
+              {{ formatMoney(tri.actualMoneyAmount) }}
             </td>
-            <td></td>
             <td></td>
             <td></td>
           </tr>
@@ -381,9 +418,6 @@ defineExpose({ selectProcedure, selectRegimen })
           <td colspan="100" class="font-bold">Dịch vụ lẻ</td>
         </tr>
         <tr v-for="(tp, index) in ticketProcedureListDraft" :key="tp._localId">
-          <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-            {{ tp.procedureId }} - {{ tp.priority }}
-          </td>
           <td style="text-align: center">{{ index + 1 }}</td>
           <td>
             <div class="flex items-center gap-1">
@@ -391,6 +425,9 @@ defineExpose({ selectProcedure, selectRegimen })
               <a style="line-height: 0" @click="modalProcedureDetail?.openModal(tp.procedureId)">
                 <IconFileSearch />
               </a>
+              <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                ({{ tp.procedureId }})
+              </span>
             </div>
           </td>
           <td>
@@ -405,23 +442,22 @@ defineExpose({ selectProcedure, selectRegimen })
             </td>
           </template>
           <template v-else>
-            <td class="text-right">
-              <div v-if="tp.discountMoney" class="text-xs italic text-red-500">
-                <del>{{ formatMoney(tp.expectedPrice) }}</del>
+            <td class="flex items-center gap-2">
+              <div class="ml-auto">
+                <div v-if="tp.discountMoney" class="text-xs italic text-red-500">
+                  <del>{{ formatMoney(tp.expectedPrice) }}</del>
+                </div>
+                <div>{{ formatMoney(tp.actualPrice) }}</div>
               </div>
-              <div>{{ formatMoney(tp.actualPrice) }}</div>
-            </td>
-            <td class="text-right">
-              <div>{{ formatMoney(tp.actualPrice * tp.quantity) }}</div>
-            </td>
-            <td>
-              <div
-                class="flex justify-center cursor-pointer"
+              <a
                 style="font-size: 20px; color: var(--text-orange)"
                 @click="modalTicketProcedureUpdateMoney?.openModal({ ticketProcedure: tp })"
               >
-                <IconDollar />
-              </div>
+                <IconEditSquare />
+              </a>
+            </td>
+            <td class="text-right">
+              <div>{{ formatMoney(tp.actualPrice * tp.quantity) }}</div>
             </td>
             <td>
               <div class="flex justify-around items-center">
@@ -455,7 +491,6 @@ defineExpose({ selectProcedure, selectRegimen })
           </td>
         </tr>
         <tr>
-          <td v-if="CONFIG.MODE === 'development'"></td>
           <td
             :colspan="ticketRegimenListDraft.length ? 5 : 4"
             class="text-right font-bold uppercase"
@@ -465,7 +500,6 @@ defineExpose({ selectProcedure, selectRegimen })
           <td class="font-bold text-right">
             {{ formatMoney(totalMoney) }}
           </td>
-          <td></td>
           <td></td>
           <td></td>
         </tr>

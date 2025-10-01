@@ -51,9 +51,11 @@ const openModal = async (data: { ticketProcedure: TicketProcedure }) => {
   )
 
   if (
-    [TicketProcedureStatus.NoEffect, TicketProcedureStatus.Pending].includes(
-      ticketProcedure.value.status,
-    )
+    [
+      TicketProcedureStatus.NoEffect,
+      TicketProcedureStatus.NoAction,
+      TicketProcedureStatus.Pending,
+    ].includes(ticketProcedure.value.status)
   ) {
     ticketProcedure.value.completedAt = Date.now()
   }

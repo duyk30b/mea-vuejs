@@ -90,7 +90,7 @@ const prescriptionCostAmount = computed(() => {
         <th>Chiết khấu</th>
         <th v-if="CONFIG.MODE === 'development'">Vốn</th>
         <th v-if="CONFIG.MODE === 'development'">H.Hồng</th>
-        <th>Tổng tiền</th>
+        <th>Phải trả</th>
         <th></th>
       </tr>
     </thead>
@@ -215,7 +215,7 @@ const prescriptionCostAmount = computed(() => {
         <th>Chiết khấu</th>
         <th v-if="CONFIG.MODE === 'development'">Vốn</th>
         <th v-if="CONFIG.MODE === 'development'">H.Hồng</th>
-        <th>Tổng tiền</th>
+        <th>Phải trả</th>
         <th></th>
       </tr>
     </thead>

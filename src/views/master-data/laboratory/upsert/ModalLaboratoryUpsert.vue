@@ -16,6 +16,7 @@ import { Position, PositionService, PositionType } from '@/modules/position'
 import PositionTableAction from '@/views/master-data/position/common/PositionTableAction.vue'
 import { computed, ref } from 'vue'
 import DiscountTableAction from '../../discount/common/DiscountTableAction.vue'
+import { CONFIG } from '@/config'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
@@ -419,6 +420,7 @@ defineExpose({ openModal })
                     <table>
                       <thead>
                         <tr>
+                          <th v-if="CONFIG.MODE === 'development'">ID - Code</th>
                           <th>STT</th>
                           <th>Tên giá trị</th>
                           <th>Kiểu giá trị</th>
@@ -431,6 +433,9 @@ defineExpose({ openModal })
                       </thead>
                       <tbody>
                         <tr v-for="(laboratoryChild, index) in laboratory.children" :key="index">
+                          <td v-if="CONFIG.MODE === 'development'" style="color: violet">
+                            {{ laboratoryChild.id }} - {{ laboratoryChild.laboratoryCode }}
+                          </td>
                           <td class="text-center">
                             <input
                               v-model="laboratory.children![index].priority"
@@ -515,7 +520,7 @@ defineExpose({ openModal })
                           </td>
                           <td class="text-center">
                             <a
-                              style="color: var(--text-red)"
+                              style="color: var(--text-red); font-size: 20px"
                               @click="laboratory.children!.splice(index, 1)"
                             >
                               <IconDelete />
