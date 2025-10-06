@@ -45,7 +45,6 @@ export class BatchApi {
       lotNumber: batch.lotNumber,
       expiryDate: batch.expiryDate != null ? batch.expiryDate : null,
       warehouseId: batch.warehouseId,
-      isActive: batch.isActive,
     })
     const { data } = response.data as BaseResponse<{ batch: any }>
     return Batch.from(data.batch)

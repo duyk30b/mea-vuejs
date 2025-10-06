@@ -465,7 +465,8 @@ const clickReturnProduct = () => {
         VÀO PHÒNG
       </VueButton>
       <VueButton
-        color="green"
+        v-if="ticketRoomRef.isPaymentEachItem"
+        color="red"
         icon="dollar"
         @click="
           modalPrepaymentTicketItem?.openModal({
@@ -474,10 +475,11 @@ const clickReturnProduct = () => {
           })
         "
       >
-        <span class="font-bold">THANH TOÁN ITEM</span>
+        <span class="font-bold">THANH TOÁN</span>
       </VueButton>
       <VueButton
         v-if="
+          !ticketRoomRef.isPaymentEachItem &&
           [
             TicketStatus.Schedule,
             TicketStatus.Draft,
@@ -497,7 +499,9 @@ const clickReturnProduct = () => {
         <span class="font-bold">THANH TOÁN</span>
       </VueButton>
       <VueButton
-        v-if="[TicketStatus.Debt].includes(ticketRoomRef.status)"
+        v-if="
+          !ticketRoomRef.isPaymentEachItem && [TicketStatus.Debt].includes(ticketRoomRef.status)
+        "
         color="green"
         icon="dollar"
         @click="
@@ -510,7 +514,10 @@ const clickReturnProduct = () => {
         <span class="font-bold">TRẢ NỢ</span>
       </VueButton>
       <VueButton
-        v-if="[TicketStatus.Completed, TicketStatus.Cancelled].includes(ticketRoomRef.status)"
+        v-if="
+          !ticketRoomRef.isPaymentEachItem &&
+          [TicketStatus.Completed, TicketStatus.Cancelled].includes(ticketRoomRef.status)
+        "
         color="green"
         icon="dollar"
         @click="
@@ -524,6 +531,7 @@ const clickReturnProduct = () => {
       </VueButton>
       <VueButton
         v-if="
+          !ticketRoomRef.isPaymentEachItem &&
           [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketRoomRef.status) &&
           ticketRoomRef.paid > ticketRoomRef.totalMoney &&
           userPermission[PermissionId.TICKET_REFUND_MONEY]
@@ -578,6 +586,7 @@ const clickReturnProduct = () => {
           <a
             @click="clickRefundOverpaid"
             v-if="
+              !ticketRoomRef.isPaymentEachItem &&
               [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketRoomRef.status) &&
               ticketRoomRef.paid <= ticketRoomRef.totalMoney &&
               userPermission[PermissionId.TICKET_REFUND_MONEY]

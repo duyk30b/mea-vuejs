@@ -121,7 +121,7 @@ const startPickAll = (v: boolean) => {
   checkboxRadiology.value = {}
 
   if (v) {
-    ticket.value.ticketProcedureList?.forEach((i) => {
+    ticket.value.ticketProcedureNormalList?.forEach((i) => {
       checkboxProcedure.value[i.id] = i
     })
     ticket.value.ticketProductConsumableList?.forEach((i) => {
@@ -439,47 +439,57 @@ defineExpose({ openModal })
                 </tr>
               </thead>
               <tbody>
-                <tr
+                <template
                   v-for="(ticketRegimen, index) in ticket.ticketRegimenList"
                   :key="ticketRegimen.id"
                 >
-                  <td
-                    v-if="CONFIG.MODE === 'development'"
-                    style="text-align: center; color: violet"
-                  >
-                    {{ ticketRegimen.id }}
-                  </td>
-                  <td>
-                    <div class="flex justify-center">
-                      <InputCheckbox
-                        :checked="!!checkboxRegimen[ticketRegimen.id]"
-                        @update:checked="
-                          (v) => (checkboxRegimen[ticketRegimen.id] = v ? ticketRegimen : undefined)
-                        "
-                      />
-                    </div>
-                  </td>
-                  <td class="text-center">{{ index + 1 }}</td>
-                  <td></td>
-                  <td>{{ ticketRegimen.regimen?.name }}</td>
-                  <td class="text-right whitespace-nowrap">
-                    <div v-if="ticketRegimen.discountMoney" class="text-xs italic text-red-500">
-                      <del>{{ formatMoney(ticketRegimen.expectedMoney) }}</del>
-                    </div>
-                    <div>{{ formatMoney(ticketRegimen.actualMoney) }}</div>
-                  </td>
-                  <td class="text-center"></td>
-                  <td class="text-right whitespace-nowrap">
-                    <div v-if="ticketRegimen.discountMoney" class="text-xs italic text-red-500">
-                      <del>
-                        {{ formatMoney(ticketRegimen.expectedMoney) }}
-                      </del>
-                    </div>
-                    <div>
-                      {{ formatMoney(ticketRegimen.actualMoney) }}
-                    </div>
-                  </td>
-                </tr>
+                  <tr>
+                    <td
+                      v-if="CONFIG.MODE === 'development'"
+                      style="text-align: center; color: violet"
+                    >
+                      {{ ticketRegimen.id }}
+                    </td>
+                    <td>
+                      <div class="flex justify-center">
+                        <InputCheckbox
+                          :checked="!!checkboxRegimen[ticketRegimen.id]"
+                          @update:checked="
+                            (v) =>
+                              (checkboxRegimen[ticketRegimen.id] = v ? ticketRegimen : undefined)
+                          "
+                        />
+                      </div>
+                    </td>
+                    <td class="text-center">{{ index + 1 }}</td>
+                    <td></td>
+                    <td>{{ ticketRegimen.regimen?.name }}</td>
+                    <td class="text-right whitespace-nowrap">
+                      <div v-if="ticketRegimen.discountMoney" class="text-xs italic text-red-500">
+                        <del>{{ formatMoney(ticketRegimen.moneyAmountRegular) }}</del>
+                      </div>
+                      <div>{{ formatMoney(ticketRegimen.moneyAmountSale) }}</div>
+                    </td>
+                    <td class="text-center"></td>
+                    <td class="text-right whitespace-nowrap">
+                      <div v-if="ticketRegimen.discountMoney" class="text-xs italic text-red-500">
+                        <del>
+                          {{ formatMoney(ticketRegimen.moneyAmountRegular) }}
+                        </del>
+                      </div>
+                      <div>
+                        {{ formatMoney(ticketRegimen.moneyAmountSale) }}
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-for="tri in ticketRegimen.ticketRegimenItemList" :key="tri.id">
+                    <td v-if="CONFIG.MODE === 'development'"></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>{{ tri.procedure?.name }}</td>
+                  </tr>
+                </template>
               </tbody>
             </template>
             <template v-if="ticket.ticketProcedureNormalList?.length">
@@ -499,7 +509,7 @@ defineExpose({ openModal })
               </thead>
               <tbody>
                 <tr
-                  v-for="(ticketProcedure, index) in ticket.ticketProcedureList"
+                  v-for="(ticketProcedure, index) in ticket.ticketProcedureNormalList"
                   :key="ticketProcedure.id"
                 >
                   <td

@@ -34,7 +34,7 @@ const { userPermission, organization } = MeService
 
 const ticketProcedure = ref<TicketProcedure>(TicketProcedure.blank())
 const ticketUserResultList = ref<TicketUser[]>([])
-const ticketProductProcedureList = ref<TicketProduct[]>([])
+const ticketProductConsumableList = ref<TicketProduct[]>([])
 const productId = ref(0)
 
 const hasChangeImageList = ref(false)
@@ -46,7 +46,7 @@ const openModal = async (data: { ticketProcedure: TicketProcedure }) => {
   ticketProcedure.value = TicketProcedure.from(data.ticketProcedure)
 
   ticketUserResultList.value = TicketUser.fromList(data.ticketProcedure.ticketUserResultList || [])
-  ticketProductProcedureList.value = TicketProduct.fromList(
+  ticketProductConsumableList.value = TicketProduct.fromList(
     data.ticketProcedure.ticketProductProcedureList || [],
   )
 
@@ -67,7 +67,7 @@ const closeModal = () => {
   showModal.value = false
   ticketProcedure.value = TicketProcedure.blank()
   ticketUserResultList.value = []
-  ticketProductProcedureList.value = []
+  ticketProductConsumableList.value = []
 }
 
 const handleSave = async () => {
@@ -89,7 +89,7 @@ const handleSave = async () => {
         ? { files, imageIdWaitList, externalUrlList: imageUrls }
         : undefined,
       ticketUserResultList: ticketUserResultList.value,
-      ticketProductProcedureResultList: ticketProductProcedureList.value,
+      ticketProductConsumableList: ticketProductConsumableList.value,
     })
 
     closeModal()
@@ -124,7 +124,7 @@ const selectProduct = async (productData: Product) => {
     if (productData.quantity <= 0) {
       AlertStore.addError('Không đủ số lượng tồn kho')
     } else {
-      const findIndex = ticketProductProcedureList.value.findIndex((i) => {
+      const findIndex = ticketProductConsumableList.value.findIndex((i) => {
         return i.productId === productData.id
       })
       if (findIndex === -1) {
@@ -134,9 +134,9 @@ const selectProduct = async (productData: Product) => {
         temp.product = productData
         temp.warehouseIds = '[]'
         temp.pickupStrategy = PickupStrategy.AutoWithFIFO
-        ticketProductProcedureList.value.push(temp)
+        ticketProductConsumableList.value.push(temp)
       } else {
-        ticketProductProcedureList.value[findIndex].quantity++
+        ticketProductConsumableList.value[findIndex].quantity++
       }
     }
   }
@@ -146,11 +146,11 @@ const selectProduct = async (productData: Product) => {
 }
 
 const removeConsumable = (productId: number) => {
-  const findIndex = ticketProductProcedureList.value.findIndex((i) => {
+  const findIndex = ticketProductConsumableList.value.findIndex((i) => {
     return i.productId === productId
   })
   if (findIndex !== -1) {
-    ticketProductProcedureList.value.splice(findIndex, 1)
+    ticketProductConsumableList.value.splice(findIndex, 1)
   }
 }
 
@@ -258,11 +258,11 @@ defineExpose({ openModal })
                 </tr>
               </thead>
               <tbody>
-                <tr v-if="!ticketProductProcedureList.length">
+                <tr v-if="!ticketProductConsumableList.length">
                   <td class="text-center" colspan="100">Không sử dụng vật tư</td>
                 </tr>
                 <tr
-                  v-for="(consumable, index) in ticketProductProcedureList"
+                  v-for="(consumable, index) in ticketProductConsumableList"
                   :key="consumable.productId"
                 >
                   <td class="text-center">{{ index + 1 }}</td>

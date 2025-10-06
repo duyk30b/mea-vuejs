@@ -286,6 +286,7 @@ export const SETTING_DEFAULT = {
   TICKET_CLINIC_DETAIL: {
     diagnosis: { icd10: 0 },
     procedure: {},
+    regimen: { isEffectTotalMoney: 1 },
     consumable: {
       warehouseIdList: [0],
       searchIncludeZeroQuantity: 1,

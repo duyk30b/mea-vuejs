@@ -51,48 +51,48 @@ const hasChangeData = computed(() => {
 
 const handleChangeExpectedMoney = (data: number) => {
   const expectedMoney = data
-  const actualMoney = ticketRegimen.value.actualMoney
+  const actualMoney = ticketRegimen.value.moneyAmountSale
   const discountMoney = expectedMoney - actualMoney
   const discountPercent =
     expectedMoney == 0 ? 0 : Math.round(((discountMoney * 100) / expectedMoney) * 100) / 100 // fix 2 chữ số thập phân
-  ticketRegimen.value.expectedMoney = expectedMoney
+  ticketRegimen.value.moneyAmountRegular = expectedMoney
   ticketRegimen.value.discountPercent = discountPercent
   ticketRegimen.value.discountMoney = discountMoney
   ticketRegimen.value.discountType = DiscountType.VND
-  ticketRegimen.value.actualMoney = actualMoney
+  ticketRegimen.value.moneyAmountSale = actualMoney
 }
 
 const handleChangeDiscountMoney = (data: number) => {
   const discountMoney = data
-  const expectedMoney = ticketRegimen.value.expectedMoney || 0
+  const expectedMoney = ticketRegimen.value.moneyAmountRegular || 0
   const discountPercent =
     expectedMoney == 0 ? 0 : Math.round(((discountMoney * 100) / expectedMoney) * 100) / 100
   const actualMoney = expectedMoney - discountMoney
   ticketRegimen.value.discountPercent = discountPercent
   ticketRegimen.value.discountMoney = discountMoney
-  ticketRegimen.value.actualMoney = actualMoney
+  ticketRegimen.value.moneyAmountSale = actualMoney
 }
 
 const handleChangeDiscountPercent = (data: number) => {
   const discountPercent = data
-  const expectedMoney = ticketRegimen.value.expectedMoney || 0
+  const expectedMoney = ticketRegimen.value.moneyAmountRegular || 0
   const discountMoney = Math.round((expectedMoney * (discountPercent || 0)) / 100 / 1000) * 1000
   const actualMoney = expectedMoney - discountMoney
   ticketRegimen.value.discountPercent = data
   ticketRegimen.value.discountMoney = discountMoney
-  ticketRegimen.value.actualMoney = actualMoney
+  ticketRegimen.value.moneyAmountSale = actualMoney
 }
 
 const handleChangeActualPrice = (data: number) => {
   const actualMoney = data
-  const expectedMoney = ticketRegimen.value.expectedMoney
+  const expectedMoney = ticketRegimen.value.moneyAmountRegular
   const discountMoney = expectedMoney - actualMoney
   const discountPercent =
     expectedMoney == 0 ? 0 : Math.round(((discountMoney * 100) / expectedMoney) * 100) / 100
   ticketRegimen.value.discountPercent = discountPercent
   ticketRegimen.value.discountMoney = discountMoney
   ticketRegimen.value.discountType = DiscountType.VND
-  ticketRegimen.value.actualMoney = actualMoney
+  ticketRegimen.value.moneyAmountSale = actualMoney
 }
 
 const closeModal = () => {
@@ -109,31 +109,31 @@ const handleSave = async () => {
     }
 
     if (hasChangeTicketRegimen.value) {
-      let totalExpectedMoneyRemain = ticketRegimen.value.expectedMoney
-      let totalActualMoneyRemain = ticketRegimen.value.actualMoney
+      let totalExpectedMoneyRemain = ticketRegimen.value.moneyAmountRegular
+      let totalActualMoneyRemain = ticketRegimen.value.moneyAmountSale
       let totalDiscountMoneyRemain = ticketRegimen.value.discountMoney
       let trLength = ticketRegimen.value.ticketRegimenItemList?.length || 0
 
       ticketRegimen.value.ticketRegimenItemList?.forEach((tri, index) => {
         if (index + 1 !== trLength) {
-          tri.expectedMoneyAmount =
+          tri.moneyAmountRegular =
             Math.floor(
-              (tri.expectedMoneyAmount * ticketRegimen.value.expectedMoney) /
-                ticketRegimenOrigin.expectedMoney /
+              (tri.moneyAmountRegular * ticketRegimen.value.moneyAmountRegular) /
+                ticketRegimenOrigin.moneyAmountRegular /
                 1000,
             ) * 1000
           tri.discountPercent = ticketRegimen.value.discountPercent
           tri.discountMoneyAmount =
-            Math.floor((tri.expectedMoneyAmount * tri.discountPercent) / 100 / 1000) * 1000
-          tri.actualMoneyAmount = tri.expectedMoneyAmount - tri.discountMoneyAmount
+            Math.floor((tri.moneyAmountRegular * tri.discountPercent) / 100 / 1000) * 1000
+          tri.moneyAmountSale = tri.moneyAmountRegular - tri.discountMoneyAmount
 
-          totalExpectedMoneyRemain -= tri.expectedMoneyAmount
+          totalExpectedMoneyRemain -= tri.moneyAmountRegular
           totalDiscountMoneyRemain -= tri.discountMoneyAmount
-          totalActualMoneyRemain -= tri.actualMoneyAmount
+          totalActualMoneyRemain -= tri.moneyAmountSale
         } else {
-          tri.expectedMoneyAmount = totalExpectedMoneyRemain
+          tri.moneyAmountRegular = totalExpectedMoneyRemain
           tri.discountMoneyAmount = totalDiscountMoneyRemain
-          tri.actualMoneyAmount = totalActualMoneyRemain
+          tri.moneyAmountSale = totalActualMoneyRemain
           tri.discountType = DiscountType.Percent
           tri.discountPercent = ticketRegimen.value.discountPercent
         }
@@ -176,7 +176,7 @@ defineExpose({ openModal })
             <div>Giá niêm yết</div>
             <div>
               <InputMoney
-                :value="ticketRegimen.expectedMoney"
+                :value="ticketRegimen.moneyAmountRegular"
                 @update:value="handleChangeExpectedMoney"
               />
             </div>
@@ -224,7 +224,7 @@ defineExpose({ openModal })
             <div>Đơn giá</div>
             <div style="width: 100%">
               <InputMoney
-                :value="ticketRegimen.actualMoney"
+                :value="ticketRegimen.moneyAmountSale"
                 @update:value="handleChangeActualPrice"
               />
             </div>

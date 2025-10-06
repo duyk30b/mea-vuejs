@@ -68,18 +68,18 @@ const procedureDiscount = computed(() => {
         <th>Chiết khấu</th>
         <th v-if="CONFIG.MODE === 'development'">Vốn</th>
         <th v-if="CONFIG.MODE === 'development'">H.Hồng</th>
-        <th>Phải trả</th>
+        <th>T.Tiền</th>
         <th></th>
       </tr>
     </thead>
     <tbody>
-      <template v-for="(ticketRegimen, index) in ticketRoomRef.ticketRegimenList" :key="index">
+      <template v-for="(ticketRegimen, trIndex) in ticketRoomRef.ticketRegimenList" :key="trIndex">
         <tr>
           <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
             {{ ticketRegimen.id }}
           </td>
           <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-            {{ index + 1 }}
+            {{ trIndex + 1 }}
           </td>
           <td v-if="ticketRoomRef.isPaymentEachItem"></td>
           <td class="text-center">
@@ -98,9 +98,9 @@ const procedureDiscount = computed(() => {
           </td>
           <td class="text-right whitespace-nowrap">
             <div v-if="ticketRegimen.discountMoney" class="text-xs italic text-red-500">
-              <del>{{ formatMoney(ticketRegimen.expectedMoney) }}</del>
+              <del>{{ formatMoney(ticketRegimen.moneyAmountRegular) }}</del>
             </div>
-            <div>{{ formatMoney(ticketRegimen.actualMoney) }}</div>
+            <div>{{ formatMoney(ticketRegimen.moneyAmountSale) }}</div>
           </td>
 
           <td class="text-center"></td>
@@ -130,27 +130,29 @@ const procedureDiscount = computed(() => {
           <td class="text-center"></td>
           <td colspan="3">
             <div class="flex gap-2">
-              <span>{{ triIndex + 1 }}. {{ tri.procedure?.name }}</span>
+              <span>{{ trIndex + 1 }}.{{ triIndex + 1 }}. {{ tri.procedure?.name }}</span>
               <span style="font-weight: 500">
-                ({{ tri.quantityFinish }} / {{ tri.quantityExpected }})
+                ({{ tri.quantityUsed }} / {{ tri.quantityRegular }})
               </span>
             </div>
           </td>
           <td style="font-weight: 700; text-align: center">
-            {{ tri.quantityPayment }}
+            <span></span>
+            <span></span>
+            {{ tri.quantityActual }}
           </td>
           <td class="text-right whitespace-nowrap">
             <div v-if="tri.discountMoneyAmount" class="text-xs italic text-red-500">
               <del>
-                {{ formatMoney(Math.round(tri.expectedMoneyAmount / tri.quantityExpected)) }}
+                {{ formatMoney(Math.round(tri.moneyAmountRegular / tri.quantityRegular)) }}
               </del>
             </div>
-            <div>{{ formatMoney(Math.round(tri.actualMoneyAmount / tri.quantityExpected)) }}</div>
+            <div>{{ formatMoney(Math.round(tri.moneyAmountSale / tri.quantityRegular)) }}</div>
           </td>
           <td class="text-center">
             <div v-if="tri.discountMoneyAmount">
               <VueTag v-if="tri.discountType === DiscountType.VND" color="green">
-                {{ formatMoney(tri.discountMoneyAmount / tri.quantityExpected) }}
+                {{ formatMoney(tri.discountMoneyAmount / tri.quantityRegular) }}
               </VueTag>
               <VueTag v-if="tri.discountType === DiscountType.Percent" color="green">
                 {{ tri.discountPercent || 0 }}%
@@ -161,7 +163,7 @@ const procedureDiscount = computed(() => {
           <td v-if="CONFIG.MODE === 'development'"></td>
           <td class="text-right whitespace-nowrap">
             <span>
-              {{ formatMoney(tri.paymentMoneyAmount) }}
+              {{ formatMoney(tri.moneyAmountActual) }}
             </span>
           </td>
           <td></td>

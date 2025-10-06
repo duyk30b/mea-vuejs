@@ -24,7 +24,7 @@ import { TicketProcedureService } from '../ticket-procedure'
 import { TicketProcedure, TicketProcedureType } from '../ticket-procedure/ticket-procedure.model'
 import { TicketProductService } from '../ticket-product'
 import { TicketProduct, TicketProductType } from '../ticket-product/ticket-product.model'
-import { TicketRadiology } from '../ticket-radiology'
+import { TicketRadiology, TicketRadiologyService } from '../ticket-radiology'
 import type { TicketReception } from '../ticket-reception'
 import { TicketRegimen, TicketRegimenItem, TicketRegimenService } from '../ticket-regimen'
 import { TicketSurcharge } from '../ticket-surcharge/ticket-surcharge.model'
@@ -353,9 +353,11 @@ export class Ticket {
       // TicketProductService.refreshRelation(this.ticketProductList || []),
       TicketProcedureService.refreshRelation(this.ticketProcedureList || []),
       TicketRegimenService.refreshRelation(this.ticketRegimenList || []),
+      TicketRegimenService.refreshRelationItem(this.ticketRegimenItemList || []),
       TicketLaboratoryService.refreshRelation(this.ticketLaboratoryList || []),
       TicketLaboratoryService.refreshRelationGroup(this.ticketLaboratoryGroupList || []),
       TicketLaboratoryService.refreshRelationResult(this.ticketLaboratoryResultList || []),
+      TicketRadiologyService.refreshRelation(this.ticketRadiologyList),
     ])
   }
 

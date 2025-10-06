@@ -238,6 +238,7 @@ const handleClickModalRegisterAppointment = () => {
                 <div>
                   <VueButton
                     v-if="
+                      !ticketRoomRef.isPaymentEachItem &&
                       [
                         TicketStatus.Schedule,
                         TicketStatus.Draft,
@@ -258,7 +259,10 @@ const handleClickModalRegisterAppointment = () => {
                     <span class="font-bold">THANH TOÁN</span>
                   </VueButton>
                   <VueButton
-                    v-if="[TicketStatus.Debt].includes(ticketRoomRef.status)"
+                    v-if="
+                      !ticketRoomRef.isPaymentEachItem &&
+                      [TicketStatus.Debt].includes(ticketRoomRef.status)
+                    "
                     size="small"
                     color="green"
                     icon="dollar"
@@ -273,6 +277,7 @@ const handleClickModalRegisterAppointment = () => {
                   </VueButton>
                   <VueButton
                     v-if="
+                      !ticketRoomRef.isPaymentEachItem &&
                       [TicketStatus.Completed, TicketStatus.Cancelled].includes(
                         ticketRoomRef.status,
                       )

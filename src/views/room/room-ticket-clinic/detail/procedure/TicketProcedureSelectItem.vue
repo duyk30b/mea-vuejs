@@ -148,7 +148,7 @@ const handleSave = async () => {
   })
   ticketRegimenListDraft.value.forEach((tr) => {
     tr.ticketRegimenItemList?.forEach((tri) => {
-      if (tri.quantityExpected < 0) {
+      if (tri.quantityRegular < 0) {
         AlertStore.addError('Không thể chọn số lượng < 0')
         throw new Error('Không thể chọn số lượng < 0')
       }

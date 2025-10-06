@@ -7,6 +7,7 @@ import {
   IconDelete,
   IconDollar,
   IconFileSearch,
+  IconMinusCircle,
   IconTeam,
 } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
@@ -132,8 +133,11 @@ const clickDestroyTicketRegimen = async (ticketRegimenId: string) => {
   if (!trCurrent) return
   for (let i = 0; i < (trCurrent.ticketRegimenItemList || []).length; i++) {
     const element = trCurrent.ticketRegimenItemList![i]
-    if (element.quantityPayment > 0) {
+    if (element.quantityPaid != 0 || element.moneyAmountPaid != 0) {
       return AlertStore.addError('Phiếu đã thanh toán không thể xóa')
+    }
+    if (element.quantityUsed != 0 || element.moneyAmountUsed != 0) {
+      return AlertStore.addError('Phiếu đã sử dụng không thể xóa')
     }
   }
 
@@ -158,10 +162,13 @@ const clickDestroyTicketRegimen = async (ticketRegimenId: string) => {
 }
 
 const totalMoney = computed(() => {
-  return (
-    ticketProcedureNormalList.value.reduce((acc, i) => acc + i.actualPrice * i.quantity, 0) +
-    ticketRegimenList.value.reduce((acc, i) => acc + i.spentMoney, 0)
-  )
+  return (ticketRoomRef.value.ticketProcedureList || []).reduce((acc, item) => {
+    const money =
+      item.paymentMoneyStatus !== PaymentMoneyStatus.NoEffect ? item.actualPrice * item.quantity : 0
+    return acc + money
+  }, 0)
+  // ticketProcedureNormalList.value.reduce((acc, i) => acc + i.actualPrice * i.quantity, 0) +
+  // ticketRegimenList.value.reduce((acc, i) => acc + i.mo, 0)
 })
 </script>
 <template>
@@ -186,7 +193,7 @@ const totalMoney = computed(() => {
         <thead>
           <tr>
             <th v-if="CONFIG.MODE === 'development'" style="width: 150px">ID</th>
-            <th v-if="ticketRoomRef.isPaymentEachItem">TT</th>
+            <th v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'">TT</th>
             <th>Dịch vụ</th>
             <th>Thời gian</th>
             <th>Hành động</th>
@@ -207,7 +214,7 @@ const totalMoney = computed(() => {
               <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
                 {{ tp.id }}
               </td>
-              <td v-if="ticketRoomRef.isPaymentEachItem">
+              <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'">
                 <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />
               </td>
 
@@ -373,11 +380,11 @@ const totalMoney = computed(() => {
               <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
                 {{ tr.id }}
               </td>
-              <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+              <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
               <!-- <td>
                 <TicketRegimenStatusTooltip :status="tr.status" />
               </td> -->
-              <td colspan="7">
+              <td colspan="6">
                 <div class="flex gap-4 justify-between">
                   <div>
                     <div class="font-bold">{{ tr.regimen?.name }}</div>
@@ -385,10 +392,12 @@ const totalMoney = computed(() => {
                       <div class="flex gap-2" style="font-size: 0.9em; color: #555">
                         <span>- {{ tri.procedure?.name }}</span>
                         <span class="font-bold">
-                          ({{ tri.quantityFinish }} / {{ tri.quantityExpected }})
+                          ({{ tri.quantityUsed }} / {{ tri.quantityRegular }})
                         </span>
+                        <span v-if="CONFIG.MODE === 'development'" style="color: violet"></span>
                         <span v-if="CONFIG.MODE === 'development'" style="color: violet">
-                          ( {{ formatMoney(tri.paymentMoneyAmount) }} / {{ tri.quantityPayment }} )
+                          ( A {{ formatMoney(tri.moneyAmountActual) }} / {{ tri.quantityActual }} -
+                          P {{ formatMoney(tri.moneyAmountPaid) }} / {{ tri.quantityPaid }} )
                         </span>
                       </div>
                     </template>
@@ -396,19 +405,20 @@ const totalMoney = computed(() => {
                   <div class="text-right">
                     <div>Giá tiền</div>
                     <div v-if="tr.discountMoney" class="text-xs italic text-red-500">
-                      <del>{{ formatMoney(tr.expectedMoney) }}</del>
+                      <del>{{ formatMoney(tr.moneyAmountRegular) }}</del>
                     </div>
                     <div
                       class="flex items-center gap-1 text-lg"
                       style="font-weight: bold; color: var(--text-green)"
                     >
-                      <span>{{ formatMoney(tr.actualMoney) }}</span>
+                      <span>{{ formatMoney(tr.moneyAmountSale) }}</span>
                       <a
                         v-if="
                           ![TicketStatus.Debt, TicketStatus.Completed].includes(
                             ticketRoomRef.status,
                           ) &&
-                          !tr.spentMoney &&
+                          !tr.moneyAmountUsed &&
+                          !tr.moneyAmountPaid &&
                           userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
                         "
                         @click="modalTicketRegimenUpdateMoney?.openModal({ ticketRegimen: tr })"
@@ -421,37 +431,20 @@ const totalMoney = computed(() => {
                   <div class="text-right">
                     <div>Đã sử dụng</div>
                     <div class="text-lg" style="font-weight: bold; color: var(--text-green)">
-                      {{ formatMoney(tr.spentMoney) }}
+                      {{ formatMoney(tr.moneyAmountUsed) }}
                     </div>
                   </div>
-                  <div v-if="ticketRegimenList.length == 1" class="text-right">
-                    <div v-if="ticketRoomRef.isPaymentEachItem">
-                      <div>Số tiền còn lại</div>
-                      <div class="text-lg" style="font-weight: bold; color: var(--text-green)">
-                        {{ formatMoney(tr.remainingMoney) }}
-                      </div>
-                    </div>
-                    <div v-else>
-                      <template v-if="ticketRoomRef.debt <= 0">
-                        <div>Số tiền còn lại</div>
-                        <div class="text-lg" style="font-weight: bold; color: var(--text-green)">
-                          {{ formatMoney(-ticketRoomRef.debt) }}
-                        </div>
-                      </template>
-                      <template v-else>
-                        <div>Số tiền còn thiếu</div>
-                        <div class="text-lg" style="font-weight: bold; color: var(--text-green)">
-                          {{ formatMoney(ticketRoomRef.debt) }}
-                        </div>
-                      </template>
+                  <div v-if="ticketRoomRef.isPaymentEachItem" class="text-right">
+                    <div>Đã thanh toán</div>
+                    <div class="text-lg" style="font-weight: bold; color: var(--text-green)">
+                      {{ formatMoney(tr.moneyAmountPaid) }}
                     </div>
                   </div>
-                  <div
-                    v-if="CONFIG.MODE === 'development'"
-                    style="color: violet; text-align: right"
-                  >
-                    <div>CostAmount</div>
-                    <div>Σ {{ formatMoney(tr.costAmount) }}</div>
+                  <div v-if="ticketRoomRef.isPaymentEachItem" class="text-right">
+                    <div>Còn thiếu</div>
+                    <div class="text-lg" style="font-weight: bold; color: var(--text-green)">
+                      {{ formatMoney(tr.moneyAmountSale - tr.moneyAmountPaid) }}
+                    </div>
                   </div>
                 </div>
               </td>
@@ -476,6 +469,12 @@ const totalMoney = computed(() => {
                   />
                 </div>
               </td> -->
+              <td>
+                <div v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: right">
+                  <div>CostAmount</div>
+                  <div>Σ {{ formatMoney(tr.costAmount) }}</div>
+                </div>
+              </td>
               <td>
                 <div class="flex justify-around items-center">
                   <div v-if="tr.ticketUserRequestList?.length">
@@ -517,7 +516,7 @@ const totalMoney = computed(() => {
                 <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
                   {{ tp.id }}
                 </td>
-                <td v-if="ticketRoomRef.isPaymentEachItem">
+                <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'">
                   <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />
                 </td>
                 <!-- <td class="text-center">
@@ -553,8 +552,9 @@ const totalMoney = computed(() => {
                     <VueButton
                       size="small"
                       @click="modalProcessTicketProcedure?.openModal({ ticketProcedure: tp })"
-                      :icon="IconClockCircle"
                     >
+                      <IconMinusCircle v-if="tp.status === TicketProcedureStatus.NoEffect" />
+                      <IconClockCircle v-if="tp.status === TicketProcedureStatus.Pending" />
                       Thực hiện
                     </VueButton>
                   </div>
@@ -669,7 +669,7 @@ const totalMoney = computed(() => {
           </template>
           <tr>
             <td v-if="CONFIG.MODE === 'development'"></td>
-            <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+            <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
             <td colspan="5" class="text-right uppercase">
               <b>Tổng tiền</b>
             </td>

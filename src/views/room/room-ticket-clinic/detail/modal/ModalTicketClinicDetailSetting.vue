@@ -182,10 +182,20 @@ defineExpose({ openModal })
                 <table class="">
                   <thead>
                     <tr>
-                      <th colspan="2">Cài đặt xét nghiệm</th>
+                      <th colspan="2">Cài đặt dịch vụ</th>
                     </tr>
                   </thead>
-                  <tbody></tbody>
+                  <tbody>
+                    <tr>
+                      <td colspan="2">
+                        <InputCheckbox
+                          v-model:value="settingDisplay.regimen.isEffectTotalMoney"
+                          type-parser="number"
+                          label="Liệu trình: Tính cả những buổi chưa thực hiện vào tổng tiền"
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
                 </table>
               </div>
             </VueTabPanel>

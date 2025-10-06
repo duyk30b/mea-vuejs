@@ -26,28 +26,30 @@ export class TicketChangeProcedureApi {
           const { ticketRegimenAdd, ticketRegimenItemAddList, ticketUserRequestAddList } = trWrap
           return {
             ticketRegimenAdd: {
+              isEffectTotalMoney: ticketRegimenAdd.isEffectTotalMoney,
               regimenId: ticketRegimenAdd.regimenId,
 
-              expectedMoney: ticketRegimenAdd.expectedMoney,
-              actualMoney: ticketRegimenAdd.actualMoney,
+              moneyAmountRegular: ticketRegimenAdd.moneyAmountRegular,
+              moneyAmountSale: ticketRegimenAdd.moneyAmountSale,
               discountMoney: ticketRegimenAdd.discountMoney,
               discountPercent: ticketRegimenAdd.discountPercent,
               discountType: ticketRegimenAdd.discountType,
             },
             ticketRegimenItemAddList: (ticketRegimenItemAddList || [])
-              .filter((tri) => tri.quantityExpected > 0)
+              .filter((tri) => tri.quantityRegular > 0)
               .map((tri, index) => {
                 return {
                   procedureId: tri.procedureId,
                   gapDay: tri.gapDay,
 
-                  quantityExpected: tri.quantityExpected,
+                  quantityRegular: tri.quantityRegular,
 
-                  expectedMoneyAmount: tri.expectedMoneyAmount,
+                  moneyAmountRegular: tri.moneyAmountRegular,
+                  moneyAmountSale: tri.moneyAmountSale,
+
                   discountMoneyAmount: tri.discountMoneyAmount,
                   discountPercent: tri.discountPercent,
                   discountType: tri.discountType,
-                  actualMoneyAmount: tri.actualMoneyAmount,
                 }
               }),
             ticketUserRequestAddList: (ticketUserRequestAddList || [])
@@ -182,21 +184,21 @@ export class TicketChangeProcedureApi {
       `/ticket/${ticketId}/procedure/update-money-ticket-regimen/${ticketRegimenId}`,
       {
         ticketRegimenUpdate: {
-          expectedMoney: ticketRegimen.expectedMoney,
+          moneyAmountRegular: ticketRegimen.moneyAmountRegular,
+          moneyAmountSale: ticketRegimen.moneyAmountSale,
           discountMoney: ticketRegimen.discountMoney,
           discountPercent: ticketRegimen.discountPercent,
           discountType: ticketRegimen.discountType,
-          actualMoney: ticketRegimen.actualMoney,
         },
         ticketRegimenItemUpdateList: ticketRegimenItemList.map((i) => {
           return {
             id: i.id,
-            quantityExpected: i.quantityExpected,
-            expectedMoneyAmount: i.expectedMoneyAmount,
+            quantityRegular: i.quantityRegular,
+            moneyAmountRegular: i.moneyAmountRegular,
+            moneyAmountSale: i.moneyAmountSale,
             discountMoneyAmount: i.discountMoneyAmount,
             discountPercent: i.discountPercent,
             discountType: i.discountType,
-            actualMoneyAmount: i.actualMoneyAmount,
           }
         }),
       },
@@ -228,7 +230,7 @@ export class TicketChangeProcedureApi {
     ticketId: string
     ticketProcedureResult: TicketProcedure
     ticketUserResultList: TicketUser[]
-    ticketProductProcedureResultList: TicketProduct[]
+    ticketProductConsumableList: TicketProduct[]
     imagesChange?: {
       files: File[]
       imageIdWaitList: number[]
@@ -240,7 +242,7 @@ export class TicketChangeProcedureApi {
       imagesChange,
       ticketProcedureResult,
       ticketUserResultList,
-      ticketProductProcedureResultList,
+      ticketProductConsumableList,
     } = options
 
     const formData = new FormData()
@@ -277,9 +279,9 @@ export class TicketChangeProcedureApi {
     )
 
     formData.append(
-      'ticketProductProcedureResultList',
+      'ticketProductConsumableList',
       JSON.stringify(
-        ticketProductProcedureResultList.map((i) => {
+        ticketProductConsumableList.map((i) => {
           return {
             quantity: i.quantity,
             productId: i.productId,

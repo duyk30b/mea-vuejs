@@ -31,14 +31,16 @@ export class TicketRegimen extends BaseModel {
   customerId: number
   regimenId: number
 
+  isEffectTotalMoney: number
   status: TicketRegimenStatus
   costAmount: number
-  commissionAmount: number // Giá thực tế
+  commissionAmount: number
 
-  expectedMoney: number // Giá dự kiến
-  actualMoney: number // Giá thực tế
-  spentMoney: number // Tiền đã dùng
-  remainingMoney: number // Tiền còn lại, chi dùng trong trường hợp thanh toán lẻ
+  moneyAmountRegular: number // Giá dự kiến
+  moneyAmountSale: number
+  moneyAmountActual: number
+  moneyAmountUsed: number
+  moneyAmountPaid: number
 
   discountMoney: number // tiền giảm giá
   discountPercent: number // % giảm giá
@@ -65,12 +67,17 @@ export class TicketRegimen extends BaseModel {
     ins.customerId = 0
     ins.regimenId = 0
 
+    ins.isEffectTotalMoney = 1
     ins.status = TicketRegimenStatus.Pending
+    ins.costAmount = 0
+    ins.commissionAmount = 0
 
-    ins.expectedMoney = 0
-    ins.actualMoney = 0
-    ins.spentMoney = 0
-    ins.remainingMoney = 0
+    ins.moneyAmountRegular = 0
+    ins.moneyAmountSale = 0
+    ins.moneyAmountActual = 0
+    ins.moneyAmountUsed = 0
+    ins.moneyAmountPaid = 0
+
     ins.discountMoney = 0
     ins.discountPercent = 0
     ins.discountType = DiscountType.VND
@@ -146,14 +153,17 @@ export class TicketRegimen extends BaseModel {
     if (a.customerId != b.customerId) return false
     if (a.regimenId != b.regimenId) return false
 
+    if (a.isEffectTotalMoney != b.isEffectTotalMoney) return false
     if (a.status != b.status) return false
     if (a.costAmount != b.costAmount) return false
     if (a.commissionAmount != b.commissionAmount) return false
 
-    if (a.expectedMoney != b.expectedMoney) return false
-    if (a.actualMoney != b.actualMoney) return false
-    if (a.spentMoney != b.spentMoney) return false
-    if (a.remainingMoney != b.remainingMoney) return false
+    if (a.moneyAmountRegular != b.moneyAmountRegular) return false
+    if (a.moneyAmountSale != b.moneyAmountSale) return false
+    if (a.moneyAmountActual != b.moneyAmountActual) return false
+    if (a.moneyAmountUsed != b.moneyAmountUsed) return false
+    if (a.moneyAmountPaid != b.moneyAmountPaid) return false
+
     if (a.discountMoney != b.discountMoney) return false
     if (a.discountPercent != b.discountPercent) return false
     if (a.discountType != b.discountType) return false

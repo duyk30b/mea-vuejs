@@ -11,17 +11,21 @@ export class TicketRegimenItem extends BaseModel {
   procedureId: number
   ticketRegimenId: string
 
-  quantityPayment: number
-  quantityExpected: number
-  quantityFinish: number
   gapDay: number
+  quantityRegular: number
+  quantityActual: number
+  quantityPaid: number
+  quantityUsed: number
 
-  expectedMoneyAmount: number // Giá dự kiến
-  discountMoneyAmount: number // Giá dự kiến
+  moneyAmountRegular: number
+  moneyAmountSale: number
+  moneyAmountUsed: number
+  moneyAmountActual: number
+  moneyAmountPaid: number
+
+  discountMoneyAmount: number
   discountPercent: number // % giảm giá
   discountType: DiscountType // Loại giảm giá
-  actualMoneyAmount: number // Giá thực tế
-  paymentMoneyAmount: number // Giá thực tế
 
   procedure?: Procedure
 
@@ -36,16 +40,21 @@ export class TicketRegimenItem extends BaseModel {
     ins.procedureId = 0
     ins.ticketRegimenId = ''
 
-    ins.quantityPayment = 0
-    ins.quantityExpected = 0
-    ins.quantityFinish = 0
     ins.gapDay = 1
+    ins.quantityRegular = 0
+    ins.quantityActual = 0
+    ins.quantityPaid = 0
+    ins.quantityUsed = 0
 
-    ins.expectedMoneyAmount = 0
+    ins.moneyAmountRegular = 0
+    ins.moneyAmountSale = 0
+    ins.moneyAmountActual = 0
+    ins.moneyAmountPaid = 0
+    ins.moneyAmountUsed = 0
+
+    ins.discountMoneyAmount = 0
     ins.discountPercent = 0
     ins.discountType = DiscountType.VND
-    ins.actualMoneyAmount = 0
-    ins.paymentMoneyAmount = 0
 
     return ins
   }
@@ -94,16 +103,21 @@ export class TicketRegimenItem extends BaseModel {
     if (a.procedureId != b.procedureId) return false
     if (a.ticketRegimenId != b.ticketRegimenId) return false
 
-    if (a.quantityPayment != b.quantityPayment) return false
-    if (a.quantityExpected != b.quantityExpected) return false
-    if (a.quantityFinish != b.quantityFinish) return false
     if (a.gapDay != b.gapDay) return false
+    if (a.quantityRegular != b.quantityRegular) return false
+    if (a.quantityActual != b.quantityActual) return false
+    if (a.quantityPaid != b.quantityPaid) return false
+    if (a.quantityUsed != b.quantityUsed) return false
 
-    if (a.expectedMoneyAmount != b.expectedMoneyAmount) return false
+    if (a.moneyAmountRegular != b.moneyAmountRegular) return false
+    if (a.moneyAmountSale != b.moneyAmountSale) return false
+    if (a.moneyAmountActual != b.moneyAmountActual) return false
+    if (a.moneyAmountPaid != b.moneyAmountPaid) return false
+    if (a.moneyAmountUsed != b.moneyAmountUsed) return false
+
+    if (a.discountMoneyAmount != b.discountMoneyAmount) return false
     if (a.discountPercent != b.discountPercent) return false
     if (a.discountType != b.discountType) return false
-    if (a.paymentMoneyAmount != b.paymentMoneyAmount) return false
-    if (a.actualMoneyAmount != b.actualMoneyAmount) return false
 
     return true
   }
