@@ -22,13 +22,11 @@ export class TicketLaboratoryGroupGetQuery {
     customerId?: number
     roomId?: number | ConditionNumber
     ticketId?: number
-    registeredAt?: ConditionDate
     createdAt?: ConditionDate
   }
 
   sort?: {
     id?: 'ASC' | 'DESC'
-    registeredAt?: 'ASC' | 'DESC'
     createdAt?: 'ASC' | 'DESC'
   }
 

@@ -16,6 +16,7 @@ export type TicketItemPaymentBody = {
   discountType: DiscountType
   actualPrice: number
   quantity: number
+  sessionIndex: number
   paymentMoneyStatus: PaymentMoneyStatus
 }
 

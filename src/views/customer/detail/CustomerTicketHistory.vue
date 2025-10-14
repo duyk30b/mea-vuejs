@@ -7,6 +7,8 @@ import { PermissionId } from '@/modules/permission/permission.enum'
 import { Ticket, TicketQueryApi, TicketStatus } from '@/modules/ticket'
 import { ESTimer } from '@/utils'
 import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
+import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
+import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -75,7 +77,10 @@ watch(
           </tr>
           <tr v-for="(ticket, index) in ticketList" :key="index">
             <td>
-              <LinkAndStatusTicket :ticket="ticket!" />
+              <div class="flex gap-1 items-center">
+                <TicketLink :ticket="ticket!" :ticketId="ticket.id" target="_blank" />
+                <TicketStatusTag :ticket="ticket!" :ticketId="ticket.id" />
+              </div>
               <div style="font-size: 0.8rem; white-space: nowrap">
                 {{ ESTimer.timeToText(ticket.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>

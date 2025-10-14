@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import VuePagination from '@/common/VuePagination.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { TicketProcedure, TicketProcedureApi } from '@/modules/ticket-procedure'
+import {
+  TicketProcedure,
+  TicketProcedureApi,
+  TicketProcedureType,
+} from '@/modules/ticket-procedure'
 import { ESTimer } from '@/utils'
 import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
 import { ref, watch } from 'vue'
@@ -28,6 +32,7 @@ const startFetchData = async () => {
       limit: limit.value,
       filter: {
         customerId: props.customerId,
+        ticketProcedureType: TicketProcedureType.Normal,
       },
       relation: {
         procedure: true,
@@ -82,7 +87,9 @@ watch(
               </div>
               <LinkAndStatusTicket :ticket="ticketProcedure.ticketProcess!" />
               <div style="font-size: 0.8rem">
-                {{ ESTimer.timeToText(ticketProcedure.ticketProcess?.createdAt, 'DD/MM/YYYY hh:mm') }}
+                {{
+                  ESTimer.timeToText(ticketProcedure.ticketProcess?.createdAt, 'DD/MM/YYYY hh:mm')
+                }}
               </div>
             </td>
             <td class="text-center">
@@ -127,7 +134,9 @@ watch(
             <td>
               <LinkAndStatusTicket :ticket="ticketProcedure.ticketProcess!" />
               <div style="font-size: 0.8rem">
-                {{ ESTimer.timeToText(ticketProcedure.ticketProcess?.createdAt, 'hh:mm DD/MM/YYYY') }}
+                {{
+                  ESTimer.timeToText(ticketProcedure.ticketProcess?.createdAt, 'hh:mm DD/MM/YYYY')
+                }}
               </div>
             </td>
             <td>{{ ticketProcedure.procedure?.name }}</td>

@@ -286,10 +286,18 @@ const handleClickModalRegisterAppointment = () => {
           </tr>
           <tr>
             <td><IconClockCircle /></td>
-            <td>Thời gian</td>
+            <td>TG tạo phiếu</td>
             <td>:</td>
             <td style="font-style: italic">
               {{ ESTimer.timeToText(ticketRoomRef.createdAt, 'hh:mm DD/MM/YYYY') }}
+            </td>
+          </tr>
+          <tr>
+            <td><IconClockCircle /></td>
+            <td>TG tiếp đón</td>
+            <td>:</td>
+            <td style="font-style: italic">
+              {{ ESTimer.timeToText(ticketRoomRef.receptionAt, 'hh:mm DD/MM/YYYY') }}
             </td>
           </tr>
           <tr>

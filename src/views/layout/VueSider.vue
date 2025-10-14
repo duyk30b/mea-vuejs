@@ -96,7 +96,8 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
           </router-link>
         </span>
       </a-menu-item>
-
+    </template>
+    <template v-for="room in roomList" :key="room.id">
       <a-menu-item
         v-if="
           roomIdMap[room.id] &&
@@ -112,6 +113,32 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <template #icon><IconApartment /></template>
         <span>
           <router-link :to="{ name: 'RoomTicketClinic', params: { roomId: room.id } }">
+            {{ room.name }}
+          </router-link>
+        </span>
+      </a-menu-item>
+    </template>
+    <template v-for="room in roomList" :key="room.id">
+      <a-menu-item
+        v-if="roomIdMap[room.id] && room.roomType === RoomType.Laboratory"
+        :key="'RoomLaboratory' + '_' + room.id"
+      >
+        <template #icon><IconApartment /></template>
+        <span>
+          <router-link :to="{ name: 'RoomLaboratory', params: { roomId: room.id } }">
+            {{ room.name }}
+          </router-link>
+        </span>
+      </a-menu-item>
+    </template>
+    <template v-for="room in roomList" :key="room.id">
+      <a-menu-item
+        v-if="roomIdMap[room.id] && room.roomType === RoomType.Radiology"
+        :key="'RoomRadiology' + '_' + room.id"
+      >
+        <template #icon><IconApartment /></template>
+        <span>
+          <router-link :to="{ name: 'RoomRadiology', params: { roomId: room.id } }">
             {{ room.name }}
           </router-link>
         </span>

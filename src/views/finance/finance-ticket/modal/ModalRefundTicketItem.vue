@@ -225,6 +225,7 @@ const startRefund = async (options?: { print: boolean }) => {
             discountType: DiscountType.VND,
             actualPrice: value!.moneyAmountWallet,
             quantity: 1,
+            sessionIndex: 0,
             paymentMoneyStatus: PaymentMoneyStatus.PendingPayment, // để tạm để validate chứ không sử dụng
           }
         }),
@@ -241,6 +242,7 @@ const startRefund = async (options?: { print: boolean }) => {
               discountType: value!.discountType,
               actualPrice: value!.actualPrice,
               quantity: value!.quantity,
+              sessionIndex: value!.indexSession,
               paymentMoneyStatus: value!.paymentMoneyStatus,
             }
           }),
@@ -257,6 +259,7 @@ const startRefund = async (options?: { print: boolean }) => {
               discountType: value!.discountType,
               actualPrice: value!.actualPrice,
               quantity: value!.quantity,
+              sessionIndex: 0,
               paymentMoneyStatus: value!.paymentMoneyStatus,
             }
           }),
@@ -273,6 +276,7 @@ const startRefund = async (options?: { print: boolean }) => {
               discountType: value!.discountType,
               actualPrice: value!.actualPrice,
               quantity: value!.quantity,
+              sessionIndex: 0,
               paymentMoneyStatus: value!.paymentMoneyStatus,
             }
           }),
@@ -289,6 +293,7 @@ const startRefund = async (options?: { print: boolean }) => {
               discountType: value!.discountType,
               actualPrice: value!.actualPrice,
               quantity: 1,
+              sessionIndex: 0,
               paymentMoneyStatus: value!.paymentMoneyStatus,
             }
           }),
@@ -305,6 +310,7 @@ const startRefund = async (options?: { print: boolean }) => {
               discountType: value!.discountType,
               actualPrice: value!.actualPrice,
               quantity: 1,
+              sessionIndex: 0,
               paymentMoneyStatus: value!.paymentMoneyStatus,
             }
           }),

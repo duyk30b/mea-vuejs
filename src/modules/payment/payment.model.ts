@@ -44,7 +44,7 @@ export const PaymentActionTypeText = {
   [PaymentActionType.Close]: 'Đóng phiếu và ghi nợ',
   [PaymentActionType.Reopen]: 'Mở phiếu và hoàn nợ',
   [PaymentActionType.PrepaymentForTicketItemList]: 'Thanh toán',
-  [PaymentActionType.RefundForTicketItemList]: 'Hoàn thanh toán',
+  [PaymentActionType.RefundForTicketItemList]: 'Hoàn tiền',
   [PaymentActionType.FixByExcel]: 'Cập nhật bởi Excel',
 }
 
@@ -188,22 +188,22 @@ export class Payment {
     payment.cashier = userMap[payment.cashierId] || User.blank()
     payment.paymentTicketItemList.forEach((i) => {
       if (i.ticketItemType === TicketItemType.TicketRegimen) {
-        i.interactName = regimenMap[i.ticketItemId]?.name || ''
+        i.interactName = regimenMap[i.interactId]?.name || ''
       }
       if (i.ticketItemType === TicketItemType.TicketProcedure) {
-        i.interactName = procedureMap[i.ticketItemId]?.name || ''
+        i.interactName = procedureMap[i.interactId]?.name || ''
       }
       if (i.ticketItemType === TicketItemType.TicketProductConsumable) {
-        i.interactName = productMap[i.ticketItemId]?.brandName || ''
+        i.interactName = productMap[i.interactId]?.brandName || ''
       }
       if (i.ticketItemType === TicketItemType.TicketProductPrescription) {
-        i.interactName = productMap[i.ticketItemId]?.brandName || ''
+        i.interactName = productMap[i.interactId]?.brandName || ''
       }
       if (i.ticketItemType === TicketItemType.TicketLaboratory) {
-        i.interactName = laboratoryMap[i.ticketItemId]?.name || ''
+        i.interactName = laboratoryMap[i.interactId]?.name || ''
       }
       if (i.ticketItemType === TicketItemType.TicketRadiology) {
-        i.interactName = radiologyMap[i.ticketItemId]?.name || ''
+        i.interactName = radiologyMap[i.interactId]?.name || ''
       }
     })
     return payment

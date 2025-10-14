@@ -7,7 +7,13 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer } from '@/modules/customer'
 import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
-import { MoneyDirection, Payment, PaymentPersonType, PaymentVoucherType } from '@/modules/payment'
+import {
+  MoneyDirection,
+  Payment,
+  PaymentActionType,
+  PaymentPersonType,
+  PaymentVoucherType,
+} from '@/modules/payment'
 import { PaymentMethodService } from '@/modules/payment-method'
 import { PaymentTicketItem, TicketItemType } from '@/modules/payment-ticket-item'
 import { PrintHtmlAction } from '@/modules/print-html'
@@ -256,6 +262,7 @@ const startPrepayment = async (options?: { print: boolean }) => {
                 discountType: ticketRegimen.discountType,
                 actualPrice: ticketRegimen.actualPrice,
                 quantity: 1,
+                sessionIndex: 0,
                 paymentMoneyStatus: PaymentMoneyStatus.PendingPayment, // để tạm để validate chứ không sử dụng
               }
             } else {
@@ -269,6 +276,7 @@ const startPrepayment = async (options?: { print: boolean }) => {
                 discountType: DiscountType.VND,
                 actualPrice: value.paymentWallet,
                 quantity: 1,
+                sessionIndex: 0,
                 paymentMoneyStatus: PaymentMoneyStatus.PendingPayment, // để tạm để validate chứ không sử dụng
               }
             }
@@ -292,6 +300,7 @@ const startPrepayment = async (options?: { print: boolean }) => {
                     discountType: tp.discountType,
                     actualPrice: tp.actualPrice,
                     quantity: tp.quantity,
+                    sessionIndex: tp.indexSession,
                     paymentMoneyStatus: tp.paymentMoneyStatus,
                   }
                 })
@@ -310,6 +319,7 @@ const startPrepayment = async (options?: { print: boolean }) => {
                 discountType: value!.discountType,
                 actualPrice: value!.actualPrice,
                 quantity: value!.quantity,
+                sessionIndex: value!.indexSession,
                 paymentMoneyStatus: value!.paymentMoneyStatus,
               }
             }),
@@ -327,6 +337,7 @@ const startPrepayment = async (options?: { print: boolean }) => {
               discountType: value!.discountType,
               actualPrice: value!.actualPrice,
               quantity: value!.quantity,
+              sessionIndex: 0,
               paymentMoneyStatus: value!.paymentMoneyStatus,
             }
           }),
@@ -343,6 +354,7 @@ const startPrepayment = async (options?: { print: boolean }) => {
               discountType: value!.discountType,
               actualPrice: value!.actualPrice,
               quantity: value!.quantity,
+              sessionIndex: 0,
               paymentMoneyStatus: value!.paymentMoneyStatus,
             }
           }),
@@ -359,6 +371,7 @@ const startPrepayment = async (options?: { print: boolean }) => {
               discountType: value!.discountType,
               actualPrice: value!.actualPrice,
               quantity: 1,
+              sessionIndex: 0,
               paymentMoneyStatus: value!.paymentMoneyStatus,
             }
           }),
@@ -375,6 +388,7 @@ const startPrepayment = async (options?: { print: boolean }) => {
               discountType: value!.discountType,
               actualPrice: value!.actualPrice,
               quantity: 1,
+              sessionIndex: 0,
               paymentMoneyStatus: value!.paymentMoneyStatus,
             }
           }),
@@ -396,13 +410,14 @@ const startPrepayment = async (options?: { print: boolean }) => {
   }
 }
 
-const startPint = async (options?: { print: boolean }) => {
+const startPrint = async () => {
   try {
     const paymentTemp = Payment.blank()
     paymentTemp.voucherType = PaymentVoucherType.Ticket
     paymentTemp.voucherId = ticket.value.id
     paymentTemp.personType = PaymentPersonType.Customer
     paymentTemp.personId = ticket.value.customerId
+    paymentTemp.paymentActionType = PaymentActionType.PrepaymentForTicketItemList
 
     paymentTemp.createdAt = Date.now()
     paymentTemp.moneyDirection = MoneyDirection.In
@@ -562,6 +577,8 @@ const startPint = async (options?: { print: boolean }) => {
       })
 
     paymentTemp.paymentTicketItemList = [
+      ...paymentTicketItemRegimen,
+      ...paymentTicketItemProcedureRegimen,
       ...paymentTicketItemProcedure,
       ...paymentTicketItemConsumable,
       ...paymentTicketItemPrescription,
@@ -570,12 +587,13 @@ const startPint = async (options?: { print: boolean }) => {
     ]
 
     const paymentPrint = await Payment.refreshData(paymentTemp)
+    console.log('🚀 ~ ModalPrepaymentTicketItem.vue:575 ~ startPrint ~ paymentPrint:', paymentPrint)
     await PrintHtmlAction.startPrintCustomerPayment({
       customer: ticket.value.customer!,
       payment: paymentPrint,
     })
   } catch (error) {
-    console.log('🚀 ~ ModalPrepaymentTicketItem.vue:380 ~ startPint ~ error:', error)
+    console.log('🚀 ~ ModalPrepaymentTicketItem.vue:380 ~ startPrint ~ error:', error)
   }
 }
 
@@ -1095,7 +1113,7 @@ defineExpose({ openModal, openModalByTicket })
               </thead>
               <tbody>
                 <tr
-                  v-for="(ticketRadiology, index) in ticket.ticketRadiologyList"
+                  v-for="(ticketRadiology, index) in ticketRadiologyPayment"
                   :key="ticketRadiology.id"
                 >
                   <td>
@@ -1175,7 +1193,7 @@ defineExpose({ openModal, openModalByTicket })
         <VueButton type="reset" @click="closeModal" icon="close">Đóng lại</VueButton>
         <VueButton
           color="blue"
-          @click="startPint"
+          @click="startPrint"
           icon="print"
           style="margin-left: auto"
           :disabled="disabledButtonSave"

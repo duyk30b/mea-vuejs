@@ -14,6 +14,7 @@ import type { PaymentPaginationQuery } from '@/modules/payment/payment.dto'
 import {
   MoneyDirection,
   Payment,
+  PaymentActionType,
   PaymentActionTypeText,
   PaymentPersonType,
   PaymentVoucherType,
@@ -159,10 +160,19 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const startPrintPayment = async (options: { customer: Customer; payment: Payment }) => {
+const startPrintCustomerPayment = async (options: { customer: Customer; payment: Payment }) => {
   const payment = options.payment
   const paymentPrint = await Payment.refreshData(payment)
   await PrintHtmlAction.startPrintCustomerPayment({
+    customer: options.customer!,
+    payment: paymentPrint,
+  })
+}
+
+const startPrintCustomerRefund = async (options: { customer: Customer; payment: Payment }) => {
+  const payment = options.payment
+  const paymentPrint = await Payment.refreshData(payment)
+  await PrintHtmlAction.startPrintCustomerRefund({
     customer: options.customer!,
     payment: paymentPrint,
   })
@@ -388,10 +398,10 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
             </td>
             <td>
               <div class="text-left" v-if="payment.moneyDirection === MoneyDirection.In">
-                <VueTag color="green" icon="dollar">Phiếu thu</VueTag>
+                <VueTag color="blue" icon="dollar">Phiếu thu</VueTag>
               </div>
               <div class="text-right" v-if="payment.moneyDirection === MoneyDirection.Out">
-                <VueTag color="blue" icon="dollar">Phiếu chi</VueTag>
+                <VueTag color="green" icon="dollar">Phiếu chi</VueTag>
               </div>
               <div class="text-center" v-if="payment.moneyDirection === MoneyDirection.Other">
                 <VueTag color="purple" icon="dollar">Khác</VueTag>
@@ -452,10 +462,27 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
                 @click="modalPaymentUpdateInfo?.openModal(payment)"
               />
             </td>
-            <td>
+            <td class="text-center">
               <IconPrint
+                v-if="
+                  [
+                    PaymentActionType.PrepaymentForTicketItemList,
+                    PaymentActionType.PrepaymentMoney,
+                    PaymentActionType.PayDebt,
+                  ].includes(payment.paymentActionType)
+                "
                 style="font-size: 18px; color: var(--text-blue); cursor: pointer"
-                @click="startPrintPayment({ payment, customer: payment.customer })"
+                @click="startPrintCustomerPayment({ payment, customer: payment.customer })"
+              />
+              <IconPrint
+                v-if="
+                  [
+                    PaymentActionType.RefundForTicketItemList,
+                    PaymentActionType.RefundMoney,
+                  ].includes(payment.paymentActionType)
+                "
+                style="font-size: 18px; color: var(--text-green); cursor: pointer"
+                @click="startPrintCustomerRefund({ payment, customer: payment.customer })"
               />
             </td>
           </tr>

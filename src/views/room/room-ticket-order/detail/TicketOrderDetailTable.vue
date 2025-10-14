@@ -458,7 +458,7 @@ const colspan = computed(() => {
             @click="showModalInvoicePayment(PaymentViewType.Success)"
           >
             <a>
-              <span class="mr-1">Đã tạm ứng</span>
+              <span class="mr-1">Đã thanh toán</span>
               <IconExclamationCircle />
             </a>
           </td>

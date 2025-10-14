@@ -47,7 +47,7 @@ const paymentMoneyStatus = ref<PaymentMoneyStatus[]>([
   PaymentMoneyStatus.PartialPaid,
 ])
 
-const sortColumn = ref<'registeredAt' | 'id' | ''>('')
+const sortColumn = ref<'createdAt' | 'id' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const page = ref(1)
@@ -81,7 +81,7 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
         paymentMoneyStatus: paymentMoneyStatus.value.length
           ? { IN: paymentMoneyStatus.value }
           : undefined,
-        registeredAt:
+        createdAt:
           fromTime.value || toTime.value
             ? {
                 GTE: fromTime.value ? fromTime.value : undefined,
@@ -92,9 +92,9 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
       sort: sortValue.value
         ? {
             id: sortColumn.value === 'id' ? sortValue.value : undefined,
-            registeredAt: sortColumn.value === 'registeredAt' ? sortValue.value : undefined,
+            createdAt: sortColumn.value === 'createdAt' ? sortValue.value : undefined,
           }
-        : { registeredAt: 'DESC' },
+        : { createdAt: 'DESC' },
     })
 
     ticketLaboratoryGroupList.value = paginationResponse.ticketLaboratoryGroupList
@@ -174,7 +174,7 @@ const startFilter = async () => {
   await startFetchData()
 }
 
-const changeSort = async (column: 'id' | 'registeredAt') => {
+const changeSort = async (column: 'id' | 'createdAt') => {
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
     sortValue.value = ''
@@ -348,16 +348,16 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
             <th style="min-width: 150px">Khách hàng</th>
             <th>Tên phiếu</th>
             <th class="">Kết quả</th>
-            <th class="cursor-pointer" @click="changeSort('registeredAt')">
+            <th class="cursor-pointer" @click="changeSort('createdAt')">
               <div class="flex items-center gap-1 justify-center">
                 <span>TG Chỉ định</span>
-                <IconSort v-if="sortColumn !== 'registeredAt'" style="opacity: 0.4" />
+                <IconSort v-if="sortColumn !== 'createdAt'" style="opacity: 0.4" />
                 <IconSortUp
-                  v-if="sortColumn === 'registeredAt' && sortValue === 'ASC'"
+                  v-if="sortColumn === 'createdAt' && sortValue === 'ASC'"
                   style="opacity: 0.4"
                 />
                 <IconSortDown
-                  v-if="sortColumn === 'registeredAt' && sortValue === 'DESC'"
+                  v-if="sortColumn === 'createdAt' && sortValue === 'DESC'"
                   style="opacity: 0.4"
                 />
               </div>

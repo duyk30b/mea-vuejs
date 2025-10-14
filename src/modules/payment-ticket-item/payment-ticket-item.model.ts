@@ -7,7 +7,7 @@ import { TicketProduct } from '../ticket-product'
 import { TicketRadiology } from '../ticket-radiology'
 
 export enum TicketItemType {
-  Other = 0, // Không xác định
+  Other = 0,
   TicketRegimen = 1,
   TicketProcedure = 2,
   TicketProductConsumable = 3,

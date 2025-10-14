@@ -193,7 +193,7 @@ const totalMoney = computed(() => {
         <thead>
           <tr>
             <th v-if="CONFIG.MODE === 'development'" style="width: 150px">ID</th>
-            <th v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'">TT</th>
+            <th>TT</th>
             <th>Dịch vụ</th>
             <th>Thời gian</th>
             <th>Hành động</th>
@@ -214,7 +214,7 @@ const totalMoney = computed(() => {
               <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
                 {{ tp.id }}
               </td>
-              <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'">
+              <td>
                 <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />
               </td>
 
@@ -380,7 +380,7 @@ const totalMoney = computed(() => {
               <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
                 {{ tr.id }}
               </td>
-              <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+              <td></td>
               <!-- <td>
                 <TicketRegimenStatusTooltip :status="tr.status" />
               </td> -->
@@ -526,7 +526,7 @@ const totalMoney = computed(() => {
                 <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
                   {{ tp.id }}
                 </td>
-                <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'">
+                <td>
                   <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />
                 </td>
                 <!-- <td class="text-center">
@@ -679,7 +679,7 @@ const totalMoney = computed(() => {
           </template>
           <tr>
             <td v-if="CONFIG.MODE === 'development'"></td>
-            <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+            <td></td>
             <td colspan="5" class="text-right uppercase">
               <b>Tổng tiền</b>
             </td>

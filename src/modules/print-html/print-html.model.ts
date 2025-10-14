@@ -21,7 +21,7 @@ export const PrintHtmlTypeText = {
   [PrintHtmlType.AllMoney]: 'Bảng kê chi phí',
   [PrintHtmlType.ParaClinicalRequest]: 'Phiếu chỉ định cận lâm sàng',
   [PrintHtmlType.CustomerPayment]: 'Phiếu thu tiền',
-  [PrintHtmlType.CustomerRefund]: 'Phiếu hoàn trả',
+  [PrintHtmlType.CustomerRefund]: 'Phiếu hoàn tiền',
   [PrintHtmlType.Prescription]: 'Đơn thuốc',
   [PrintHtmlType.LaboratoryResult]: 'Phiếu kết quả xét nghiệm',
   [PrintHtmlType.Optometry]: 'Phiếu kết quả đo thị lực',

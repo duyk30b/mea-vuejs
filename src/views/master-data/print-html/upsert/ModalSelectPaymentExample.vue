@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { Payment, PaymentApi } from '@/modules/payment'
+import { Payment, PaymentActionTypeText, PaymentApi } from '@/modules/payment'
 import { ref } from 'vue'
 import VuePagination from '../../../../common/VuePagination.vue'
 import { IconClose } from '../../../../common/icon-antd'
@@ -89,8 +89,8 @@ defineExpose({ openModal })
                 <th>ID</th>
                 <th>Thời gian</th>
                 <th>Khách hàng</th>
+                <th>Lý do</th>
                 <th>Số tiền</th>
-                <th>Note</th>
                 <th style="width: 100px">#</th>
               </tr>
             </thead>
@@ -104,8 +104,8 @@ defineExpose({ openModal })
                   {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
                 </td>
                 <td>{{ payment.customer?.fullName }}</td>
+                <td>{{ PaymentActionTypeText[payment.paymentActionType] }}</td>
                 <td>{{ formatMoney(payment.paidAmount) }}</td>
-                <td>{{ payment.note }}</td>
                 <td class="text-center">
                   <a @click="selectPaymentDemo(payment)">Chọn</a>
                 </td>

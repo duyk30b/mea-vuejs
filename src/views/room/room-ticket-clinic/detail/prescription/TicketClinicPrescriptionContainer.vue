@@ -5,7 +5,7 @@ import { IconFileSearch, IconSpin } from '@/common/icon-antd'
 import { IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import { IconEditSquare } from '@/common/icon-google'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { VueSwitch } from '@/common/vue-form'
+import { InputArea, VueSwitch } from '@/common/vue-form'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus, DiscountType, PaymentMoneyStatus } from '@/modules/enum'
@@ -481,11 +481,15 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
 
     <div class="mt-4">
       <div>Lời dặn của bác sĩ</div>
-      <div style="height: 140px">
-        <VueTinyMCE
+      <div>
+        <InputArea
+          v-model:value="ticketAttributeMap.advice"
+          :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.status)"
+        />
+        <!-- <VueTinyMCE
           v-model="ticketAttributeMap.advice"
           :readonly="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.status)"
-        />
+        /> -->
       </div>
     </div>
   </div>

@@ -2,6 +2,7 @@ import { ESImage, ESString, ESTimer } from '../../utils'
 import type { Customer } from '../customer'
 import { LaboratoryValueType } from '../laboratory'
 import type { Organization } from '../organization'
+import { TicketItemType } from '../payment-ticket-item'
 import { PositionType } from '../position'
 import type { Ticket } from '../ticket'
 import type { User } from '../user'
@@ -27,6 +28,7 @@ export class PrintHtmlCompile {
       _UTILS: {
         PositionType,
         LaboratoryValueType,
+        TicketItemType,
         ESTimer,
         ESImage,
         ESString,
@@ -53,7 +55,7 @@ export class PrintHtmlCompile {
     }
   }
 
-  static compilePageHtml(options: {
+  static compilePageHtml(props: {
     data: Record<string, any> & {
       me: User
       organization: Organization
@@ -68,7 +70,7 @@ export class PrintHtmlCompile {
       _wrapper: string
     }
   }) {
-    const { data, variablesString, template } = options
+    const { data, variablesString, template } = props
     const headerCompiled = PrintHtmlCompile.compileContentHtml({
       data,
       variablesString,

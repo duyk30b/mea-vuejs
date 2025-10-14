@@ -91,7 +91,6 @@ const hasChangeData = computed(() => {
 const startCompile = () => {
   if (!iframe.value) return
   let data: Record<string, any> = {}
-  const ticket = ticketDemo.value
   try {
     eval(printHtml.value.dataExample)
     if (!data || typeof data !== 'object') {
@@ -109,7 +108,7 @@ const startCompile = () => {
   const dataCompile = {
     organization: organization.value,
     me: user.value!,
-    ticket,
+    ticket: ticketDemo.value,
     customer: customerDemo.value!,
     payment: paymentDemo.value,
     ...data,
@@ -136,6 +135,21 @@ const startCompile = () => {
         _wrapper: '${_LAYOUT._FOOTER}',
       },
       variablesString: [printHtmlHeader.value.initVariable, printHtml.value.initVariable],
+    })
+  } else if (printHtml.value.printHtmlType === PrintHtmlType.CustomerPayment) {
+    printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
+      data: dataCompile,
+      template: {
+        _header: printHtmlHeader.value.html,
+        _footer: printHtmlFooter.value.html,
+        _content: '',
+        _wrapper: printHtml.value.html,
+      },
+      variablesString: [
+        printHtmlHeader.value.initVariable,
+        printHtmlFooter.value.initVariable,
+        printHtml.value.initVariable,
+      ],
     })
   } else {
     printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
@@ -187,8 +201,10 @@ const handleModalSelectTicketDemoSuccess = async (ticketDemoId: string) => {
           paymentList: false,
 
           ticketAttributeList: true,
-          ticketProductList: { batch: true, product: true },
+          ticketRegimenList: true,
+          ticketRegimenItemList: true,
           ticketProcedureList: true,
+          ticketProductList: { batch: true, product: true },
           ticketLaboratoryList: true,
           ticketLaboratoryGroupList: true,
           ticketLaboratoryResultList: true,
@@ -384,7 +400,13 @@ const handleSave = async () => {
 
       <div style="grid-area: viewer" class="flex flex-col">
         <div class="flex justify-between">
-          <div v-if="printHtml.printHtmlType === PrintHtmlType.CustomerPayment">
+          <div
+            v-if="
+              [PrintHtmlType.CustomerPayment, PrintHtmlType.CustomerRefund].includes(
+                printHtml.printHtmlType,
+              )
+            "
+          >
             <a @click="modalSelectPaymentExample?.openModal()">Chọn mẫu thanh toán thử</a>
           </div>
           <div v-else>
