@@ -481,7 +481,6 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
 
     <div class="mt-4">
       <div>Lời dặn của bác sĩ</div>
-      {{ ticketAttributeMap.advice }}
       <div style="height: 140px">
         <VueTinyMCE
           v-model="ticketAttributeMap.advice"

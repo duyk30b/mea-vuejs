@@ -51,48 +51,48 @@ const hasChangeData = computed(() => {
 
 const handleChangeExpectedMoney = (data: number) => {
   const expectedMoney = data
-  const actualMoney = ticketRegimen.value.moneyAmountSale
+  const actualMoney = ticketRegimen.value.actualPrice
   const discountMoney = expectedMoney - actualMoney
   const discountPercent =
     expectedMoney == 0 ? 0 : Math.round(((discountMoney * 100) / expectedMoney) * 100) / 100 // fix 2 chữ số thập phân
-  ticketRegimen.value.moneyAmountRegular = expectedMoney
+  ticketRegimen.value.expectedPrice = expectedMoney
   ticketRegimen.value.discountPercent = discountPercent
   ticketRegimen.value.discountMoney = discountMoney
   ticketRegimen.value.discountType = DiscountType.VND
-  ticketRegimen.value.moneyAmountSale = actualMoney
+  ticketRegimen.value.actualPrice = actualMoney
 }
 
 const handleChangeDiscountMoney = (data: number) => {
   const discountMoney = data
-  const expectedMoney = ticketRegimen.value.moneyAmountRegular || 0
+  const expectedMoney = ticketRegimen.value.expectedPrice || 0
   const discountPercent =
     expectedMoney == 0 ? 0 : Math.round(((discountMoney * 100) / expectedMoney) * 100) / 100
   const actualMoney = expectedMoney - discountMoney
   ticketRegimen.value.discountPercent = discountPercent
   ticketRegimen.value.discountMoney = discountMoney
-  ticketRegimen.value.moneyAmountSale = actualMoney
+  ticketRegimen.value.actualPrice = actualMoney
 }
 
 const handleChangeDiscountPercent = (data: number) => {
   const discountPercent = data
-  const expectedMoney = ticketRegimen.value.moneyAmountRegular || 0
+  const expectedMoney = ticketRegimen.value.expectedPrice || 0
   const discountMoney = Math.round((expectedMoney * (discountPercent || 0)) / 100 / 1000) * 1000
   const actualMoney = expectedMoney - discountMoney
   ticketRegimen.value.discountPercent = data
   ticketRegimen.value.discountMoney = discountMoney
-  ticketRegimen.value.moneyAmountSale = actualMoney
+  ticketRegimen.value.actualPrice = actualMoney
 }
 
 const handleChangeActualPrice = (data: number) => {
   const actualMoney = data
-  const expectedMoney = ticketRegimen.value.moneyAmountRegular
+  const expectedMoney = ticketRegimen.value.expectedPrice
   const discountMoney = expectedMoney - actualMoney
   const discountPercent =
     expectedMoney == 0 ? 0 : Math.round(((discountMoney * 100) / expectedMoney) * 100) / 100
   ticketRegimen.value.discountPercent = discountPercent
   ticketRegimen.value.discountMoney = discountMoney
   ticketRegimen.value.discountType = DiscountType.VND
-  ticketRegimen.value.moneyAmountSale = actualMoney
+  ticketRegimen.value.actualPrice = actualMoney
 }
 
 const closeModal = () => {
@@ -109,8 +109,8 @@ const handleSave = async () => {
     }
 
     if (hasChangeTicketRegimen.value) {
-      let totalExpectedMoneyRemain = ticketRegimen.value.moneyAmountRegular
-      let totalActualMoneyRemain = ticketRegimen.value.moneyAmountSale
+      let totalExpectedMoneyRemain = ticketRegimen.value.expectedPrice
+      let totalActualMoneyRemain = ticketRegimen.value.actualPrice
       let totalDiscountMoneyRemain = ticketRegimen.value.discountMoney
       let trLength = ticketRegimen.value.ticketRegimenItemList?.length || 0
 
@@ -118,8 +118,8 @@ const handleSave = async () => {
         if (index + 1 !== trLength) {
           tri.moneyAmountRegular =
             Math.floor(
-              (tri.moneyAmountRegular * ticketRegimen.value.moneyAmountRegular) /
-                ticketRegimenOrigin.moneyAmountRegular /
+              (tri.moneyAmountRegular * ticketRegimen.value.expectedPrice) /
+                ticketRegimenOrigin.expectedPrice /
                 1000,
             ) * 1000
           tri.discountPercent = ticketRegimen.value.discountPercent
@@ -176,7 +176,7 @@ defineExpose({ openModal })
             <div>Giá niêm yết</div>
             <div>
               <InputMoney
-                :value="ticketRegimen.moneyAmountRegular"
+                :value="ticketRegimen.expectedPrice"
                 @update:value="handleChangeExpectedMoney"
               />
             </div>
@@ -224,7 +224,7 @@ defineExpose({ openModal })
             <div>Đơn giá</div>
             <div style="width: 100%">
               <InputMoney
-                :value="ticketRegimen.moneyAmountSale"
+                :value="ticketRegimen.actualPrice"
                 @update:value="handleChangeActualPrice"
               />
             </div>

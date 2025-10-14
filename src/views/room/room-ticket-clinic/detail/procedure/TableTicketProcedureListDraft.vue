@@ -104,30 +104,30 @@ const selectRegimen = async (data: { regimen: Regimen }) => {
   temp.regimenId = regimenData.id
   temp.isEffectTotalMoney = Number(settingStore.TICKET_CLINIC_DETAIL.regimen.isEffectTotalMoney)
 
-  temp.moneyAmountRegular = regimenData.totalMoney
+  temp.expectedPrice = regimenData.totalMoney
   const discountApply = regimenData.discountApply
   if (discountApply?.discountType === DiscountType.VND) {
     temp.discountType = DiscountType.VND
     temp.discountMoney = discountApply?.discountMoney || 0
     temp.discountPercent =
-      temp.moneyAmountRegular === 0
+      temp.expectedPrice === 0
         ? 0
-        : Math.round((temp.discountMoney / temp.moneyAmountRegular) * 100 * 100) / 100 // thêm nhân chia với 100 để làm tròn sau 2 số thập phân
+        : Math.round((temp.discountMoney / temp.expectedPrice) * 100 * 100) / 100 // thêm nhân chia với 100 để làm tròn sau 2 số thập phân
   }
   if (discountApply?.discountType === DiscountType.Percent) {
     temp.discountType = DiscountType.Percent
     temp.discountPercent = discountApply?.discountPercent || 0
-    temp.discountMoney = Math.round((temp.discountPercent * temp.moneyAmountRegular) / 100)
+    temp.discountMoney = Math.round((temp.discountPercent * temp.expectedPrice) / 100)
   }
-  temp.moneyAmountSale = temp.moneyAmountRegular - temp.discountMoney
+  temp.actualPrice = temp.expectedPrice - temp.discountMoney
 
   temp.status = TicketRegimenStatus.Pending
   temp.createdAt = Date.now()
 
   temp.regimen = regimenData
 
-  let totalMoneyAmountRegularRemain = temp.moneyAmountRegular
-  let totalMoneyAmountSaleRemain = temp.moneyAmountSale
+  let totalExpectedPriceRemain = temp.expectedPrice
+  let totalActualPriceRemain = temp.actualPrice
   let totalDiscountMoneyRemain = temp.discountMoney
   let trLength = temp.ticketRegimenItemList?.length || 0
   temp.ticketRegimenItemList = (regimenData.regimenItemList || []).map((ri, index) => {
@@ -136,7 +136,6 @@ const selectRegimen = async (data: { regimen: Regimen }) => {
     tri.procedureId = ri.procedureId
 
     tri.quantityRegular = ri.quantity
-    tri.quantityPaid = 0
     tri.quantityUsed = 0
     tri.gapDay = 1
 
@@ -150,13 +149,13 @@ const selectRegimen = async (data: { regimen: Regimen }) => {
         Math.floor(((ri.procedure?.price || 0) * temp.discountPercent) / 100 / 1000) * 1000
       tri.moneyAmountSale = tri.moneyAmountRegular - tri.discountMoneyAmount
 
-      totalMoneyAmountRegularRemain -= tri.moneyAmountRegular
+      totalExpectedPriceRemain -= tri.moneyAmountRegular
       totalDiscountMoneyRemain -= tri.discountMoneyAmount
-      totalMoneyAmountSaleRemain -= tri.moneyAmountSale
+      totalActualPriceRemain -= tri.moneyAmountSale
     } else {
-      tri.moneyAmountRegular = totalMoneyAmountRegularRemain
+      tri.moneyAmountRegular = totalExpectedPriceRemain
       tri.discountMoneyAmount = totalDiscountMoneyRemain
-      tri.moneyAmountSale = totalMoneyAmountSaleRemain
+      tri.moneyAmountSale = totalActualPriceRemain
       tri.discountType = DiscountType.Percent
       tri.discountPercent = temp.discountPercent
     }
@@ -236,13 +235,13 @@ const handleChangeTicketRegimenItemQuantityExpected = (data: {
   ticketRegimenItem.moneyAmountSale = Math.floor(
     (ticketRegimenItem.moneyAmountSale / oldQuantityRegular) * quantityRegular,
   )
-  ticketRegimen.moneyAmountRegular = ticketRegimen.ticketRegimenItemList!.reduce((acc, item) => {
+  ticketRegimen.expectedPrice = ticketRegimen.ticketRegimenItemList!.reduce((acc, item) => {
     return acc + item.moneyAmountRegular
   }, 0)
   ticketRegimen.discountMoney = ticketRegimen.ticketRegimenItemList!.reduce((acc, item) => {
     return acc + item.discountMoneyAmount
   }, 0)
-  ticketRegimen.moneyAmountSale = ticketRegimen.ticketRegimenItemList!.reduce((acc, item) => {
+  ticketRegimen.actualPrice = ticketRegimen.ticketRegimenItemList!.reduce((acc, item) => {
     return acc + item.moneyAmountSale
   }, 0)
 }
@@ -250,7 +249,7 @@ const handleChangeTicketRegimenItemQuantityExpected = (data: {
 const totalMoney = computed(() => {
   return (
     props.ticketProcedureListDraft.reduce((acc, i) => acc + i.actualPrice * i.quantity, 0) +
-    props.ticketRegimenListDraft.reduce((acc, i) => acc + i.moneyAmountSale, 0)
+    props.ticketRegimenListDraft.reduce((acc, i) => acc + i.actualPrice, 0)
   )
 })
 
@@ -313,9 +312,9 @@ defineExpose({ selectProcedure, selectRegimen })
                 </div>
                 <div class="ml-auto">
                   <div v-if="tr.discountMoney" class="text-xs italic text-red-500">
-                    <del>{{ formatMoney(tr.moneyAmountRegular) }}</del>
+                    <del>{{ formatMoney(tr.expectedPrice) }}</del>
                   </div>
-                  <div>{{ formatMoney(tr.moneyAmountSale) }}</div>
+                  <div>{{ formatMoney(tr.actualPrice) }}</div>
                 </div>
                 <a
                   style="font-size: 20px; color: var(--text-orange)"
@@ -326,7 +325,7 @@ defineExpose({ selectProcedure, selectRegimen })
               </div>
             </td>
             <td class="text-right">
-              {{ formatMoney(tr.moneyAmountSale) }}
+              {{ formatMoney(tr.actualPrice) }}
             </td>
             <td>
               <div class="flex justify-around items-center">

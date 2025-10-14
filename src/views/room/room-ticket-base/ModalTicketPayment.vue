@@ -265,7 +265,12 @@ defineExpose({ openModal })
                   <VueButton
                     color="default"
                     type="button"
-                    @click="money = ticketClone.paid - ticketClone.totalMoney"
+                    @click="
+                      money =
+                        ticketClone.paid > ticketClone.totalMoney
+                          ? ticketClone.paid - ticketClone.totalMoney
+                          : ticketClone.paid
+                    "
                   >
                     Tất cả
                   </VueButton>
@@ -279,10 +284,11 @@ defineExpose({ openModal })
               </div>
             </div>
             <div class="mt-4">
-              <div>Còn thừa</div>
+              <div v-if="ticketClone.totalMoney >= ticketClone.paid - money">Còn thiếu</div>
+              <div v-else>Còn thừa</div>
               <div>
                 <InputMoney
-                  :value="ticketClone.paid - money - ticketClone.totalMoney"
+                  :value="Math.abs(ticketClone.totalMoney - (ticketClone.paid - money))"
                   disabled
                   textAlign="right"
                 />

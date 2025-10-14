@@ -89,17 +89,17 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="p-4">
-        <div class="">
-          <div>Mã phụ phí</div>
-          <div>
-            <InputText v-model:value="surcharge.code" placeholder="Tạo tự động" />
-          </div>
-        </div>
+      <div class="px-4">
         <div class="mt-4">
           <div>Tên phụ phí</div>
           <div>
             <InputText v-model:value="surcharge.name" required />
+          </div>
+        </div>
+        <div class="mt-4">
+          <div>Mã phụ phí</div>
+          <div>
+            <InputText v-model:value="surcharge.code" placeholder="Tạo tự động" />
           </div>
         </div>
         <div class="flex items-center mt-4">

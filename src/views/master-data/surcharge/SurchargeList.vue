@@ -3,13 +3,14 @@ import { CONFIG } from '@/config'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import VuePagination from '../../../common/VuePagination.vue'
-import { IconEditSquare } from '../../../common/icon-google'
+import { IconDelete, IconEditSquare } from '../../../common/icon-google'
 import { InputSelect } from '../../../common/vue-form'
 import { MeService } from '../../../modules/_me/me.service'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { SurchargeService, type Surcharge } from '../../../modules/surcharge'
 import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalSurchargeUpsert from './SurchargeUpsert.vue'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 
 const modalSurchargeUpsert = ref<InstanceType<typeof ModalSurchargeUpsert>>()
 
@@ -61,6 +62,21 @@ const handleModalSurchargeUpsertSuccess = async (
 ) => {
   await startFetchData()
 }
+
+const handleClickDeleteSurcharge = async (surchargeId: number) => {
+  ModalStore.confirm({
+    title: 'Bạn có chắc chắn muốn xóa phụ phí này',
+    content: 'Dữ liệu đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    async onOk() {
+      try {
+        await SurchargeService.destroyOne(surchargeId)
+        await startFetchData()
+      } catch (error) {
+        console.log('🚀 ~ SurchargeList.vue:75 ~ onOk ~ error:', error)
+      }
+    },
+  })
+}
 </script>
 
 <template>
@@ -71,7 +87,7 @@ const handleModalSurchargeUpsertSuccess = async (
     </div>
     <div>
       <VueButton
-        v-if="userPermission[PermissionId.MASTER_DATA_WAREHOUSE]"
+        v-if="userPermission[PermissionId.MASTER_DATA_SURCHARGE]"
         color="blue"
         icon="plus"
         @click="modalSurchargeUpsert?.openModal()"
@@ -120,6 +136,7 @@ const handleModalSurchargeUpsertSuccess = async (
             <th style="width: 100px">Mã</th>
             <th>Tên</th>
             <th></th>
+            <th></th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -151,7 +168,7 @@ const handleModalSurchargeUpsertSuccess = async (
             <td class="text-center" style="width: 100px">{{ surcharge.code }}</td>
             <td>{{ surcharge.name }}</td>
             <td
-              v-if="userPermission[PermissionId.MASTER_DATA_PAYMENT_METHOD]"
+              v-if="userPermission[PermissionId.MASTER_DATA_SURCHARGE]"
               class="text-center"
               style="width: 100px"
             >
@@ -160,6 +177,15 @@ const handleModalSurchargeUpsertSuccess = async (
                 @click="modalSurchargeUpsert?.openModal(surcharge.id)"
               >
                 <IconEditSquare width="24px" height="24px" />
+              </a>
+            </td>
+            <td
+              v-if="userPermission[PermissionId.MASTER_DATA_SURCHARGE]"
+              class="text-center"
+              style="width: 100px"
+            >
+              <a style="color: var(--text-red)" @click="handleClickDeleteSurcharge(surcharge.id)">
+                <IconDelete width="24px" height="24px" />
               </a>
             </td>
           </tr>

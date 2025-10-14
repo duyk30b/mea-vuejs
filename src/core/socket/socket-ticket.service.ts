@@ -8,6 +8,8 @@ import {
 import { Ticket } from '@/modules/ticket'
 import { TicketAttribute } from '@/modules/ticket-attribute'
 import { TicketBatch } from '@/modules/ticket-batch'
+import { TicketExpenseService } from '@/modules/ticket-expense'
+import { TicketExpense } from '@/modules/ticket-expense/ticket-expense.model'
 import {
   TicketLaboratory,
   TicketLaboratoryGroup,
@@ -20,6 +22,7 @@ import { TicketProductService } from '@/modules/ticket-product/ticket-product.se
 import { TicketRadiology, TicketRadiologyService } from '@/modules/ticket-radiology'
 import { TicketReception } from '@/modules/ticket-reception'
 import { TicketRegimen, TicketRegimenItem, TicketRegimenService } from '@/modules/ticket-regimen'
+import { TicketSurcharge, TicketSurchargeService } from '@/modules/ticket-surcharge'
 import { TicketUser, TicketUserService } from '@/modules/ticket-user'
 
 export class SocketTicketService {
@@ -48,6 +51,8 @@ export class SocketTicketService {
       upsertedList?: TicketLaboratoryResult[]
     }
     ticketRadiology?: { destroyedList?: TicketRadiology[]; upsertedList?: TicketRadiology[] }
+    ticketSurcharge?: { destroyedList?: TicketSurcharge[]; upsertedList?: TicketSurcharge[] }
+    ticketExpense?: { destroyedList?: TicketExpense[]; upsertedList?: TicketExpense[] }
   }) {
     const ticketActionList: Ticket[] = [
       ticketRoomRef.value,
@@ -377,6 +382,52 @@ export class SocketTicketService {
         }
         await TicketRadiologyService.refreshRelation(ticketAction.ticketRadiologyList)
         ticketAction.refreshTicketRadiology()
+      }
+
+      if (data.ticketSurcharge && ticketAction.ticketSurchargeList) {
+        if (data.ticketSurcharge.destroyedList?.length) {
+          const idDestroyList = data.ticketSurcharge.destroyedList.map((i) => i.id)
+          ticketAction.ticketSurchargeList = ticketAction.ticketSurchargeList.filter((i) => {
+            return !idDestroyList.includes(i.id)
+          })
+        }
+        if (data.ticketSurcharge.upsertedList?.length) {
+          data.ticketSurcharge.upsertedList?.forEach((i) => {
+            const temp = TicketSurcharge.from(i)
+            const index = ticketAction.ticketSurchargeList!.findIndex((j) => {
+              return i.id === j.id
+            })
+            if (index !== -1) {
+              ticketAction.ticketSurchargeList![index] = temp
+            } else {
+              ticketAction.ticketSurchargeList!.push(temp)
+            }
+          })
+        }
+        await TicketSurchargeService.refreshRelation(ticketAction.ticketSurchargeList)
+      }
+
+      if (data.ticketExpense && ticketAction.ticketExpenseList) {
+        if (data.ticketExpense.destroyedList?.length) {
+          const idDestroyList = data.ticketExpense.destroyedList.map((i) => i.id)
+          ticketAction.ticketExpenseList = ticketAction.ticketExpenseList.filter((i) => {
+            return !idDestroyList.includes(i.id)
+          })
+        }
+        if (data.ticketExpense.upsertedList?.length) {
+          data.ticketExpense.upsertedList?.forEach((i) => {
+            const temp = TicketExpense.from(i)
+            const index = ticketAction.ticketExpenseList!.findIndex((j) => {
+              return i.id === j.id
+            })
+            if (index !== -1) {
+              ticketAction.ticketExpenseList![index] = temp
+            } else {
+              ticketAction.ticketExpenseList!.push(temp)
+            }
+          })
+        }
+        await TicketExpenseService.refreshRelation(ticketAction.ticketExpenseList)
       }
     }
   }

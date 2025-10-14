@@ -35,6 +35,8 @@ import TicketLink from '../../room-ticket-base/TicketLink.vue'
 import { fromTime, toTime } from '../../room-ticket-base/room-ticket.ref'
 import ModalTicketClinicListSetting from './ModalTicketClinicListSetting.vue'
 import { PaymentService } from '@/modules/payment'
+import { RegimenService } from '@/modules/regimen'
+import { TicketRegimen, TicketRegimenService } from '@/modules/ticket-regimen'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalReceptionCreate = ref<InstanceType<typeof ModalReceptionCreate>>()
@@ -87,11 +89,8 @@ const startFetchData = async () => {
         // ticketAttributeList: true,
         paymentList: !!settingStore.TICKET_CLINIC_LIST.paymentList,
         ticketReceptionList: true,
-        ticketUserList:
-          settingStore.TICKET_CLINIC_LIST.roleIdList.length ||
-          settingStore.TICKET_CLINIC_LIST.procedure
-            ? true
-            : undefined,
+        ticketUserList: settingStore.TICKET_CLINIC_LIST.roleIdList.length ? true : undefined,
+        ticketRegimenList: settingStore.TICKET_CLINIC_LIST.regimen,
       },
       filter: {
         roomId: currentRoom.value.isCommon ? undefined : currentRoom.value.id || 0,
@@ -125,7 +124,10 @@ const startFetchData = async () => {
       ticketItem.ticketReceptionList?.forEach((tr) => {
         tr.customer = Customer.from(ticketItem.customer)
       })
-      await PaymentService.refreshRelation(ticketItem.paymentList)
+      await Promise.all([
+        PaymentService.refreshRelation(ticketItem.paymentList),
+        TicketRegimenService.refreshRelation(ticketItem.ticketRegimenList),
+      ])
       ticketItem.refreshTreeData()
     }
 
@@ -369,7 +371,7 @@ const clickCloseTicket = (ticket: Ticket) => {
             <th v-if="settingStore.TICKET_CLINIC_LIST.note" style="white-space: nowrap">
               Lý do / Chẩn đoán
             </th>
-            <th v-if="settingStore.TICKET_CLINIC_LIST.procedure" style="">Dịch vụ</th>
+            <th v-if="settingStore.TICKET_CLINIC_LIST.regimen" style="">Liệu trình</th>
             <th v-for="(roleId, i) in settingStore.TICKET_CLINIC_LIST.roleIdList" :key="i">
               {{ roleMap[roleId]?.name || '' }}
             </th>
@@ -482,6 +484,11 @@ const clickCloseTicket = (ticket: Ticket) => {
                 {{ ticket.note || '' }}
               </div>
             </td>
+            <td v-if="settingStore.TICKET_CLINIC_LIST.regimen">
+              <div v-for="ticketRegimen in ticket.ticketRegimenList" :key="ticketRegimen.id">
+                - {{ ticketRegimen.regimen?.name }}
+              </div>
+            </td>
             <td
               v-for="(roleId, i) in settingStore.TICKET_CLINIC_LIST.roleIdList"
               :key="i"
@@ -549,7 +556,7 @@ const clickCloseTicket = (ticket: Ticket) => {
               </div>
               <div v-if="settingStore.TICKET_CLINIC_LIST.paymentList">
                 <div v-for="payment in ticket.paymentList" :key="payment.id">
-                  {{ payment.paymentMethod?.name }}: {{ payment.paidAmount }}
+                  {{ payment.paymentMethod?.name }}: {{ formatMoney(payment.paidAmount) }}
                 </div>
               </div>
               <div v-else>

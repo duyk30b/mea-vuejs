@@ -26,15 +26,18 @@ import ModalTicketPayment from '@/views/room/room-ticket-base/ModalTicketPayment
 import ModalTicketRegisterAppointment from '@/views/room/room-ticket-base/ModalTicketRegisterAppointment.vue'
 import TicketDeliveryStatusTag from '@/views/room/room-ticket-base/TicketDeliveryStatusTag.vue'
 import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalTicketChangeDiscount from './ModalTicketChangeDiscount.vue'
+import ModalTicketChangeSurcharge from './ModalTicketChangeSurcharge.vue'
 import TicketSummaryLaboratory from './TicketSummaryLaboratory.vue'
 import TicketSummaryProcedure from './TicketSummaryProcedure.vue'
 import TicketSummaryProduct from './TicketSummaryProduct.vue'
 import TicketSummaryRadiology from './TicketSummaryRadiology.vue'
+import { TicketSurchargeService } from '@/modules/ticket-surcharge'
 
 const modalTicketChangeDiscount = ref<InstanceType<typeof ModalTicketChangeDiscount>>()
+const modalTicketChangeSurcharge = ref<InstanceType<typeof ModalTicketChangeSurcharge>>()
 const modalTicketRegisterAppointment = ref<InstanceType<typeof ModalTicketRegisterAppointment>>()
 const modalTicketPayment = ref<InstanceType<typeof ModalTicketPayment>>()
 
@@ -44,6 +47,10 @@ const router = useRouter()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const { userPermission, organizationPermission, organization } = MeService
+
+onMounted(async () => {
+  await TicketSurchargeService.refreshRelation(ticketRoomRef.value.ticketSurchargeList)
+})
 
 const startPrintAllMoney = async () => {
   await PrintHtmlAction.startPrintAllMoney({
@@ -72,6 +79,7 @@ const handleClickModalRegisterAppointment = () => {
 </script>
 <template>
   <ModalTicketChangeDiscount ref="modalTicketChangeDiscount" />
+  <ModalTicketChangeSurcharge ref="modalTicketChangeSurcharge" />
   <ModalTicketPayment ref="modalTicketPayment" />
   <ModalTicketRegisterAppointment ref="modalTicketRegisterAppointment" />
   <div class="flex flex-wrap gap-4">
@@ -85,7 +93,7 @@ const handleClickModalRegisterAppointment = () => {
           <tbody>
             <tr>
               <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+              <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
               <td class="text-right" colspan="8">
                 <div class="flex items-center justify-end gap-2">
                   <span>Tổng thành phần</span>
@@ -107,7 +115,7 @@ const handleClickModalRegisterAppointment = () => {
             </tr>
             <tr>
               <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+              <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
               <td class="text-right" colspan="8">Chiết khấu</td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>
@@ -132,9 +140,59 @@ const handleClickModalRegisterAppointment = () => {
                 </a>
               </td>
             </tr>
+            <tr v-if="!ticketRoomRef.ticketSurchargeList?.length">
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+              <td class="text-right" colspan="8">Phụ phí</td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td class="text-right" style="width: 40px">
+                {{ formatMoney(ticketRoomRef.surcharge) }}
+              </td>
+              <td class="text-center">
+                <a
+                  v-if="
+                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                    userPermission[PermissionId.TICKET_CHANGE_DISCOUNT]
+                  "
+                  class="text-orange-500"
+                  @click="modalTicketChangeSurcharge?.openModal()"
+                >
+                  <IconEditSquare width="20" height="20" />
+                </a>
+              </td>
+            </tr>
+            <tr v-for="(ts, tsIndex) in ticketRoomRef.ticketSurchargeList" :key="ts.id">
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+              <td class="text-right" colspan="8">
+                {{ ts.surcharge?.name }}
+              </td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td class="text-right" style="width: 40px">
+                {{ formatMoney(ts.money) }}
+              </td>
+              <td
+                v-if="tsIndex === 0"
+                :rowspan="ticketRoomRef.ticketSurchargeList?.length"
+                class="text-center"
+              >
+                <a
+                  v-if="
+                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                    userPermission[PermissionId.TICKET_CHANGE_DISCOUNT]
+                  "
+                  class="text-orange-500"
+                  @click="modalTicketChangeSurcharge?.openModal()"
+                >
+                  <IconEditSquare width="20" height="20" />
+                </a>
+              </td>
+            </tr>
             <tr>
               <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+              <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
               <td class="uppercase text-right font-bold" colspan="8">Tổng tiền</td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>
@@ -145,7 +203,7 @@ const handleClickModalRegisterAppointment = () => {
             </tr>
             <tr>
               <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+              <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
               <td class="uppercase text-right font-bold" colspan="8">Đã thanh toán</td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>
@@ -154,9 +212,9 @@ const handleClickModalRegisterAppointment = () => {
               </td>
               <td></td>
             </tr>
-            <tr>
+            <tr v-if="ticketRoomRef.debt >= 0">
               <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+              <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
               <td class="uppercase text-right font-bold" colspan="8">Còn thiếu</td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>
@@ -165,9 +223,20 @@ const handleClickModalRegisterAppointment = () => {
               </td>
               <td></td>
             </tr>
+            <tr v-if="ticketRoomRef.debt < 0">
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+              <td class="uppercase text-right font-bold" colspan="8">Tiền Thừa</td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td class="font-bold text-right whitespace-nowrap">
+                {{ formatMoney(-ticketRoomRef.debt) }}
+              </td>
+              <td></td>
+            </tr>
             <tr v-if="CONFIG.MODE === 'development'" style="color: violet">
               <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+              <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
               <td class="text-right" colspan="8">profit</td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>

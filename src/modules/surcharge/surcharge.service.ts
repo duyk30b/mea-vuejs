@@ -51,10 +51,10 @@ export class SurchargeService {
     return data
   }
 
-  static async pagination(query: SurchargePaginationQuery) {
+  static async pagination(query: SurchargePaginationQuery, options?: { refetch: boolean }) {
     const page = query.page || 1
     const limit = query.limit || 10
-    await SurchargeService.fetchAll()
+    await SurchargeService.fetchAll({ refetch: !!options?.refetch })
     const dataQuery = SurchargeService.executeQuery(SurchargeService.surchargeAll.value, query)
     const data = dataQuery.slice((page - 1) * limit, page * limit)
     return {
@@ -73,22 +73,17 @@ export class SurchargeService {
     return SurchargeService.surchargeAll.value
   }
 
-  static async list(query: SurchargeListQuery) {
-    await SurchargeService.fetchAll()
+  static async list(query: SurchargeListQuery, options?: { refetch: boolean }) {
+    await SurchargeService.fetchAll({ refetch: !!options?.refetch })
     const data = SurchargeService.executeQuery(SurchargeService.surchargeAll.value, query)
 
     return Surcharge.fromList(data)
   }
 
-  static async detail(id: number, options: SurchargeDetailQuery = {}) {
-    const surcharge = await SurchargeApi.detail(id, options)
-    if (surcharge) {
-      const findIndex = SurchargeService.surchargeAll.value.findIndex((i) => i.id === id)
-      if (findIndex !== -1) {
-        SurchargeService.surchargeAll.value[findIndex] = surcharge
-      }
-    }
-    return surcharge
+  static async detail(id: number, options?: { refetch: boolean }) {
+    const surchargeMap = await SurchargeService.getMap({ refetch: !!options?.refetch })
+    const surcharge = surchargeMap[id]
+    return Surcharge.from(surcharge)
   }
 
   static async createOne(surcharge: Surcharge, options?: {}) {

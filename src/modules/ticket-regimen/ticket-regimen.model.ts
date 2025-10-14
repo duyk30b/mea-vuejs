@@ -36,11 +36,12 @@ export class TicketRegimen extends BaseModel {
   costAmount: number
   commissionAmount: number
 
-  moneyAmountRegular: number // Giá dự kiến
-  moneyAmountSale: number
+  expectedPrice: number // Giá dự kiến
+  actualPrice: number
   moneyAmountActual: number
   moneyAmountUsed: number
   moneyAmountPaid: number
+  moneyAmountWallet: number
 
   discountMoney: number // tiền giảm giá
   discountPercent: number // % giảm giá
@@ -72,11 +73,12 @@ export class TicketRegimen extends BaseModel {
     ins.costAmount = 0
     ins.commissionAmount = 0
 
-    ins.moneyAmountRegular = 0
-    ins.moneyAmountSale = 0
+    ins.expectedPrice = 0
+    ins.actualPrice = 0
     ins.moneyAmountActual = 0
     ins.moneyAmountUsed = 0
     ins.moneyAmountPaid = 0
+    ins.moneyAmountWallet = 0
 
     ins.discountMoney = 0
     ins.discountPercent = 0
@@ -158,11 +160,12 @@ export class TicketRegimen extends BaseModel {
     if (a.costAmount != b.costAmount) return false
     if (a.commissionAmount != b.commissionAmount) return false
 
-    if (a.moneyAmountRegular != b.moneyAmountRegular) return false
-    if (a.moneyAmountSale != b.moneyAmountSale) return false
+    if (a.expectedPrice != b.expectedPrice) return false
+    if (a.actualPrice != b.actualPrice) return false
     if (a.moneyAmountActual != b.moneyAmountActual) return false
     if (a.moneyAmountUsed != b.moneyAmountUsed) return false
     if (a.moneyAmountPaid != b.moneyAmountPaid) return false
+    if (a.moneyAmountWallet != b.moneyAmountWallet) return false
 
     if (a.discountMoney != b.discountMoney) return false
     if (a.discountPercent != b.discountPercent) return false

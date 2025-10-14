@@ -58,6 +58,7 @@ defineExpose({ focus })
         :class="{
           'input-checkbox-fake': true,
           'input-checkbox-fake-checked': Boolean(value) || checked,
+          'input-checkbox-fake-indeterminate': indeterminate,
           disabled,
         }"
       ></span>
@@ -74,7 +75,9 @@ defineExpose({ focus })
   flex-wrap: wrap;
   gap: 1em;
   .vue-input-checkbox-item {
-    display: flex;
+    position: relative; // ✅ Thêm dòng này
+    display: inline-flex; // 👌 Nên dùng inline-flex thay vì flex full-width
+    width: fit-content; // ✅ Giới hạn vùng label, tránh kéo dài
     align-items: center;
     gap: 0.5em;
     cursor: pointer;
@@ -129,6 +132,28 @@ defineExpose({ focus })
           transform: rotate(45deg) scale(1) translate(-50%, -50%);
           opacity: 1;
           transition: all 0.2s cubic-bezier(0.12, 0.4, 0.29, 1.46) 0.1s;
+        }
+        &.disabled {
+          background-color: #eeeeee !important;
+          border-color: #eeeeee !important;
+          &::after {
+            border: 2px solid #555;
+          }
+        }
+      }
+      &.input-checkbox-fake-indeterminate {
+        background-color: #fff;
+        border-color: #d9d9d9;
+        &::after {
+          top: 50%;
+          left: 50%;
+          width: 8px;
+          height: 8px;
+          background-color: #1890ff;
+          border: 0;
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+          content: ' ';
         }
         &.disabled {
           background-color: #eeeeee !important;

@@ -80,17 +80,17 @@ const prescriptionCostAmount = computed(() => {
       <tr>
         <th v-if="CONFIG.MODE === 'development'">ID</th>
         <th>#</th>
-        <th v-if="ticketRoomRef.isPaymentEachItem"></th>
+        <th v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></th>
         <th style="width: 32px"></th>
         <th colspan="1">VẬT TƯ</th>
         <th></th>
         <th>Đ.Vị</th>
         <th>SL</th>
-        <th>Giá</th>
+        <th>Đơn Giá</th>
         <th>Chiết khấu</th>
         <th v-if="CONFIG.MODE === 'development'">Vốn</th>
         <th v-if="CONFIG.MODE === 'development'">H.Hồng</th>
-        <th>Phải trả</th>
+        <th>Thanh Toán</th>
         <th></th>
       </tr>
     </thead>
@@ -105,7 +105,7 @@ const prescriptionCostAmount = computed(() => {
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ tpConsumableIndex + 1 }}
         </td>
-        <td v-if="ticketRoomRef.isPaymentEachItem">
+        <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'">
           <PaymentMoneyStatusTooltip :paymentMoneyStatus="tpConsumable.paymentMoneyStatus" />
         </td>
         <td class="text-center">
@@ -180,7 +180,7 @@ const prescriptionCostAmount = computed(() => {
       </tr>
       <tr>
         <td v-if="CONFIG.MODE === 'development'"></td>
-        <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+        <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
         <td class="text-right" colspan="8">
           <div class="flex items-center justify-end gap-2">
             <span class="uppercase">Tiền vật tư</span>
@@ -205,17 +205,17 @@ const prescriptionCostAmount = computed(() => {
       <tr>
         <th v-if="CONFIG.MODE === 'development'">ID</th>
         <th>#</th>
-        <th v-if="ticketRoomRef.isPaymentEachItem"></th>
+        <th v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></th>
         <th style="width: 32px"></th>
         <th>THUỐC</th>
         <th>Đ.Vị</th>
         <th>SL kê</th>
         <th>SL mua</th>
-        <th>Giá</th>
+        <th>Đơn Giá</th>
         <th>Chiết khấu</th>
         <th v-if="CONFIG.MODE === 'development'">Vốn</th>
         <th v-if="CONFIG.MODE === 'development'">H.Hồng</th>
-        <th>Phải trả</th>
+        <th>Thanh Toán</th>
         <th></th>
       </tr>
     </thead>
@@ -230,7 +230,7 @@ const prescriptionCostAmount = computed(() => {
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ tpPrescriptionIndex + 1 }}
         </td>
-        <td v-if="ticketRoomRef.isPaymentEachItem">
+        <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'">
           <PaymentMoneyStatusTooltip :paymentMoneyStatus="tpPrescription.paymentMoneyStatus" />
         </td>
         <td class="text-center">
@@ -309,7 +309,7 @@ const prescriptionCostAmount = computed(() => {
       </tr>
       <tr>
         <td v-if="CONFIG.MODE === 'development'"></td>
-        <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+        <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
         <td class="text-right" colspan="8">
           <div class="flex items-center justify-end gap-2">
             <span class="uppercase">Tiền thuốc</span>

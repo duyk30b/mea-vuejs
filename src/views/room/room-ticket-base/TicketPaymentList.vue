@@ -105,7 +105,7 @@ const hasDebtMinus = computed(() => {
               </span>
             </td>
             <td
-              class="text-right"
+              class="text-center"
               v-if="CONFIG.MODE === 'development' || hasDebtPlus || hasDebtMinus"
             >
               {{ formatMoney(payment.openDebt) }} ->
@@ -138,7 +138,6 @@ const hasDebtMinus = computed(() => {
             <td v-if="CONFIG.MODE === 'development' || hasDebtPlus"></td>
             <td v-if="CONFIG.MODE === 'development' || hasDebtMinus"></td>
             <td v-if="CONFIG.MODE === 'development' || hasDebtPlus || hasDebtMinus"></td>
-            V
           </tr>
         </tbody>
       </table>

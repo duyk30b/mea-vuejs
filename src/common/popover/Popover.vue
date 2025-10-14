@@ -56,7 +56,7 @@ const props = defineProps({
       dropdownArrow?: StyleValue
     }>,
   },
-  delay: { type: Number, default: 1000 },
+  delayHide: { type: Number, default: 1000 },
 })
 
 const positionFix = reactive<{
@@ -181,7 +181,7 @@ const handleMouseOverDocument = async (event: MouseEvent) => {
           if (isHover === false && !isClick.value) {
             isOpen.value = false
           }
-        }, props.delay)
+        }, props.delayHide)
       }
     }
   }

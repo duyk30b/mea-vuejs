@@ -210,7 +210,7 @@ const handleClickClear = () => {
       offset: 10,
     }"
     :position="{ horizontal: 'start', vertical: 'bottom' }"
-    :delay="1000"
+    :delayHide="1000"
   >
     <template #trigger>
       <div

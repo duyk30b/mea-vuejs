@@ -27,6 +27,7 @@ import { TicketProduct, TicketProductType } from '../ticket-product/ticket-produ
 import { TicketRadiology, TicketRadiologyService } from '../ticket-radiology'
 import type { TicketReception } from '../ticket-reception'
 import { TicketRegimen, TicketRegimenItem, TicketRegimenService } from '../ticket-regimen'
+import { TicketSurchargeService } from '../ticket-surcharge'
 import { TicketSurcharge } from '../ticket-surcharge/ticket-surcharge.model'
 import { TicketUser, TicketUserService } from '../ticket-user'
 
@@ -286,6 +287,15 @@ export class Ticket {
       tr.ticketRegimenItemList = (this.ticketRegimenItemList || []).filter((i) => {
         return i.ticketRegimenId === tr.id
       })
+      tr.ticketRegimenItemList.forEach((tri) => {
+        tri.ticketProcedureList = this.ticketProcedureList?.filter((i) => {
+          return (
+            i.ticketProcedureType === TicketProcedureType.InRegimen &&
+            i.ticketRegimenId === tr.id &&
+            i.ticketRegimenItemId === tri.id
+          )
+        })
+      })
 
       tr.ticketProcedureList = this.ticketProcedureList?.filter((i) => {
         return (
@@ -358,6 +368,7 @@ export class Ticket {
       TicketLaboratoryService.refreshRelationGroup(this.ticketLaboratoryGroupList || []),
       TicketLaboratoryService.refreshRelationResult(this.ticketLaboratoryResultList || []),
       TicketRadiologyService.refreshRelation(this.ticketRadiologyList),
+      TicketSurchargeService.refreshRelation(this.ticketSurchargeList),
     ])
   }
 
@@ -447,9 +458,6 @@ export class Ticket {
 
     if (source.ticketSurchargeList) {
       target.ticketSurchargeList = TicketSurcharge.basicList(source.ticketSurchargeList)
-      target.ticketSurchargeList.forEach((i) => {
-        i.surcharge = Surcharge.basic(i.surcharge!)
-      })
     }
     if (source.ticketExpenseList) {
       target.ticketExpenseList = TicketExpense.basicList(source.ticketExpenseList)

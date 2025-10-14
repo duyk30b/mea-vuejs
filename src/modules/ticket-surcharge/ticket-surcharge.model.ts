@@ -53,4 +53,24 @@ export class TicketSurcharge extends BaseModel {
   static fromList(sourceList: TicketSurcharge[]): TicketSurcharge[] {
     return sourceList.map((i) => TicketSurcharge.from(i))
   }
+
+  static equal(a: TicketSurcharge, b: TicketSurcharge) {
+    if (a.id != b.id) return false
+    if (a.ticketId != b.ticketId) return false
+
+    if (a.surchargeId != b.surchargeId) return false
+    if (a.money != b.money) return false
+
+    return true
+  }
+
+  static equalList(a: TicketSurcharge[], b: TicketSurcharge[]) {
+    if (a.length != b.length) return false
+    for (let i = 0; i < a.length; i++) {
+      if (!TicketSurcharge.equal(a[i], b[i])) {
+        return false
+      }
+    }
+    return true
+  }
 }

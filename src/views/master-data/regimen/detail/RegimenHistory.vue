@@ -87,9 +87,9 @@ watch(
               class="text-xs italic line-through"
               style="color: var(--text-red)"
             >
-              {{ formatMoney(ticketRegimen.moneyAmountRegular) }}
+              {{ formatMoney(ticketRegimen.expectedPrice) }}
             </div>
-            {{ formatMoney(ticketRegimen.moneyAmountSale) }}
+            {{ formatMoney(ticketRegimen.actualPrice) }}
           </td>
         </tr>
       </tbody>

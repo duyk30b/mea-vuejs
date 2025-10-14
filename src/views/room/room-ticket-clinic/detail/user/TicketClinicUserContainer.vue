@@ -12,7 +12,7 @@ import { RadiologyService } from '@/modules/radiology'
 import { RegimenService } from '@/modules/regimen'
 import { ticketRoomRef } from '@/modules/room'
 import type { TicketUser } from '@/modules/ticket-user'
-import { arrayToKeyValue } from '@/utils'
+import { arrayToKeyValue, ESTimer } from '@/utils'
 import ModalTicketUserUpdateCommission from '@/views/room/room-user/ModalTicketUserUpdateCommission.vue'
 import { onMounted, ref, watch } from 'vue'
 
@@ -85,6 +85,7 @@ const handleModalTicketUserUpdateCommissionSuccess = (
               </div>
               <div>DV/SP/XN...</div>
             </th>
+            <th>T.Gian</th>
             <th>Giá</th>
             <th>SL</th>
             <th>Hoa hồng</th>
@@ -158,7 +159,9 @@ const handleModalTicketUserUpdateCommissionSuccess = (
                   {{ radiologyMap[ticketUser.positionInteractId]?.name }}
                 </template>
               </td>
-
+              <td class="text-center">
+                {{ ESTimer.timeToText(ticketUser.createdAt, 'hh:mm DD/MM/YYYY') }}
+              </td>
               <td class="text-right">
                 <template v-if="ticketUser.positionType !== PositionType.Reception">
                   <div
@@ -213,7 +216,7 @@ const handleModalTicketUserUpdateCommissionSuccess = (
             </tr>
             <tr>
               <td v-if="CONFIG.MODE === 'development'"></td>
-              <td class="text-right" colspan="7">
+              <td class="text-right" colspan="8">
                 <span class="uppercase">Tổng tiền hoa hồng</span>
               </td>
               <td class="font-bold text-right whitespace-nowrap">

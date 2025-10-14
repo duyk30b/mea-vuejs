@@ -112,8 +112,8 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td colspan="2">
-                <InputCheckbox v-model:checked="settingDisplay.procedure">
-                  Hiển thị dịch vụ
+                <InputCheckbox v-model:checked="settingDisplay.regimen">
+                  Hiển thị liệu trình
                 </InputCheckbox>
               </td>
             </tr>

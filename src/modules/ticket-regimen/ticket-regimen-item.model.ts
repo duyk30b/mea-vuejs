@@ -1,6 +1,7 @@
 import { BaseModel } from '../_base/base.model'
 import { DiscountType, PaymentMoneyStatus } from '../enum'
 import { Procedure } from '../procedure'
+import type { TicketProcedure } from '../ticket-procedure'
 
 export class TicketRegimenItem extends BaseModel {
   id: string
@@ -14,20 +15,19 @@ export class TicketRegimenItem extends BaseModel {
   gapDay: number
   quantityRegular: number
   quantityActual: number
-  quantityPaid: number
   quantityUsed: number
 
   moneyAmountRegular: number
   moneyAmountSale: number
   moneyAmountUsed: number
   moneyAmountActual: number
-  moneyAmountPaid: number
 
   discountMoneyAmount: number
   discountPercent: number // % giảm giá
   discountType: DiscountType // Loại giảm giá
 
   procedure?: Procedure
+  ticketProcedureList?: TicketProcedure[]
 
   static init(): TicketRegimenItem {
     const ins = new TicketRegimenItem()
@@ -43,13 +43,11 @@ export class TicketRegimenItem extends BaseModel {
     ins.gapDay = 1
     ins.quantityRegular = 0
     ins.quantityActual = 0
-    ins.quantityPaid = 0
     ins.quantityUsed = 0
 
     ins.moneyAmountRegular = 0
     ins.moneyAmountSale = 0
     ins.moneyAmountActual = 0
-    ins.moneyAmountPaid = 0
     ins.moneyAmountUsed = 0
 
     ins.discountMoneyAmount = 0
@@ -61,6 +59,7 @@ export class TicketRegimenItem extends BaseModel {
 
   static blank(): TicketRegimenItem {
     const ins = TicketRegimenItem.init()
+    ins.ticketProcedureList = []
     return ins
   }
 
@@ -106,13 +105,11 @@ export class TicketRegimenItem extends BaseModel {
     if (a.gapDay != b.gapDay) return false
     if (a.quantityRegular != b.quantityRegular) return false
     if (a.quantityActual != b.quantityActual) return false
-    if (a.quantityPaid != b.quantityPaid) return false
     if (a.quantityUsed != b.quantityUsed) return false
 
     if (a.moneyAmountRegular != b.moneyAmountRegular) return false
     if (a.moneyAmountSale != b.moneyAmountSale) return false
     if (a.moneyAmountActual != b.moneyAmountActual) return false
-    if (a.moneyAmountPaid != b.moneyAmountPaid) return false
     if (a.moneyAmountUsed != b.moneyAmountUsed) return false
 
     if (a.discountMoneyAmount != b.discountMoneyAmount) return false

@@ -14,7 +14,7 @@ const props = withDefaults(defineProps<{ paymentMoneyStatus: PaymentMoneyStatus 
       <template #trigger>
         <IconMinusCircle style="font-size: 18px; cursor: not-allowed" />
       </template>
-      <div>Không áp dụng thanh toán</div>
+      <div>Chưa thanh toán</div>
     </VueTooltip>
     <VueTooltip v-if="paymentMoneyStatus === PaymentMoneyStatus.TicketPaid">
       <template #trigger>

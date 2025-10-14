@@ -29,8 +29,8 @@ export class TicketChangeProcedureApi {
               isEffectTotalMoney: ticketRegimenAdd.isEffectTotalMoney,
               regimenId: ticketRegimenAdd.regimenId,
 
-              moneyAmountRegular: ticketRegimenAdd.moneyAmountRegular,
-              moneyAmountSale: ticketRegimenAdd.moneyAmountSale,
+              expectedPrice: ticketRegimenAdd.expectedPrice,
+              actualPrice: ticketRegimenAdd.actualPrice,
               discountMoney: ticketRegimenAdd.discountMoney,
               discountPercent: ticketRegimenAdd.discountPercent,
               discountType: ticketRegimenAdd.discountType,
@@ -184,8 +184,8 @@ export class TicketChangeProcedureApi {
       `/ticket/${ticketId}/procedure/update-money-ticket-regimen/${ticketRegimenId}`,
       {
         ticketRegimenUpdate: {
-          moneyAmountRegular: ticketRegimen.moneyAmountRegular,
-          moneyAmountSale: ticketRegimen.moneyAmountSale,
+          expectedPrice: ticketRegimen.expectedPrice,
+          actualPrice: ticketRegimen.actualPrice,
           discountMoney: ticketRegimen.discountMoney,
           discountPercent: ticketRegimen.discountPercent,
           discountType: ticketRegimen.discountType,

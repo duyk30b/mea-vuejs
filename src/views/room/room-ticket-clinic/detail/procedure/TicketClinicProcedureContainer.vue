@@ -131,11 +131,11 @@ const clickDestroyTicketProcedure = async (ticketProcedureId: string) => {
 const clickDestroyTicketRegimen = async (ticketRegimenId: string) => {
   const trCurrent = ticketRegimenList.value.find((i) => i.id === ticketRegimenId)
   if (!trCurrent) return
+  if (trCurrent.moneyAmountPaid != 0 || trCurrent.moneyAmountWallet != 0) {
+    return AlertStore.addError('Liệu trình có tiền không thể xóa')
+  }
   for (let i = 0; i < (trCurrent.ticketRegimenItemList || []).length; i++) {
     const element = trCurrent.ticketRegimenItemList![i]
-    if (element.quantityPaid != 0 || element.moneyAmountPaid != 0) {
-      return AlertStore.addError('Phiếu đã thanh toán không thể xóa')
-    }
     if (element.quantityUsed != 0 || element.moneyAmountUsed != 0) {
       return AlertStore.addError('Phiếu đã sử dụng không thể xóa')
     }
@@ -396,8 +396,7 @@ const totalMoney = computed(() => {
                         </span>
                         <span v-if="CONFIG.MODE === 'development'" style="color: violet"></span>
                         <span v-if="CONFIG.MODE === 'development'" style="color: violet">
-                          ( A {{ formatMoney(tri.moneyAmountActual) }} / {{ tri.quantityActual }} -
-                          P {{ formatMoney(tri.moneyAmountPaid) }} / {{ tri.quantityPaid }} )
+                          ( A {{ formatMoney(tri.moneyAmountActual) }} / {{ tri.quantityActual }} )
                         </span>
                       </div>
                     </template>
@@ -405,13 +404,13 @@ const totalMoney = computed(() => {
                   <div class="text-right">
                     <div>Giá tiền</div>
                     <div v-if="tr.discountMoney" class="text-xs italic text-red-500">
-                      <del>{{ formatMoney(tr.moneyAmountRegular) }}</del>
+                      <del>{{ formatMoney(tr.expectedPrice) }}</del>
                     </div>
                     <div
                       class="flex items-center gap-1 text-lg"
                       style="font-weight: bold; color: var(--text-green)"
                     >
-                      <span>{{ formatMoney(tr.moneyAmountSale) }}</span>
+                      <span>{{ formatMoney(tr.actualPrice) }}</span>
                       <a
                         v-if="
                           ![TicketStatus.Debt, TicketStatus.Completed].includes(
@@ -428,8 +427,8 @@ const totalMoney = computed(() => {
                       </a>
                     </div>
                   </div>
-                  <div class="text-right">
-                    <div>Đã sử dụng</div>
+                  <div v-if="!ticketRoomRef.isPaymentEachItem" class="text-right">
+                    <div>Đã thực hiện</div>
                     <div class="text-lg" style="font-weight: bold; color: var(--text-green)">
                       {{ formatMoney(tr.moneyAmountUsed) }}
                     </div>
@@ -440,10 +439,21 @@ const totalMoney = computed(() => {
                       {{ formatMoney(tr.moneyAmountPaid) }}
                     </div>
                   </div>
+                  <div
+                    v-if="ticketRoomRef.isPaymentEachItem && tr.moneyAmountWallet != 0"
+                    class="text-right"
+                  >
+                    <div>Ví</div>
+                    <div class="text-lg" style="font-weight: bold; color: violet">
+                      {{ formatMoney(tr.moneyAmountWallet) }}
+                    </div>
+                  </div>
                   <div v-if="ticketRoomRef.isPaymentEachItem" class="text-right">
                     <div>Còn thiếu</div>
                     <div class="text-lg" style="font-weight: bold; color: var(--text-green)">
-                      {{ formatMoney(tr.moneyAmountSale - tr.moneyAmountPaid) }}
+                      {{
+                        formatMoney(tr.actualPrice - (tr.moneyAmountPaid + tr.moneyAmountWallet))
+                      }}
                     </div>
                   </div>
                 </div>
@@ -592,7 +602,7 @@ const totalMoney = computed(() => {
                   </div>
                 </td>
                 <td class="text-right">
-                  <span v-if="tp.status !== TicketProcedureStatus.NoEffect">
+                  <span v-if="tp.paymentMoneyStatus !== PaymentMoneyStatus.NoEffect">
                     {{ formatMoney(tp.actualPrice) }}
                   </span>
                 </td>

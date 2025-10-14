@@ -276,7 +276,7 @@ export const SETTING_DEFAULT = {
   TICKET_CLINIC_LIST: {
     isPaymentEachItem: 0,
     goRoomAfterReception: true,
-    procedure: false,
+    regimen: false,
     roleIdList: [],
     phoneAndAddress: true,
     note: true,

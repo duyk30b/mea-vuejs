@@ -1,20 +1,13 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
-import { InputCheckbox, InputMoney, InputSelect, InputText } from '@/common/vue-form'
+import { InputCheckbox, InputMoney, InputNumber, InputSelect, InputText } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
-import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer } from '@/modules/customer'
-import { PaymentMoneyStatus } from '@/modules/enum'
-import {
-  MoneyDirection,
-  Payment,
-  PaymentApi,
-  PaymentPersonType,
-  PaymentVoucherType,
-} from '@/modules/payment'
+import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
+import { MoneyDirection, Payment, PaymentPersonType, PaymentVoucherType } from '@/modules/payment'
 import { PaymentMethodService } from '@/modules/payment-method'
 import { PaymentTicketItem, TicketItemType } from '@/modules/payment-ticket-item'
 import { PrintHtmlAction } from '@/modules/print-html'
@@ -23,9 +16,9 @@ import type { TicketLaboratory } from '@/modules/ticket-laboratory'
 import type { TicketProcedure } from '@/modules/ticket-procedure'
 import type { TicketProduct } from '@/modules/ticket-product'
 import type { TicketRadiology } from '@/modules/ticket-radiology'
+import type { TicketRegimen } from '@/modules/ticket-regimen'
 import { computed, onMounted, ref } from 'vue'
 import PaymentMoneyStatusTooltip from '../../payment/PaymentMoneyStatusTooltip.vue'
-import type { TicketRegimen } from '@/modules/ticket-regimen'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -37,13 +30,37 @@ const showModal = ref(false)
 const dataLoading = ref(false)
 const ticket = ref(Ticket.blank())
 
+const ticketRegimenPayment = ref<TicketRegimen[]>([])
+const ticketProcedureNormalPayment = ref<TicketProcedure[]>([])
+const ticketConsumablePayment = ref<TicketProduct[]>([])
+const ticketPrescriptionPayment = ref<TicketProduct[]>([])
+const ticketLaboratoryPayment = ref<TicketLaboratory[]>([])
+const ticketRadiologyPayment = ref<TicketRadiology[]>([])
+
 const paymentMethodId = ref<number>(0)
 const note = ref('')
 const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
 const pickAll = ref(false)
 
+const checkboxRegimen = ref<
+  Record<
+    string, // trId
+    {
+      checked: boolean
+      indeterminate: boolean
+      data: TicketRegimen
+      paymentWallet: number
+      paymentItem: number
+      typeAction: 'PaymentWallet' | 'CheckItem' | ''
+      trpCheckbox: Record<
+        string, // trpId
+        { data: TicketProcedure; checked: boolean }
+      >
+    }
+  >
+>({})
+
 const checkboxProcedure = ref<Record<string, TicketProcedure | undefined>>({})
-const checkboxRegimen = ref<Record<string, TicketRegimen | undefined>>({})
 const checkboxPrescription = ref<Record<string, TicketProduct | undefined>>({})
 const checkboxConsumable = ref<Record<string, TicketProduct | undefined>>({})
 const checkboxLaboratory = ref<Record<string, TicketLaboratory | undefined>>({})
@@ -56,6 +73,9 @@ onMounted(async () => {
 })
 
 const totalMoney = computed(() => {
+  const regimenMoney = Object.values(checkboxRegimen.value).reduce((acc, item) => {
+    return acc + item.paymentWallet + item.paymentItem
+  }, 0)
   const procedureMoney = Object.entries(checkboxProcedure.value)
     .filter(([id, value]) => !!value)
     .reduce((acc, [id, value]) => acc + value!.quantity * value!.actualPrice, 0)
@@ -71,32 +91,97 @@ const totalMoney = computed(() => {
   const radiologyMoney = Object.entries(checkboxRadiology.value)
     .filter(([id, value]) => !!value)
     .reduce((acc, [id, value]) => acc + value!.actualPrice, 0)
-  return procedureMoney + prescriptionMoney + consumableMoney + laboratoryMoney + radiologyMoney
+  return (
+    regimenMoney +
+    procedureMoney +
+    prescriptionMoney +
+    consumableMoney +
+    laboratoryMoney +
+    radiologyMoney
+  )
 })
+
+const refreshData = async () => {
+  await ticket.value.refreshAllData()
+
+  ticketRegimenPayment.value = (ticket.value.ticketRegimenList || []).filter((i) => {
+    return i.moneyAmountPaid !== i.actualPrice
+  })
+  ticketProcedureNormalPayment.value = (ticket.value.ticketProcedureNormalList || []).filter(
+    (i) => {
+      return i.paymentMoneyStatus === PaymentMoneyStatus.PendingPayment
+    },
+  )
+  ticketConsumablePayment.value = (ticket.value.ticketProductConsumableList || []).filter((i) => {
+    return i.paymentMoneyStatus === PaymentMoneyStatus.PendingPayment
+  })
+  ticketPrescriptionPayment.value = (ticket.value.ticketProductPrescriptionList || []).filter(
+    (i) => {
+      return i.paymentMoneyStatus === PaymentMoneyStatus.PendingPayment
+    },
+  )
+  ticketLaboratoryPayment.value = (ticket.value.ticketLaboratoryList || []).filter((i) => {
+    return i.paymentMoneyStatus === PaymentMoneyStatus.PendingPayment
+  })
+  ticketRadiologyPayment.value = (ticket.value.ticketRadiologyList || []).filter((i) => {
+    return i.paymentMoneyStatus === PaymentMoneyStatus.PendingPayment
+  })
+
+  checkboxRegimen.value = {}
+  checkboxProcedure.value = {}
+  checkboxPrescription.value = {}
+  checkboxConsumable.value = {}
+  checkboxLaboratory.value = {}
+  checkboxRadiology.value = {}
+
+  ticketRegimenPayment.value?.forEach((tr) => {
+    checkboxRegimen.value[tr.id] = {
+      checked: false,
+      indeterminate: false,
+      typeAction: tr.moneyAmountWallet ? 'PaymentWallet' : '',
+      paymentWallet: 0,
+      paymentItem: 0,
+      data: tr,
+      trpCheckbox: {},
+    }
+    tr.ticketProcedureList?.forEach((trp) => {
+      checkboxRegimen.value[tr.id].trpCheckbox[trp.id] = { checked: false, data: trp }
+    })
+  })
+
+  note.value = ''
+  paymentMethodId.value = 0
+  pickAll.value = false
+}
 
 const openModal = async (options: { ticketId: string; customer: Customer }) => {
   showModal.value = true
   const { ticketId } = options
   try {
     dataLoading.value = true
-    const ticketResponse = await TicketService.detail(ticketId, {
+    ticket.value = await TicketService.detail(ticketId, {
       relation: {
-        ticketProcedureList: true,
         ticketRegimenList: true,
         ticketRegimenItemList: true,
+        ticketProcedureList: true,
         ticketProductList: { batch: true, product: true },
         ticketLaboratoryList: true,
         ticketRadiologyList: true,
       },
     })
-    ticketResponse.customer = Customer.from(options.customer)
-    await ticketResponse.refreshAllData()
-    ticket.value = ticketResponse
+    ticket.value.customer = Customer.from(options.customer)
+    await refreshData()
   } catch (error) {
     console.log('🚀 ~ ModalTicketClinicPayment.vue:67 ~ openModal ~ error:', error)
   } finally {
     dataLoading.value = false
   }
+}
+
+const openModalByTicket = async (ticketProps: Ticket) => {
+  ticket.value = Ticket.from(ticketProps)
+  await refreshData()
+  showModal.value = true
 }
 
 const closeModal = () => {
@@ -121,21 +206,28 @@ const startPickAll = (v: boolean) => {
   checkboxRadiology.value = {}
 
   if (v) {
-    ticket.value.ticketProcedureNormalList?.forEach((i) => {
+    ticketProcedureNormalPayment.value.forEach((i) => {
       checkboxProcedure.value[i.id] = i
     })
-    ticket.value.ticketProductConsumableList?.forEach((i) => {
+    ticketConsumablePayment.value?.forEach((i) => {
       checkboxConsumable.value[i.id] = i
     })
-    ticket.value.ticketProductPrescriptionList?.forEach((i) => {
+    ticketPrescriptionPayment.value?.forEach((i) => {
       checkboxPrescription.value[i.id] = i
     })
 
-    ticket.value.ticketLaboratoryList?.forEach((i) => {
+    ticketLaboratoryPayment.value?.forEach((i) => {
       checkboxLaboratory.value[i.id] = i
     })
-    ticket.value.ticketRadiologyList?.forEach((i) => {
+    ticketRadiologyPayment.value?.forEach((i) => {
       checkboxRadiology.value[i.id] = i
+    })
+    ticketRegimenPayment.value?.forEach((tr) => {
+      handleUpdateCheckedTicketRegimen(true, tr)
+    })
+  } else {
+    ticketRegimenPayment.value?.forEach((tr) => {
+      handleUpdateCheckedTicketRegimen(false, tr)
     })
   }
 }
@@ -149,7 +241,62 @@ const startPrepayment = async (options?: { print: boolean }) => {
         paymentMethodId: paymentMethodId.value,
         note: note.value,
         paidAmount: totalMoney.value,
-        ticketItemList: [
+        ticketRegimenBodyList: Object.values(checkboxRegimen.value)
+          .filter((v) => v.typeAction === 'PaymentWallet' && v.paymentWallet !== 0)
+          .map((value) => {
+            const ticketRegimen = value.data
+            if (value.paymentWallet === ticketRegimen.actualPrice) {
+              return {
+                ticketItemId: ticketRegimen.id,
+                ticketItemType: TicketItemType.TicketRegimen,
+                interactId: ticketRegimen.regimenId,
+                expectedPrice: ticketRegimen.expectedPrice,
+                discountMoney: ticketRegimen.discountMoney,
+                discountPercent: ticketRegimen.discountPercent,
+                discountType: ticketRegimen.discountType,
+                actualPrice: ticketRegimen.actualPrice,
+                quantity: 1,
+                paymentMoneyStatus: PaymentMoneyStatus.PendingPayment, // để tạm để validate chứ không sử dụng
+              }
+            } else {
+              return {
+                ticketItemId: ticketRegimen.id,
+                ticketItemType: TicketItemType.TicketRegimen,
+                interactId: ticketRegimen.regimenId,
+                expectedPrice: value.paymentWallet,
+                discountMoney: 0,
+                discountPercent: 0,
+                discountType: DiscountType.VND,
+                actualPrice: value.paymentWallet,
+                quantity: 1,
+                paymentMoneyStatus: PaymentMoneyStatus.PendingPayment, // để tạm để validate chứ không sử dụng
+              }
+            }
+          }),
+        ticketProcedureBodyList: [
+          ...Object.values(checkboxRegimen.value)
+            .filter((v) => v.typeAction === 'CheckItem' && v.paymentItem !== 0)
+            .map((value) => {
+              const trpCheckbox = value.trpCheckbox
+              return Object.values(trpCheckbox)
+                .filter((tpV) => tpV.checked)
+                .map((tpV) => {
+                  const tp = tpV.data
+                  return {
+                    ticketItemId: tp.id,
+                    ticketItemType: TicketItemType.TicketProcedure,
+                    interactId: tp.procedureId,
+                    expectedPrice: tp.expectedPrice,
+                    discountMoney: tp.discountMoney,
+                    discountPercent: tp.discountPercent,
+                    discountType: tp.discountType,
+                    actualPrice: tp.actualPrice,
+                    quantity: tp.quantity,
+                    paymentMoneyStatus: tp.paymentMoneyStatus,
+                  }
+                })
+            })
+            .flat(),
           ...Object.entries(checkboxProcedure.value)
             .filter(([id, value]) => !!value)
             .map(([id, value]) => {
@@ -163,69 +310,74 @@ const startPrepayment = async (options?: { print: boolean }) => {
                 discountType: value!.discountType,
                 actualPrice: value!.actualPrice,
                 quantity: value!.quantity,
-              }
-            }),
-          ...Object.entries(checkboxConsumable.value)
-            .filter(([id, value]) => !!value)
-            .map(([id, value]) => {
-              return {
-                ticketItemId: value!.id,
-                interactId: value!.productId,
-                ticketItemType: TicketItemType.TicketProductConsumable,
-                expectedPrice: value!.expectedPrice,
-                discountMoney: value!.discountMoney,
-                discountPercent: value!.discountPercent,
-                discountType: value!.discountType,
-                actualPrice: value!.actualPrice,
-                quantity: value!.quantity,
-              }
-            }),
-          ...Object.entries(checkboxPrescription.value)
-            .filter(([id, value]) => !!value)
-            .map(([id, value]) => {
-              return {
-                ticketItemId: value!.id,
-                interactId: value!.productId,
-                ticketItemType: TicketItemType.TicketProductPrescription,
-                expectedPrice: value!.expectedPrice,
-                discountMoney: value!.discountMoney,
-                discountPercent: value!.discountPercent,
-                discountType: value!.discountType,
-                actualPrice: value!.actualPrice,
-                quantity: value!.quantity,
-              }
-            }),
-          ...Object.entries(checkboxLaboratory.value)
-            .filter(([id, value]) => !!value)
-            .map(([id, value]) => {
-              return {
-                ticketItemId: value!.id,
-                interactId: value!.laboratoryId,
-                ticketItemType: TicketItemType.TicketLaboratory,
-                expectedPrice: value!.expectedPrice,
-                discountMoney: value!.discountMoney,
-                discountPercent: value!.discountPercent,
-                discountType: value!.discountType,
-                actualPrice: value!.actualPrice,
-                quantity: 1,
-              }
-            }),
-          ...Object.entries(checkboxRadiology.value)
-            .filter(([id, value]) => !!value)
-            .map(([id, value]) => {
-              return {
-                ticketItemId: value!.id,
-                interactId: value!.radiologyId,
-                ticketItemType: TicketItemType.TicketRadiology,
-                expectedPrice: value!.expectedPrice,
-                discountMoney: value!.discountMoney,
-                discountPercent: value!.discountPercent,
-                discountType: value!.discountType,
-                actualPrice: value!.actualPrice,
-                quantity: 1,
+                paymentMoneyStatus: value!.paymentMoneyStatus,
               }
             }),
         ],
+        ticketProductConsumableBodyList: Object.entries(checkboxConsumable.value)
+          .filter(([id, value]) => !!value)
+          .map(([id, value]) => {
+            return {
+              ticketItemId: value!.id,
+              interactId: value!.productId,
+              ticketItemType: TicketItemType.TicketProductConsumable,
+              expectedPrice: value!.expectedPrice,
+              discountMoney: value!.discountMoney,
+              discountPercent: value!.discountPercent,
+              discountType: value!.discountType,
+              actualPrice: value!.actualPrice,
+              quantity: value!.quantity,
+              paymentMoneyStatus: value!.paymentMoneyStatus,
+            }
+          }),
+        ticketProductPrescriptionBodyList: Object.entries(checkboxPrescription.value)
+          .filter(([id, value]) => !!value)
+          .map(([id, value]) => {
+            return {
+              ticketItemId: value!.id,
+              interactId: value!.productId,
+              ticketItemType: TicketItemType.TicketProductPrescription,
+              expectedPrice: value!.expectedPrice,
+              discountMoney: value!.discountMoney,
+              discountPercent: value!.discountPercent,
+              discountType: value!.discountType,
+              actualPrice: value!.actualPrice,
+              quantity: value!.quantity,
+              paymentMoneyStatus: value!.paymentMoneyStatus,
+            }
+          }),
+        ticketLaboratoryBodyList: Object.entries(checkboxLaboratory.value)
+          .filter(([id, value]) => !!value)
+          .map(([id, value]) => {
+            return {
+              ticketItemId: value!.id,
+              interactId: value!.laboratoryId,
+              ticketItemType: TicketItemType.TicketLaboratory,
+              expectedPrice: value!.expectedPrice,
+              discountMoney: value!.discountMoney,
+              discountPercent: value!.discountPercent,
+              discountType: value!.discountType,
+              actualPrice: value!.actualPrice,
+              quantity: 1,
+              paymentMoneyStatus: value!.paymentMoneyStatus,
+            }
+          }),
+        ticketRadiologyBodyList: Object.entries(checkboxRadiology.value)
+          .filter(([id, value]) => !!value)
+          .map(([id, value]) => {
+            return {
+              ticketItemId: value!.id,
+              interactId: value!.radiologyId,
+              ticketItemType: TicketItemType.TicketRadiology,
+              expectedPrice: value!.expectedPrice,
+              discountMoney: value!.discountMoney,
+              discountPercent: value!.discountPercent,
+              discountType: value!.discountType,
+              actualPrice: value!.actualPrice,
+              quantity: 1,
+              paymentMoneyStatus: value!.paymentMoneyStatus,
+            }
+          }),
       },
     })
 
@@ -259,6 +411,64 @@ const startPint = async (options?: { print: boolean }) => {
     paymentTemp.paymentMethodId = paymentMethodId.value
 
     paymentTemp.paidAmount = totalMoney.value
+
+    const paymentTicketItemRegimen: PaymentTicketItem[] = Object.entries(checkboxRegimen.value)
+      .filter(([id, value]) => {
+        return !!value && value.typeAction === 'PaymentWallet' && value.paymentWallet != 0
+      })
+      .map(([id, value]) => {
+        const paymentTicketItem = PaymentTicketItem.blank()
+        paymentTicketItem.ticketItemType = TicketItemType.TicketRegimen
+        paymentTicketItem.ticketItemId = value!.data.id
+        paymentTicketItem.interactId = value!.data.regimenId
+
+        if (value.paymentWallet === value.data.actualPrice) {
+          paymentTicketItem.expectedPrice = value!.data.expectedPrice
+          paymentTicketItem.discountMoney = value!.data.discountMoney
+          paymentTicketItem.discountPercent = value!.data.discountPercent
+          paymentTicketItem.discountType = value!.data.discountType
+          paymentTicketItem.actualPrice = value!.data.actualPrice
+          paymentTicketItem.quantity = 1
+        } else {
+          paymentTicketItem.expectedPrice = value!.paymentWallet
+          paymentTicketItem.discountMoney = 0
+          paymentTicketItem.discountPercent = 0
+          paymentTicketItem.discountType = DiscountType.VND
+          paymentTicketItem.actualPrice = value!.paymentWallet
+          paymentTicketItem.quantity = 1
+        }
+
+        return paymentTicketItem
+      })
+
+    const paymentTicketItemProcedureRegimen: PaymentTicketItem[] = Object.entries(
+      checkboxRegimen.value,
+    )
+      .filter(([id, value]) => {
+        return !!value && value.typeAction === 'CheckItem' && value.paymentItem != 0
+      })
+      .map(([id, value]) => {
+        const trpCheckbox = value.trpCheckbox
+        return Object.values(trpCheckbox)
+          .filter((tpV) => tpV.checked)
+          .map((tpV) => {
+            const tp = tpV.data
+
+            const paymentTicketItem = PaymentTicketItem.blank()
+            paymentTicketItem.ticketItemType = TicketItemType.TicketProcedure
+            paymentTicketItem.ticketItemId = tp.id
+            paymentTicketItem.interactId = tp.procedureId
+
+            paymentTicketItem.expectedPrice = tp!.expectedPrice
+            paymentTicketItem.discountMoney = tp!.discountMoney
+            paymentTicketItem.discountPercent = tp!.discountPercent
+            paymentTicketItem.discountType = tp!.discountType
+            paymentTicketItem.actualPrice = tp!.actualPrice
+            paymentTicketItem.quantity = tp!.quantity
+            return paymentTicketItem
+          })
+      })
+      .flat()
 
     const paymentTicketItemProcedure: PaymentTicketItem[] = Object.entries(checkboxProcedure.value)
       .filter(([id, value]) => !!value)
@@ -376,7 +586,93 @@ const disabledButtonSave = computed(() => {
   return false
 })
 
-defineExpose({ openModal })
+const handleUpdateCheckedTicketRegimen = (checked: boolean, tr: TicketRegimen) => {
+  checkboxRegimen.value[tr.id].indeterminate = false
+  if (checked) {
+    checkboxRegimen.value[tr.id].checked = true
+    if (tr.moneyAmountWallet) {
+      checkboxRegimen.value[tr.id].typeAction = 'PaymentWallet'
+      checkboxRegimen.value[tr.id].paymentItem = 0
+      checkboxRegimen.value[tr.id].paymentWallet =
+        tr.actualPrice - (tr.moneyAmountPaid + tr.moneyAmountWallet)
+      tr.ticketProcedureList?.forEach((trp) => {
+        if (trp.paymentMoneyStatus !== PaymentMoneyStatus.FullPaid) {
+          checkboxRegimen.value[tr.id].trpCheckbox[trp.id].checked = false
+        }
+      })
+    } else {
+      checkboxRegimen.value[tr.id].typeAction = 'CheckItem'
+      checkboxRegimen.value[tr.id].paymentWallet = 0
+      checkboxRegimen.value[tr.id].paymentItem =
+        tr.actualPrice - (tr.moneyAmountPaid + tr.moneyAmountWallet)
+      tr.ticketProcedureList?.forEach((trp) => {
+        if (trp.paymentMoneyStatus !== PaymentMoneyStatus.FullPaid) {
+          checkboxRegimen.value[tr.id].trpCheckbox[trp.id].checked = true
+        }
+      })
+    }
+  } else {
+    checkboxRegimen.value[tr.id].checked = false
+    checkboxRegimen.value[tr.id].paymentWallet = 0
+    checkboxRegimen.value[tr.id].paymentItem = 0
+    checkboxRegimen.value[tr.id].typeAction = tr.moneyAmountWallet ? 'PaymentWallet' : ''
+    tr.ticketProcedureList?.forEach((trp) => {
+      checkboxRegimen.value[tr.id].trpCheckbox[trp.id].checked = false
+    })
+  }
+}
+
+const handleUpdateCheckedTicketRegimenProcedure = (checked: boolean, trp: TicketProcedure) => {
+  if (checked) {
+    checkboxRegimen.value[trp.ticketRegimenId].paymentItem += trp.quantity * trp.actualPrice
+  } else {
+    checkboxRegimen.value[trp.ticketRegimenId].paymentItem -= trp.quantity * trp.actualPrice
+  }
+  checkboxRegimen.value[trp.ticketRegimenId].paymentWallet = 0
+
+  if (checkboxRegimen.value[trp.ticketRegimenId].paymentItem === 0) {
+    checkboxRegimen.value[trp.ticketRegimenId].typeAction = ''
+    checkboxRegimen.value[trp.ticketRegimenId].indeterminate = false
+    checkboxRegimen.value[trp.ticketRegimenId].checked = false
+  } else if (
+    checkboxRegimen.value[trp.ticketRegimenId].paymentItem ===
+    checkboxRegimen.value[trp.ticketRegimenId].data.actualPrice -
+      (checkboxRegimen.value[trp.ticketRegimenId].data.moneyAmountPaid +
+        checkboxRegimen.value[trp.ticketRegimenId].data.moneyAmountWallet)
+  ) {
+    checkboxRegimen.value[trp.ticketRegimenId].typeAction = 'CheckItem'
+    checkboxRegimen.value[trp.ticketRegimenId].indeterminate = false
+    checkboxRegimen.value[trp.ticketRegimenId].checked = true
+  } else {
+    checkboxRegimen.value[trp.ticketRegimenId].typeAction = 'CheckItem'
+    checkboxRegimen.value[trp.ticketRegimenId].indeterminate = true
+    checkboxRegimen.value[trp.ticketRegimenId].checked = false
+  }
+}
+
+const handleUpdateMoneyTicketRegimen = (money: number, tr: TicketRegimen) => {
+  checkboxRegimen.value[tr.id].paymentWallet = money
+  checkboxRegimen.value[tr.id].paymentItem = 0
+  if (money <= 0) {
+    checkboxRegimen.value[tr.id].checked = false
+    checkboxRegimen.value[tr.id].indeterminate = false
+    checkboxRegimen.value[tr.id].typeAction = ''
+  } else if (money < tr.actualPrice - tr.moneyAmountPaid) {
+    checkboxRegimen.value[tr.id].checked = false
+    checkboxRegimen.value[tr.id].indeterminate = true
+    checkboxRegimen.value[tr.id].typeAction = 'PaymentWallet'
+  } else if (money === tr.actualPrice - tr.moneyAmountPaid) {
+    checkboxRegimen.value[tr.id].checked = true
+    checkboxRegimen.value[tr.id].indeterminate = false
+    checkboxRegimen.value[tr.id].typeAction = 'PaymentWallet'
+  } else {
+    checkboxRegimen.value[tr.id].checked = false
+    checkboxRegimen.value[tr.id].indeterminate = false
+    checkboxRegimen.value[tr.id].typeAction = 'PaymentWallet'
+  }
+}
+
+defineExpose({ openModal, openModalByTicket })
 </script>
 
 <template>
@@ -412,30 +708,28 @@ defineExpose({ openModal })
           <table v-else>
             <tbody
               v-if="
-                !ticket.ticketRegimenList?.length &&
-                !ticket.ticketProcedureList?.length &&
-                !ticket.ticketProductList?.length &&
-                !ticket.ticketLaboratoryList?.length &&
-                !ticket.ticketRadiologyList?.length
+                !ticketRegimenPayment.length &&
+                !ticketProcedureNormalPayment.length &&
+                !ticketConsumablePayment?.length &&
+                !ticketPrescriptionPayment?.length &&
+                !ticketLaboratoryPayment?.length &&
+                !ticketRadiologyPayment?.length
               "
             >
               <tr>
-                <td colspan="100">Không có dịch vụ nào cần thanh toán</td>
+                <td colspan="100" class="text-center">Không có dịch vụ nào cần thanh toán</td>
               </tr>
             </tbody>
-            <template v-if="ticket.ticketRegimenList?.length">
+            <template v-if="ticketRegimenPayment.length">
               <thead>
                 <tr>
-                  <th v-if="CONFIG.MODE === 'development'">ID</th>
-                  <th>Chọn</th>
+                  <th style="width: 40px">Chọn</th>
                   <th>#</th>
                   <th></th>
-                  <th>
-                    <span>Liệu trình</span>
-                  </th>
-                  <th>Giá tiền</th>
-                  <th>Số lượng</th>
-                  <th>Tổng tiền</th>
+                  <th>Liệu trình</th>
+                  <th></th>
+                  <th>Đơn Giá</th>
+                  <th>Thanh toán</th>
                 </tr>
               </thead>
               <tbody>
@@ -444,67 +738,143 @@ defineExpose({ openModal })
                   :key="ticketRegimen.id"
                 >
                   <tr>
-                    <td
-                      v-if="CONFIG.MODE === 'development'"
-                      style="text-align: center; color: violet"
-                    >
-                      {{ ticketRegimen.id }}
-                    </td>
                     <td>
                       <div class="flex justify-center">
                         <InputCheckbox
-                          :checked="!!checkboxRegimen[ticketRegimen.id]"
+                          :checked="checkboxRegimen[ticketRegimen.id].checked"
+                          :indeterminate="checkboxRegimen[ticketRegimen.id].indeterminate"
                           @update:checked="
-                            (v) =>
-                              (checkboxRegimen[ticketRegimen.id] = v ? ticketRegimen : undefined)
+                            (checked) => handleUpdateCheckedTicketRegimen(checked, ticketRegimen)
                           "
                         />
                       </div>
                     </td>
                     <td class="text-center">{{ index + 1 }}</td>
-                    <td></td>
-                    <td>{{ ticketRegimen.regimen?.name }}</td>
-                    <td class="text-right whitespace-nowrap">
-                      <div v-if="ticketRegimen.discountMoney" class="text-xs italic text-red-500">
-                        <del>{{ formatMoney(ticketRegimen.moneyAmountRegular) }}</del>
+                    <td colspan="4">
+                      <div class="flex justify-between items-center">
+                        <div class="flex gap-1 flex-wrap">
+                          <div>{{ ticketRegimen.regimen?.name }}</div>
+                          <div
+                            v-if="ticketRegimen.moneyAmountWallet"
+                            style="font-size: 0.8em; font-style: italic; color: #555"
+                          >
+                            (Bắt buộc chuyển sang hình thức thanh toán vào Ví do trong Ví đang có
+                            tiền)
+                          </div>
+                        </div>
+                        <div>
+                          <table>
+                            <tbody>
+                              <tr>
+                                <td style="white-space: nowrap">Giá tiền:</td>
+                                <td class="text-right font-bold pl-4">
+                                  {{ formatMoney(ticketRegimen.actualPrice) }}
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style="white-space: nowrap">Đã sử dụng:</td>
+                                <td
+                                  class="text-right font-bold pl-4"
+                                  style="color: var(--text-green)"
+                                >
+                                  {{ formatMoney(ticketRegimen.moneyAmountPaid) }}
+                                </td>
+                              </tr>
+                              <tr v-if="ticketRegimen.moneyAmountWallet">
+                                <td>Ví:</td>
+                                <td class="text-right font-bold pl-4" style="color: violet">
+                                  {{ formatMoney(ticketRegimen.moneyAmountWallet) }}
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
-                      <div>{{ formatMoney(ticketRegimen.moneyAmountSale) }}</div>
                     </td>
-                    <td class="text-center"></td>
-                    <td class="text-right whitespace-nowrap">
-                      <div v-if="ticketRegimen.discountMoney" class="text-xs italic text-red-500">
-                        <del>
-                          {{ formatMoney(ticketRegimen.moneyAmountRegular) }}
-                        </del>
+                    <td style="max-width: 100px">
+                      <div v-if="checkboxRegimen[ticketRegimen.id].typeAction === 'CheckItem'">
+                        <InputNumber
+                          :value="checkboxRegimen[ticketRegimen.id].paymentItem"
+                          disabled
+                          textAlign="right"
+                        />
                       </div>
-                      <div>
-                        {{ formatMoney(ticketRegimen.moneyAmountSale) }}
+                      <div v-else>
+                        <div
+                          style="
+                            white-space: nowrap;
+                            font-size: 1em;
+                            font-style: italic;
+                            color: #555;
+                            text-align: right;
+                          "
+                        >
+                          TT vào Ví
+                        </div>
+                        <InputNumber
+                          :value="checkboxRegimen[ticketRegimen.id].paymentWallet"
+                          @update:value="(v) => handleUpdateMoneyTicketRegimen(v, ticketRegimen)"
+                          textAlign="right"
+                        />
                       </div>
                     </td>
                   </tr>
-                  <tr v-for="tri in ticketRegimen.ticketRegimenItemList" :key="tri.id">
-                    <td v-if="CONFIG.MODE === 'development'"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td>{{ tri.procedure?.name }}</td>
-                  </tr>
+                  <template v-for="trp in ticketRegimen.ticketProcedureList" :key="trp.id">
+                    <tr>
+                      <td></td>
+                      <td>
+                        <div class="flex justify-center">
+                          <InputCheckbox
+                            v-if="trp.paymentMoneyStatus !== PaymentMoneyStatus.FullPaid"
+                            :disabled="
+                              checkboxRegimen[ticketRegimen.id].typeAction === 'PaymentWallet'
+                            "
+                            v-model:checked="
+                              checkboxRegimen[ticketRegimen.id].trpCheckbox[trp.id].checked
+                            "
+                            @update:checked="
+                              (checked) => handleUpdateCheckedTicketRegimenProcedure(checked, trp)
+                            "
+                          />
+                        </div>
+                      </td>
+                      <td>
+                        <PaymentMoneyStatusTooltip :paymentMoneyStatus="trp.paymentMoneyStatus" />
+                      </td>
+                      <td colspan="2">
+                        <div class="flex gap-1">
+                          <span>{{ trp.procedure?.name }}</span>
+                          <span style="font-weight: 700">( buổi {{ trp.indexSession }} )</span>
+                        </div>
+                      </td>
+                      <td class="text-right whitespace-nowrap">
+                        <div v-if="trp.discountMoney" class="text-xs italic text-red-500">
+                          <del>
+                            {{ formatMoney(Math.round(trp.expectedPrice)) }}
+                          </del>
+                        </div>
+                        <div>
+                          {{ formatMoney(Math.round(trp.actualPrice)) }}
+                        </div>
+                      </td>
+                      <td class="text-center"></td>
+                    </tr>
+                  </template>
                 </template>
               </tbody>
             </template>
-            <template v-if="ticket.ticketProcedureNormalList?.length">
+            <template v-if="ticketProcedureNormalPayment?.length">
               <thead>
                 <tr>
-                  <th v-if="CONFIG.MODE === 'development'">ID</th>
                   <th>Chọn</th>
                   <th>#</th>
                   <th></th>
                   <th>
                     <span>Dịch vụ</span>
                   </th>
-                  <th>Giá tiền</th>
-                  <th>Số lượng</th>
-                  <th>Tổng tiền</th>
+                  <th>SL</th>
+                  <th>Đơn giá</th>
+                  <th>Thanh toán</th>
                 </tr>
               </thead>
               <tbody>
@@ -512,12 +882,6 @@ defineExpose({ openModal })
                   v-for="(ticketProcedure, index) in ticket.ticketProcedureNormalList"
                   :key="ticketProcedure.id"
                 >
-                  <td
-                    v-if="CONFIG.MODE === 'development'"
-                    style="text-align: center; color: violet"
-                  >
-                    {{ ticketProcedure.id }}
-                  </td>
                   <td>
                     <div class="flex justify-center">
                       <InputCheckbox
@@ -538,13 +902,13 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td>{{ ticketProcedure.procedure?.name }}</td>
+                  <td class="text-center">{{ ticketProcedure.quantity }}</td>
                   <td class="text-right whitespace-nowrap">
                     <div v-if="ticketProcedure.discountMoney" class="text-xs italic text-red-500">
                       <del>{{ formatMoney(ticketProcedure.expectedPrice) }}</del>
                     </div>
                     <div>{{ formatMoney(ticketProcedure.actualPrice) }}</div>
                   </td>
-                  <td class="text-center">{{ ticketProcedure.quantity }}</td>
                   <td class="text-right whitespace-nowrap">
                     <div v-if="ticketProcedure.discountMoney" class="text-xs italic text-red-500">
                       <del>
@@ -558,19 +922,18 @@ defineExpose({ openModal })
                 </tr>
               </tbody>
             </template>
-            <template v-if="ticket.ticketProductConsumableList?.length">
+            <template v-if="ticketConsumablePayment?.length">
               <thead>
                 <tr>
-                  <th v-if="CONFIG.MODE === 'development'">ID</th>
                   <th>Chọn</th>
                   <th>#</th>
                   <th></th>
                   <th>
                     <span>Vật tư</span>
                   </th>
-                  <th>Giá tiền</th>
-                  <th>Số lượng</th>
-                  <th>Tổng tiền</th>
+                  <th>SL</th>
+                  <th>Đơn giá</th>
+                  <th>Thanh toán</th>
                 </tr>
               </thead>
               <tbody>
@@ -578,12 +941,6 @@ defineExpose({ openModal })
                   v-for="(ticketConsumable, index) in ticket.ticketProductConsumableList"
                   :key="ticketConsumable.id"
                 >
-                  <td
-                    v-if="CONFIG.MODE === 'development'"
-                    style="text-align: center; color: violet"
-                  >
-                    {{ ticketConsumable.id }}
-                  </td>
                   <td>
                     <div class="flex justify-center">
                       <InputCheckbox
@@ -604,32 +961,32 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td>{{ ticketConsumable.product?.brandName }}</td>
+                  <td class="text-center">{{ ticketConsumable.quantity }}</td>
                   <td class="text-right whitespace-nowrap">
                     <div v-if="ticketConsumable.discountMoney" class="text-xs italic text-red-500">
                       <del>{{ formatMoney(ticketConsumable.expectedPrice) }}</del>
                     </div>
                     <div>{{ formatMoney(ticketConsumable.actualPrice) }}</div>
                   </td>
-                  <td class="text-center">{{ ticketConsumable.quantity }}</td>
+
                   <td class="text-right whitespace-nowrap">
                     {{ formatMoney(ticketConsumable.actualPrice * ticketConsumable.quantity) }}
                   </td>
                 </tr>
               </tbody>
             </template>
-            <template v-if="ticket.ticketProductPrescriptionList?.length">
+            <template v-if="ticketPrescriptionPayment?.length">
               <thead>
                 <tr>
-                  <th v-if="CONFIG.MODE === 'development'">ID</th>
                   <th>Chọn</th>
                   <th>#</th>
                   <th></th>
                   <th>
                     <span>Thuốc</span>
                   </th>
-                  <th>Giá tiền</th>
-                  <th>Số lượng</th>
-                  <th>Tổng tiền</th>
+                  <th>SL</th>
+                  <th>Đơn giá</th>
+                  <th>Thanh toán</th>
                 </tr>
               </thead>
               <tbody>
@@ -637,12 +994,6 @@ defineExpose({ openModal })
                   v-for="(ticketPrescription, index) in ticket.ticketProductPrescriptionList"
                   :key="ticketPrescription.id"
                 >
-                  <td
-                    v-if="CONFIG.MODE === 'development'"
-                    style="text-align: center; color: violet"
-                  >
-                    {{ ticketPrescription.id }}
-                  </td>
                   <td>
                     <div class="flex justify-center">
                       <InputCheckbox
@@ -663,6 +1014,7 @@ defineExpose({ openModal })
                     />
                   </td>
                   <td>{{ ticketPrescription.product?.brandName }}</td>
+                  <td class="text-center">{{ ticketPrescription.quantity }}</td>
                   <td class="text-right whitespace-nowrap">
                     <div
                       v-if="ticketPrescription.discountMoney"
@@ -672,17 +1024,16 @@ defineExpose({ openModal })
                     </div>
                     <div>{{ formatMoney(ticketPrescription.actualPrice) }}</div>
                   </td>
-                  <td class="text-center">{{ ticketPrescription.quantity }}</td>
+
                   <td class="text-right whitespace-nowrap">
                     {{ formatMoney(ticketPrescription.actualPrice * ticketPrescription.quantity) }}
                   </td>
                 </tr>
               </tbody>
             </template>
-            <template v-if="ticket.ticketLaboratoryList?.length">
+            <template v-if="ticketLaboratoryPayment?.length">
               <thead>
                 <tr>
-                  <th v-if="CONFIG.MODE === 'development'">ID</th>
                   <th>Chọn</th>
                   <th>#</th>
                   <th></th>
@@ -691,7 +1042,7 @@ defineExpose({ openModal })
                   </th>
                   <th></th>
                   <th></th>
-                  <th>Giá tiền</th>
+                  <th>Thanh toán</th>
                 </tr>
               </thead>
               <tbody>
@@ -699,12 +1050,6 @@ defineExpose({ openModal })
                   v-for="(ticketLaboratory, index) in ticket.ticketLaboratoryList"
                   :key="ticketLaboratory.id"
                 >
-                  <td
-                    v-if="CONFIG.MODE === 'development'"
-                    style="text-align: center; color: violet"
-                  >
-                    {{ ticketLaboratory.id }}
-                  </td>
                   <td>
                     <div class="flex justify-center">
                       <InputCheckbox
@@ -734,10 +1079,9 @@ defineExpose({ openModal })
                 </tr>
               </tbody>
             </template>
-            <template v-if="ticket.ticketRadiologyList?.length">
+            <template v-if="ticketRadiologyPayment?.length">
               <thead>
                 <tr>
-                  <th v-if="CONFIG.MODE === 'development'">ID</th>
                   <th>Chọn</th>
                   <th>#</th>
                   <th></th>
@@ -746,7 +1090,7 @@ defineExpose({ openModal })
                   </th>
                   <th></th>
                   <th></th>
-                  <th>Giá tiền</th>
+                  <th>Thanh toán</th>
                 </tr>
               </thead>
               <tbody>
@@ -754,12 +1098,6 @@ defineExpose({ openModal })
                   v-for="(ticketRadiology, index) in ticket.ticketRadiologyList"
                   :key="ticketRadiology.id"
                 >
-                  <td
-                    v-if="CONFIG.MODE === 'development'"
-                    style="text-align: center; color: violet"
-                  >
-                    {{ ticketRadiology.id }}
-                  </td>
                   <td>
                     <div class="flex justify-center">
                       <InputCheckbox

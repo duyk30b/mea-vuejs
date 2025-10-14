@@ -8,11 +8,12 @@ import { TicketRadiology } from '../ticket-radiology'
 
 export enum TicketItemType {
   Other = 0, // Không xác định
-  TicketProcedure = 1,
-  TicketProductConsumable = 2,
-  TicketProductPrescription = 3,
-  TicketLaboratory = 4,
-  TicketRadiology = 5,
+  TicketRegimen = 1,
+  TicketProcedure = 2,
+  TicketProductConsumable = 3,
+  TicketProductPrescription = 4,
+  TicketLaboratory = 5,
+  TicketRadiology = 6,
 }
 
 export class PaymentTicketItem {

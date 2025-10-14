@@ -9,6 +9,7 @@ import { RadiologyService } from '../radiology'
 import type { PurchaseOrder } from '../purchase-order'
 import type { Ticket } from '../ticket'
 import { User, UserService } from '../user'
+import { RegimenService } from '../regimen'
 
 export enum PaymentPersonType {
   Other = 0,
@@ -174,16 +175,21 @@ export class Payment {
       })
       .map((i) => i.interactId)
 
-    const [productMap, procedureMap, laboratoryMap, radiologyMap, userMap] = await Promise.all([
-      ProductService.map({ filter: { id: { IN: productIdList } } }),
-      ProcedureService.getMap(),
-      LaboratoryService.getMap(),
-      RadiologyService.getMap(),
-      UserService.getMap(),
-    ])
+    const [regimenMap, procedureMap, productMap, laboratoryMap, radiologyMap, userMap] =
+      await Promise.all([
+        RegimenService.getMap(),
+        ProcedureService.getMap(),
+        ProductService.map({ filter: { id: { IN: productIdList } } }),
+        LaboratoryService.getMap(),
+        RadiologyService.getMap(),
+        UserService.getMap(),
+      ])
 
     payment.cashier = userMap[payment.cashierId] || User.blank()
     payment.paymentTicketItemList.forEach((i) => {
+      if (i.ticketItemType === TicketItemType.TicketRegimen) {
+        i.interactName = regimenMap[i.ticketItemId]?.name || ''
+      }
       if (i.ticketItemType === TicketItemType.TicketProcedure) {
         i.interactName = procedureMap[i.ticketItemId]?.name || ''
       }

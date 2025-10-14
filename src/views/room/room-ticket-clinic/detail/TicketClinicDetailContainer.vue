@@ -54,10 +54,12 @@ import TicketClinicProcedureContainer from './procedure/TicketClinicProcedureCon
 import TicketClinicRadiologyContainer from './radiology/TicketClinicRadiologyContainer.vue'
 import TicketClinicSummaryContainer from './summary/TicketClinicSummaryContainer.vue'
 import TicketClinicUserContainer from './user/TicketClinicUserContainer.vue'
+import ModalRefundTicketItem from '@/views/finance/finance-ticket/modal/ModalRefundTicketItem.vue'
 
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
 const modalPrepaymentTicketItem = ref<InstanceType<typeof ModalPrepaymentTicketItem>>()
+const modalRefundTicketItem = ref<InstanceType<typeof ModalRefundTicketItem>>()
 const modalTicketPayment = ref<InstanceType<typeof ModalTicketPayment>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -126,6 +128,7 @@ const startFetchData = async (ticketId?: string) => {
         ticketLaboratoryResultList: true,
         ticketRadiologyList: true,
         ticketUserList: true,
+        ticketSurchargeList: true,
         toAppointment: organizationPermission.value[PermissionId.APPOINTMENT] ? true : undefined,
         imageList: true,
       },
@@ -397,6 +400,17 @@ const clickRefundOverpaid = () => {
   }
 }
 
+const clickRefundTicketItem = () => {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+    return ModalStore.alert({
+      title: 'Trạng thái hồ sơ không hợp lệ ?',
+      content: 'Cần mở lại hồ sơ trước khi hoàn trả tiền',
+    })
+  } else {
+    modalRefundTicketItem.value?.openModalByTicket(ticketRoomRef.value)
+  }
+}
+
 const clickReturnProduct = () => {
   if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
     return ModalStore.alert({
@@ -413,6 +427,7 @@ const clickReturnProduct = () => {
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalTicketClinicDetailSetting ref="modalTicketClinicDetailSetting" />
   <ModalPrepaymentTicketItem ref="modalPrepaymentTicketItem" />
+  <ModalRefundTicketItem ref="modalRefundTicketItem" />
   <ModalTicketPayment ref="modalTicketPayment" />
   <ModalTicketReturnProduct ref="modalTicketReturnProduct" />
   <ModalTicketClinicHistory ref="modalTicketClinicHistory" />
@@ -468,12 +483,7 @@ const clickReturnProduct = () => {
         v-if="ticketRoomRef.isPaymentEachItem"
         color="red"
         icon="dollar"
-        @click="
-          modalPrepaymentTicketItem?.openModal({
-            ticketId: ticketRoomRef.id,
-            customer: ticketRoomRef.customer!,
-          })
-        "
+        @click="modalPrepaymentTicketItem?.openModalByTicket(ticketRoomRef)"
       >
         <span class="font-bold">THANH TOÁN</span>
       </VueButton>
@@ -531,19 +541,6 @@ const clickReturnProduct = () => {
       </VueButton>
       <VueButton
         v-if="
-          !ticketRoomRef.isPaymentEachItem &&
-          [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketRoomRef.status) &&
-          ticketRoomRef.paid > ticketRoomRef.totalMoney &&
-          userPermission[PermissionId.TICKET_REFUND_MONEY]
-        "
-        icon="dollar"
-        color="green"
-        @click="clickRefundOverpaid"
-      >
-        <span class="font-bold">HOÀN TIỀN</span>
-      </VueButton>
-      <VueButton
-        v-if="
           ticketRoomRef.deliveryStatus !== DeliveryStatus.NoStock &&
           userPermission[PermissionId.TICKET_CHANGE_PRODUCT_SEND_PRODUCT] &&
           ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status)
@@ -588,14 +585,26 @@ const clickReturnProduct = () => {
             v-if="
               !ticketRoomRef.isPaymentEachItem &&
               [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketRoomRef.status) &&
-              ticketRoomRef.paid <= ticketRoomRef.totalMoney &&
               userPermission[PermissionId.TICKET_REFUND_MONEY]
             "
           >
             <span class="text-red-500">
               <IconDollar />
-              Hoàn tiền
             </span>
+            <span class="text-red-500">Hoàn tiền</span>
+          </a>
+          <a
+            @click="clickRefundTicketItem"
+            v-if="
+              ticketRoomRef.isPaymentEachItem &&
+              [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketRoomRef.status) &&
+              userPermission[PermissionId.TICKET_REFUND_MONEY]
+            "
+          >
+            <span class="text-red-500">
+              <IconDollar />
+            </span>
+            <span class="text-red-500 font-bold">HOÀN TIỀN</span>
           </a>
           <a
             @click="clickReturnProduct"
@@ -603,8 +612,8 @@ const clickReturnProduct = () => {
           >
             <span class="text-red-500">
               <IconFileSync />
-              Hoàn trả thuốc - vật tư
             </span>
+            <span class="text-red-500">Hoàn trả thuốc - vật tư</span>
           </a>
           <a
             v-if="
@@ -615,14 +624,14 @@ const clickReturnProduct = () => {
           >
             <span class="text-red-500">
               <IconFileSync />
-              Mở lại phiếu
             </span>
+            <span class="text-red-500">Mở lại phiếu</span>
           </a>
           <a @click="clickDestroyTicket" v-if="userPermission[PermissionId.TICKET_DESTROY]">
             <span class="text-red-500">
               <IconDelete />
-              Xóa phiếu
             </span>
+            <span class="text-red-500">Xóa phiếu</span>
           </a>
         </div>
       </VueDropdown>

@@ -75,6 +75,7 @@ const startFetchData = async () => {
       groupTimeType: timeType.value,
       filter: {
         roomId: roomId.value ? roomId.value : undefined,
+        status: { NOT: TicketStatus.Draft },
         // status: { IN: [TicketStatus.Debt, TicketStatus.Completed] },
       },
     })

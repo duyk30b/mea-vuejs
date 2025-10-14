@@ -8,7 +8,7 @@
       dropdownContent: { backgroundColor: 'rgba(0, 0, 0, 0.7)', color: 'white' },
     }"
     :position="{ horizontal: 'center', vertical: 'top' }"
-    :delay="1000"
+    :delayHide="0"
   >
     <template #trigger>
       <slot name="trigger"></slot>

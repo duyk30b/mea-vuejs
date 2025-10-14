@@ -5,6 +5,7 @@ import { Payment } from '@/modules/payment'
 import { TicketProduct } from '@/modules/ticket-product'
 import type { BaseResponse } from '../../_base/base-dto'
 import { Ticket } from '../ticket.model'
+import type { TicketSurcharge } from '@/modules/ticket-surcharge/ticket-surcharge.model'
 
 export type TicketItemChangeMoney = {
   id: string
@@ -37,6 +38,23 @@ export class TicketActionApi {
       discountType: body.discountType,
       discountMoney: body.discountMoney,
       discountPercent: body.discountPercent,
+    })
+    const { data } = response.data as BaseResponse
+  }
+
+  static async changeSurchargeList(
+    ticketId: string,
+    body: {
+      ticketSurchargeBodyList: TicketSurcharge[]
+    },
+  ) {
+    const response = await AxiosInstance.post(`/ticket/${ticketId}/change-surcharge-list`, {
+      ticketSurchargeBodyList: body.ticketSurchargeBodyList.map((i) => {
+        return {
+          surchargeId: i.surchargeId,
+          money: i.money,
+        }
+      }),
     })
     const { data } = response.data as BaseResponse
   }
