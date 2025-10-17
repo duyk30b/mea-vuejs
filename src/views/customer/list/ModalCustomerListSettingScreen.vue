@@ -83,6 +83,11 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
+                <InputCheckbox v-model:value="settingDisplay.citizenIdCard" label="Hiển thị CCCD" />
+              </td>
+            </tr>
+            <tr>
+              <td>
                 <InputCheckbox v-model:value="settingDisplay.gender" label="Hiển thị giới tính" />
               </td>
             </tr>

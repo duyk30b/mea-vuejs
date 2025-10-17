@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import VueTag from '@/common/VueTag.vue'
-import { IconFileSearch } from '@/common/icon-antd'
+import { IconBug, IconFileSearch } from '@/common/icon-antd'
 import { IconEditSquare } from '@/common/icon-google'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
@@ -17,6 +17,7 @@ import { computed, onMounted, ref } from 'vue'
 import ModalTicketClinicConsumableUpdate from '../consumable/ModalTicketConsumableUpdate.vue'
 import ModalTicketPrescriptionUpdate from '../prescription/ModalTicketPrescriptionUpdate.vue'
 import { TicketProductService } from '@/modules/ticket-product'
+import { VueTooltip } from '@/common/popover'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalTicketClinicConsumableUpdate =
@@ -78,7 +79,7 @@ const prescriptionCostAmount = computed(() => {
   <template v-if="ticketRoomRef.ticketProductConsumableList?.length">
     <thead>
       <tr>
-        <th v-if="CONFIG.MODE === 'development'">ID</th>
+        <th v-if="CONFIG.MODE === 'development'"></th>
         <th>#</th>
         <th v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></th>
         <th style="width: 32px"></th>
@@ -100,7 +101,14 @@ const prescriptionCostAmount = computed(() => {
         :key="tpConsumable.id + '_' + tpConsumableIndex"
       >
         <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-          {{ tpConsumable.id }}
+          <VueTooltip>
+            <template #trigger>
+              <IconBug width="1.2em" height="1.2em" />
+            </template>
+            <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+              <pre>{{ JSON.stringify(tpConsumable, null, 4) }}</pre>
+            </div>
+          </VueTooltip>
         </td>
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ tpConsumableIndex + 1 }}
@@ -203,7 +211,7 @@ const prescriptionCostAmount = computed(() => {
   <template v-if="ticketRoomRef.ticketProductPrescriptionList?.length">
     <thead>
       <tr>
-        <th v-if="CONFIG.MODE === 'development'">ID</th>
+        <th v-if="CONFIG.MODE === 'development'"></th>
         <th>#</th>
         <th v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></th>
         <th style="width: 32px"></th>
@@ -225,7 +233,14 @@ const prescriptionCostAmount = computed(() => {
         :key="tpPrescription.id + '_' + tpPrescriptionIndex"
       >
         <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-          {{ tpPrescription.id }}
+          <VueTooltip>
+            <template #trigger>
+              <IconBug width="1.2em" height="1.2em" />
+            </template>
+            <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+              <pre>{{ JSON.stringify(tpPrescription, null, 4) }}</pre>
+            </div>
+          </VueTooltip>
         </td>
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ tpPrescriptionIndex + 1 }}

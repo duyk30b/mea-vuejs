@@ -12,6 +12,7 @@ import {
   TicketLaboratoryGroup,
   TicketLaboratoryGroupApi,
   TicketLaboratoryResult,
+  TicketLaboratoryService,
 } from '@/modules/ticket-laboratory'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import { computed, ref } from 'vue'
@@ -36,9 +37,10 @@ const openModal = async (tlgIdProp: string, options?: { noEdit: boolean; query?:
   showModal.value = true
   ticketLaboratoryGroup.value = await TicketLaboratoryGroupApi.detail(tlgIdProp, {
     relation: {
-      // customer: true,
-      // ticket: true,
-      ticketUserList: true,
+      customer: true,
+      ticket: true,
+      ticketUserRequestList: true,
+      ticketUserResultList: true,
       ticketLaboratoryList: true,
       ticketLaboratoryResultMap: true,
     },
@@ -114,8 +116,7 @@ const updateResult = async (options: { print: boolean }) => {
           ? {
               ticket: true,
               customer: true,
-              imageList: true,
-              ticketUserList: true,
+              ticketUserResultList: true,
               ticketLaboratoryList: true,
               ticketLaboratoryResultMap: true,
             }
@@ -125,10 +126,14 @@ const updateResult = async (options: { print: boolean }) => {
     emit('success')
 
     if (options.print) {
+      await Promise.all([
+        TicketLaboratoryService.refreshRelationGroup([ticketLaboratoryGroupUpdate]),
+        TicketLaboratoryService.refreshRelation(ticketLaboratoryGroupUpdate.ticketLaboratoryList),
+      ])
       await PrintHtmlAction.startPrintResultTicketLaboratory({
         ticketLaboratoryGroup: ticketLaboratoryGroupUpdate,
-        ticket: ticketLaboratoryGroupUpdate.ticket!,
-        customer: ticketLaboratoryGroupUpdate.customer!,
+        ticket: ticketLaboratoryGroup.value.ticket!,
+        customer: ticketLaboratoryGroup.value.customer!,
       })
     }
 

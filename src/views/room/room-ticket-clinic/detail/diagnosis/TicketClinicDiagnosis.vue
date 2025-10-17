@@ -14,6 +14,7 @@ import { TicketChangeAttributeApi } from '@/modules/ticket'
 import {
   TicketAttributeKeyGeneralList,
   type TicketAttributeKeyGeneralType,
+  type TicketAttributeKeyType,
 } from '@/modules/ticket-attribute'
 import { ESImage } from '@/utils'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -52,9 +53,7 @@ const note = ref<string>('')
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadCloudinary>>()
 
 const ticketAttributeOriginMap: { [P in TicketAttributeKeyGeneralType]?: any } = {}
-const ticketAttributeMap = ref<
-  { [P in TicketAttributeKeyGeneralType]?: any } & { healthHistory: string; summary: string }
->({
+const ticketAttributeMap = ref<{ [P in TicketAttributeKeyType]?: any }>({
   healthHistory: '',
   summary: '',
 })
@@ -86,7 +85,7 @@ watch(
       return (ticketAttributeMap.value = { healthHistory: '', summary: '' })
     }
     newValue.forEach((i) => {
-      // if (!TicketAttributeKeyGeneralList.includes(i.key as any)) return
+      // if (!TicketAttributeKeyList.includes(i.key as any)) return
       const k = i.key as unknown as TicketAttributeKeyGeneralType
       if (i.value === ticketAttributeOriginMap[k]) return
       ticketAttributeOriginMap[k] = i.value
@@ -121,7 +120,7 @@ const hasChangeCustomer = computed(() => {
 const hasChangeAttribute = computed(() => {
   let hasChange = false
   Object.entries(ticketAttributeMap.value).forEach(([key, value]) => {
-    const k = key as unknown as TicketAttributeKeyGeneralType
+    const k = key as unknown as TicketAttributeKeyType
     const rootValue = ticketRoomRef.value.ticketAttributeMap[k] || ''
     if (rootValue != value) {
       hasChange = true

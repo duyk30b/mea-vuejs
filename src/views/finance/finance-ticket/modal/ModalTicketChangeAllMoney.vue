@@ -15,7 +15,9 @@ import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadi
 import TicketDeliveryStatusTooltip from '@/views/room/room-ticket-base/TicketDeliveryStatusTooltip.vue'
 import { computed, ref } from 'vue'
 import PaymentMoneyStatusTooltip from '../../payment/PaymentMoneyStatusTooltip.vue'
+import { InputMoney } from '@/common/vue-form'
 
+let ticketOrigin = Ticket.blank()
 const ticket = ref<Ticket>(Ticket.blank())
 
 const emit = defineEmits<{ (e: 'success', ticket: Ticket): void }>()
@@ -31,7 +33,7 @@ const openModal = async (options: { ticketId: string; customer: Customer }) => {
   showModal.value = true
 
   try {
-    const ticketData = await TicketService.detail(options.ticketId, {
+    ticketOrigin = await TicketService.detail(options.ticketId, {
       relation: {
         ticketProcedureList: true,
         ticketProductList: { batch: true, product: true },
@@ -40,21 +42,21 @@ const openModal = async (options: { ticketId: string; customer: Customer }) => {
         ticketRadiologyList: true,
       },
     })
-    if (!ticketData.ticketProcedureList) ticketData.ticketProcedureList = []
-    if (!ticketData.ticketProductConsumableList) ticketData.ticketProductConsumableList = []
-    if (!ticketData.ticketProductPrescriptionList) ticketData.ticketProductPrescriptionList = []
-    if (!ticketData.ticketRadiologyList) ticketData.ticketRadiologyList = []
-    if (!ticketData.ticketLaboratoryList) ticketData.ticketLaboratoryList = []
-    await ticketData.refreshAllData()
+    if (!ticketOrigin.ticketProcedureList) ticketOrigin.ticketProcedureList = []
+    if (!ticketOrigin.ticketProductConsumableList) ticketOrigin.ticketProductConsumableList = []
+    if (!ticketOrigin.ticketProductPrescriptionList) ticketOrigin.ticketProductPrescriptionList = []
+    if (!ticketOrigin.ticketRadiologyList) ticketOrigin.ticketRadiologyList = []
+    if (!ticketOrigin.ticketLaboratoryList) ticketOrigin.ticketLaboratoryList = []
+    await ticketOrigin.refreshAllData()
+    ticketOrigin.customer = Customer.from(options.customer)
 
-    ticket.value = ticketData
-    ticket.value.customer = Customer.from(options.customer)
+    ticket.value = Ticket.from(ticketOrigin)
   } catch (error) {}
 }
 
 const procedureActualMoney = computed(() => {
   return (
-    ticket.value.ticketProcedureList?.reduce((acc, item) => {
+    ticket.value.ticketProcedureNormalList?.reduce((acc, item) => {
       return acc + item.actualPrice * item.quantity
     }, 0) || 0
   )
@@ -94,6 +96,7 @@ const radiologyActualMoney = computed(() => {
 
 const closeModal = () => {
   showModal.value = false
+  ticketOrigin = Ticket.blank()
   ticket.value = Ticket.blank()
 }
 
@@ -101,7 +104,7 @@ const startChangeAllMoney = async () => {
   try {
     changeLoading.value = true
     const ticketResponse = await TicketActionApi.changeAllMoney(ticket.value.id, {
-      ticketProcedureList: (ticket.value.ticketProcedureList || [])
+      ticketProcedureList: (ticket.value.ticketProcedureNormalList || [])
         .filter(
           (i) =>
             ![PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
@@ -254,12 +257,12 @@ defineExpose({ openModal })
                 <th>G.Niêm Yết</th>
                 <th>Chiết khấu (%)</th>
                 <th>Chiết khấu (VNĐ)</th>
-                <th>Giá thực tế</th>
+                <th>Đơn Giá</th>
                 <th>S.Lượng</th>
                 <th>Tổng</th>
               </tr>
             </thead>
-            <template v-if="ticket.ticketProcedureList?.length">
+            <template v-if="ticket.ticketProcedureNormalList?.length">
               <tbody>
                 <tr class="font-bold" style="color: var(--text-blue); text-align: center">
                   <td style="text-align: left" colspan="6">DỊCH VỤ - THỦ THUẬT</td>
@@ -271,7 +274,7 @@ defineExpose({ openModal })
                   <td>Tổng</td>
                 </tr>
                 <tr
-                  v-for="(ticketProcedure, index) in ticket.ticketProcedureList"
+                  v-for="(ticketProcedure, index) in ticket.ticketProcedureNormalList"
                   :key="ticketProcedure.id"
                   :style="
                     [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
@@ -316,7 +319,8 @@ defineExpose({ openModal })
                       min="0"
                       :max="100"
                       @input="
-                        (e) => handleChangeDiscountPercent(e, ticket.ticketProcedureList!, index)
+                        (e) =>
+                          handleChangeDiscountPercent(e, ticket.ticketProcedureNormalList!, index)
                       "
                     />
                   </td>
@@ -333,10 +337,12 @@ defineExpose({ openModal })
                     <input
                       v-else
                       type="number"
+                      :step="1000"
                       :value="ticketProcedure.discountMoney"
                       min="0"
                       @input="
-                        (e) => handleChangeDiscountMoney(e, ticket.ticketProcedureList!, index)
+                        (e) =>
+                          handleChangeDiscountMoney(e, ticket.ticketProcedureNormalList!, index)
                       "
                     />
                   </td>
@@ -354,8 +360,11 @@ defineExpose({ openModal })
                       v-else
                       type="number"
                       :value="ticketProcedure.actualPrice"
+                      :step="1000"
                       min="0"
-                      @input="(e) => handleChangeActualPrice(e, ticket.ticketProcedureList!, index)"
+                      @input="
+                        (e) => handleChangeActualPrice(e, ticket.ticketProcedureNormalList!, index)
+                      "
                     />
                   </td>
                   <td class="text-right">
@@ -373,7 +382,9 @@ defineExpose({ openModal })
                       v-else
                       :value="ticketProcedure.quantity"
                       min="0"
-                      @input="(e) => handleChangeQuantity(e, ticket.ticketProcedureList!, index)"
+                      @input="
+                        (e) => handleChangeQuantity(e, ticket.ticketProcedureNormalList!, index)
+                      "
                     />
                   </td>
                   <td class="text-right whitespace-nowrap">
@@ -479,6 +490,7 @@ defineExpose({ openModal })
                     <input
                       v-else
                       type="number"
+                      :step="1000"
                       :value="ticketConsumable.discountMoney"
                       min="0"
                       @input="
@@ -500,6 +512,7 @@ defineExpose({ openModal })
                     <input
                       v-else
                       type="number"
+                      :step="1000"
                       :value="ticketConsumable.actualPrice"
                       min="0"
                       @input="
@@ -636,6 +649,7 @@ defineExpose({ openModal })
                     <input
                       v-else
                       type="number"
+                      :step="1000"
                       :value="ticketPrescription.discountMoney"
                       min="0"
                       @input="
@@ -657,6 +671,7 @@ defineExpose({ openModal })
                     <input
                       v-else
                       type="number"
+                      :step="1000"
                       :value="ticketPrescription.actualPrice"
                       min="0"
                       @input="
@@ -786,6 +801,7 @@ defineExpose({ openModal })
                     <input
                       v-else
                       type="number"
+                      :step="1000"
                       :value="ticketLaboratory.discountMoney"
                       min="0"
                       @input="
@@ -806,6 +822,7 @@ defineExpose({ openModal })
                     <input
                       v-else
                       type="number"
+                      :step="1000"
                       :value="ticketLaboratory.actualPrice"
                       min="0"
                       @input="
@@ -915,6 +932,7 @@ defineExpose({ openModal })
                     <input
                       v-else
                       type="number"
+                      :step="1000"
                       :value="ticketRadiology.discountMoney"
                       min="0"
                       @input="
@@ -935,6 +953,7 @@ defineExpose({ openModal })
                     <input
                       v-else
                       type="number"
+                      :step="1000"
                       :value="ticketRadiology.actualPrice"
                       min="0"
                       @input="(e) => handleChangeActualPrice(e, ticket.ticketRadiologyList!, index)"

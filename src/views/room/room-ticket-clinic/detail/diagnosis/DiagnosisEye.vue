@@ -1,136 +1,68 @@
+<!-- eslint-disable vue/no-mutating-props -->
+<!-- eslint-disable vue/no-mutating-props -->
 <script lang="ts" setup>
-import ImageUploadCloudinary from '@/common/image-upload/ImageUploadCloudinary.vue'
-import { MeService } from '@/modules/_me/me.service'
-import { CustomerService } from '@/modules/customer'
-import { ticketRoomRef } from '@/modules/room'
-import { TicketChangeAttributeApi } from '@/modules/ticket'
-import {
-  TicketAttributeKeyEyeList,
-  type TicketAttributeKeyEyeType,
-} from '@/modules/ticket-attribute'
-import { computed, onMounted, ref, watch } from 'vue'
+import { type TicketAttributeMap } from '@/modules/ticket-attribute'
 
-const { userPermission, organization } = MeService
-
-const note = ref<string>('')
-const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadCloudinary>>()
-const ticketAttributeOriginMap: { [P in TicketAttributeKeyEyeType]?: any } = {}
-const ticketAttributeMap = ref<
-  { [P in TicketAttributeKeyEyeType]?: any } & { healthHistory: string; body: string }
->({
-  healthHistory: '',
-  body: '',
+const props = withDefaults(defineProps<{ ticketAttributeMap: TicketAttributeMap }>(), {
+  ticketAttributeMap: () => ({}),
 })
 
-const saveLoading = ref(false)
-const hasChangeImage = ref(false)
-
-onMounted(async () => {})
-
-watch(
-  () => ticketRoomRef.value.note,
-  (newValue, oldValue) => {
-    note.value = newValue
-  },
-  { immediate: true, deep: true },
-)
-
-watch(
-  () => ticketRoomRef.value.ticketAttributeList,
-  (newValue, oldValue) => {
-    if (!newValue) {
-      return (ticketAttributeMap.value = { healthHistory: '', body: '' })
-    }
-    newValue.forEach((i) => {
-      if (!TicketAttributeKeyEyeList.includes(i.key as any)) return
-      const k = i.key as unknown as TicketAttributeKeyEyeType
-      if (i.value === ticketAttributeOriginMap[k]) return
-      ticketAttributeOriginMap[k] = i.value
-      ticketAttributeMap.value[k] = i.value
-    })
-  },
-  { immediate: true, deep: true },
-)
-
-watch(
-  () => ticketRoomRef.value.imageDiagnosisIds,
-  (newValue, oldValue) => (hasChangeImage.value = false),
-  { immediate: true },
-)
-
-const hasChangeCustomer = computed(() => {
-  const customerHealthHistory = ticketRoomRef.value.customer?.healthHistory || ''
-  return customerHealthHistory != ticketAttributeMap.value.healthHistory
-})
-
-const hasChangeAttribute = computed(() => {
-  let hasChange = false
-  Object.entries(ticketAttributeMap.value).forEach(([key, value]) => {
-    const k = key as unknown as TicketAttributeKeyEyeType
-    const rootValue = ticketRoomRef.value.ticketAttributeMap[k] || ''
-    if (rootValue != value) {
-      hasChange = true
-    }
-  })
-  return hasChange
-})
-
-const hasChangeData = computed(() => {
-  if (note.value != ticketRoomRef.value.note) return true
-  if (hasChangeImage.value) return true
-  if (hasChangeAttribute.value) return true
-  if (hasChangeCustomer.value) return true
-
-  return false
-})
-
-const saveTicketDiagnosis = async () => {
-  try {
-    saveLoading.value = true
-    const { filesPosition, imageIdListKeep, files, imageUrls, imageIdWaitList } =
-      imageUploadMultipleRef.value?.getData() || {
-        filesPosition: [],
-        imageIdListKeep: [],
-        files: [],
-        imageUrls: [],
-        imageIdWaitList: [],
-      }
-
-    let ticketAttributeChangeList = undefined
-    if (hasChangeAttribute.value) {
-      ticketAttributeChangeList = Object.entries(ticketAttributeMap.value)
-        .map(([key, value]) => ({ key, value }))
-        .filter((i) => !!i.value)
-    }
-
-    await Promise.all([
-      TicketChangeAttributeApi.updateDiagnosis({
-        ticketId: ticketRoomRef.value.id,
-        note: note.value,
-        imagesChange: hasChangeImage.value
-          ? { files, imageIdWaitList, externalUrlList: imageUrls }
-          : undefined,
-        ticketAttributeChangeList,
-        ticketAttributeKeyList: TicketAttributeKeyEyeList as any,
-      }),
-      hasChangeCustomer.value
-        ? CustomerService.updateOne(ticketRoomRef.value.customerId, {
-            healthHistory: ticketAttributeMap.value.healthHistory,
-          })
-        : undefined,
-    ])
-  } catch (error) {
-    console.log('🚀 ~ file: TicketClinicDiagnosisEyeBasic.vue:115 ~ saveTicketDiagnosis:', error)
-  } finally {
-    saveLoading.value = false
-  }
+const update_ThiLuc_MP = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  props.ticketAttributeMap.ThiLuc_MP = target.value
 }
-
-const getDataTicketDiagnosis = () => {
-  return { ticketAttributeMap: ticketAttributeMap.value }
+const update_ThiLuc_MT = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  props.ticketAttributeMap.ThiLuc_MT = target.value
 }
-
-defineExpose({ getDataTicketDiagnosis })
+const update_NhanAp_MP_mmHg = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  props.ticketAttributeMap.NhanAp_MP_mmHg = target.value
+}
+const update_NhanAp_MT_mmHg = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  props.ticketAttributeMap.NhanAp_MT_mmHg = target.value
+}
+const update_MiMatKetMac_MP = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  props.ticketAttributeMap.MiMatKetMac_MP = target.value
+}
+const update_MiMatKetMac_MT = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  props.ticketAttributeMap.MiMatKetMac_MT = target.value
+}
+const update_GiacMac_MP = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  props.ticketAttributeMap.GiacMac_MP = target.value
+}
+const update_GiacMac_MT = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  props.ticketAttributeMap.GiacMac_MT = target.value
+}
+const update_TienPhongMongMat_MP = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  props.ticketAttributeMap.TienPhongMongMat_MP = target.value
+}
+const update_TienPhongMongMat_MT = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  props.ticketAttributeMap.TienPhongMongMat_MT = target.value
+}
+const update_ThuyTinhThe_MP = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  props.ticketAttributeMap.ThuyTinhThe_MP = target.value
+}
+const update_ThuyTinhThe_MT = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  props.ticketAttributeMap.ThuyTinhThe_MT = target.value
+}
+const update_DayMat_MP = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  props.ticketAttributeMap.DayMat_MP = target.value
+}
+const update_DayMat_MT = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  props.ticketAttributeMap.DayMat_MT = target.value
+}
 </script>
 <template>
   <div class="mt-4 w-full" style="overflow-x: scroll">
@@ -147,38 +79,72 @@ defineExpose({ getDataTicketDiagnosis })
         <tbody>
           <tr>
             <td class="title">Thị lực</td>
-            <td><input v-model="ticketAttributeMap.ThiLuc_MP" /></td>
-            <td><input v-model="ticketAttributeMap.ThiLuc_MT" /></td>
+            <td>
+              <input :value="ticketAttributeMap.ThiLuc_MP" @input="update_ThiLuc_MP" />
+            </td>
+            <td>
+              <input :value="ticketAttributeMap.ThiLuc_MT" @input="update_ThiLuc_MT" />
+            </td>
           </tr>
           <tr>
             <td class="title">Nhãn áp</td>
-            <td><input v-model="ticketAttributeMap.NhanAp_MP" /></td>
-            <td><input v-model="ticketAttributeMap.NhanAp_MT" /></td>
+            <td>
+              <input :value="ticketAttributeMap.NhanAp_MP_mmHg" @input="update_NhanAp_MP_mmHg" />
+            </td>
+            <td>
+              <input :value="ticketAttributeMap.NhanAp_MT_mmHg" @input="update_NhanAp_MT_mmHg" />
+            </td>
           </tr>
           <tr>
             <td class="title">Mi mắt - kết mạc</td>
-            <td><input v-model="ticketAttributeMap.MiMatKetMac_MP" /></td>
-            <td><input v-model="ticketAttributeMap.MiMatKetMac_MT" /></td>
+            <td>
+              <input :value="ticketAttributeMap.MiMatKetMac_MP" @input="update_MiMatKetMac_MP" />
+            </td>
+            <td>
+              <input :value="ticketAttributeMap.MiMatKetMac_MT" @input="update_MiMatKetMac_MT" />
+            </td>
           </tr>
           <tr>
             <td class="title">Giác mạc</td>
-            <td><input v-model="ticketAttributeMap.GiacMac_MP" /></td>
-            <td><input v-model="ticketAttributeMap.GiacMac_MT" /></td>
+            <td>
+              <input :value="ticketAttributeMap.GiacMac_MP" @input="update_GiacMac_MP" />
+            </td>
+            <td>
+              <input :value="ticketAttributeMap.GiacMac_MT" @input="update_GiacMac_MT" />
+            </td>
           </tr>
           <tr>
             <td class="title">Tiền phòng, mống mắt</td>
-            <td><input v-model="ticketAttributeMap.TienPhongMongMat_MP" /></td>
-            <td><input v-model="ticketAttributeMap.TienPhongMongMat_MT" /></td>
+            <td>
+              <input
+                :value="ticketAttributeMap.TienPhongMongMat_MP"
+                @input="update_TienPhongMongMat_MP"
+              />
+            </td>
+            <td>
+              <input
+                :value="ticketAttributeMap.TienPhongMongMat_MT"
+                @input="update_TienPhongMongMat_MT"
+              />
+            </td>
           </tr>
           <tr>
             <td class="title">Thủy tinh thể</td>
-            <td><input v-model="ticketAttributeMap.ThuyTinhThe_MP" /></td>
-            <td><input v-model="ticketAttributeMap.ThuyTinhThe_MT" /></td>
+            <td>
+              <input :value="ticketAttributeMap.ThuyTinhThe_MP" @input="update_ThuyTinhThe_MP" />
+            </td>
+            <td>
+              <input :value="ticketAttributeMap.ThuyTinhThe_MT" @input="update_ThuyTinhThe_MT" />
+            </td>
           </tr>
           <tr>
             <td class="title">Đáy mắt</td>
-            <td><input v-model="ticketAttributeMap.DayMat_MP" /></td>
-            <td><input v-model="ticketAttributeMap.DayMat_MT" /></td>
+            <td>
+              <input :value="ticketAttributeMap.DayMat_MP" @input="update_DayMat_MP" />
+            </td>
+            <td>
+              <input :value="ticketAttributeMap.DayMat_MT" @input="update_DayMat_MT" />
+            </td>
           </tr>
         </tbody>
       </table>

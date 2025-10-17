@@ -23,6 +23,8 @@ import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import ModalSelectPaymentExample from './ModalSelectPaymentExample.vue'
 import { Payment } from '@/modules/payment'
 import { Customer } from '@/modules/customer'
+import { VueTooltip } from '@/common/popover'
+import { IconBug } from '@/common/icon-antd'
 
 const modalSelectTicketExample = ref<InstanceType<typeof ModalSelectTicketExample>>()
 const modalSelectPaymentExample = ref<InstanceType<typeof ModalSelectPaymentExample>>()
@@ -92,6 +94,7 @@ const startCompile = () => {
   if (!iframe.value) return
   let data: Record<string, any> = {}
   try {
+    const ticket = ticketDemo.value
     eval(printHtml.value.dataExample)
     if (!data || typeof data !== 'object') {
       data = {}
@@ -406,11 +409,28 @@ const handleSave = async () => {
                 printHtml.printHtmlType,
               )
             "
+            class="flex gap-2 items-baseline"
           >
+            <VueTooltip>
+              <template #trigger>
+                <IconBug width="1em" height="1em" style="color: violet" />
+              </template>
+              <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                <pre>{{ JSON.stringify(paymentDemo, null, 4) }}</pre>
+              </div>
+            </VueTooltip>
             <a @click="modalSelectPaymentExample?.openModal()">Chọn mẫu thanh toán thử</a>
           </div>
-          <div v-else>
+          <div v-else class="flex gap-2 items-baseline">
             <a @click="modalSelectTicketExample?.openModal()">Chọn mẫu thử</a>
+            <VueTooltip>
+              <template #trigger>
+                <IconBug width="1em" height="1em" style="color: violet" />
+              </template>
+              <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                <pre>{{ JSON.stringify(ticketDemo, null, 4) }}</pre>
+              </div>
+            </VueTooltip>
           </div>
           <a @click="startTestPrint">In thử</a>
         </div>

@@ -67,6 +67,13 @@ defineExpose({ openModal })
           <tbody>
             <tr>
               <td colspan="2">
+                <InputCheckbox v-model:value="settingDisplay.citizenIdCard">
+                  Hiển thị điền số CCCD
+                </InputCheckbox>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
                 <InputCheckbox v-model:value="settingDisplay.facebook">
                   Hiển thị điền link facebook
                 </InputCheckbox>

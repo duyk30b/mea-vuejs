@@ -47,6 +47,7 @@ export class CustomerApi {
       customerCode: customer.customerCode || '',
       fullName: customer.fullName,
       phone: customer.phone,
+      citizenIdCard: customer.citizenIdCard || '',
       facebook: customer.facebook || '',
       zalo: customer.zalo || '',
       birthday: customer.birthday,
@@ -69,6 +70,7 @@ export class CustomerApi {
     const response = await AxiosInstance.patch(`/customer/update/${id}`, {
       customerCode: customer.customerCode,
       fullName: customer.fullName !== undefined ? customer.fullName : undefined,
+      citizenIdCard: customer.citizenIdCard !== undefined ? customer.citizenIdCard : undefined,
       phone: customer.phone !== undefined ? customer.phone : undefined,
       facebook: customer.facebook !== undefined ? customer.facebook : undefined,
       zalo: customer.zalo !== undefined ? customer.zalo : undefined,

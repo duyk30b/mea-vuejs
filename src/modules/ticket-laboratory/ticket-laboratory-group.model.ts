@@ -2,6 +2,7 @@ import { Customer } from '../customer'
 import { PaymentMoneyStatus } from '../enum'
 import { LaboratoryGroup } from '../laboratory-group'
 import { Room } from '../room'
+import { TicketUser } from '../ticket-user'
 import { Ticket } from '../ticket/ticket.model'
 import { TicketLaboratoryResult } from './ticket-laboratory-result.model'
 import { TicketLaboratory, TicketLaboratoryStatus } from './ticket-laboratory.model'
@@ -25,6 +26,8 @@ export class TicketLaboratoryGroup {
   laboratoryGroup?: LaboratoryGroup
   ticketLaboratoryList?: TicketLaboratory[]
   ticketLaboratoryResultMap?: Record<string, TicketLaboratoryResult>
+  ticketUserRequestList: TicketUser[]
+  ticketUserResultList: TicketUser[]
 
   static init(): TicketLaboratoryGroup {
     const ins = new TicketLaboratoryGroup()
@@ -37,6 +40,8 @@ export class TicketLaboratoryGroup {
 
   static blank(): TicketLaboratoryGroup {
     const ins = TicketLaboratoryGroup.init()
+    ins.ticketUserRequestList = []
+    ins.ticketUserResultList = []
     return ins
   }
 
@@ -75,6 +80,12 @@ export class TicketLaboratoryGroup {
     }
     if (target.ticketLaboratoryResultMap) {
       // todo
+    }
+    if (target.ticketUserRequestList) {
+      target.ticketUserRequestList = TicketUser.basicList(target.ticketUserRequestList)
+    }
+    if (target.ticketUserResultList) {
+      target.ticketUserResultList = TicketUser.basicList(target.ticketUserResultList)
     }
     return target
   }

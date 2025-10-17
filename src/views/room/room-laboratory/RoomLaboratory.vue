@@ -1,30 +1,34 @@
 <script setup lang="ts">
-import VueButton from '@/common/VueButton.vue'
-import VuePagination from '@/common/VuePagination.vue'
 import { IconEye, IconPrint, IconRight } from '@/common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import { IconEditSquare } from '@/common/icon-google'
 import { InputDate, InputOptions, InputSelect, VueSelect } from '@/common/vue-form'
+import VueButton from '@/common/VueButton.vue'
+import VuePagination from '@/common/VuePagination.vue'
+import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { CustomerService, type Customer } from '@/modules/customer'
+import { PaymentMoneyStatus } from '@/modules/enum'
 import { Laboratory, LaboratoryService } from '@/modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '@/modules/laboratory-group'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PrintHtmlService } from '@/modules/print-html'
-import { Room, RoomType, roomLaboratory, RoomService } from '@/modules/room'
-import { TicketLaboratoryStatus } from '@/modules/ticket-laboratory'
-import { TicketLaboratoryGroup, TicketLaboratoryGroupApi } from '@/modules/ticket-laboratory'
+import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
+import { Room, roomLaboratory, RoomService, RoomType } from '@/modules/room'
+import {
+  TicketLaboratoryGroup,
+  TicketLaboratoryGroupApi,
+  TicketLaboratoryStatus,
+} from '@/modules/ticket-laboratory'
 import { ESString, ESTimer } from '@/utils'
 import Breadcrumb from '@/views/component/Breadcrumb.vue'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import { onBeforeMount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { fromTime, toTime } from '../room-ticket-base/room-ticket.ref'
+import TicketLink from '../room-ticket-base/TicketLink.vue'
 import ModalTicketLaboratoryResult from './ModalTicketLaboratoryGroupResult.vue'
 import TicketLaboratoryStatusTag from './TicketLaboratoryStatusTag.vue'
-import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
-import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
-import { PaymentMoneyStatus } from '@/modules/enum'
-import { fromTime, toTime } from '../room-ticket-base/room-ticket.ref'
 
 const router = useRouter()
 const route = useRoute()
@@ -204,7 +208,8 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
       relation: {
         // customer: true,
         // ticket: true,
-        ticketUserList: true,
+        ticketUserRequestList: true,
+        ticketUserResultList: true,
         // ticketLaboratoryList: true,
         ticketLaboratoryResultMap: true,
       },
@@ -343,7 +348,8 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
       <table>
         <thead>
           <tr>
-            <th style="width: 40px">Mã</th>
+            <th v-if="CONFIG.MODE === 'development'">ID</th>
+            <th>Phiếu Khám</th>
             <th style="width: 32px"></th>
             <th style="min-width: 150px">Khách hàng</th>
             <th>Tên phiếu</th>
@@ -385,17 +391,12 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(tlg, index) in ticketLaboratoryGroupList" :key="index">
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              {{ tlg.id }}
+            </td>
             <td>
               <div class="flex justify-center items-center gap-2">
-                {{
-                  (tlg.ticket?.date?.toString()?.padStart(2, '0') || '') +
-                  tlg.ticket?.month?.toString().padStart(2, '0') +
-                  tlg.ticket?.year?.toString().slice(-2) +
-                  '_' +
-                  tlg.ticket?.dailyIndex?.toString().padStart(2, '0') +
-                  '_' +
-                  tlg.id
-                }}
+                <TicketLink :ticketId="tlg.ticketId" :ticket="tlg.ticket" />
               </div>
             </td>
             <td><PaymentMoneyStatusTooltip :paymentMoneyStatus="tlg.paymentMoneyStatus" /></td>

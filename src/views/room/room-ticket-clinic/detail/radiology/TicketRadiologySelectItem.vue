@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { VueButton } from '@/common'
-import { IconDelete, IconFileSearch } from '@/common/icon-antd'
+import { IconBug, IconDelete, IconFileSearch } from '@/common/icon-antd'
 import { IconEditSquare } from '@/common/icon-google'
 import { InputText } from '@/common/vue-form'
 import { CONFIG } from '@/config'
@@ -17,6 +17,7 @@ import { ESFunction, ESString } from '@/utils'
 import ModalRadiologyDetail from '@/views/master-data/radiology/detail/ModalRadiologyDetail.vue'
 import { onMounted, ref } from 'vue'
 import ModalTicketRadiologyUpdate from './ModalTicketRadiologyUpdate.vue'
+import { VueTooltip } from '@/common/popover'
 
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalTicketRadiologyUpdate = ref<InstanceType<typeof ModalTicketRadiologyUpdate>>()
@@ -256,7 +257,7 @@ const handleModalTicketRadiologyUpdateSuccess = (
             <tbody>
               <tr>
                 <td colspan="100" style="padding: 0">
-                  <div style="margin: -1px;">
+                  <div style="margin: -1px">
                     <InputText
                       v-model:value="searchText"
                       prepend="🔎"
@@ -301,12 +302,11 @@ const handleModalTicketRadiologyUpdateSuccess = (
         <table>
           <thead>
             <tr>
-              <th v-if="CONFIG.MODE === 'development'">LocalId-RadiologyID</th>
+              <th v-if="CONFIG.MODE === 'development'"></th>
               <th>#</th>
               <th>Tên</th>
               <th>Giá</th>
               <th v-if="CONFIG.MODE === 'development'">N.Viên</th>
-              <th v-if="CONFIG.MODE === 'development'">Description</th>
               <th></th>
               <th></th>
             </tr>
@@ -317,7 +317,14 @@ const handleModalTicketRadiologyUpdateSuccess = (
             </tr>
             <tr v-for="(tp, index) in ticketRadiologyListDraft" :key="tp._localId">
               <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-                {{ tp._localId }}-{{ tp.radiologyId }}
+                <VueTooltip>
+                  <template #trigger>
+                    <IconBug width="1.2em" height="1.2em" />
+                  </template>
+                  <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                    <pre>{{ JSON.stringify(tp, null, 4) }}</pre>
+                  </div>
+                </VueTooltip>
               </td>
               <td style="text-align: center">{{ index + 1 }}</td>
               <td>
@@ -341,11 +348,6 @@ const handleModalTicketRadiologyUpdateSuccess = (
                 <div v-for="tu in tp.ticketUserRequestList" :key="tu._localId">
                   <span>(P{{ tu.positionId }}-R{{ tu.roleId }}-U{{ tu.userId }})</span>
                   <span>{{ tu.user?.fullName }}</span>
-                </div>
-              </td>
-              <td v-if="CONFIG.MODE === 'development'" style="width: 300px; color: violet">
-                <div class="max-line-2">
-                  {{ tp.description }}
                 </div>
               </td>
               <td>
@@ -374,7 +376,6 @@ const handleModalTicketRadiologyUpdateSuccess = (
                   formatMoney(ticketRadiologyListDraft.reduce((acc, i) => acc + i.actualPrice, 0))
                 }}
               </td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td></td>
               <td></td>

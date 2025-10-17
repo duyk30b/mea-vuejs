@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IconDelete, IconFileSearch, IconSetting } from '@/common/icon-antd'
+import { IconBug, IconDelete, IconFileSearch, IconSetting } from '@/common/icon-antd'
 import { IconEditSquare } from '@/common/icon-google'
 import VueDropdown from '@/common/popover/VueDropdown.vue'
 import { AlertStore } from '@/common/vue-alert'
@@ -28,6 +28,7 @@ import ModalTicketClinicPayment from '../../room-ticket-base/ModalTicketPayment.
 import TicketLink from '../../room-ticket-base/TicketLink.vue'
 import ModalReceptionCreate from '../create/ModalReceptionCreate.vue'
 import ModalReceptionListSetting from './ModalReceptionListSetting.vue'
+import { VueTooltip } from '@/common/popover'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalReceptionCreate = ref<InstanceType<typeof ModalReceptionCreate>>()
@@ -220,7 +221,7 @@ const handleClickDestroy = async (obj: { ticketId: string; ticketReceptionId: st
       <table>
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'">ID-RoomID</th>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th class="cursor-pointer">
               <div class="flex items-center gap-1 justify-center">
                 <span>Hồ Sơ</span>
@@ -258,8 +259,15 @@ const handleClickDestroy = async (obj: { ticketId: string; ticketReceptionId: st
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="ticketReception in ticketReceptionList" :key="ticketReception.id">
-            <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
-              {{ ticketReception.id }} - {{ ticketReception.roomId }}
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(ticketReception, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
             </td>
             <td class="">
               <template v-if="ticketReception?.ticket?.roomId">

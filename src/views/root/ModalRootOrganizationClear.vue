@@ -75,6 +75,7 @@ const tableNameDeleteMapDefault = {
   TicketProcedure: 1,
   TicketProduct: 1,
   TicketRadiology: 1,
+  TicketReception: 1,
   TicketRegimen: 1,
   TicketRegimenItem: 1,
   TicketSurcharge: 1,

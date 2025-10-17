@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { VueButton, VuePagination, VueTag } from '@/common'
-import { IconFileSearch, IconPrint } from '@/common/icon-antd'
+import { IconBug, IconFileSearch, IconPrint } from '@/common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import { IconEditSquare } from '@/common/icon-google'
 import { InputDate, InputSelect, VueSelect } from '@/common/vue-form'
@@ -35,6 +35,7 @@ import ModalOtherPaymentMoney from './ModalOtherPaymentMoney.vue'
 import ModalPaymentUpdateInfo from './ModalPaymentUpdateInfo.vue'
 import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 import PurchaseOrderLink from '@/views/purchase-order/PurchaseOrderLink.vue'
+import { VueTooltip } from '@/common/popover'
 
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -322,24 +323,7 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
       <table>
         <thead>
           <tr>
-            <th
-              v-if="CONFIG.MODE === 'development'"
-              class="cursor-pointer whitespace-nowrap"
-              @click="changeSort('id')"
-            >
-              <div class="flex items-center gap-1 justify-center">
-                <span>Mã</span>
-                <IconSort v-if="sortColumn !== 'id'" style="opacity: 0.4" />
-                <IconSortUp
-                  v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                  style="opacity: 0.4"
-                />
-                <IconSortDown
-                  v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                  style="opacity: 0.4"
-                />
-              </div>
-            </th>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>Phiếu</th>
             <th>Loại</th>
             <th>Người nộp/nhận</th>
@@ -374,11 +358,15 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(payment, index) in paymentList" :key="index">
-            <td
-              v-if="CONFIG.MODE === 'development'"
-              style="white-space: nowrap; color: violet; text-align: center"
-            >
-              {{ payment.id }}
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(payment, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
             </td>
             <td>
               <div v-if="payment.voucherType === PaymentVoucherType.Ticket">

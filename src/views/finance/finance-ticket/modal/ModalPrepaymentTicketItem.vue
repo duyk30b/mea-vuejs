@@ -443,6 +443,7 @@ const startPrint = async () => {
           paymentTicketItem.discountPercent = value!.data.discountPercent
           paymentTicketItem.discountType = value!.data.discountType
           paymentTicketItem.actualPrice = value!.data.actualPrice
+          paymentTicketItem.sessionIndex = 0
           paymentTicketItem.quantity = 1
         } else {
           paymentTicketItem.expectedPrice = value!.paymentWallet
@@ -450,6 +451,7 @@ const startPrint = async () => {
           paymentTicketItem.discountPercent = 0
           paymentTicketItem.discountType = DiscountType.VND
           paymentTicketItem.actualPrice = value!.paymentWallet
+          paymentTicketItem.sessionIndex = 0
           paymentTicketItem.quantity = 1
         }
 
@@ -480,6 +482,7 @@ const startPrint = async () => {
             paymentTicketItem.discountType = tp!.discountType
             paymentTicketItem.actualPrice = tp!.actualPrice
             paymentTicketItem.quantity = tp!.quantity
+            paymentTicketItem.sessionIndex = tp!.indexSession
             return paymentTicketItem
           })
       })
@@ -499,6 +502,7 @@ const startPrint = async () => {
         paymentTicketItem.discountType = value!.discountType
         paymentTicketItem.actualPrice = value!.actualPrice
         paymentTicketItem.quantity = value!.quantity
+        paymentTicketItem.sessionIndex = value!.indexSession
         return paymentTicketItem
       })
 
@@ -518,6 +522,7 @@ const startPrint = async () => {
         paymentTicketItem.discountMoney = value!.discountMoney
         paymentTicketItem.discountPercent = value!.discountPercent
         paymentTicketItem.discountType = value!.discountType
+        paymentTicketItem.sessionIndex = 0
         return paymentTicketItem
       })
 
@@ -537,6 +542,7 @@ const startPrint = async () => {
         paymentTicketItem.discountType = value!.discountType
         paymentTicketItem.actualPrice = value!.actualPrice
         paymentTicketItem.quantity = value!.quantity
+        paymentTicketItem.sessionIndex = 0
         return paymentTicketItem
       })
 
@@ -556,6 +562,7 @@ const startPrint = async () => {
         paymentTicketItem.discountType = value!.discountType
         paymentTicketItem.actualPrice = value!.actualPrice
         paymentTicketItem.quantity = 1
+        paymentTicketItem.sessionIndex = 0
         return paymentTicketItem
       })
 
@@ -573,6 +580,7 @@ const startPrint = async () => {
         paymentTicketItem.discountType = value!.discountType
         paymentTicketItem.actualPrice = value!.actualPrice
         paymentTicketItem.quantity = 1
+        paymentTicketItem.sessionIndex = 0
         return paymentTicketItem
       })
 
@@ -587,7 +595,6 @@ const startPrint = async () => {
     ]
 
     const paymentPrint = await Payment.refreshData(paymentTemp)
-    console.log('🚀 ~ ModalPrepaymentTicketItem.vue:575 ~ startPrint ~ paymentPrint:', paymentPrint)
     await PrintHtmlAction.startPrintCustomerPayment({
       customer: ticket.value.customer!,
       payment: paymentPrint,
@@ -608,27 +615,27 @@ const handleUpdateCheckedTicketRegimen = (checked: boolean, tr: TicketRegimen) =
   checkboxRegimen.value[tr.id].indeterminate = false
   if (checked) {
     checkboxRegimen.value[tr.id].checked = true
-    if (tr.moneyAmountWallet) {
-      checkboxRegimen.value[tr.id].typeAction = 'PaymentWallet'
-      checkboxRegimen.value[tr.id].paymentItem = 0
-      checkboxRegimen.value[tr.id].paymentWallet =
-        tr.actualPrice - (tr.moneyAmountPaid + tr.moneyAmountWallet)
-      tr.ticketProcedureList?.forEach((trp) => {
-        if (trp.paymentMoneyStatus !== PaymentMoneyStatus.FullPaid) {
-          checkboxRegimen.value[tr.id].trpCheckbox[trp.id].checked = false
-        }
-      })
-    } else {
-      checkboxRegimen.value[tr.id].typeAction = 'CheckItem'
-      checkboxRegimen.value[tr.id].paymentWallet = 0
-      checkboxRegimen.value[tr.id].paymentItem =
-        tr.actualPrice - (tr.moneyAmountPaid + tr.moneyAmountWallet)
-      tr.ticketProcedureList?.forEach((trp) => {
-        if (trp.paymentMoneyStatus !== PaymentMoneyStatus.FullPaid) {
-          checkboxRegimen.value[tr.id].trpCheckbox[trp.id].checked = true
-        }
-      })
-    }
+    // if (tr.moneyAmountWallet) {
+    checkboxRegimen.value[tr.id].typeAction = 'PaymentWallet'
+    checkboxRegimen.value[tr.id].paymentItem = 0
+    checkboxRegimen.value[tr.id].paymentWallet =
+      tr.actualPrice - (tr.moneyAmountPaid + tr.moneyAmountWallet)
+    tr.ticketProcedureList?.forEach((trp) => {
+      if (trp.paymentMoneyStatus !== PaymentMoneyStatus.FullPaid) {
+        checkboxRegimen.value[tr.id].trpCheckbox[trp.id].checked = false
+      }
+    })
+    // } else {
+    //   checkboxRegimen.value[tr.id].typeAction = 'CheckItem'
+    //   checkboxRegimen.value[tr.id].paymentWallet = 0
+    //   checkboxRegimen.value[tr.id].paymentItem =
+    //     tr.actualPrice - (tr.moneyAmountPaid + tr.moneyAmountWallet)
+    //   tr.ticketProcedureList?.forEach((trp) => {
+    //     if (trp.paymentMoneyStatus !== PaymentMoneyStatus.FullPaid) {
+    //       checkboxRegimen.value[tr.id].trpCheckbox[trp.id].checked = true
+    //     }
+    //   })
+    // }
   } else {
     checkboxRegimen.value[tr.id].checked = false
     checkboxRegimen.value[tr.id].paymentWallet = 0
@@ -897,7 +904,7 @@ defineExpose({ openModal, openModalByTicket })
               </thead>
               <tbody>
                 <tr
-                  v-for="(ticketProcedure, index) in ticket.ticketProcedureNormalList"
+                  v-for="(ticketProcedure, index) in ticketProcedureNormalPayment"
                   :key="ticketProcedure.id"
                 >
                   <td>
@@ -956,7 +963,7 @@ defineExpose({ openModal, openModalByTicket })
               </thead>
               <tbody>
                 <tr
-                  v-for="(ticketConsumable, index) in ticket.ticketProductConsumableList"
+                  v-for="(ticketConsumable, index) in ticketConsumablePayment"
                   :key="ticketConsumable.id"
                 >
                   <td>
@@ -1009,7 +1016,7 @@ defineExpose({ openModal, openModalByTicket })
               </thead>
               <tbody>
                 <tr
-                  v-for="(ticketPrescription, index) in ticket.ticketProductPrescriptionList"
+                  v-for="(ticketPrescription, index) in ticketPrescriptionPayment"
                   :key="ticketPrescription.id"
                 >
                   <td>
@@ -1065,7 +1072,7 @@ defineExpose({ openModal, openModalByTicket })
               </thead>
               <tbody>
                 <tr
-                  v-for="(ticketLaboratory, index) in ticket.ticketLaboratoryList"
+                  v-for="(ticketLaboratory, index) in ticketLaboratoryPayment"
                   :key="ticketLaboratory.id"
                 >
                   <td>

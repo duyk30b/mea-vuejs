@@ -1,9 +1,11 @@
 <script lang="ts" setup>
 import { VueTag } from '@/common'
 import VueButton from '@/common/VueButton.vue'
-import { IconEye, IconFileSearch, IconPrint, IconSpin } from '@/common/icon-antd'
-import { IconEditSquare } from '@/common/icon-google'
+import { IconBug, IconEye, IconFileSearch, IconPrint, IconSpin } from '@/common/icon-antd'
+import { IconDelete, IconEditSquare } from '@/common/icon-google'
+import { VueTooltip } from '@/common/popover'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
@@ -26,6 +28,7 @@ import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadi
 import { computed, onMounted, ref, watch } from 'vue'
 import ModalTicketRadiologyUpdate from './ModalTicketRadiologyUpdate.vue'
 import TicketRadiologySelectItem from './TicketRadiologySelectItem.vue'
+import { TicketLaboratoryService } from '@/modules/ticket-laboratory'
 
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalTicketRadiologyUpdate = ref<InstanceType<typeof ModalTicketRadiologyUpdate>>()
@@ -61,7 +64,11 @@ const hasChangePriority = computed(() => {
 onMounted(async () => {
   try {
     const radiologyAll = await RadiologyService.list({})
-    await TicketRadiologyService.refreshRelation(ticketRoomRef.value.ticketRadiologyList)
+    await Promise.all([
+      TicketLaboratoryService.refreshRelationGroup(ticketRoomRef.value.ticketLaboratoryGroupList),
+      TicketLaboratoryService.refreshRelation(ticketRoomRef.value.ticketLaboratoryList),
+      TicketRadiologyService.refreshRelation(ticketRoomRef.value.ticketRadiologyList),
+    ])
     ticketRoomRef.value.refreshTicketRadiology()
     radiologyOptions.value = radiologyAll.map((i) => ({ value: i.id, text: i.name, data: i }))
   } catch (error: any) {
@@ -120,6 +127,41 @@ const startPrintParaClinicalRequest = async () => {
     customer: ticketRoomRef.value.customer!,
   })
 }
+
+const clickDestroyTicketRadiology = async (tp: TicketRadiology) => {
+  if (
+    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(tp.paymentMoneyStatus)
+  ) {
+    return ModalStore.alert({
+      title: 'Không thể xóa phiếu chỉ định CĐHA ?',
+      content: ['- Phiếu CĐHA đã được thanh toán sẽ không thể xóa'],
+    })
+  }
+  if (tp.status !== TicketRadiologyStatus.Pending) {
+    return ModalStore.alert({
+      title: `Không thể xóa phiếu : ${tp.radiology?.name}!`,
+      content: ['- Phiếu CĐHA đã được thực hiện sẽ không thể xóa'],
+    })
+  }
+
+  ModalStore.confirm({
+    title: 'Xác nhận xóa CĐHA ?',
+    content: [
+      '- Hệ thống sẽ xóa CĐHA này khỏi phiếu khám',
+      '- Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
+    ],
+    onOk: async () => {
+      try {
+        await TicketChangeRadiologyApi.destroyTicketRadiology({
+          ticketId: tp.ticketId,
+          ticketRadiologyId: tp.id,
+        })
+      } catch (error) {
+        console.log('🚀 ~ TicketClinicRadiologyContainer.vue:155 ~ clickDestroy ~ error:', error)
+      }
+    },
+  })
+}
 </script>
 <template>
   <ModalRadiologyDetail ref="modalRadiologyDetail" />
@@ -138,18 +180,16 @@ const startPrintParaClinicalRequest = async () => {
       <table>
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'">ID</th>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>#</th>
             <th style="width: 40px"></th>
             <th style="width: 40px"></th>
             <th>Phiếu</th>
             <th>Kết quả</th>
             <th>Giá NY</th>
-            <th>Chiết khấu</th>
             <th>Đơn giá</th>
             <th v-if="CONFIG.MODE === 'development'">NV Chỉ định</th>
             <th v-if="CONFIG.MODE === 'development'">NV Kết quả</th>
-            <th v-if="CONFIG.MODE === 'development'">ImageIds</th>
             <th>In KQ</th>
             <th></th>
             <th></th>
@@ -161,7 +201,14 @@ const startPrintParaClinicalRequest = async () => {
           </tr>
           <tr v-for="(tp, index) in ticketRadiologyList" :key="tp.radiologyId">
             <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-              {{ tp.id }}
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(tp, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
             </td>
             <td>
               <IndexAndSort
@@ -193,17 +240,32 @@ const startPrintParaClinicalRequest = async () => {
               <div>{{ formatMoney(tp.expectedPrice) }}</div>
             </td>
             <td class="text-right whitespace-nowrap">
-              <div v-if="tp.discountMoney" class="flex justify-between">
+              <div class="flex flex-wrap gap-2 items-center">
                 <div>
-                  <VueTag v-if="tp.discountType === DiscountType.Percent" color="green">
-                    {{ tp.discountPercent || 0 }}%
+                  <VueTag v-if="tp.discountMoney" color="green">
+                    {{ tp.discountPercent + ' %' }}
                   </VueTag>
                 </div>
-                <div>{{ formatMoney(tp.discountMoney) }}</div>
+                <div class="ml-auto">
+                  <div v-if="tp.discountMoney" class="text-xs italic text-red-500">
+                    <del>{{ formatMoney(tp.expectedPrice) }}</del>
+                  </div>
+                  <div>{{ formatMoney(tp.actualPrice) }}</div>
+                </div>
+                <a
+                  v-if="
+                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                    [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                      tp.paymentMoneyStatus,
+                    ) &&
+                    userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_REQUEST]
+                  "
+                  @click="modalTicketRadiologyUpdate?.openModal({ ticketRadiology: tp })"
+                  style="color: var(--text-orange)"
+                >
+                  <IconEditSquare width="20" height="20" />
+                </a>
               </div>
-            </td>
-            <td class="text-right whitespace-nowrap">
-              <div>{{ formatMoney(tp.actualPrice) }}</div>
             </td>
             <td v-if="CONFIG.MODE === 'development'" style="color: violet">
               <div v-for="tu in tp.ticketUserRequestList" :key="tu.id">
@@ -217,56 +279,53 @@ const startPrintParaClinicalRequest = async () => {
                 <span>{{ tu.user?.fullName }}</span>
               </div>
             </td>
-            <td v-if="CONFIG.MODE === 'development'" style="color: violet">
-              <div v-for="img in tp.imageList" :key="img.id">
-                <span>{{ img.id }}</span>
-              </div>
-            </td>
             <td class="text-center">
               <a v-if="tp.status === TicketRadiologyStatus.Completed" @click="startPrintResult(tp)">
                 <IconPrint width="18px" height="18px" />
               </a>
             </td>
-            <td class="text-center">
-              <a v-if="!tp.id">
+            <template v-if="!tp.id">
+              <td colspan="3" class="text-center">
                 <IconSpin width="20" height="20" />
-              </a>
-              <a
-                v-else-if="
-                  ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                  userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_RESULT]
-                "
-                class="text-orange-500"
-                @click="openModalResult({ ticketRadiology: tp })"
-              >
-                <IconEye width="20" height="20" />
-              </a>
-              <a v-else @click="openModalResult({ ticketRadiology: tp, noEdit: true })">
-                <IconEye width="20" height="20" />
-              </a>
-            </td>
-            <td class="text-center">
-              <a v-if="!tp.id">
-                <IconSpin width="20" height="20" />
-              </a>
-              <a
-                v-else-if="
-                  ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                  [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                    tp.paymentMoneyStatus,
-                  ) &&
-                  userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_REQUEST]
-                "
-                @click="modalTicketRadiologyUpdate?.openModal({ ticketRadiology: tp })"
-                style="color: var(--text-orange)"
-              >
-                <IconEditSquare width="20" height="20" />
-              </a>
-            </td>
+              </td>
+            </template>
+            <template v-else>
+              <td class="text-center">
+                <a
+                  v-if="
+                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                    userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_RESULT]
+                  "
+                  class="text-orange-500"
+                  @click="openModalResult({ ticketRadiology: tp })"
+                >
+                  <IconEye width="20" height="20" />
+                </a>
+                <a v-else @click="openModalResult({ ticketRadiology: tp, noEdit: true })">
+                  <IconEye width="20" height="20" />
+                </a>
+              </td>
+              <td class="text-center">
+                <a
+                  v-if="
+                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                    tp.status === TicketRadiologyStatus.Pending &&
+                    [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                      tp.paymentMoneyStatus,
+                    ) &&
+                    userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_REQUEST]
+                  "
+                  style="color: var(--text-red)"
+                  @click="clickDestroyTicketRadiology(tp)"
+                >
+                  <IconDelete width="22" height="22" />
+                </a>
+              </td>
+            </template>
           </tr>
           <tr>
             <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center"></td>
-            <td colspan="7" class="text-right">
+            <td colspan="6" class="text-right">
               <b>Tổng tiền</b>
             </td>
             <td class="text-right">
@@ -276,7 +335,6 @@ const startPrintParaClinicalRequest = async () => {
                 }}
               </b>
             </td>
-            <td v-if="CONFIG.MODE === 'development'"></td>
             <td v-if="CONFIG.MODE === 'development'"></td>
             <td v-if="CONFIG.MODE === 'development'"></td>
             <td></td>

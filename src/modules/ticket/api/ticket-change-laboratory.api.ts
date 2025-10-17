@@ -6,26 +6,20 @@ import type { TicketLaboratory, TicketLaboratoryResult } from '../../ticket-labo
 import type { TicketUser } from '../../ticket-user'
 
 export class TicketChangeLaboratoryApi {
-  static async upsertRequestLaboratoryGroup(body: {
+  static async addTicketLaboratoryGroup(body: {
     ticketId: string
-    ticketLaboratoryGroupAddList?: {
+    ticketLaboratoryGroupAddList: {
       roomId: number
       laboratoryGroupId: number
       createdAt: number | null
       ticketLaboratoryList: TicketLaboratory[]
     }[]
-    ticketLaboratoryGroupUpdate?: {
-      roomId: number
-      id: string
-      laboratoryGroupId: number
-      createdAt: number | null
-      ticketLaboratoryList: TicketLaboratory[]
-    }
   }) {
-    const { ticketId, ticketLaboratoryGroupAddList, ticketLaboratoryGroupUpdate } = body
-    const response = await AxiosInstance.post(`/ticket/${ticketId}/laboratory/upsert-request-laboratory-group`, {
-      ticketLaboratoryGroupAddList: ticketLaboratoryGroupAddList
-        ? ticketLaboratoryGroupAddList.map((tlg) => ({
+    const { ticketId, ticketLaboratoryGroupAddList } = body
+    const response = await AxiosInstance.post(
+      `/ticket/${ticketId}/laboratory/add-ticket-laboratory-group`,
+      {
+        ticketLaboratoryGroupAddList: ticketLaboratoryGroupAddList.map((tlg) => ({
           laboratoryGroupId: tlg.laboratoryGroupId,
           createdAt: tlg.createdAt,
           roomId: tlg.roomId,
@@ -41,10 +35,27 @@ export class TicketChangeLaboratoryApi {
             actualPrice: tl.actualPrice,
             createdAt: tlg.createdAt,
           })),
-        }))
-        : undefined,
-      ticketLaboratoryGroupUpdate: ticketLaboratoryGroupUpdate
-        ? {
+        })),
+      },
+    )
+    const { data } = response.data as BaseResponse<boolean>
+  }
+
+  static async updateTicketLaboratoryGroup(body: {
+    ticketId: string
+    ticketLaboratoryGroupUpdate: {
+      roomId: number
+      id: string
+      laboratoryGroupId: number
+      createdAt: number | null
+      ticketLaboratoryList: TicketLaboratory[]
+    }
+  }) {
+    const { ticketId, ticketLaboratoryGroupUpdate } = body
+    const response = await AxiosInstance.post(
+      `/ticket/${ticketId}/laboratory/update-ticket-laboratory-group`,
+      {
+        ticketLaboratoryGroupUpdate: {
           id: ticketLaboratoryGroupUpdate.id,
           laboratoryGroupId: ticketLaboratoryGroupUpdate.laboratoryGroupId,
           createdAt: ticketLaboratoryGroupUpdate.createdAt,
@@ -61,9 +72,9 @@ export class TicketChangeLaboratoryApi {
             actualPrice: tl.actualPrice,
             createdAt: ticketLaboratoryGroupUpdate.createdAt,
           })),
-        }
-        : undefined,
-    })
+        },
+      },
+    )
     const { data } = response.data as BaseResponse<boolean>
   }
 
@@ -127,8 +138,8 @@ export class TicketChangeLaboratoryApi {
       ticketLaboratoryGroup: {
         ticket?: boolean
         customer?: boolean
-        ticketUserList?: boolean
-        imageList?: boolean
+        ticketUserRequestList?: boolean
+        ticketUserResultList?: boolean
         ticketLaboratoryList?: boolean
         ticketLaboratoryResultMap?: boolean
       }

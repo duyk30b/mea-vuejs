@@ -45,6 +45,7 @@ export class TicketChangeReceptionApi {
           ? {
             customerCode: obj.customer.customerCode || '',
             fullName: obj.customer.fullName,
+            citizenIdCard: obj.customer.citizenIdCard || '',
             phone: obj.customer.phone,
             facebook: obj.customer.facebook || '',
             zalo: obj.customer.zalo || '',

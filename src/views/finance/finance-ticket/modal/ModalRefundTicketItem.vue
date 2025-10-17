@@ -50,7 +50,12 @@ const note = ref('')
 const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
 const pickAll = ref(false)
 
-const checkboxRegimen = ref<Record<string, TicketRegimen | undefined>>({})
+const checkboxRegimenWallet = ref<
+  Record<
+    string,
+    { checked: boolean; indeterminate: boolean; data: TicketRegimen; refundMoney: number }
+  >
+>({})
 const checkboxProcedure = ref<Record<string, TicketProcedure | undefined>>({})
 const checkboxConsumable = ref<Record<string, TicketProduct | undefined>>({})
 const checkboxPrescription = ref<Record<string, TicketProduct | undefined>>({})
@@ -64,9 +69,9 @@ onMounted(async () => {
 })
 
 const totalMoney = computed(() => {
-  const regimenMoney = Object.entries(checkboxRegimen.value)
-    .filter(([id, value]) => !!value)
-    .reduce((acc, [id, value]) => acc + value!.moneyAmountWallet, 0)
+  const regimenMoney = Object.entries(checkboxRegimenWallet.value)
+    .filter(([id, value]) => !!value && value.refundMoney > 0)
+    .reduce((acc, [id, value]) => acc + value!.refundMoney, 0)
   const procedureMoney = Object.entries(checkboxProcedure.value)
     .filter(([id, value]) => !!value)
     .reduce((acc, [id, value]) => acc + value!.quantity * value!.actualPrice, 0)
@@ -116,12 +121,21 @@ const refreshData = async () => {
     return i.paymentMoneyStatus === PaymentMoneyStatus.FullPaid
   })
 
-  checkboxRegimen.value = {}
+  checkboxRegimenWallet.value = {}
   checkboxProcedure.value = {}
   checkboxConsumable.value = {}
   checkboxPrescription.value = {}
   checkboxLaboratory.value = {}
   checkboxRadiology.value = {}
+
+  ticketRegimenRefund.value.forEach((tr) => {
+    checkboxRegimenWallet.value[tr.id] = {
+      checked: false,
+      indeterminate: false,
+      data: tr,
+      refundMoney: 0,
+    }
+  })
 
   note.value = ''
   paymentMethodId.value = 0
@@ -145,8 +159,8 @@ const openModal = async (options: { ticketId: string; customer: Customer }) => {
     })
     ticketResponse.customer = Customer.from(options.customer)
     await ticketResponse.refreshAllData()
-    await refreshData()
     ticket.value = ticketResponse
+    await refreshData()
   } catch (error) {
     console.log('🚀 ~ ModalTicketClinicPayment.vue:67 ~ openModal ~ error:', error)
   } finally {
@@ -167,7 +181,7 @@ const closeModal = () => {
   ticket.value = Ticket.blank()
   pickAll.value = false
 
-  checkboxRegimen.value = {}
+  checkboxRegimenWallet.value = {}
   checkboxProcedure.value = {}
   checkboxConsumable.value = {}
   checkboxPrescription.value = {}
@@ -176,7 +190,7 @@ const closeModal = () => {
 }
 
 const startPickAll = (v: boolean) => {
-  checkboxRegimen.value = {}
+  checkboxRegimenWallet.value = {}
   checkboxProcedure.value = {}
   checkboxConsumable.value = {}
   checkboxPrescription.value = {}
@@ -185,7 +199,12 @@ const startPickAll = (v: boolean) => {
 
   if (v) {
     ticketRegimenRefund.value?.forEach((i) => {
-      checkboxRegimen.value[i.id] = i
+      checkboxRegimenWallet.value[i.id] = {
+        checked: true,
+        indeterminate: false,
+        data: i,
+        refundMoney: i.moneyAmountWallet,
+      }
     })
     ticketProcedureRefund.value?.forEach((i) => {
       checkboxProcedure.value[i.id] = i
@@ -202,6 +221,40 @@ const startPickAll = (v: boolean) => {
     ticketRadiologyRefund.value?.forEach((i) => {
       checkboxRadiology.value[i.id] = i
     })
+  } else {
+    ticketRegimenRefund.value?.forEach((i) => {
+      checkboxRegimenWallet.value[i.id] = {
+        checked: false,
+        indeterminate: false,
+        data: i,
+        refundMoney: 0,
+      }
+    })
+  }
+}
+
+const handleUpdateCheckedTicketRegimenWallet = (checked: boolean, tr: TicketRegimen) => {
+  checkboxRegimenWallet.value[tr.id].indeterminate = false
+  if (checked) {
+    checkboxRegimenWallet.value[tr.id].checked = true
+    checkboxRegimenWallet.value[tr.id].refundMoney = tr.moneyAmountWallet
+  } else {
+    checkboxRegimenWallet.value[tr.id].checked = false
+    checkboxRegimenWallet.value[tr.id].refundMoney = 0
+  }
+}
+
+const handleUpdateMoneyTicketRegimenWallet = (money: number, tr: TicketRegimen) => {
+  checkboxRegimenWallet.value[tr.id].refundMoney = money
+  if (money <= 0) {
+    checkboxRegimenWallet.value[tr.id].checked = false
+    checkboxRegimenWallet.value[tr.id].indeterminate = false
+  } else if (money < tr.moneyAmountWallet) {
+    checkboxRegimenWallet.value[tr.id].checked = false
+    checkboxRegimenWallet.value[tr.id].indeterminate = true
+  } else if (money === tr.moneyAmountWallet) {
+    checkboxRegimenWallet.value[tr.id].checked = true
+    checkboxRegimenWallet.value[tr.id].indeterminate = false
   }
 }
 
@@ -214,21 +267,23 @@ const startRefund = async (options?: { print: boolean }) => {
         paymentMethodId: paymentMethodId.value,
         refundAmount: totalMoney.value,
         note: note.value,
-        ticketRegimenBodyList: Object.values(checkboxRegimen.value).map((value) => {
-          return {
-            ticketItemId: value!.id,
-            ticketItemType: TicketItemType.TicketRegimen,
-            interactId: value!.regimenId,
-            expectedPrice: value!.moneyAmountWallet,
-            discountMoney: 0,
-            discountPercent: 0,
-            discountType: DiscountType.VND,
-            actualPrice: value!.moneyAmountWallet,
-            quantity: 1,
-            sessionIndex: 0,
-            paymentMoneyStatus: PaymentMoneyStatus.PendingPayment, // để tạm để validate chứ không sử dụng
-          }
-        }),
+        ticketRegimenBodyList: Object.values(checkboxRegimenWallet.value)
+          .filter((value) => value.refundMoney > 0)
+          .map((value) => {
+            return {
+              ticketItemId: value!.data.id,
+              ticketItemType: TicketItemType.TicketRegimen,
+              interactId: value!.data.regimenId,
+              expectedPrice: value!.refundMoney,
+              discountMoney: 0,
+              discountPercent: 0,
+              discountType: DiscountType.VND,
+              actualPrice: value!.refundMoney,
+              quantity: 1,
+              sessionIndex: 0,
+              paymentMoneyStatus: PaymentMoneyStatus.PendingPayment, // để tạm để validate chứ không sử dụng
+            }
+          }),
         ticketProcedureBodyList: Object.entries(checkboxProcedure.value)
           .filter(([id, value]) => !!value)
           .map(([id, value]) => {
@@ -348,19 +403,21 @@ const startPint = async (options?: { print: boolean }) => {
 
     paymentTemp.paidAmount = totalMoney.value
 
-    const paymentTicketItemRegimen: PaymentTicketItem[] = Object.entries(checkboxRegimen.value)
-      .filter(([id, value]) => !!value)
+    const paymentTicketItemRegimen: PaymentTicketItem[] = Object.entries(
+      checkboxRegimenWallet.value,
+    )
+      .filter(([id, value]) => !!value && value.refundMoney > 0)
       .map(([id, value]) => {
         const paymentTicketItem = PaymentTicketItem.blank()
         paymentTicketItem.ticketItemType = TicketItemType.TicketRegimen
-        paymentTicketItem.ticketItemId = value!.id
-        paymentTicketItem.interactId = value!.regimenId
+        paymentTicketItem.ticketItemId = value!.data.id
+        paymentTicketItem.interactId = value!.data.regimenId
 
-        paymentTicketItem.expectedPrice = value!.moneyAmountWallet
+        paymentTicketItem.expectedPrice = value!.refundMoney
         paymentTicketItem.discountMoney = 0
         paymentTicketItem.discountPercent = 0
         paymentTicketItem.discountType = DiscountType.VND
-        paymentTicketItem.actualPrice = value!.moneyAmountWallet
+        paymentTicketItem.actualPrice = value!.refundMoney
         paymentTicketItem.quantity = 1
 
         return paymentTicketItem
@@ -546,8 +603,8 @@ defineExpose({ openModal, openModalByTicket })
                   <th></th>
                   <th>Liệu trình</th>
                   <th></th>
-                  <th>Đơn Giá</th>
                   <th>Ví</th>
+                  <th>Hoàn Trả</th>
                 </tr>
               </thead>
               <tbody>
@@ -555,9 +612,11 @@ defineExpose({ openModal, openModalByTicket })
                   <td>
                     <div class="flex justify-center">
                       <InputCheckbox
-                        :checked="!!checkboxRegimen[ticketRegimen.id]"
+                        :checked="checkboxRegimenWallet[ticketRegimen.id].checked"
+                        :indeterminate="checkboxRegimenWallet[ticketRegimen.id].indeterminate"
                         @update:checked="
-                          (v) => (checkboxRegimen[ticketRegimen.id] = v ? ticketRegimen : undefined)
+                          (checked) =>
+                            handleUpdateCheckedTicketRegimenWallet(checked, ticketRegimen)
                         "
                       />
                     </div>
@@ -566,13 +625,18 @@ defineExpose({ openModal, openModalByTicket })
                   <td></td>
                   <td colspan="2">{{ ticketRegimen.regimen?.name }}</td>
                   <td class="text-right whitespace-nowrap">
-                    <div v-if="ticketRegimen.discountMoney" class="text-xs italic text-red-500">
-                      <del>{{ formatMoney(ticketRegimen.expectedPrice) }}</del>
-                    </div>
-                    <div>{{ formatMoney(ticketRegimen.actualPrice) }}</div>
-                  </td>
-                  <td class="text-right whitespace-nowrap">
                     <div>{{ formatMoney(ticketRegimen.moneyAmountWallet) }}</div>
+                  </td>
+                  <td class="text-right whitespace-nowrap" style="max-width: 120px">
+                    <div>
+                      <InputMoney
+                        :value="checkboxRegimenWallet[ticketRegimen.id].refundMoney"
+                        @update:value="
+                          (v) => handleUpdateMoneyTicketRegimenWallet(v, ticketRegimen)
+                        "
+                        textAlign="right"
+                      />
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -846,7 +910,7 @@ defineExpose({ openModal, openModalByTicket })
           </div>
           <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
             <div class="flex flex-wrap justify-between">
-              <span>Số tiền thanh toán</span>
+              <span>Số tiền hoàn trả</span>
             </div>
             <div>
               <div class="flex">

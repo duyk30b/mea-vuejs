@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
 import VuePagination from '@/common/VuePagination.vue'
-import { IconEye, IconPrint, IconRight } from '@/common/icon-antd'
+import { IconBug, IconEye, IconPrint, IconRight } from '@/common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import { IconEditSquare } from '@/common/icon-google'
 import { InputDate, InputOptions, InputSelect, VueSelect } from '@/common/vue-form'
@@ -29,6 +29,8 @@ import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import { PaymentMoneyStatus } from '@/modules/enum'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import { fromTime, toTime } from '../../room-ticket-base/room-ticket.ref'
+import TicketLink from '../../room-ticket-base/TicketLink.vue'
+import { VueTooltip } from '@/common/popover'
 
 const router = useRouter()
 const route = useRoute()
@@ -330,7 +332,8 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
       <table>
         <thead>
           <tr>
-            <th style="width: 40px">Mã</th>
+            <th v-if="CONFIG.MODE === 'development'"></th>
+            <th>Phiếu Khám</th>
             <th></th>
             <th style="min-width: 150px">Khách hàng</th>
             <th>Tên phiếu</th>
@@ -372,17 +375,19 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(ticketRadiology, index) in ticketRadiologyList" :key="index">
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(ticketRadiology, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
+            </td>
             <td>
               <div class="flex justify-center items-center gap-2">
-                {{
-                  (ticketRadiology.ticket?.date?.toString()?.padStart(2, '0') || '') +
-                  ticketRadiology.ticket?.month?.toString().padStart(2, '0') +
-                  ticketRadiology.ticket?.year?.toString().slice(-2) +
-                  '_' +
-                  ticketRadiology.ticket?.dailyIndex?.toString().padStart(2, '0') +
-                  '_' +
-                  ticketRadiology.id
-                }}
+                <TicketLink :ticketId="ticketRadiology.ticketId" :ticket="ticketRadiology.ticket" />
               </div>
             </td>
             <td>

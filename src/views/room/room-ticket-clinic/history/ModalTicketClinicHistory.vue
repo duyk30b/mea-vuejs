@@ -18,6 +18,16 @@ import { TicketLaboratoryStatus } from '@/modules/ticket-laboratory'
 import { ESImage, ESTimer } from '@/utils'
 import ModalTicketRadiologyResult from '@/views/room/room-radiology/ModalTicketRadiologyResult.vue'
 import { ref } from 'vue'
+import TicketLink from '../../room-ticket-base/TicketLink.vue'
+import TicketRegimenStatusTooltip from '../detail/procedure/TicketRegimenStatusTooltip.vue'
+import { DiscountType } from '@/modules/enum'
+import { CONFIG } from '@/config'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import TicketProcedureStatusTooltip from '../detail/procedure/TicketProcedureStatusTooltip.vue'
+import TicketLaboratoryStatusTooltip from '../../room-laboratory/TicketLaboratoryStatusTooltip.vue'
+import TicketRadiologyStatusTooltip from '../../room-radiology/TicketRadiologyStatusTooltip.vue'
+import TicketDeliveryStatusTooltip from '../../room-ticket-base/TicketDeliveryStatusTooltip.vue'
+import { VueTag } from '@/common'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 
@@ -138,7 +148,11 @@ defineExpose({ openModal })
             >
               Chưa chọn phiếu khám
             </div>
-            <div v-else>
+            <div v-if="ticket.id">
+              <div class="pb-1">
+                <span>- Phiếu khám:</span>
+                <TicketLink :ticket="ticket" :ticketId="ticket.id" target="_blank" />
+              </div>
               <div class="flex flex-wrap items-start gap-4 p-4" style="background-color: white">
                 <div style="flex-grow: 1">
                   <div>
@@ -233,14 +247,18 @@ defineExpose({ openModal })
                   </table>
                 </div>
               </div>
-              <div class="mt-4 px-4 pt-2 pb-1" style="background-color: white">
-                <div style="font-style: italic; text-decoration: underline">5. Hình ảnh</div>
+              <div
+                v-if="ticket?.imageDiagnosisList?.length"
+                class="mt-4 px-4 pt-2 pb-1"
+                style="background-color: white"
+              >
+                <div style="font-style: italic; text-decoration: underline">5. Hình ảnh khám</div>
                 <ImageUploadMultiple
                   ref="imageUploadRef"
                   :height="100"
                   :editable="false"
                   :rootImageList="
-                    (ticket?.imageList || []).map((i) => ({
+                    (ticket?.imageDiagnosisList || []).map((i) => ({
                       thumbnail: ESImage.getImageLink(i, { size: 200 }),
                       enlarged: ESImage.getImageLink(i, { size: 1000 }),
                       id: i.id,
@@ -248,47 +266,142 @@ defineExpose({ openModal })
                   "
                 />
               </div>
-              <div class="mt-4 table-wrapper p-4" style="background-color: white">
-                <div class="mb-2" style="font-weight: 500">6. Vật tư:</div>
-                <table v-if="ticket.ticketProductConsumableList?.length">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Tên sản phẩm</th>
-                      <th>Số lượng</th>
-                      <th>Giá tiền</th>
-                    </tr>
-                  </thead>
-                  <tbody style="background-color: white">
-                    <tr v-for="(tp, index) in ticket.ticketProductConsumableList" :key="tp.id">
-                      <td class="text-center">{{ index + 1 }}</td>
-                      <td>{{ tp.product?.brandName }}</td>
-                      <td class="text-center">{{ tp.quantity }}</td>
-                      <td class="text-right">
-                        <div v-if="tp.discountMoney" class="text-xs italic text-red-500">
-                          <del>{{ formatMoney(tp.unitExpectedPrice) }}</del>
-                        </div>
-                        <div>{{ formatMoney(tp.unitActualPrice) }}</div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
 
-              <div class="mt-4 table-wrapper p-4" style="background-color: white">
-                <div class="mb-2" style="font-weight: 500">7. Dịch vụ:</div>
-                <table v-if="ticket.ticketProcedureList?.length">
+              <div
+                v-if="ticket.ticketRegimenList?.length || ticket.ticketProcedureNormalList?.length"
+                class="mt-4 table-wrapper p-4"
+                style="background-color: white"
+              >
+                <div class="mb-2" style="font-weight: 500">6. Dịch vụ:</div>
+                <table>
                   <thead>
                     <tr>
                       <th>#</th>
+                      <th style="width: 40px"></th>
+                      <th
+                        v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'"
+                        style="width: 40px"
+                      ></th>
                       <th>Tên dịch vụ</th>
                       <th>Số lượng</th>
-                      <th>Giá tiền</th>
+                      <th>Đơn giá</th>
+                      <th>Tổng tiền</th>
                     </tr>
                   </thead>
                   <tbody style="background-color: white">
-                    <tr v-for="(tp, index) in ticket.ticketProcedureList" :key="tp.id">
-                      <td class="text-center">{{ index + 1 }}</td>
+                    <template
+                      v-for="(ticketRegimen, trIndex) in ticket.ticketRegimenList"
+                      :key="ticketRegimen.id"
+                    >
+                      <tr>
+                        <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
+                          {{ trIndex + 1 }}
+                        </td>
+                        <td v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+                        <td class="text-center">
+                          <TicketRegimenStatusTooltip :status="ticketRegimen.status" />
+                        </td>
+                        <td :colspan="6">
+                          <div class="flex justify-between">
+                            <div class="flex flex-wrap items-center gap-1">
+                              <span style="font-weight: 500">
+                                {{ ticketRegimen.regimen?.name }}
+                              </span>
+                            </div>
+                            <div class="text-right">
+                              <div>Giá tiền</div>
+                              <div
+                                v-if="ticketRegimen.discountMoney"
+                                class="text-xs italic text-red-500"
+                              >
+                                <del>{{ formatMoney(ticketRegimen.expectedPrice) }}</del>
+                              </div>
+                              <div
+                                class="flex items-center gap-1"
+                                style="font-weight: bold; color: var(--text-green)"
+                              >
+                                <span>{{ formatMoney(ticketRegimen.actualPrice) }}</span>
+                              </div>
+                            </div>
+                            <div v-if="ticket.isPaymentEachItem" class="text-right">
+                              <div>Đã thanh toán</div>
+                              <div style="font-weight: bold; color: var(--text-green)">
+                                {{ formatMoney(ticketRegimen.moneyAmountPaid) }}
+                              </div>
+                            </div>
+                            <div v-if="!ticket.isPaymentEachItem" class="text-right">
+                              <div>Đã thực hiện</div>
+                              <div style="font-weight: bold; color: var(--text-green)">
+                                {{ formatMoney(ticketRegimen.moneyAmountUsed) }}
+                              </div>
+                            </div>
+                            <div
+                              v-if="
+                                ticket.isPaymentEachItem && ticketRegimen.moneyAmountWallet != 0
+                              "
+                              class="text-right"
+                            >
+                              <div>Ví</div>
+                              <div style="font-weight: bold; color: violet">
+                                {{ formatMoney(ticketRegimen.moneyAmountWallet) }}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr
+                        v-for="(tri, triIndex) in ticketRegimen.ticketRegimenItemList"
+                        :key="tri.id"
+                      >
+                        <td></td>
+                        <td v-if="ticket.isPaymentEachItem"></td>
+                        <td class="text-center"></td>
+                        <td colspan="1">
+                          <div class="flex gap-2">
+                            <span>
+                              {{ trIndex + 1 }}.{{ triIndex + 1 }}. {{ tri.procedure?.name }}
+                            </span>
+                            <span style="font-weight: 500">
+                              ({{ tri.quantityUsed }} / {{ tri.quantityRegular }})
+                            </span>
+                          </div>
+                        </td>
+                        <td style="font-weight: 700; text-align: center">
+                          <span></span>
+                          <span></span>
+                          {{ tri.quantityActual }}
+                        </td>
+                        <td class="text-right whitespace-nowrap">
+                          <div v-if="tri.discountMoneyAmount" class="text-xs italic text-red-500">
+                            <del>
+                              {{
+                                formatMoney(
+                                  Math.round(tri.moneyAmountRegular / tri.quantityRegular),
+                                )
+                              }}
+                            </del>
+                          </div>
+                          <div>
+                            {{ formatMoney(Math.round(tri.moneyAmountSale / tri.quantityRegular)) }}
+                          </div>
+                        </td>
+                        <td class="text-right whitespace-nowrap">
+                          <span>
+                            {{ formatMoney(tri.moneyAmountActual) }}
+                          </span>
+                        </td>
+                      </tr>
+                    </template>
+                    <tr v-for="(tp, index) in ticket.ticketProcedureNormalList" :key="tp.id">
+                      <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
+                        {{ index + (ticket.ticketRegimenList?.length || 0) + 1 }}
+                      </td>
+                      <td v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'">
+                        <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />
+                      </td>
+                      <td class="text-center">
+                        <TicketProcedureStatusTooltip :status="tp.status" />
+                      </td>
                       <td>{{ tp.procedure?.name }}</td>
                       <td class="text-center">{{ tp.quantity }}</td>
                       <td class="text-right">
@@ -297,18 +410,41 @@ defineExpose({ openModal })
                         </div>
                         <div>{{ formatMoney(tp.actualPrice) }}</div>
                       </td>
+                      <td class="text-right whitespace-nowrap">
+                        {{ formatMoney(tp.actualPrice * tp.quantity) }}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+                      <td class="text-right" colspan="4">
+                        <div class="flex items-center justify-end gap-2">
+                          <span class="uppercase">Tổng tiền dịch vụ</span>
+                        </div>
+                      </td>
+                      <td class="font-bold text-right whitespace-nowrap" colspan="1">
+                        {{ formatMoney(ticket.procedureMoney) }}
+                      </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
-              <div class="mt-4 table-wrapper p-4" style="background-color: white">
-                <div class="mb-2" style="font-weight: 500">8. Xét nghiệm:</div>
+              <div
+                v-if="ticket.ticketLaboratoryGroupList?.length"
+                class="mt-4 table-wrapper p-4"
+                style="background-color: white"
+              >
+                <div class="mb-2" style="font-weight: 500">7. Xét nghiệm:</div>
                 <table v-if="ticket.ticketLaboratoryList?.length">
                   <thead>
                     <tr>
                       <th>#</th>
-                      <th style="width: 32px"></th>
+                      <th
+                        v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'"
+                        style="width: 40px"
+                      ></th>
+                      <th style="width: 40px"></th>
                       <th>Tên</th>
                       <th>Kết quả</th>
                       <th>Tham chiếu</th>
@@ -317,25 +453,20 @@ defineExpose({ openModal })
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-if="ticket.ticketLaboratoryGroupList!.length === 0">
-                      <td colspan="20" class="text-center">Chưa có phiếu xét nghiệm nào</td>
-                    </tr>
                     <template v-for="tlg in ticket.ticketLaboratoryGroupList" :key="tlg.id">
                       <tr>
-                        <td colspan="3" class="">
+                        <td colspan="8" class="">
                           <div class="flex items-center gap-2">
-                            <span class="font-bold">{{ tlg.laboratoryGroup?.name }}</span>
+                            <span class="font-bold">
+                              {{ tlg.laboratoryGroup?.name || 'Chưa có nhóm' }}
+                            </span>
                           </div>
                         </td>
-                        <td colspan="4"></td>
                       </tr>
-                      <template
-                        v-for="(tlItem, index) in tlg.ticketLaboratoryList || []"
-                        :key="tlItem.id"
-                      >
+                      <template v-for="(tl, index) in tlg.ticketLaboratoryList || []" :key="tl.id">
                         <tr
                           :style="
-                            tlg.ticketLaboratoryResultMap?.[tlItem.laboratoryId]?.attention
+                            tlg.ticketLaboratoryResultMap?.[tl.laboratoryId]?.attention
                               ? 'color: red'
                               : ''
                           "
@@ -343,55 +474,40 @@ defineExpose({ openModal })
                           <td class="text-center">
                             <span>{{ index + 1 }}</span>
                           </td>
-                          <td class="text-center">
-                            <VueTooltip v-if="tlItem.status === TicketLaboratoryStatus.Pending">
-                              <template #trigger>
-                                <IconClockCircle
-                                  style="font-size: 18px; color: orange; cursor: not-allowed"
-                                />
-                              </template>
-                              <div>Chưa có kết quả</div>
-                            </VueTooltip>
-
-                            <VueTooltip v-else>
-                              <template #trigger>
-                                <IconCheckSquare
-                                  style="color: #52c41a; font-size: 18px; cursor: not-allowed"
-                                />
-                              </template>
-                              <div>Đã hoàn thành</div>
-                            </VueTooltip>
+                          <td v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'">
+                            <PaymentMoneyStatusTooltip
+                              :paymentMoneyStatus="tl.paymentMoneyStatus"
+                            />
                           </td>
-                          <td>{{ tlItem.laboratory?.name }}</td>
+                          <td class="text-center">
+                            <TicketLaboratoryStatusTooltip :status="tl.status" />
+                          </td>
+                          <td>{{ tl.laboratory?.name }}</td>
                           <td class="text-center">
                             <div>
-                              {{ tlg.ticketLaboratoryResultMap?.[tlItem.laboratoryId]?.result }}
+                              {{ tlg.ticketLaboratoryResultMap?.[tl.laboratoryId]?.result }}
                             </div>
                           </td>
                           <td class="text-center">
-                            <span
-                              v-if="tlItem.laboratory?.valueType === LaboratoryValueType.Number"
-                            >
-                              {{ tlItem.laboratory?.lowValue }} -
-                              {{ tlItem.laboratory?.highValue }}
+                            <span v-if="tl.laboratory?.valueType === LaboratoryValueType.Number">
+                              {{ tl.laboratory?.lowValue }} -
+                              {{ tl.laboratory?.highValue }}
                             </span>
                           </td>
                           <td class="text-center">
-                            <span
-                              v-if="tlItem.laboratory?.valueType === LaboratoryValueType.Number"
-                            >
-                              {{ tlItem.laboratory?.unit }}
+                            <span v-if="tl.laboratory?.valueType === LaboratoryValueType.Number">
+                              {{ tl.laboratory?.unit }}
                             </span>
                           </td>
                           <td class="text-right whitespace-nowrap">
-                            <div v-if="tlItem.discountMoney" class="text-xs italic text-red-500">
-                              <del>{{ formatMoney(tlItem.expectedPrice) }}</del>
+                            <div v-if="tl.discountMoney" class="text-xs italic text-red-500">
+                              <del>{{ formatMoney(tl.expectedPrice) }}</del>
                             </div>
-                            <div>{{ formatMoney(tlItem.actualPrice) }}</div>
+                            <div>{{ formatMoney(tl.actualPrice) }}</div>
                           </td>
                         </tr>
                         <tr
-                          v-for="(laboratoryChild, i) in tlItem.laboratory?.children || []"
+                          v-for="(laboratoryChild, i) in tl.laboratory?.children || []"
                           :key="i"
                           :style="
                             tlg.ticketLaboratoryResultMap?.[laboratoryChild.id]?.attention
@@ -421,9 +537,9 @@ defineExpose({ openModal })
                     </template>
 
                     <tr>
-                      <td colspan="6" class="text-right">
-                        <b>Tổng tiền</b>
-                      </td>
+                      <td></td>
+                      <td v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+                      <td colspan="5" class="text-right uppercase">Tổng tiền xét nghiệm</td>
                       <td class="text-right">
                         <b>
                           {{ formatMoney(ticket.laboratoryMoney) }}
@@ -434,15 +550,24 @@ defineExpose({ openModal })
                 </table>
               </div>
 
-              <div class="mt-4 table-wrapper p-4" style="background-color: white">
-                <div class="mb-2" style="font-weight: 500">9. CĐHA:</div>
-                <table v-if="ticket.ticketRadiologyList?.length">
+              <div
+                v-if="ticket.ticketRadiologyList?.length"
+                class="mt-4 table-wrapper p-4"
+                style="background-color: white"
+              >
+                <div class="mb-2" style="font-weight: 500">8. CĐHA:</div>
+                <table>
                   <thead>
                     <tr>
-                      <th>#</th>
-                      <th class="text-center font-bold">Tên phiếu</th>
-                      <th class="text-center font-bold">Chi tiết</th>
-                      <th class="text-center font-bold">Giá tiền</th>
+                      <th style="width: 32px">#</th>
+                      <th
+                        v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'"
+                        style="width: 32px"
+                      ></th>
+                      <th style="width: 32px"></th>
+                      <th class="">Tên phiếu</th>
+                      <th class="">Chi tiết</th>
+                      <th class="">Giá tiền</th>
                     </tr>
                   </thead>
                   <tbody style="background-color: white">
@@ -451,6 +576,14 @@ defineExpose({ openModal })
                       :key="ticketRadiology.id"
                     >
                       <td class="text-center">{{ index + 1 }}</td>
+                      <td v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'">
+                        <PaymentMoneyStatusTooltip
+                          :paymentMoneyStatus="ticketRadiology.paymentMoneyStatus"
+                        />
+                      </td>
+                      <td class="text-center">
+                        <TicketRadiologyStatusTooltip :status="ticketRadiology.status" />
+                      </td>
                       <td>
                         <div style="font-weight: 500">{{ ticketRadiology.radiology?.name }}</div>
                         <div style="font-style: italic">{{ ticketRadiology.result }}</div>
@@ -477,25 +610,106 @@ defineExpose({ openModal })
                         <div>{{ formatMoney(ticketRadiology.actualPrice) }}</div>
                       </td>
                     </tr>
+                    <tr>
+                      <td></td>
+                      <td v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+                      <td class="text-right uppercase" colspan="3">Tổng tiền CĐHA</td>
+                      <td class="font-bold text-right whitespace-nowrap">
+                        {{ formatMoney(ticket.radiologyMoney) }}
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
 
-              <div class="mt-4 table-wrapper p-4" style="background-color: white">
-                <div class="mb-2" style="font-weight: 500">10. Thuốc - Vật tư:</div>
-                <table v-if="ticket.ticketProductPrescriptionList?.length">
+              <div
+                v-if="ticket.ticketProductConsumableList?.length"
+                class="mt-4 table-wrapper p-4"
+                style="background-color: white"
+              >
+                <div class="mb-2" style="font-weight: 500">9. Vật tư:</div>
+                <table>
                   <thead>
                     <tr>
                       <th>#</th>
-                      <th class="text-center">Tên thuốc</th>
-                      <th class="text-center">SL kê</th>
-                      <th class="text-center">SL mua</th>
-                      <th class="text-center">Giá tiền</th>
+                      <th
+                        v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'"
+                        style="width: 32px"
+                      ></th>
+                      <th style="width: 32px"></th>
+                      <th>Tên vật tư</th>
+                      <th>Số lượng</th>
+                      <th>Đơn giá</th>
+                      <th>Tổng tiền</th>
+                    </tr>
+                  </thead>
+                  <tbody style="background-color: white">
+                    <tr v-for="(tp, index) in ticket.ticketProductConsumableList" :key="tp.id">
+                      <td class="text-center">{{ index + 1 }}</td>
+                      <td v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'">
+                        <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />
+                      </td>
+                      <td class="text-center">
+                        <TicketDeliveryStatusTooltip :deliveryStatus="tp.deliveryStatus" />
+                      </td>
+                      <td>{{ tp.product?.brandName }}</td>
+                      <td class="text-center">{{ tp.quantity }}</td>
+                      <td class="text-right">
+                        <div v-if="tp.discountMoney" class="text-xs italic text-red-500">
+                          <del>{{ formatMoney(tp.unitExpectedPrice) }}</del>
+                        </div>
+                        <div>{{ formatMoney(tp.unitActualPrice) }}</div>
+                      </td>
+                      <td class="text-right">
+                        {{ formatMoney(tp.actualPrice * tp.quantity) }}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+                      <td class="text-right uppercase" colspan="4">Tổng tiền vật tư</td>
+                      <td class="font-bold text-right whitespace-nowrap">
+                        {{
+                          formatMoney(
+                            ticket.ticketProductConsumableList.reduce((acc, item) => {
+                              return acc + item.quantity * item.actualPrice
+                            }, 0),
+                          )
+                        }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div
+                v-if="ticket.ticketProductPrescriptionList?.length"
+                class="mt-4 table-wrapper p-4"
+                style="background-color: white"
+              >
+                <div class="mb-2" style="font-weight: 500">10. Thuốc:</div>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'"></th>
+                      <th style="width: 32px"></th>
+                      <th>Tên thuốc</th>
+                      <th>SL kê</th>
+                      <th>SL mua</th>
+                      <th>Đơn giá</th>
+                      <th>Tổng tiền</th>
                     </tr>
                   </thead>
                   <tbody style="background-color: white">
                     <tr v-for="(tp, index) in ticket.ticketProductPrescriptionList" :key="tp.id">
                       <td class="text-center">{{ index + 1 }}</td>
+                      <td v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'">
+                        <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />
+                      </td>
+                      <td class="text-center">
+                        <TicketDeliveryStatusTooltip :deliveryStatus="tp.deliveryStatus" />
+                      </td>
                       <td>
                         <div>{{ tp.product?.brandName }}</div>
                         <div style="font-size: 0.8rem; font-style: italic">
@@ -510,6 +724,23 @@ defineExpose({ openModal })
                         </div>
                         <div>{{ formatMoney(tp.unitActualPrice) }}</div>
                       </td>
+                      <td class="text-right">
+                        {{ formatMoney(tp.actualPrice * tp.quantity) }}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+                      <td class="text-right uppercase" colspan="5">Tổng tiền thuốc</td>
+                      <td class="font-bold text-right whitespace-nowrap">
+                        {{
+                          formatMoney(
+                            ticket.ticketProductPrescriptionList.reduce((acc, item) => {
+                              return acc + item.quantity * item.actualPrice
+                            }, 0),
+                          )
+                        }}
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -522,6 +753,17 @@ defineExpose({ openModal })
                     <tr>
                       <td>- Tổng chi phí:</td>
                       <td class="px-4">{{ formatMoney(ticket.totalMoney) }}</td>
+                    </tr>
+                    <tr v-if="ticket.discountMoney">
+                      <td>- Chiết khấu:</td>
+                      <td class="px-4">
+                        <VueTag v-if="ticket.discountType === 'VNĐ'" color="green">
+                          {{ formatMoney(ticket.discountMoney) }}
+                        </VueTag>
+                        <VueTag v-if="ticket.discountType === '%'" color="green">
+                          {{ ticket.discountPercent || 0 }}%
+                        </VueTag>
+                      </td>
                     </tr>
                     <tr>
                       <td>- Đã thanh toán:</td>

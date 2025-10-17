@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import VueTag from '@/common/VueTag.vue'
-import { IconFileSearch } from '@/common/icon-antd'
+import { IconBug, IconFileSearch } from '@/common/icon-antd'
 import { IconEditSquare } from '@/common/icon-google'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
@@ -18,6 +18,7 @@ import ModalTicketProcedureUpdate from '@/views/room/room-ticket-clinic/detail/p
 import { computed, onMounted, ref } from 'vue'
 import TicketProcedureStatusTooltip from '../procedure/TicketProcedureStatusTooltip.vue'
 import TicketRegimenStatusTooltip from '../procedure/TicketRegimenStatusTooltip.vue'
+import { VueTooltip } from '@/common/popover'
 
 const modalRegimenDetail = ref<InstanceType<typeof ModalRegimenDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
@@ -56,7 +57,7 @@ const procedureDiscount = computed(() => {
   >
     <thead>
       <tr>
-        <th v-if="CONFIG.MODE === 'development'">ID</th>
+        <th v-if="CONFIG.MODE === 'development'"></th>
         <th>#</th>
         <th v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></th>
         <th></th>
@@ -79,7 +80,14 @@ const procedureDiscount = computed(() => {
       >
         <tr>
           <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-            {{ ticketRegimen.id }}
+            <VueTooltip>
+              <template #trigger>
+                <IconBug width="1.2em" height="1.2em" />
+              </template>
+              <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                <pre>{{ JSON.stringify(ticketRegimen, null, 4) }}</pre>
+              </div>
+            </VueTooltip>
           </td>
           <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
             {{ trIndex + 1 }}
@@ -156,7 +164,14 @@ const procedureDiscount = computed(() => {
         </tr>
         <tr v-for="(tri, triIndex) in ticketRegimen.ticketRegimenItemList" :key="tri.id">
           <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-            {{ tri.id }}
+            <VueTooltip>
+              <template #trigger>
+                <IconBug width="1.2em" height="1.2em" />
+              </template>
+              <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                <pre>{{ JSON.stringify(tri, null, 4) }}</pre>
+              </div>
+            </VueTooltip>
           </td>
           <td></td>
           <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
@@ -208,7 +223,14 @@ const procedureDiscount = computed(() => {
         :key="ticketProcedure.id"
       >
         <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-          {{ ticketProcedure.id }}
+          <VueTooltip>
+            <template #trigger>
+              <IconBug width="1.2em" height="1.2em" />
+            </template>
+            <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+              <pre>{{ JSON.stringify(ticketProcedure, null, 4) }}</pre>
+            </div>
+          </VueTooltip>
         </td>
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ index + (ticketRoomRef.ticketRegimenList?.length || 0) + 1 }}

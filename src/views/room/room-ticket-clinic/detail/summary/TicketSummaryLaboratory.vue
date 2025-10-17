@@ -13,6 +13,8 @@ import TicketLaboratoryStatusTooltip from '@/views/room/room-laboratory/TicketLa
 import { computed, onMounted, ref } from 'vue'
 import ModalTicketLaboratoryUpdateMoney from '../laboratory/ModalTicketLaboratoryUpdateMoney.vue'
 import { TicketLaboratoryService } from '@/modules/ticket-laboratory'
+import { VueTooltip } from '@/common/popover'
+import { IconBug } from '@/common/icon-antd'
 
 const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
@@ -46,7 +48,7 @@ const laboratoryCostAmount = computed(() => {
   <template v-if="ticketRoomRef.ticketLaboratoryGroupList?.length">
     <thead>
       <tr>
-        <th v-if="CONFIG.MODE === 'development'">ID</th>
+        <th v-if="CONFIG.MODE === 'development'"></th>
         <th>#</th>
         <th v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></th>
         <th></th>
@@ -66,7 +68,14 @@ const laboratoryCostAmount = computed(() => {
       <template v-for="tlg in ticketRoomRef.ticketLaboratoryGroupList || []" :key="tlg.id">
         <tr>
           <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-            {{ tlg.laboratoryGroupId }}
+            <VueTooltip>
+              <template #trigger>
+                <IconBug width="1.2em" height="1.2em" />
+              </template>
+              <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                <pre>{{ JSON.stringify(tlg, null, 4) }}</pre>
+              </div>
+            </VueTooltip>
           </td>
           <td colspan="100" class="font-bold">
             {{ tlg.laboratoryGroup?.name || 'Chưa phân nhóm xét nghiệm ' }}
@@ -74,7 +83,14 @@ const laboratoryCostAmount = computed(() => {
         </tr>
         <tr v-for="(tl, index) in tlg.ticketLaboratoryList" :key="tl.id">
           <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-            {{ tl.id }}
+            <VueTooltip>
+              <template #trigger>
+                <IconBug width="1.2em" height="1.2em" />
+              </template>
+              <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                <pre>{{ JSON.stringify(tl, null, 4) }}</pre>
+              </div>
+            </VueTooltip>
           </td>
           <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
             {{ index + 1 }}

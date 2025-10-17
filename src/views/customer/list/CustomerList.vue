@@ -331,11 +331,7 @@ const handleModalUploadCustomerSuccess = async () => {
             </td>
             <td class="text-right" style="border-left: none">
               <div style="white-space: nowrap">{{ formatMoney(customer.debt) }}</div>
-              <div
-                v-if="
-                  userPermission[PermissionId.TICKET_PAYMENT_MONEY] && customer.debt != 0
-                "
-              >
+              <div v-if="userPermission[PermissionId.TICKET_PAYMENT_MONEY] && customer.debt != 0">
                 <VueButton
                   color="default"
                   size="small"
@@ -401,6 +397,7 @@ const handleModalUploadCustomerSuccess = async () => {
               </div>
             </th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
+            <th v-if="settingStore.SCREEN_CUSTOMER_LIST.citizenIdCard">CCCD</th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.gender">Giới tính</th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.birthday">Ngày sinh</th>
             <th class="cursor-pointer" @click="changeSort('debt')">
@@ -473,6 +470,9 @@ const handleModalUploadCustomerSuccess = async () => {
             <td v-if="settingStore.SCREEN_CUSTOMER_LIST.phone" class="text-center">
               <a :href="'tel:' + customer.phone">{{ customer.phone }}</a>
             </td>
+            <td v-if="settingStore.SCREEN_CUSTOMER_LIST.citizenIdCard" class="text-center">
+              <span>{{ customer.citizenIdCard }}</span>
+            </td>
             <td v-if="settingStore.SCREEN_CUSTOMER_LIST.gender" class="text-center">
               <span v-if="customer.gender != null">{{ customer.gender ? 'Nam' : 'Nữ' }}</span>
             </td>
@@ -485,10 +485,7 @@ const handleModalUploadCustomerSuccess = async () => {
               <div class="flex justify-between gap-1 items-center">
                 <div>
                   <VueButton
-                    v-if="
-                      userPermission[PermissionId.TICKET_PAYMENT_MONEY] &&
-                      customer.debt != 0
-                    "
+                    v-if="userPermission[PermissionId.TICKET_PAYMENT_MONEY] && customer.debt != 0"
                     size="small"
                     @click="modalCustomerPayDebt?.openModal(customer.id)"
                   >

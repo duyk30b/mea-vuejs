@@ -15,7 +15,7 @@ const props = withDefaults(
   defineProps<{
     loading?: boolean
     disabled?: boolean
-    color?: 'default' | 'green' | 'blue' | 'red'
+    color?: 'default' | 'green' | 'blue' | 'red' | 'cyan' | 'purple'
     size?: 'small' | 'default' | 'large' | 'text'
     type?: 'reset' | 'submit' | 'button'
     icon?:
@@ -228,6 +228,62 @@ const props = withDefaults(
     &.btn-loading {
       &:disabled {
         background-color: #1e8449 !important;
+        color: white !important;
+      }
+    }
+  }
+
+  &.btn-cyan {
+    background-color: #08979c;
+    border-color: #08979c;
+    color: white;
+
+    &:hover {
+      background-color: #0fadb3;
+      border-color: #0fadb3;
+    }
+
+    &:focus {
+      background-color: #0fadb3;
+      border-color: #0fadb3;
+    }
+
+    &:active {
+      background-color: #045e61;
+      border-color: #045e61;
+    }
+
+    &.btn-loading {
+      &:disabled {
+        background-color: #045e61 !important;
+        color: white !important;
+      }
+    }
+  }
+
+  &.btn-purple {
+    background-color: #9059e9;
+    border-color: #d3adf7;
+    color: white;
+
+    &:hover {
+      background-color: #7736e0;
+      border-color: #d3adf7;
+    }
+
+    &:focus {
+      background-color: #3b147a;
+      border-color: #d3adf7;
+    }
+
+    &:active {
+      background-color: #3b147a;
+      border-color: #d3adf7;
+    }
+
+    &.btn-loading {
+      &:disabled {
+        background-color: #3b147a !important;
         color: white !important;
       }
     }

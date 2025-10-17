@@ -2,6 +2,7 @@
 import { VueTag } from '@/common'
 import VueButton from '@/common/VueButton.vue'
 import {
+  IconBug,
   IconCheckSquare,
   IconClockCircle,
   IconDelete,
@@ -48,6 +49,7 @@ import TicketProcedureSelectItem from './TicketProcedureSelectItem.vue'
 import TicketRegimenStatusTooltip from './TicketRegimenStatusTooltip.vue'
 import TicketProcedureStatusTooltip from './TicketProcedureStatusTooltip.vue'
 import { IconEditSquare } from '@/common/icon-google'
+import { VueTooltip } from '@/common/popover'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
@@ -192,11 +194,11 @@ const totalMoney = computed(() => {
       <table>
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'" style="width: 150px">ID</th>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>TT</th>
             <th>Dịch vụ</th>
-            <th>Thời gian</th>
             <th>Hành động</th>
+            <th>Thời gian</th>
             <th style="min-width: 60px">SL</th>
             <th>Đơn Giá</th>
             <th>Tiền sử dụng</th>
@@ -211,8 +213,15 @@ const totalMoney = computed(() => {
           </tr>
           <template v-for="tp in ticketProcedureNormalList" :key="tp._localId">
             <tr>
-              <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
-                {{ tp.id }}
+              <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+                <VueTooltip>
+                  <template #trigger>
+                    <IconBug width="1.2em" height="1.2em" />
+                  </template>
+                  <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                    <pre>{{ JSON.stringify(tp, null, 4) }}</pre>
+                  </div>
+                </VueTooltip>
               </td>
               <td>
                 <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />

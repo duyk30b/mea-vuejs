@@ -4,6 +4,7 @@ export class Customer {
   id: number
   customerCode: string
   fullName: string
+  citizenIdCard: string
   customerSourceId: number
   phone?: string
   zalo?: string
@@ -52,6 +53,7 @@ export class Customer {
     const customer = Customer.blank()
     customer.fullName = 'Nguyễn Văn A'
     customer.phone = '0968123456'
+    customer.citizenIdCard = ''
     customer.birthday = new Date('1990-09-04').getTime()
     customer.gender = 1
     customer.addressProvince = 'Hà Nội'

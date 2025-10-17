@@ -1,15 +1,9 @@
 <script lang="ts" setup>
-import { ModalStore } from '@/common/vue-modal/vue-modal.store'
-import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
-import { RoomService, ticketRoomRef } from '@/modules/room'
-import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
-import ModalTicketLaboratoryResult from '@/views/room/room-laboratory/ModalTicketLaboratoryGroupResult.vue'
-import TicketLaboratoryStatusTooltip from '@/views/room/room-laboratory/TicketLaboratoryStatusTooltip.vue'
-import { computed, onMounted, ref } from 'vue'
-import { IconDollar, IconPrint, IconSpin } from '@/common/icon-antd'
+import { IconBug, IconDollar, IconPrint, IconSpin } from '@/common/icon-antd'
 import { IconDelete, IconEditSquare } from '@/common/icon-google'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputDate, InputText } from '@/common/vue-form'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import VueButton from '@/common/VueButton.vue'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
@@ -19,15 +13,23 @@ import { Laboratory, LaboratoryService, LaboratoryValueType } from '@/modules/la
 import { LaboratoryGroup, LaboratoryGroupService } from '@/modules/laboratory-group'
 import { LaboratorySample, LaboratorySampleService } from '@/modules/laboratory-sample'
 import { PermissionId } from '@/modules/permission/permission.enum'
+import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
+import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeLaboratoryApi, TicketStatus } from '@/modules/ticket'
 import {
   TicketLaboratory,
+  TicketLaboratoryGroup,
   TicketLaboratoryService,
   TicketLaboratoryStatus,
 } from '@/modules/ticket-laboratory'
-import { TicketLaboratoryGroup } from '@/modules/ticket-laboratory'
 import { ESArray, ESString } from '@/utils'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import ModalTicketLaboratoryResult from '@/views/room/room-laboratory/ModalTicketLaboratoryGroupResult.vue'
+import TicketLaboratoryStatusTooltip from '@/views/room/room-laboratory/TicketLaboratoryStatusTooltip.vue'
+import { computed, onMounted, ref } from 'vue'
 import ModalTicketLaboratoryUpdateMoney from './ModalTicketLaboratoryUpdateMoney.vue'
+import { VueTooltip } from '@/common/popover'
+import { VueTag } from '@/common'
 
 const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
@@ -193,6 +195,9 @@ const reloadCheckboxLaboratory = async (checked: boolean, laboratory: Laboratory
 }
 
 const handleChangeCheckboxLaboratory = async (checked: boolean, laboratory: Laboratory) => {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+    return AlertStore.addWarning('Phiếu đã kết thúc không thể chỉ định')
+  }
   createdAt.value = Date.now()
   reloadCheckboxLaboratory(checked, laboratory)
   reloadIndeterminateCheckbox()
@@ -202,6 +207,9 @@ const handleChangeCheckboxLaboratorySample = async (
   checked: boolean,
   laboratorySample: LaboratorySample,
 ) => {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+    return AlertStore.addWarning('Phiếu đã kết thúc không thể chỉ định')
+  }
   createdAt.value = Date.now()
   laboratorySample.laboratoryList?.forEach((laboratory) => {
     handleChangeCheckboxLaboratory(checked, laboratory)
@@ -239,7 +247,15 @@ const clear = () => {
   createdAt.value = null
 }
 
-const saveLaboratorySelected = async () => {
+const startSaveTicketLaboratoryGroup = async () => {
+  if (!tlgEdit.value.id) {
+    await startAddTicketLaboratoryGroup()
+  } else {
+    await startUpdateTicketLaboratoryGroup()
+  }
+}
+
+const startAddTicketLaboratoryGroup = async () => {
   try {
     const ticketLaboratoryGroupAddList = Object.keys(laboratoryGroupSelects.value)
       .filter((key) => {
@@ -298,29 +314,39 @@ const saveLaboratorySelected = async () => {
       }
     }
 
-    const ticketLaboratoryGroupUpdate = tlgEdit.value.id
-      ? {
-          id: tlgEdit.value.id,
-          createdAt: createdAt.value,
-          laboratoryGroupId: tlgEdit.value.laboratoryGroupId,
-          roomId: tlgEdit.value.roomId,
-          ticketLaboratoryList: laboratoryGroupSelects.value[
-            tlgEdit.value.laboratoryGroupId
-          ].laboratoryList.map((i, index) => {
-            const ins = TicketLaboratory.blank()
-            ins.priority = index + 1
-            ins.laboratoryId = i.id
-            ins.laboratoryGroupId = i.laboratoryGroupId
-            ins.costPrice = i.costPrice
-            ins.expectedPrice = i.price
-            ins.discountMoney = 0
-            ins.discountPercent = 0
-            ins.discountType = DiscountType.VND
-            ins.actualPrice = i.price
-            return ins
-          }),
-        }
-      : undefined
+    await TicketChangeLaboratoryApi.addTicketLaboratoryGroup({
+      ticketId: ticketRoomRef.value.id,
+      ticketLaboratoryGroupAddList,
+    })
+    clear()
+  } catch (error) {
+    console.log('🚀: TicketClinicLaboratory.vue:148 ~ handleAddTicketLaboratoryList :', error)
+  }
+}
+
+const startUpdateTicketLaboratoryGroup = async () => {
+  try {
+    const ticketLaboratoryGroupUpdate = {
+      id: tlgEdit.value.id,
+      createdAt: createdAt.value,
+      laboratoryGroupId: tlgEdit.value.laboratoryGroupId,
+      roomId: tlgEdit.value.roomId,
+      ticketLaboratoryList: laboratoryGroupSelects.value[
+        tlgEdit.value.laboratoryGroupId
+      ].laboratoryList.map((i, index) => {
+        const ins = TicketLaboratory.blank()
+        ins.priority = index + 1
+        ins.laboratoryId = i.id
+        ins.laboratoryGroupId = i.laboratoryGroupId
+        ins.costPrice = i.costPrice
+        ins.expectedPrice = i.price
+        ins.discountMoney = 0
+        ins.discountPercent = 0
+        ins.discountType = DiscountType.VND
+        ins.actualPrice = i.price
+        return ins
+      }),
+    }
     if (ticketLaboratoryGroupUpdate?.ticketLaboratoryList?.length) {
       for (let j = 0; j < ticketLaboratoryGroupUpdate.ticketLaboratoryList.length; j++) {
         const tpItem = ticketLaboratoryGroupUpdate.ticketLaboratoryList[j]
@@ -345,9 +371,8 @@ const saveLaboratorySelected = async () => {
       }
     }
 
-    await TicketChangeLaboratoryApi.upsertRequestLaboratoryGroup({
+    await TicketChangeLaboratoryApi.updateTicketLaboratoryGroup({
       ticketId: ticketRoomRef.value.id,
-      ticketLaboratoryGroupAddList,
       ticketLaboratoryGroupUpdate,
     })
     clear()
@@ -356,7 +381,7 @@ const saveLaboratorySelected = async () => {
   }
 }
 
-const clickChangeLaboratoryGroup = (tlgEditId: string) => {
+const clickEditLaboratoryGroup = (tlgEditId: string) => {
   const tlgFind = ticketRoomRef.value.ticketLaboratoryGroupList?.find((i) => {
     return i.id === tlgEditId
   })
@@ -465,6 +490,13 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
     ticketLaboratoryGroup: tlgData,
   })
 }
+
+const startPrintParaClinicalRequest = async () => {
+  await PrintHtmlAction.startPrintParaClinicalRequest({
+    ticket: ticketRoomRef.value,
+    customer: ticketRoomRef.value.customer!,
+  })
+}
 </script>
 <template>
   <ModalTicketLaboratoryResult ref="modalTicketLaboratoryResult" />
@@ -500,32 +532,13 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                 </div>
               </td>
             </tr>
-            <template
-              v-for="laboratorySample in laboratorySampleOptions"
-              :key="laboratorySample.id"
-            >
-              <tr>
-                <td>
-                  <input
-                    type="checkbox"
-                    :checked="!!laboratorySampleIdCheckbox[laboratorySample.id]?.checked"
-                    :indeterminate="
-                      !!laboratorySampleIdCheckbox[laboratorySample.id]?.indeterminate
-                    "
-                    style="cursor: pointer"
-                    @change="
-                      (e) =>
-                        handleChangeCheckboxLaboratorySample(
-                          (e.target as HTMLInputElement).checked,
-                          laboratorySample,
-                        )
-                    "
-                  />
-                </td>
-                <td
-                  colspan="2"
-                  style="user-select: none; cursor: pointer"
-                  class="font-bold"
+            <template v-if="!tlgEdit.id">
+              <template
+                v-for="laboratorySample in laboratorySampleOptions"
+                :key="laboratorySample.id"
+              >
+                <tr
+                  style="cursor: pointer"
                   @click="
                     handleChangeCheckboxLaboratorySample(
                       !laboratorySampleIdCheckbox[laboratorySample.id]?.checked,
@@ -533,70 +546,73 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                     )
                   "
                 >
-                  {{ laboratorySample.name }}
-                </td>
-              </tr>
-              <tr
-                v-for="laboratory in laboratorySample.laboratoryList || []"
-                :key="laboratory.id"
-                style=""
-              >
-                <td style="user-select: none">
-                  <input
-                    type="checkbox"
-                    :checked="!!laboratoryIdCheckbox[laboratory.id]"
-                    style="cursor: pointer"
-                    @change="
-                      (e) =>
-                        handleChangeCheckboxLaboratory(
-                          (e.target as HTMLInputElement).checked,
-                          laboratory,
-                        )
-                    "
-                  />
-                </td>
-                <td
+                  <td>
+                    <input
+                      type="checkbox"
+                      :checked="!!laboratorySampleIdCheckbox[laboratorySample.id]?.checked"
+                      :indeterminate="
+                        !!laboratorySampleIdCheckbox[laboratorySample.id]?.indeterminate
+                      "
+                      :disabled="
+                        [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status)
+                      "
+                    />
+                  </td>
+                  <td colspan="2" style="user-select: none; cursor: pointer" class="font-bold">
+                    {{ laboratorySample.name }}
+                  </td>
+                </tr>
+                <tr
+                  v-for="laboratory in laboratorySample.laboratoryList || []"
+                  :key="laboratory.id"
                   style="user-select: none; cursor: pointer"
                   @click="
                     handleChangeCheckboxLaboratory(!laboratoryIdCheckbox[laboratory.id], laboratory)
                   "
                 >
-                  {{ laboratory.name }}
-                </td>
-                <td class="text-right">{{ formatMoney(laboratory.price) }}</td>
-              </tr>
+                  <td style="user-select: none">
+                    <input
+                      type="checkbox"
+                      :checked="!!laboratoryIdCheckbox[laboratory.id]"
+                      style="cursor: pointer"
+                      :disabled="
+                        [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status)
+                      "
+                    />
+                  </td>
+                  <td>{{ laboratory.name }}</td>
+                  <td class="text-right">{{ formatMoney(laboratory.price) }}</td>
+                </tr>
+              </template>
             </template>
             <template v-for="(lo, i) in laboratoryOptions" :key="i">
-              <tr>
-                <td colspan="3" class="font-bold">
-                  <span>{{ lo.laboratoryGroup.name }}</span>
-                </td>
-              </tr>
-              <tr v-for="laboratory in lo.laboratoryList" :key="laboratory.id" style="">
-                <td style="user-select: none">
-                  <input
-                    type="checkbox"
-                    :checked="!!laboratoryIdCheckbox[laboratory.id]"
-                    style="cursor: pointer"
-                    @change="
-                      (e) =>
-                        handleChangeCheckboxLaboratory(
-                          (e.target as HTMLInputElement).checked,
-                          laboratory,
-                        )
-                    "
-                  />
-                </td>
-                <td
+              <template v-if="!tlgEdit.id || tlgEdit.laboratoryGroup?.id === lo.laboratoryGroup.id">
+                <tr>
+                  <td colspan="3" class="font-bold">
+                    <span>{{ lo.laboratoryGroup.name }}</span>
+                  </td>
+                </tr>
+                <tr
+                  v-for="laboratory in lo.laboratoryList"
+                  :key="laboratory.id"
                   style="user-select: none; cursor: pointer"
                   @click="
                     handleChangeCheckboxLaboratory(!laboratoryIdCheckbox[laboratory.id], laboratory)
                   "
                 >
-                  {{ laboratory.name }}
-                </td>
-                <td class="text-right">{{ formatMoney(laboratory.price) }}</td>
-              </tr>
+                  <td style="user-select: none">
+                    <input
+                      type="checkbox"
+                      :checked="!!laboratoryIdCheckbox[laboratory.id]"
+                      :disabled="
+                        [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status)
+                      "
+                    />
+                  </td>
+                  <td>{{ laboratory.name }}</td>
+                  <td class="text-right">{{ formatMoney(laboratory.price) }}</td>
+                </tr>
+              </template>
             </template>
           </tbody>
         </table>
@@ -627,6 +643,14 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                     <span v-if="laboratoryGroupMap[key]">{{ laboratoryGroupMap[key]?.name }}</span>
                     <span v-else-if="Number(key) === 0">Chưa phân nhóm phiếu</span>
                     <span v-else>(ID{{ key }}) Nhóm bị xóa</span>
+                    <span
+                      v-if="
+                        tlgEdit.id && laboratoryGroupMap[key].id === tlgEdit.laboratoryGroup?.id
+                      "
+                      style="color: var(--text-red); font-style: italic"
+                    >
+                      (Đang sửa)
+                    </span>
                   </td>
                 </tr>
                 <tr v-for="(laboratory, j) in laboratoryList" :key="j">
@@ -658,7 +682,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
         <VueButton
           color="blue"
           :disabled="disabledButtonSaveLaboratorySelect"
-          @click="saveLaboratorySelected"
+          @click="startSaveTicketLaboratoryGroup"
         >
           <span v-if="tlgEdit.id">Cập nhật chỉ định xét nghiệm</span>
           <span v-else>Tạo chỉ định xét nghiệm mới</span>
@@ -668,22 +692,27 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
   </div>
   <div class="mt-8">
     <div class="flex flex-wrap items-baseline justify-between">
-      <div class="italic">Danh sách các phiếu xét nghiệm đã chỉ định</div>
+      <div class="italic">Danh sách các xét nghiệm đã chỉ định</div>
+      <VueButton icon="print" @click="startPrintParaClinicalRequest">
+        In phiếu chỉ định CLS
+      </VueButton>
     </div>
     <div class="mt-2 table-wrapper">
       <table>
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'">ID</th>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>#</th>
-            <th v-if="ticketRoomRef.isPaymentEachItem" style="width: 32px"></th>
+            <th
+              v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"
+              style="width: 32px"
+            ></th>
             <th style="width: 32px"></th>
             <th>Tên</th>
             <th>Kết quả</th>
             <th>Tham chiếu</th>
             <th>Đơn vị</th>
             <th>Giá</th>
-            <th></th>
             <th></th>
           </tr>
         </thead>
@@ -694,9 +723,19 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
           <template v-for="tlg in ticketRoomRef.ticketLaboratoryGroupList" :key="tlg.id">
             <tr>
               <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-                {{ tlg.id }}
+                <VueTooltip>
+                  <template #trigger>
+                    <IconBug width="1.2em" height="1.2em" />
+                  </template>
+                  <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                    <pre>{{ JSON.stringify(tlg, null, 4) }}</pre>
+                  </div>
+                </VueTooltip>
               </td>
-              <td :colspan="ticketRoomRef.isPaymentEachItem ? 4 : 3" class="">
+              <td
+                :colspan="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development' ? 4 : 3"
+                class=""
+              >
                 <div class="flex items-center gap-2">
                   <span class="font-bold">
                     {{ tlg.laboratoryGroup?.name || 'Chưa phân nhóm phiếu xét nghiệm' }}
@@ -723,7 +762,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                       userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
                     "
                     size="small"
-                    @click="clickChangeLaboratoryGroup(tlg.id)"
+                    @click="clickEditLaboratoryGroup(tlg.id)"
                   >
                     Sửa chỉ định
                   </VueButton>
@@ -736,7 +775,6 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   </VueButton>
                 </div>
               </td>
-              <td></td>
               <td class="text-center">
                 <a
                   v-if="
@@ -762,10 +800,20 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                 "
               >
                 <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-                  {{ tlItem.id }}
+                  <VueTooltip>
+                    <template #trigger>
+                      <IconBug width="1.2em" height="1.2em" />
+                    </template>
+                    <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                      <pre>{{ JSON.stringify(tlItem, null, 4) }}</pre>
+                    </div>
+                  </VueTooltip>
                 </td>
                 <td class="text-center">{{ index + 1 }}</td>
-                <td v-if="ticketRoomRef.isPaymentEachItem" class="text-center">
+                <td
+                  v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"
+                  class="text-center"
+                >
                   <PaymentMoneyStatusTooltip :paymentMoneyStatus="tlItem.paymentMoneyStatus" />
                 </td>
                 <td class="text-center">
@@ -787,26 +835,34 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   </span>
                 </td>
                 <td class="text-right whitespace-nowrap">
-                  <div v-if="tlItem.discountMoney" class="text-xs italic text-red-500">
-                    <del>{{ formatMoney(tlItem.expectedPrice) }}</del>
+                  <div class="flex flex-wrap gap-2 items-center">
+                    <div>
+                      <VueTag v-if="tlItem.discountMoney" color="green">
+                        {{ tlItem.discountPercent + ' %' }}
+                      </VueTag>
+                    </div>
+                    <div class="ml-auto">
+                      <div v-if="tlItem.discountMoney" class="text-xs italic text-red-500">
+                        <del>{{ formatMoney(tlItem.expectedPrice) }}</del>
+                      </div>
+                      <div>{{ formatMoney(tlItem.actualPrice) }}</div>
+                    </div>
+                    <a
+                      v-if="
+                        ![TicketStatus.Debt, TicketStatus.Completed].includes(
+                          ticketRoomRef.status,
+                        ) &&
+                        [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
+                          tlItem.paymentMoneyStatus,
+                        ) &&
+                        userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
+                      "
+                      @click="modalTicketLaboratoryUpdateMoney?.openModal(tlItem)"
+                      style="color: var(--text-orange); line-height: 0"
+                    >
+                      <IconEditSquare width="20" height="20" />
+                    </a>
                   </div>
-                  <div>{{ formatMoney(tlItem.actualPrice) }}</div>
-                </td>
-                <td class="text-center">
-                  <a v-if="!tlItem.id">
-                    <IconSpin width="20" height="20" />
-                  </a>
-                  <a
-                    v-else-if="
-                      [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                        tlItem.paymentMoneyStatus,
-                      ) && userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
-                    "
-                    style="color: var(--text-orange)"
-                    @click="modalTicketLaboratoryUpdateMoney?.openModal(tlItem)"
-                  >
-                    <IconDollar width="20" height="20" />
-                  </a>
                 </td>
                 <td class="text-center">
                   <a v-if="!tlItem.id">
@@ -835,10 +891,17 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                 "
               >
                 <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-                  {{ laboratoryChild.id }}
+                  <VueTooltip>
+                    <template #trigger>
+                      <IconBug width="1.2em" height="1.2em" />
+                    </template>
+                    <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                      <pre>{{ JSON.stringify(laboratoryChild, null, 4) }}</pre>
+                    </div>
+                  </VueTooltip>
                 </td>
                 <td></td>
-                <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+                <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
                 <td></td>
                 <td>{{ laboratoryChild?.name }}</td>
                 <td class="text-center">
@@ -851,7 +914,6 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   </span>
                 </td>
                 <td class="text-center">{{ laboratoryChild?.unit }}</td>
-                <td class="text-right"></td>
                 <td class="text-center"></td>
                 <td class="text-center"></td>
               </tr>
@@ -860,7 +922,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
 
           <tr>
             <td v-if="CONFIG.MODE === 'development'"></td>
-            <td v-if="ticketRoomRef.isPaymentEachItem"></td>
+            <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
             <td :colspan="6" class="text-right">
               <b>Tổng tiền</b>
             </td>
@@ -869,7 +931,6 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                 {{ formatMoney(ticketRoomRef.laboratoryMoney) }}
               </b>
             </td>
-            <td></td>
             <td></td>
           </tr>
         </tbody>

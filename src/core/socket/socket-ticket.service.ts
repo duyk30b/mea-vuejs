@@ -2,6 +2,8 @@ import { Image } from '@/modules/image/image.model'
 import {
   roomDeliveryPagination,
   roomFinancePagination,
+  roomLaboratory,
+  roomRadiology,
   roomTicketPaginationMapRoomId,
   ticketRoomRef,
 } from '@/modules/room/room.ref'
@@ -54,6 +56,30 @@ export class SocketTicketService {
     ticketSurcharge?: { destroyedList?: TicketSurcharge[]; upsertedList?: TicketSurcharge[] }
     ticketExpense?: { destroyedList?: TicketExpense[]; upsertedList?: TicketExpense[] }
   }) {
+    // Refresh cho phòng xét nghiệm
+    const roomLaboratoryIdRefresh: Record<string, boolean> = {}
+    data.ticketLaboratoryGroup?.upsertedList?.forEach((i) => {
+      roomLaboratoryIdRefresh[i.roomId] = true
+    })
+    data.ticketLaboratoryGroup?.destroyedList?.forEach((i) => {
+      roomLaboratoryIdRefresh[i.roomId] = true
+    })
+    Object.keys(roomLaboratoryIdRefresh).forEach((id) => {
+      roomLaboratory.value[id] = new Date().toISOString()
+    })
+
+    // Refresh cho phòng CĐHA
+    const roomRadiologyIdRefresh: Record<string, boolean> = {}
+    data.ticketRadiology?.upsertedList?.forEach((i) => {
+      roomRadiologyIdRefresh[i.roomId] = true
+    })
+    data.ticketRadiology?.destroyedList?.forEach((i) => {
+      roomRadiologyIdRefresh[i.roomId] = true
+    })
+    Object.keys(roomRadiologyIdRefresh).forEach((id) => {
+      roomRadiology.value[id] = new Date().toISOString()
+    })
+
     const ticketActionList: Ticket[] = [
       ticketRoomRef.value,
       ...Object.values(roomTicketPaginationMapRoomId.value).flat(),

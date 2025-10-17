@@ -30,6 +30,7 @@ import DiagnosisVitalSigns from '@/views/room/room-ticket-clinic/detail/diagnosi
 import TableTicketProcedureListRequest from '@/views/room/room-ticket-clinic/detail/procedure/TableTicketProcedureListDraft.vue'
 import TicketChangeTicketUserPosition from '@/views/room/room-user/TicketChangeTicketUserPosition.vue'
 import { nextTick, ref } from 'vue'
+import TicketLink from '../../room-ticket-base/TicketLink.vue'
 import ModalReceptionCreateSetting from './ModalReceptionCreateSetting.vue'
 
 const modalReceptionCreateSetting = ref<InstanceType<typeof ModalReceptionCreateSetting>>()
@@ -430,7 +431,7 @@ defineExpose({ openModal })
 
         <div
           v-if="ticketPendingOptions.length"
-          style="flex-grow: 1; flex-basis: 40%; min-width: 400px"
+          style="flex-grow: 1; flex-basis: 90%; min-width: 400px"
         >
           <div>Khách hàng đến tiếp tục điều trị ?</div>
           <div class="ml-4">
@@ -440,9 +441,17 @@ defineExpose({ openModal })
                 @change="(e: Event) => handleChangeCheckboxTicketPending(e, ticketPending)"
               >
                 <span>
-                  {{ ESTimer.timeToText(ticketPending.receptionAt, 'DD/MM/YYYY hh:mm ') }} - CĐ:
-                  {{ ticketPending.note }}
+                  {{ ESTimer.timeToText(ticketPending.receptionAt, 'DD/MM/YYYY hh:mm ') }}
                 </span>
+                <span>
+                  -
+                  <TicketLink
+                    :ticketId="ticketPending.id"
+                    :ticket="ticketPending"
+                    :target="'_blank'"
+                  />
+                </span>
+                <span>- CĐ: {{ ticketPending.note }}</span>
               </InputCheckbox>
             </div>
           </div>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
 import VuePagination from '@/common/VuePagination.vue'
-import { IconDownload, IconFileSearch, IconRight, IconSetting } from '@/common/icon-antd'
+import { IconBug, IconDownload, IconFileSearch, IconRight, IconSetting } from '@/common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import { IconVisibility } from '@/common/icon-google'
 import VueDropdown from '@/common/popover/VueDropdown.vue'
@@ -23,6 +23,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ETicketOrderUpsertMode } from '../upsert/ticket-order-upsert.ref'
 import ModalTicketOrderListSetting from './ModalTicketOrderListSetting.vue'
 import TicketLink from '../../room-ticket-base/TicketLink.vue'
+import { VueTooltip } from '@/common/popover'
 
 const modalTicketOrderListSetting = ref<InstanceType<typeof ModalTicketOrderListSetting>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -361,7 +362,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
       <table>
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'">ID-RoomID</th>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th class="cursor-pointer whitespace-nowrap" @click="changeSort('id')">
               <div class="flex items-center gap-1 justify-center">
                 <span>Mã</span>
@@ -404,8 +405,15 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="ticket in roomTicketPaginationMapRoomId[currentRoom.id]" :key="ticket.id">
-            <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
-              {{ ticket.id }} - {{ ticket.roomId }}
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(ticket, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
             </td>
             <td class="text-center">
               <TicketLink :ticket="ticket" :ticketId="ticket.id" />

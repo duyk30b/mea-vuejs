@@ -196,6 +196,16 @@ defineExpose({ openModal })
         </div>
 
         <div
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.citizenIdCard"
+          style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
+        >
+          <div>Số CCCD</div>
+          <div>
+            <InputText v-model:value="customer.citizenIdCard" />
+          </div>
+        </div>
+
+        <div
           v-if="settingStore.SCREEN_CUSTOMER_UPSERT.facebook"
           style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
         >
@@ -231,6 +241,22 @@ defineExpose({ openModal })
           </div>
         </div>
 
+        <div
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.gender"
+          style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
+        >
+          <div>Giới tính</div>
+          <div>
+            <InputRadio
+              v-model:value="customer!.gender"
+              :options="[
+                { key: 1, label: 'Nam' },
+                { key: 0, label: 'Nữ' },
+              ]"
+            />
+          </div>
+        </div>
+
         <template v-if="settingStore.SCREEN_CUSTOMER_UPSERT.address">
           <div style="flex-grow: 1; flex-basis: 45%; min-width: 300px">
             <div>Địa chỉ</div>
@@ -253,22 +279,6 @@ defineExpose({ openModal })
             </div>
           </div>
         </template>
-
-        <div
-          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.gender"
-          style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
-        >
-          <div>Giới tính</div>
-          <div>
-            <InputRadio
-              v-model:value="customer!.gender"
-              :options="[
-                { key: 1, label: 'Nam' },
-                { key: 0, label: 'Nữ' },
-              ]"
-            />
-          </div>
-        </div>
 
         <div
           v-if="settingStore.SCREEN_CUSTOMER_UPSERT.relative"

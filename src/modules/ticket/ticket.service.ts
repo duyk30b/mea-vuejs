@@ -1,5 +1,6 @@
 import { CustomerDB } from '../../core/indexed-db/repository/customer.repository'
 import { Customer } from '../customer'
+import { TicketProductService } from '../ticket-product'
 import { TicketQueryApi } from './api/ticket-query.api'
 import type { TicketDetailQuery } from './ticket.dto'
 import type { Ticket } from './ticket.model'
@@ -28,9 +29,10 @@ export class TicketService {
           customer: true,
           imageList: true,
           ticketAttributeList: true,
-          ticketProcedureList: true,
           ticketRegimenList: true,
           ticketRegimenItemList: true,
+          ticketProcedureList: true,
+          ticketProductList: {},
           ticketRadiologyList: true,
           ticketLaboratoryList: true,
           ticketLaboratoryGroupList: true,
@@ -38,6 +40,7 @@ export class TicketService {
         },
       })
       await ticketResponse.refreshAllData()
+      await TicketProductService.refreshRelation(ticketResponse.ticketProductList || [])
 
       TicketService.ticketMap[ticket.id] = ticketResponse
     }

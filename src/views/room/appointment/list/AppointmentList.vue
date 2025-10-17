@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
 import VuePagination from '@/common/VuePagination.vue'
-import { IconDelete, IconFileSearch, IconSchedule, IconSetting } from '@/common/icon-antd'
+import { IconBug, IconDelete, IconFileSearch, IconSchedule, IconSetting } from '@/common/icon-antd'
 import { IconEditSquare } from '@/common/icon-google'
 import VueDropdown from '@/common/popover/VueDropdown.vue'
 import { InputDate, InputOptions, InputSelect, VueSelect } from '@/common/vue-form'
@@ -24,6 +24,7 @@ import AppointmentStatusTag from '../AppointmentStatusTag.vue'
 import ModalAppointmentUpsert from '../upsert/ModalAppointmentUpsert.vue'
 import ModalAppointmentListSetting from './ModalAppointmentListSetting.vue'
 import ModalAppointmentRegisterTicketClinic from './ModalAppointmentRegisterTicketClinic.vue'
+import { VueTooltip } from '@/common/popover'
 
 const modalAppointmentUpsert = ref<InstanceType<typeof ModalAppointmentUpsert>>()
 const modalAppointmentRegisterTicketClinic =
@@ -287,7 +288,7 @@ const handleFocusFirstSearchCustomer = async () => {
       <table>
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'">ID</th>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>#</th>
             <th>Trạng thái</th>
             <th>Khách hàng</th>
@@ -316,8 +317,15 @@ const handleFocusFirstSearchCustomer = async () => {
             <td colspan="20" class="text-center">Không có lịch hẹn nào</td>
           </tr>
           <tr v-for="(appointment, index) in appointmentList" :key="index">
-            <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
-              {{ appointment.id }}
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(appointment, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
             </td>
             <td>
               <div class="flex justify-between items-center gap-4">

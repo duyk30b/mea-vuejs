@@ -11,8 +11,9 @@ import { RoomService } from '../../../modules/room/room.service'
 import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalRoomUpsert from './ModalRoomUpsert.vue'
 import { CONFIG } from '@/config'
-import { IconMergeCells } from '@/common/icon-antd'
+import { IconBug, IconMergeCells } from '@/common/icon-antd'
 import ModalRoomMerge from './ModalRoomMerge.vue'
+import { VueTooltip } from '@/common/popover'
 
 const modalRoomUpsert = ref<InstanceType<typeof ModalRoomUpsert>>()
 const modalRoomMerge = ref<InstanceType<typeof ModalRoomMerge>>()
@@ -107,7 +108,7 @@ const handleModalRoomMergeSuccess = async () => {
       <table>
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'">ID</th>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>Mã</th>
             <th>Tên</th>
             <th>Loại phòng</th>
@@ -136,12 +137,15 @@ const handleModalRoomMergeSuccess = async () => {
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="room in roomList" :key="room.id">
-            <td
-              v-if="CONFIG.MODE === 'development'"
-              class="text-center"
-              style="width: 100px; color: violet"
-            >
-              {{ room.id }}
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(room, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
             </td>
             <td class="text-center">{{ room.code }}</td>
             <td>{{ room.name }}</td>

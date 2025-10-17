@@ -1,11 +1,14 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import VuePagination from '@/common/VuePagination.vue'
-import { IconClose } from '@/common/icon-antd'
+import { IconBug, IconClose } from '@/common/icon-antd'
 import { InputSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { Ticket, TicketQueryApi } from '@/modules/ticket'
 import { ESTimer } from '@/utils'
+import { CONFIG } from '@/config'
+import { VueTooltip } from '@/common/popover'
+import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 
 const emit = defineEmits<{
   (e: 'select', value: string): void
@@ -79,7 +82,8 @@ defineExpose({ openModal })
           <table>
             <thead>
               <tr>
-                <th>ID</th>
+                <th v-if="CONFIG.MODE === 'development'"></th>
+                <th>Phiếu</th>
                 <th>Khách hàng</th>
                 <th>Thời gian</th>
                 <th>Chẩn đoán</th>
@@ -91,7 +95,19 @@ defineExpose({ openModal })
                 <td colspan="20" class="text-center">Không có dữ liệu</td>
               </tr>
               <tr v-for="ticket in ticketClinicList" :key="ticket.id">
-                <td class="text-center">KB{{ ticket.id }}</td>
+                <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+                  <VueTooltip>
+                    <template #trigger>
+                      <IconBug width="1.2em" height="1.2em" />
+                    </template>
+                    <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                      <pre>{{ JSON.stringify(ticket, null, 4) }}</pre>
+                    </div>
+                  </VueTooltip>
+                </td>
+                <td>
+                  <TicketLink :ticket="ticket" :ticketId="ticket.id" />
+                </td>
                 <td>{{ ticket.customer?.fullName }}</td>
                 <td class="text-center">
                   {{ ESTimer.timeToText(ticket.createdAt, 'hh:mm DD/MM/YYYY') }}

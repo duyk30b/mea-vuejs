@@ -69,8 +69,8 @@ export class TicketActionApi {
     },
   ) {
     const response = await AxiosInstance.post(`/ticket/${ticketId}/change-all-money`, body)
-    const { data } = response.data as BaseResponse<{ ticket: any }>
-    return Ticket.from(data.ticket)
+    const { data } = response.data as BaseResponse<{ ticketModified: any }>
+    return Ticket.from(data.ticketModified)
   }
 
   static async sendProduct(body: { ticketId: string; ticketProductIdList: string[] }) {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
 import VuePagination from '@/common/VuePagination.vue'
-import { IconFileSearch, IconMore, IconRight, IconSetting } from '@/common/icon-antd'
+import { IconBug, IconFileSearch, IconMore, IconRight, IconSetting } from '@/common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import { IconEditSquare } from '@/common/icon-google'
 import VueDropdown from '@/common/popover/VueDropdown.vue'
@@ -37,6 +37,7 @@ import ModalTicketClinicListSetting from './ModalTicketClinicListSetting.vue'
 import { PaymentService } from '@/modules/payment'
 import { RegimenService } from '@/modules/regimen'
 import { TicketRegimen, TicketRegimenService } from '@/modules/ticket-regimen'
+import { VueTooltip } from '@/common/popover'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalReceptionCreate = ref<InstanceType<typeof ModalReceptionCreate>>()
@@ -352,7 +353,7 @@ const clickCloseTicket = (ticket: Ticket) => {
       <table>
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'" class="">Id-RoomId</th>
+            <th v-if="CONFIG.MODE === 'development'" class=""></th>
             <th class="cursor-pointer">
               <div class="flex items-center gap-1 justify-center">
                 <span>Hồ Sơ</span>
@@ -400,8 +401,15 @@ const clickCloseTicket = (ticket: Ticket) => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(ticket, index) in roomTicketPaginationMapRoomId[currentRoom.id]" :key="index">
-            <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
-              {{ ticket.id }} - {{ ticket.roomId }}
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(ticket, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
             </td>
             <td>
               <div class="flex gap-4 justify-between items-center">

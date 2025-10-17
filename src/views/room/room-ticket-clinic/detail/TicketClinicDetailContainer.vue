@@ -591,7 +591,7 @@ const clickReturnProduct = () => {
             <span class="text-red-500">
               <IconDollar />
             </span>
-            <span class="text-red-500">Hoàn tiền</span>
+            <span class="text-red-500 font-bold">HOÀN TIỀN</span>
           </a>
           <a
             @click="clickRefundTicketItem"

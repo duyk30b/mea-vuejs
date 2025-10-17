@@ -9,10 +9,10 @@ export class TicketLaboratoryGroupGetQuery {
   relation?: {
     ticket?: boolean
     customer?: boolean
-    ticketUserList?: boolean
+    ticketUserRequestList?: boolean
+    ticketUserResultList?: boolean
     ticketLaboratoryList?: boolean
     ticketLaboratoryResultMap?: boolean
-    imageList?: boolean
   }
 
   filter?: {

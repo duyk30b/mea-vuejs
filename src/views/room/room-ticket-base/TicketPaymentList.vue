@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { IconBug } from '@/common/icon-antd'
+import { VueTooltip } from '@/common/popover'
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { MoneyDirection, PaymentActionTypeText } from '@/modules/payment'
@@ -55,7 +57,7 @@ const hasDebtMinus = computed(() => {
       <table>
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'">ID</th>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>#</th>
             <th>Thời gian</th>
             <th>Note</th>
@@ -68,8 +70,15 @@ const hasDebtMinus = computed(() => {
         </thead>
         <tbody>
           <tr v-for="(payment, index) in ticket.paymentList" :key="index">
-            <td v-if="CONFIG.MODE === 'development'" style="color: violet" class="text-center">
-              {{ payment.id }}
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(payment, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
             </td>
             <td class="text-center">{{ index + 1 }}</td>
             <td class="">

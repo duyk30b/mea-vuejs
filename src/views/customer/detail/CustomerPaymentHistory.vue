@@ -5,7 +5,13 @@ import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { type Customer } from '@/modules/customer'
-import { MoneyDirection, Payment, PaymentActionTypeText, PaymentApi, PaymentPersonType } from '@/modules/payment'
+import {
+  MoneyDirection,
+  Payment,
+  PaymentActionTypeText,
+  PaymentApi,
+  PaymentPersonType,
+} from '@/modules/payment'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { ESTimer } from '@/utils'
 import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
@@ -161,7 +167,7 @@ defineExpose({ startFetchData })
               {{ payment.id }}
             </td>
             <td>
-              <TicketLink :ticketId="payment.voucherId" :ticket="payment.ticket!" />
+              <TicketLink :ticketId="payment.voucherId" :ticket="payment.ticket!" target="_blank" />
               <div style="white-space: nowrap">
                 {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
