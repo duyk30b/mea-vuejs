@@ -92,6 +92,7 @@ export const SETTING_DEFAULT = {
   SCREEN_CUSTOMER_LIST: {
     detail: true,
     phone: true,
+    citizenIdCard: false,
     gender: true,
     birthday: true,
     address: true,
@@ -101,10 +102,11 @@ export const SETTING_DEFAULT = {
   },
   SCREEN_CUSTOMER_DETAIL: {},
   SCREEN_CUSTOMER_UPSERT: {
-    facebook: false,
-    zalo: false,
+    citizenIdCard: true,
     birthday: true,
     gender: true,
+    facebook: false,
+    zalo: false,
     address: true,
     relative: false,
     note: false,

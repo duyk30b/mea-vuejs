@@ -49,6 +49,7 @@ export class AppointmentApi {
           ? {
             fullName: newCustomer.fullName,
             customerCode: newCustomer.customerCode,
+            citizenIdCard: newCustomer.citizenIdCard || '',
             phone: newCustomer.phone,
             facebook: newCustomer.facebook || '',
             zalo: newCustomer.zalo || '',
