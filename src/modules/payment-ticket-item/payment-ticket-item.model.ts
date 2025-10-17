@@ -23,6 +23,7 @@ export class PaymentTicketItem {
   ticketItemType: TicketItemType
   ticketItemId: string
   interactId: number
+  sessionIndex: number
 
   expectedPrice: number
   discountMoney: number

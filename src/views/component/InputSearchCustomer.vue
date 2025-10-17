@@ -147,7 +147,7 @@ const logicFilter = (item: ItemOption<Customer>, text: string) => {
       <template #option="{ item: { data } }">
         <div>
           <b>{{ data.fullName }}</b>
-          - {{ data.phone }} -
+          - {{ ESString.formatPhone(data.phone) }} -
           {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
         </div>
         <div>{{ ESString.formatAddress(data) }}</div>

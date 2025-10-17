@@ -21,7 +21,6 @@ export const TicketAttributeKeyEyeList = [
   'body',
 
   'ThiLuc_MP',
-  'NhanAp_MP',
   'MiMatKetMac_MP',
   'GiacMac_MP',
   'TienPhongMongMat_MP',
@@ -29,15 +28,12 @@ export const TicketAttributeKeyEyeList = [
   'DayMat_MP',
 
   'ThiLuc_MT',
-  'NhanAp_MT',
   'MiMatKetMac_MT',
   'GiacMac_MT',
   'TienPhongMongMat_MT',
   'ThuyTinhThe_MT',
   'DayMat_MT',
-] as const
 
-export const TicketAttributeKeyOptometryList = [
   // Oculus Sinister: Mắt trái
   // Oculus Dexter: Mắt phải
   // Sphere (SPH): Độ cầu (âm là cận thị, dương là viễn thị, ví dụ như SPH -2.00)
@@ -161,7 +157,6 @@ export const TicketAttributeKeyOrderList = ['note'] as const
 
 export type TicketAttributeKeyGeneralType = (typeof TicketAttributeKeyGeneralList)[number]
 export type TicketAttributeKeyEyeType = (typeof TicketAttributeKeyEyeList)[number]
-export type TicketAttributeKeyOptometryType = (typeof TicketAttributeKeyOptometryList)[number]
 export type TicketAttributeKeyObstetricType = (typeof TicketAttributeKeyObstetricList)[number]
 export type TicketAttributeKeyAdviceType = (typeof TicketAttributeKeyAdviceList)[number]
 export type TicketAttributeKeyOrderType = (typeof TicketAttributeKeyOrderList)[number]
@@ -169,7 +164,6 @@ export type TicketAttributeKeyOrderType = (typeof TicketAttributeKeyOrderList)[n
 export type TicketAttributeKeyType =
   | TicketAttributeKeyGeneralType
   | TicketAttributeKeyEyeType
-  | TicketAttributeKeyOptometryType
   | TicketAttributeKeyObstetricType
   | TicketAttributeKeyAdviceType
   | TicketAttributeKeyOrderType

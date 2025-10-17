@@ -102,6 +102,18 @@ const handleChangeUnitQuantity = (data: number) => {
   }
 }
 
+const handleChangeUnitExpectPrice = (data: number) => {
+  const expectedPrice = data / ticketProduct.value.unitRate
+  const actualPrice = ticketProduct.value.actualPrice
+  const discountMoney = expectedPrice - actualPrice
+  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+  ticketProduct.value.expectedPrice = expectedPrice
+  ticketProduct.value.discountPercent = discountPercent
+  ticketProduct.value.discountMoney = discountMoney
+  ticketProduct.value.discountType = DiscountType.VND
+  ticketProduct.value.actualPrice = actualPrice
+}
+
 const handleChangeUnitDiscountMoney = (data: number) => {
   const discountMoney = data / ticketProduct.value.unitRate
   const expectedPrice = ticketProduct.value.expectedPrice || 0
@@ -272,8 +284,9 @@ defineExpose({ openModal })
 
           <div style="width: 100%">
             <InputMoney
-              v-model:value="ticketProduct.unitExpectedPrice"
+              :value="ticketProduct.unitExpectedPrice"
               :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
+              @update:value="handleChangeUnitExpectPrice"
             />
           </div>
         </div>

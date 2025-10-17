@@ -6,15 +6,15 @@ import { MeService } from '@/modules/_me/me.service'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtmlAction } from '@/modules/print-html'
 import {
-  TicketAttributeKeyOptometryList,
-  type TicketAttributeKeyOptometryType,
+  TicketAttributeKeyEyeList,
+  type TicketAttributeKeyEyeType,
 } from '@/modules/ticket-attribute'
 import { TicketChangeAttributeApi } from '@/modules/ticket'
 
 const { userPermission, organization } = MeService
 
-const ticketAttributeOriginMap: { [P in TicketAttributeKeyOptometryType]?: any } = {}
-const ticketAttributeMap = ref<{ [P in TicketAttributeKeyOptometryType]?: any }>({})
+const ticketAttributeOriginMap: { [P in TicketAttributeKeyEyeType]?: any } = {}
+const ticketAttributeMap = ref<{ [P in TicketAttributeKeyEyeType]?: any }>({})
 
 const saveLoading = ref(false)
 
@@ -27,8 +27,8 @@ watch(
       return (ticketAttributeMap.value = {})
     }
     newValue.forEach((i) => {
-      if (!TicketAttributeKeyOptometryList.includes(i.key as any)) return
-      const k = i.key as unknown as TicketAttributeKeyOptometryType
+      if (!TicketAttributeKeyEyeList.includes(i.key as any)) return
+      const k = i.key as unknown as TicketAttributeKeyEyeType
       if (i.value === ticketAttributeOriginMap[k]) return
       ticketAttributeOriginMap[k] = i.value
       ticketAttributeMap.value[k] = i.value
@@ -40,7 +40,7 @@ watch(
 const hasChangeAttribute = computed(() => {
   let hasChange = false
   Object.entries(ticketAttributeMap.value).forEach(([key, value]) => {
-    const k = key as unknown as TicketAttributeKeyOptometryType
+    const k = key as unknown as TicketAttributeKeyEyeType
     const rootValue = ticketRoomRef.value.ticketAttributeMap[k] || ''
     if (rootValue != value) {
       hasChange = true
@@ -70,7 +70,7 @@ const saveTicketDiagnosis = async () => {
       note: ticketRoomRef.value.note,
       ticketId: ticketRoomRef.value.id,
       ticketAttributeChangeList,
-      ticketAttributeKeyList: TicketAttributeKeyOptometryList as any,
+      ticketAttributeKeyList: TicketAttributeKeyEyeList as any,
     })
   } catch (error) {
     console.log('🚀 TicketClinicDiagnosisEyeSpecial.vue:82 ~ saveTicketDiagnosis ~ error:', error)
