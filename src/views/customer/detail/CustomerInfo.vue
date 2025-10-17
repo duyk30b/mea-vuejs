@@ -43,6 +43,12 @@ onMounted(async () => {
         </div>
       </div>
       <div class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">Số CCCD</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
+          {{ customer.citizenIdCard || '' }}
+        </div>
+      </div>
+      <div class="my-2 flex gap-4">
         <div style="width: 100px; flex-shrink: 0">Ngày sinh</div>
         <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
           {{ ESTimer.timeToText(customer.birthday, 'DD/MM/YYYY') || customer.yearOfBirth || '' }}

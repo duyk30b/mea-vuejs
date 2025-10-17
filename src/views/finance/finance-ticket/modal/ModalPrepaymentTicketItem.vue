@@ -608,27 +608,27 @@ const handleUpdateCheckedTicketRegimen = (checked: boolean, tr: TicketRegimen) =
   checkboxRegimen.value[tr.id].indeterminate = false
   if (checked) {
     checkboxRegimen.value[tr.id].checked = true
-    if (tr.moneyAmountWallet) {
-      checkboxRegimen.value[tr.id].typeAction = 'PaymentWallet'
-      checkboxRegimen.value[tr.id].paymentItem = 0
-      checkboxRegimen.value[tr.id].paymentWallet =
-        tr.actualPrice - (tr.moneyAmountPaid + tr.moneyAmountWallet)
-      tr.ticketProcedureList?.forEach((trp) => {
-        if (trp.paymentMoneyStatus !== PaymentMoneyStatus.FullPaid) {
-          checkboxRegimen.value[tr.id].trpCheckbox[trp.id].checked = false
-        }
-      })
-    } else {
-      checkboxRegimen.value[tr.id].typeAction = 'CheckItem'
-      checkboxRegimen.value[tr.id].paymentWallet = 0
-      checkboxRegimen.value[tr.id].paymentItem =
-        tr.actualPrice - (tr.moneyAmountPaid + tr.moneyAmountWallet)
-      tr.ticketProcedureList?.forEach((trp) => {
-        if (trp.paymentMoneyStatus !== PaymentMoneyStatus.FullPaid) {
-          checkboxRegimen.value[tr.id].trpCheckbox[trp.id].checked = true
-        }
-      })
-    }
+    // if (tr.moneyAmountWallet) {
+    checkboxRegimen.value[tr.id].typeAction = 'PaymentWallet'
+    checkboxRegimen.value[tr.id].paymentItem = 0
+    checkboxRegimen.value[tr.id].paymentWallet =
+      tr.actualPrice - (tr.moneyAmountPaid + tr.moneyAmountWallet)
+    tr.ticketProcedureList?.forEach((trp) => {
+      if (trp.paymentMoneyStatus !== PaymentMoneyStatus.FullPaid) {
+        checkboxRegimen.value[tr.id].trpCheckbox[trp.id].checked = false
+      }
+    })
+    // } else {
+    //   checkboxRegimen.value[tr.id].typeAction = 'CheckItem'
+    //   checkboxRegimen.value[tr.id].paymentWallet = 0
+    //   checkboxRegimen.value[tr.id].paymentItem =
+    //     tr.actualPrice - (tr.moneyAmountPaid + tr.moneyAmountWallet)
+    //   tr.ticketProcedureList?.forEach((trp) => {
+    //     if (trp.paymentMoneyStatus !== PaymentMoneyStatus.FullPaid) {
+    //       checkboxRegimen.value[tr.id].trpCheckbox[trp.id].checked = true
+    //     }
+    //   })
+    // }
   } else {
     checkboxRegimen.value[tr.id].checked = false
     checkboxRegimen.value[tr.id].paymentWallet = 0
