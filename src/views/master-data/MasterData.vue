@@ -167,16 +167,16 @@ const { organizationPermission, userPermission } = MeService
 
       <div
         class="card"
-        @click="router.push({ name: 'PaymentMethod' })"
-        v-if="userPermission[PermissionId.MASTER_DATA_PAYMENT_METHOD]"
+        @click="router.push({ name: 'Wallet' })"
+        v-if="userPermission[PermissionId.MASTER_DATA_WALLET]"
       >
         <div class="card-icon">
           <IconDollar />
         </div>
         <div class="card-content">
-          <div class="card-title">10. Phương thức thanh toán</div>
+          <div class="card-title">10. Ví tiền và Phương thức thanh toán</div>
           <div class="card-description">
-            Các phương thức thanh toán như: Tiền mặt, chuyển khoản, ...
+            Quản lý ví tiền, số dư hiện tại, các phương thức thanh toán như: Tiền mặt, chuyển khoản, ...
           </div>
         </div>
       </div>

@@ -1,7 +1,6 @@
 import { Customer } from '../customer/customer.model'
 import { Distributor } from '../distributor'
 import { LaboratoryService } from '../laboratory'
-import { PaymentMethod } from '../payment-method'
 import { PaymentTicketItem, TicketItemType } from '../payment-ticket-item'
 import { ProcedureService } from '../procedure'
 import { ProductService } from '../product'
@@ -10,6 +9,7 @@ import type { PurchaseOrder } from '../purchase-order'
 import type { Ticket } from '../ticket'
 import { User, UserService } from '../user'
 import { RegimenService } from '../regimen'
+import { Wallet } from '../wallet/wallet.model'
 
 export enum PaymentPersonType {
   Other = 0,
@@ -61,7 +61,7 @@ export class Payment {
   personType: PaymentPersonType
   personId: number
 
-  paymentMethodId: number
+  walletId: number
   createdAt: number
   moneyDirection: MoneyDirection
   paymentActionType: PaymentActionType
@@ -70,8 +70,10 @@ export class Payment {
 
   paidAmount: number
   debtAmount: number
-  openDebt: number
-  closeDebt: number
+  personOpenDebt: number
+  personCloseDebt: number
+  walletOpenMoney: number
+  walletCloseMoney: number
 
   ticket: Ticket
   purchaseOrder: PurchaseOrder
@@ -81,7 +83,7 @@ export class Payment {
   cashier: User
 
   paymentTicketItemList: PaymentTicketItem[]
-  paymentMethod: PaymentMethod
+  wallet: Wallet
 
   static init(): Payment {
     const ins = new Payment()
@@ -91,14 +93,16 @@ export class Payment {
     ins.personType = PaymentPersonType.Other
     ins.personId = 0
 
-    ins.paymentMethodId = 0
+    ins.walletId = 0
     ins.cashierId = 0
     ins.note = ''
 
     ins.paidAmount = 0
     ins.debtAmount = 0
-    ins.openDebt = 0
-    ins.closeDebt = 0
+    ins.personOpenDebt = 0
+    ins.personCloseDebt = 0
+    ins.walletOpenMoney = 0
+    ins.walletCloseMoney = 0
 
     ins.paymentTicketItemList = []
     return ins
@@ -139,10 +143,8 @@ export class Payment {
     if (Object.prototype.hasOwnProperty.call(source, 'cashier')) {
       target.cashier = source.cashier ? User.basic(source.cashier) : source.cashier
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'paymentMethod')) {
-      target.paymentMethod = source.paymentMethod
-        ? PaymentMethod.basic(source.paymentMethod)
-        : source.paymentMethod
+    if (Object.prototype.hasOwnProperty.call(source, 'wallet')) {
+      target.wallet = source.wallet ? Wallet.basic(source.wallet) : source.wallet
     }
     if (source.paymentTicketItemList) {
       target.paymentTicketItemList = PaymentTicketItem.basicList(source.paymentTicketItemList)

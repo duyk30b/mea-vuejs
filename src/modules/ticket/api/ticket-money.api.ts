@@ -25,7 +25,7 @@ export class TicketMoneyApi {
     ticketId: string
     body: {
       customerId: number
-      paymentMethodId: number
+      walletId: string
       paidAmount: number
       note: string
     }
@@ -47,7 +47,7 @@ export class TicketMoneyApi {
 
   static async payDebt(body: {
     customerId: number
-    paymentMethodId: number
+    walletId: string
     paidAmount: number
     note: string
     dataList: { ticketId: string; paidAmount: number }[]
@@ -70,7 +70,7 @@ export class TicketMoneyApi {
     ticketId: string
     body: {
       customerId: number
-      paymentMethodId: number
+      walletId: string
       refundAmount: number
       note: string
     }
@@ -97,7 +97,7 @@ export class TicketMoneyApi {
     ticketId: string
     body: {
       customerId: number
-      paymentMethodId: number
+      walletId: string
       paidAmount: number
       note: string
       ticketRegimenBodyList: TicketItemPaymentBody[]
@@ -130,7 +130,7 @@ export class TicketMoneyApi {
     ticketId: string
     body: {
       customerId: number
-      paymentMethodId: number
+      walletId: string
       refundAmount: number
       note: string
       ticketRegimenBodyList: TicketItemPaymentBody[]

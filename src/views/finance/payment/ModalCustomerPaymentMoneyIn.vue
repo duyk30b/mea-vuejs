@@ -9,7 +9,7 @@ import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer, CustomerService } from '@/modules/customer'
-import { PaymentMethodService } from '@/modules/payment-method'
+import { WalletService } from '@/modules/wallet'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { Ticket, TicketQueryApi, TicketStatus } from '@/modules/ticket'
 import { ESString, ESTimer } from '@/utils'
@@ -35,8 +35,8 @@ const customer = ref<Customer>(Customer.blank())
 
 const totalMoney = ref(0)
 const reason = ref('')
-const paymentMethodId = ref<number>(0)
-const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
+const walletId = ref<string>('')
+const walletOptions = ref<{ value: any; label: string }[]>([])
 
 const payDebtTicketList = ref<{ ticket: Ticket; money: number }[]>([])
 const prepaymentTicketList = ref<{ ticket: Ticket; money: number }[]>([])
@@ -48,9 +48,9 @@ const ticketLoading = ref(false)
 const saveLoading = ref(false)
 
 onMounted(async () => {
-  const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
-  paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
-  paymentMethodId.value = paymentMethodAll[0]?.id || 0
+  const walletAll = await WalletService.list({ sort: { priority: 'ASC' } })
+  walletOptions.value = walletAll.map((i) => ({ value: i.id, label: i.name }))
+  walletId.value = walletAll[0]?.id || ''
 
   await CustomerService.refreshDB()
 })
@@ -126,7 +126,7 @@ const closeModal = () => {
   moneyTopUp.value = 0
   reason.value = ''
   customer.value = Customer.blank()
-  paymentMethodId.value = 0
+  walletId.value = ''
 }
 
 const handleSave = async () => {
@@ -139,7 +139,7 @@ const handleSave = async () => {
     // const data = await PaymentApi.customerPayment({
     //   body: {
     //     customerId: customer.value.id,
-    //     paymentMethodId: paymentMethodId.value,
+    //     walletId: walletId.value,
     //     reason: reason.value,
     //     totalMoney: totalMoney.value,
     //     note: '',
@@ -372,7 +372,7 @@ defineExpose({ openModal })
           <div>
             <div>Phương thức thanh toán</div>
             <div>
-              <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+              <InputSelect v-model:value="walletId" :options="walletOptions" />
             </div>
           </div>
           <div class="mt-4">

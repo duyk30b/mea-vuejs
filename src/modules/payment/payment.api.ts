@@ -30,7 +30,6 @@ export class PaymentApi {
     paymentId: string
     body: {
       createdAt: number
-      paymentMethodId: number
       note: string
     }
   }) {
@@ -55,7 +54,7 @@ export class PaymentApi {
   }
 
   static async otherCreateMoneyOut(body: {
-    paymentMethodId: number
+    walletId: string
     paidAmount: number
     note: string
   }) {
@@ -65,7 +64,7 @@ export class PaymentApi {
   }
 
   static async otherCreateMoneyIn(body: {
-    paymentMethodId: number
+    walletId: string
     paidAmount: number
     note: string
   }) {

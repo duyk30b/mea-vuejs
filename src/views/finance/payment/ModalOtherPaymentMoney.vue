@@ -4,7 +4,7 @@ import { IconClose } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputMoney, InputSelect, InputText, VueSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
-import { PaymentMethodService } from '@/modules/payment-method'
+import { WalletService } from '@/modules/wallet'
 import { PaymentApi } from '@/modules/payment/payment.api'
 import { MoneyDirection, Payment } from '@/modules/payment/payment.model'
 import { onMounted, ref } from 'vue'
@@ -17,8 +17,8 @@ const emit = defineEmits<{
 
 const money = ref(0)
 const note = ref('')
-const paymentMethodId = ref<number>(0)
-const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
+const walletId = ref<string>('')
+const walletOptions = ref<{ value: any; label: string }[]>([])
 
 const moneyDirection = ref(MoneyDirection.In)
 
@@ -26,9 +26,9 @@ const showModal = ref(false)
 const saveLoading = ref(false)
 
 onMounted(async () => {
-  const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
-  paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
-  paymentMethodId.value = paymentMethodAll[0]?.id || 0
+  const walletAll = await WalletService.list({ sort: { priority: 'ASC' } })
+  walletOptions.value = walletAll.map((i) => ({ value: i.id, label: i.name }))
+  walletId.value = walletAll[0]?.id || ''
 })
 
 const openModal = async (moneyDirectionProp: MoneyDirection) => {
@@ -40,8 +40,8 @@ const closeModal = () => {
   showModal.value = false
   money.value = 0
   note.value = ''
-  paymentMethodId.value = 0
-  paymentMethodOptions.value = []
+  walletId.value = ''
+  walletOptions.value = []
 }
 
 const handleSave = async () => {
@@ -52,7 +52,7 @@ const handleSave = async () => {
   try {
     if (moneyDirection.value === MoneyDirection.In) {
       const payment = await PaymentApi.otherCreateMoneyIn({
-        paymentMethodId: paymentMethodId.value,
+        walletId: walletId.value,
         note: note.value,
         paidAmount: money.value,
       })
@@ -60,7 +60,7 @@ const handleSave = async () => {
     }
     if (moneyDirection.value === MoneyDirection.Out) {
       const payment = await PaymentApi.otherCreateMoneyOut({
-        paymentMethodId: paymentMethodId.value,
+        walletId: walletId.value,
         note: note.value,
         paidAmount: money.value,
       })
@@ -95,7 +95,7 @@ defineExpose({ openModal })
           <div>
             <div>Phương thức thanh toán</div>
             <div>
-              <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+              <InputSelect v-model:value="walletId" :options="walletOptions" />
             </div>
           </div>
           <div class="mt-4">

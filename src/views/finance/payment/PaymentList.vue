@@ -8,7 +8,7 @@ import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import type { Customer } from '@/modules/customer'
-import { PaymentMethodService } from '@/modules/payment-method'
+import { WalletService } from '@/modules/wallet'
 import { PaymentApi } from '@/modules/payment/payment.api'
 import type { PaymentPaginationQuery } from '@/modules/payment/payment.dto'
 import {
@@ -58,8 +58,8 @@ const limit = ref(Number(localStorage.getItem('PAYMENT_PAGINATION_LIMIT')) || 10
 const total = ref(0)
 
 const moneyDirection = ref<MoneyDirection | null>(null)
-const paymentMethodId = ref<number>(0)
-const paymentMethodOptions = ref<{ value: number; text: string }[]>([])
+const walletId = ref<number>(0)
+const walletOptions = ref<{ value: string; text: string }[]>([])
 const fromTime = ref<number>(ESTimer.startOfMonth(new Date()).getTime())
 const toTime = ref<number>(ESTimer.endOfMonth(new Date()).getTime())
 
@@ -85,7 +85,7 @@ const startFetchData = async () => {
         customer: true,
         distributor: true,
         cashier: true,
-        paymentMethod: true,
+        wallet: true,
         paymentTicketItemList: true,
       },
       filter: {
@@ -97,7 +97,7 @@ const startFetchData = async () => {
               }
             : undefined,
         moneyDirection: moneyDirection.value !== null ? moneyDirection.value : undefined,
-        paymentMethodId: paymentMethodId.value ? paymentMethodId.value : undefined,
+        walletId: walletId.value ? walletId.value : undefined,
       },
       page: page.value,
       limit: limit.value,
@@ -122,11 +122,11 @@ const startFetchData = async () => {
 
 onBeforeMount(async () => {
   await startFetchData()
-  const paymentMethodList = await PaymentMethodService.list({})
-  paymentMethodOptions.value = paymentMethodList.map((i) => {
+  const walletList = await WalletService.list({})
+  walletOptions.value = walletList.map((i) => {
     return { value: i.id, text: i.name }
   })
-  paymentMethodOptions.value.unshift({ value: 0, text: 'Tất cả' })
+  walletOptions.value.unshift({ value: '', text: 'Tất cả' })
 })
 
 const startSearch = async () => {
@@ -312,8 +312,8 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
         <div>Hình thức thanh toán</div>
         <div>
           <VueSelect
-            v-model:value="paymentMethodId"
-            :options="paymentMethodOptions"
+            v-model:value="walletId"
+            :options="walletOptions"
             @update:value="startSearch"
           />
         </div>
@@ -332,8 +332,7 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
             <th>Tiền chi</th>
             <th>Ghi nợ</th>
             <th>Trả nợ</th>
-            <th v-if="CONFIG.MODE === 'development'">Nợ</th>
-            <th>HT Thanh toán</th>
+            <th>Ví thanh toán</th>
             <th>NV thu/chi</th>
             <th></th>
             <th></th>
@@ -408,6 +407,13 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
                   <IconFileSearch />
                 </a>
               </div>
+              <div
+                v-if="payment.personOpenDebt !== 0 || payment.personCloseDebt !== 0"
+                style="white-space: nowrap; font-size: 0.9em"
+              >
+                Nợ: {{ formatMoney(payment.personOpenDebt) }} ➞
+                {{ formatMoney(payment.personCloseDebt) }}
+              </div>
             </td>
             <td>
               <div>{{ PaymentActionTypeText[payment.paymentActionType] }}</div>
@@ -431,19 +437,14 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
             <td class="text-right">
               <span v-if="payment.debtAmount < 0">{{ formatMoney(-payment.debtAmount) }}</span>
             </td>
-            <td
-              v-if="CONFIG.MODE === 'development'"
-              style="white-space: nowrap; color: violet; text-align: center"
-            >
-              {{ formatMoney(payment.openDebt) }} ➞
-              {{ formatMoney(payment.closeDebt) }}
-            </td>
-            <td>{{ payment.paymentMethod?.name }}</td>
             <td>
-              <div>
-                {{ payment.cashier?.fullName }}
+              <div>{{ payment.wallet?.name }}</div>
+              <div style="white-space: nowrap; font-size: 0.9em">
+                {{ formatMoney(payment.walletOpenMoney) }} ➞
+                {{ formatMoney(payment.walletCloseMoney) }}
               </div>
             </td>
+            <td>{{ payment.cashier?.fullName }}</td>
             <td>
               <IconEditSquare
                 style="font-size: 20px; color: var(--text-orange); cursor: pointer"

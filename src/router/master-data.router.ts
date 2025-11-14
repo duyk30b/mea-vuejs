@@ -144,15 +144,15 @@ export const masterDataRouter: RouteRecordRaw = {
       ],
     },
     {
-      path: 'payment-method',
-      name: 'PaymentMethod',
-      meta: { title: 'Phương thức thanh toán' },
-      redirect: () => ({ name: 'PaymentMethodList' }),
+      path: 'wallet',
+      name: 'Wallet',
+      meta: { title: 'Ví tiền' },
+      redirect: () => ({ name: 'WalletList' }),
       children: [
         {
           path: 'list',
-          name: 'PaymentMethodList',
-          component: () => import('../views/master-data/payment-method/PaymentMethodList.vue'),
+          name: 'WalletList',
+          component: () => import('../views/master-data/wallet/WalletList.vue'),
         },
       ],
     },

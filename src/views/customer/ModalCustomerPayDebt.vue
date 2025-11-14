@@ -8,7 +8,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer, CustomerService } from '@/modules/customer'
 import { PaymentApi } from '@/modules/payment'
-import { PaymentMethodService } from '@/modules/payment-method'
+import { WalletService } from '@/modules/wallet'
 import { TicketMoneyApi, TicketQueryApi, TicketStatus, type Ticket } from '@/modules/ticket'
 import { ESTimer } from '@/utils'
 import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
@@ -29,8 +29,8 @@ const { userPermission, user } = MeService
 const money = ref(0)
 const note = ref('')
 const customer = ref<Customer>(Customer.blank())
-const paymentMethodId = ref<number>(0)
-const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
+const walletId = ref<string>('')
+const walletOptions = ref<{ value: any; label: string }[]>([])
 
 const ticketPaymentList = ref<{ ticket: Ticket; money: number }[]>([])
 
@@ -39,9 +39,9 @@ const dataLoading = ref(false)
 const saveLoading = ref(false)
 
 onMounted(async () => {
-  const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
-  paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
-  paymentMethodId.value = paymentMethodAll[0]?.id || 0
+  const walletAll = await WalletService.list({ sort: { priority: 'ASC' } })
+  walletOptions.value = walletAll.map((i) => ({ value: i.id, label: i.name }))
+  walletId.value = walletAll[0]?.id || ''
 })
 
 const openModal = async (customerId: number) => {
@@ -59,7 +59,7 @@ const openModal = async (customerId: number) => {
         },
         sort: { id: 'ASC' },
       }),
-      PaymentMethodService.list({ sort: { priority: 'ASC' } }),
+      WalletService.list({ sort: { priority: 'ASC' } }),
     ])
     customer.value = fetchPromise[0] || Customer.blank()
     ticketPaymentList.value = fetchPromise[1].ticketList.map((i) => ({ ticket: i, money: 0 }))
@@ -76,7 +76,7 @@ const closeModal = () => {
   money.value = 0
   note.value = ''
   customer.value = Customer.blank()
-  paymentMethodId.value = 0
+  walletId.value = ''
 }
 
 const handleSave = async () => {
@@ -88,7 +88,7 @@ const handleSave = async () => {
 
     const data = await TicketMoneyApi.payDebt({
       customerId: customer.value.id,
-      paymentMethodId: paymentMethodId.value,
+      walletId: walletId.value,
       paidAmount: money.value,
       note: '',
       dataList: ticketPaymentList.value
@@ -188,7 +188,7 @@ defineExpose({ openModal })
             <div>
               <div>Phương thức thanh toán</div>
               <div>
-                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+                <InputSelect v-model:value="walletId" :options="walletOptions" />
               </div>
             </div>
             <div class="mt-4">

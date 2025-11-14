@@ -9,7 +9,7 @@ export class PurchaseOrderMoneyApi {
     purchaseOrderId: string
     body: {
       distributorId: number
-      paymentMethodId: number
+      walletId: string
       paidAmount: number
       note: string
     }
@@ -34,7 +34,7 @@ export class PurchaseOrderMoneyApi {
 
   static async payDebt(body: {
     distributorId: number
-    paymentMethodId: number
+    walletId: string
     paidAmount: number
     note: string
     dataList: { purchaseOrderId: string; paidAmount: number }[]
@@ -57,7 +57,7 @@ export class PurchaseOrderMoneyApi {
     purchaseOrderId: string
     body: {
       distributorId: number
-      paymentMethodId: number
+      walletId: string
       refundAmount: number
       note: string
     }

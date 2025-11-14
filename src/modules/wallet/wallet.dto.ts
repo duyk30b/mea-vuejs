@@ -1,6 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
 
-export class PaymentMethodGetQuery {
+export class WalletGetQuery {
   page?: number
   limit?: number
   relation?: object
@@ -11,7 +11,7 @@ export class PaymentMethodGetQuery {
     priority?: 'ASC' | 'DESC'
   }
 
-  static toQuery(instance: Partial<PaymentMethodGetQuery>) {
+  static toQuery(instance: Partial<WalletGetQuery>) {
     return {
       page: instance?.page,
       limit: instance?.limit,
@@ -22,6 +22,6 @@ export class PaymentMethodGetQuery {
   }
 }
 
-export class PaymentMethodPaginationQuery extends PaymentMethodGetQuery {}
-export class PaymentMethodListQuery extends OmitClass(PaymentMethodGetQuery, ['page']) {}
-export class PaymentMethodDetailQuery extends PickClass(PaymentMethodGetQuery, ['relation']) {}
+export class WalletPaginationQuery extends WalletGetQuery {}
+export class WalletListQuery extends OmitClass(WalletGetQuery, ['page']) {}
+export class WalletDetailQuery extends PickClass(WalletGetQuery, ['relation']) {}
