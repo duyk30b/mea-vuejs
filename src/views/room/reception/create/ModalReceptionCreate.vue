@@ -124,6 +124,11 @@ const selectCustomer = async (customerSelect?: Customer) => {
     const fullName = currentCustomer.value.fullName
     currentCustomer.value = Customer.blank()
     currentCustomer.value.fullName = fullName // để fix lỗi mất tên khách hàng đã chọn
+
+    appointmentOptions.value = []
+    ticketPendingOptions.value = []
+    ticketPendingId.value = ''
+    fromAppointmentId.value = ''
     return
   }
   currentCustomer.value = Customer.from(customerSelect)

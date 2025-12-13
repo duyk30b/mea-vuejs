@@ -240,9 +240,6 @@ const addConsumableItem = async () => {
     }
   }
 
-  // tính lại costAmount
-  ticketProductConsumable.value.costAmount =
-    ticketProductConsumable.value.quantity * (product?.costPrice || 0)
   emit('success', [ticketProductConsumable.value])
   clear()
   inputOptionsProduct.value?.clear()

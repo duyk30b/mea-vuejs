@@ -6,16 +6,21 @@ import VuePagination from '../../../common/VuePagination.vue'
 import { IconEditSquare } from '../../../common/icon-google'
 import { InputSelect } from '../../../common/vue-form'
 import { MeService } from '../../../modules/_me/me.service'
-import { PaymentMethodService, type PaymentMethod } from '../../../modules/payment-method'
+import { WalletService, WalletType, WalletTypeText, type Wallet } from '../../../modules/wallet'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import Breadcrumb from '../../component/Breadcrumb.vue'
-import ModalPaymentMethodUpsert from './ModalPaymentMethodUpsert.vue'
+import ModalWalletUpsert from './ModalWalletUpsert.vue'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { VueTooltip } from '@/common/popover'
+import { IconBug } from '@/common/icon-antd'
 
-const modalPaymentMethodUpsert = ref<InstanceType<typeof ModalPaymentMethodUpsert>>()
+const modalWalletUpsert = ref<InstanceType<typeof ModalWalletUpsert>>()
 
 const { userPermission } = MeService
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
-const paymentMethodList = ref<PaymentMethod[]>([])
+const walletList = ref<Wallet[]>([])
 
 const page = ref(1)
 const limit = ref(10)
@@ -23,22 +28,25 @@ const total = ref(0)
 
 const dataLoading = ref(false)
 
-const startFetchData = async () => {
+const startFetchData = async (options?: { refetch?: boolean }) => {
   try {
     dataLoading.value = true
 
-    const paginationResponse = await PaymentMethodService.pagination({
-      page: page.value,
-      limit: limit.value,
-      relation: {},
-      filter: {},
-      sort: { id: 'ASC' },
-    })
+    const paginationResponse = await WalletService.pagination(
+      {
+        page: page.value,
+        limit: limit.value,
+        relation: {},
+        filter: {},
+        sort: { id: 'ASC' },
+      },
+      { refetch: !!options?.refetch },
+    )
 
-    paymentMethodList.value = paginationResponse.paymentMethodList
+    walletList.value = paginationResponse.walletList
     total.value = paginationResponse.total
   } catch (error) {
-    console.log('🚀 ~ PaymentMethodList.vue:45 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ WalletList.vue:45 ~ startFetchData ~ error:', error)
   } finally {
     dataLoading.value = false
   }
@@ -52,11 +60,11 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 }
 
 onBeforeMount(async () => {
-  await startFetchData()
+  await startFetchData({ refetch: true })
 })
 
-const handleModalPaymentMethodUpsertSuccess = async (
-  data: PaymentMethod,
+const handleModalWalletUpsertSuccess = async (
+  data: Wallet,
   type: 'CREATE' | 'UPDATE' | 'DESTROY',
 ) => {
   await startFetchData()
@@ -64,10 +72,7 @@ const handleModalPaymentMethodUpsertSuccess = async (
 </script>
 
 <template>
-  <ModalPaymentMethodUpsert
-    ref="modalPaymentMethodUpsert"
-    @success="handleModalPaymentMethodUpsertSuccess"
-  />
+  <ModalWalletUpsert ref="modalWalletUpsert" @success="handleModalWalletUpsertSuccess" />
   <div class="mx-4 mt-4 gap-4 flex items-center">
     <div class="hidden md:block">
       <Breadcrumb />
@@ -77,7 +82,7 @@ const handleModalPaymentMethodUpsertSuccess = async (
         v-if="userPermission[PermissionId.MASTER_DATA_WAREHOUSE]"
         color="blue"
         icon="plus"
-        @click="modalPaymentMethodUpsert?.openModal()"
+        @click="modalWalletUpsert?.openModal()"
       >
         Thêm mới
       </VueButton>
@@ -90,9 +95,11 @@ const handleModalPaymentMethodUpsertSuccess = async (
       <table>
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'">ID</th>
+            <th v-if="CONFIG.MODE === 'development'" style="width: 40px"></th>
             <th style="width: 200px">Mã</th>
             <th>Tên</th>
+            <th>Loại ví</th>
+            <th>Số dư</th>
             <th></th>
           </tr>
         </thead>
@@ -111,28 +118,32 @@ const handleModalPaymentMethodUpsertSuccess = async (
           </tr>
         </tbody>
         <tbody v-if="!dataLoading">
-          <tr v-if="paymentMethodList.length === 0">
+          <tr v-if="walletList.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr v-for="paymentMethod in paymentMethodList" :key="paymentMethod.id">
-            <td
-              v-if="CONFIG.MODE === 'development'"
-              class="text-center"
-              style="width: 100px; color: violet"
-            >
-              {{ paymentMethod.id }}
+          <tr v-for="wallet in walletList" :key="wallet.id">
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(wallet, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
             </td>
-            <td class="text-center" style="width: 100px">{{ paymentMethod.code }}</td>
-            <td>{{ paymentMethod.name }}</td>
+            <td class="text-center" style="width: 100px">{{ wallet.code }}</td>
+            <td>{{ wallet.name }}</td>
+            <td>{{ WalletTypeText[wallet.walletType] }}</td>
+            <td class="text-right">
+              {{ formatMoney(wallet.money) }}
+            </td>
             <td
-              v-if="userPermission[PermissionId.MASTER_DATA_PAYMENT_METHOD]"
+              v-if="userPermission[PermissionId.MASTER_DATA_WALLET]"
               class="text-center"
               style="width: 100px"
             >
-              <a
-                style="color: var(--text-orange)"
-                @click="modalPaymentMethodUpsert?.openModal(paymentMethod.id)"
-              >
+              <a style="color: var(--text-orange)" @click="modalWalletUpsert?.openModal(wallet.id)">
                 <IconEditSquare width="24px" height="24px" />
               </a>
             </td>

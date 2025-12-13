@@ -34,10 +34,13 @@ export class TicketRadiology extends BaseModel {
   discountType: DiscountType
   actualPrice: number
 
-  createdAt: number
-  completedAt: number
   status: TicketRadiologyStatus
   paymentMoneyStatus: PaymentMoneyStatus
+  paid: number
+  debt: number
+
+  createdAt: number
+  completedAt: number
   imageIds: string
 
   imageList: Image[]
@@ -55,6 +58,9 @@ export class TicketRadiology extends BaseModel {
 
     ins.radiologyId = 0
     ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
+    ins.paid = 0
+    ins.debt = 0
+
     ins.printHtmlId = 0
     ins.imageIds = '[]'
     ins.description = ''
@@ -152,9 +158,13 @@ export class TicketRadiology extends BaseModel {
     if (a.discountType != b.discountType) return false
     if (a.actualPrice != b.actualPrice) return false
 
+    if (a.status != b.status) return false
+    if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
+    if (a.paid != b.paid) return false
+    if (a.debt != b.debt) return false
+
     if (a.createdAt != b.createdAt) return false
     if (a.completedAt != b.completedAt) return false
-    if (a.status != b.status) return false
     if (a.imageIds != b.imageIds) return false
     return true
   }

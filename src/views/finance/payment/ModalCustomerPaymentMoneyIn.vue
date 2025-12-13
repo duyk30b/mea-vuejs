@@ -9,7 +9,7 @@ import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer, CustomerService } from '@/modules/customer'
-import { PaymentMethodService } from '@/modules/payment-method'
+import { WalletService } from '@/modules/wallet'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { Ticket, TicketQueryApi, TicketStatus } from '@/modules/ticket'
 import { ESString, ESTimer } from '@/utils'
@@ -35,12 +35,9 @@ const customer = ref<Customer>(Customer.blank())
 
 const totalMoney = ref(0)
 const reason = ref('')
-const paymentMethodId = ref<number>(0)
-const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
+const walletId = ref<string>('')
+const walletOptions = ref<{ value: any; label: string }[]>([])
 
-const payDebtTicketList = ref<{ ticket: Ticket; money: number }[]>([])
-const prepaymentTicketList = ref<{ ticket: Ticket; money: number }[]>([])
-const prepaymentTicket = ref<{ ticket: Ticket; money: number }>()
 const moneyTopUp = ref(0)
 
 const showModal = ref(false)
@@ -48,9 +45,9 @@ const ticketLoading = ref(false)
 const saveLoading = ref(false)
 
 onMounted(async () => {
-  const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
-  paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
-  paymentMethodId.value = paymentMethodAll[0]?.id || 0
+  const walletAll = await WalletService.list({ sort: { code: 'ASC' } })
+  walletOptions.value = walletAll.map((i) => ({ value: i.id, label: i.name }))
+  walletId.value = walletAll[0]?.id || ''
 
   await CustomerService.refreshDB()
 })
@@ -71,41 +68,6 @@ const selectCustomer = async (data?: Customer) => {
   customer.value = data ? Customer.from(data) : Customer.blank()
   try {
     ticketLoading.value = true
-    const { ticketList: ticketActionList } = await TicketQueryApi.list({
-      filter: {
-        customerId: customer.value.id,
-        status: {
-          IN: [
-            TicketStatus.Debt,
-            TicketStatus.Draft,
-            TicketStatus.Schedule,
-            TicketStatus.Deposited,
-            TicketStatus.Executing,
-          ],
-        },
-      },
-      sort: { id: 'ASC' },
-    })
-    payDebtTicketList.value = ticketActionList
-      .filter((i) => i.status === TicketStatus.Debt)
-      .map((i) => ({
-        ticket: i,
-        money: 0,
-      }))
-    prepaymentTicketList.value = ticketActionList
-      .filter((i) =>
-        [
-          TicketStatus.Draft,
-          TicketStatus.Schedule,
-          TicketStatus.Deposited,
-          TicketStatus.Executing,
-        ].includes(i.status),
-      )
-      .map((i) => ({
-        ticket: i,
-        money: 0,
-      }))
-    prepaymentTicket.value = prepaymentTicketList.value[0]
   } catch (error) {
     console.log('🚀 ~ ModalPaymentMoneyIn.vue:82 ~ selectCustomer ~ error:', error)
   } finally {
@@ -119,14 +81,11 @@ const openModal = async () => {
 
 const closeModal = () => {
   showModal.value = false
-  payDebtTicketList.value = []
-  prepaymentTicketList.value = []
-  prepaymentTicket.value = undefined
   totalMoney.value = 0
   moneyTopUp.value = 0
   reason.value = ''
   customer.value = Customer.blank()
-  paymentMethodId.value = 0
+  walletId.value = ''
 }
 
 const handleSave = async () => {
@@ -136,39 +95,6 @@ const handleSave = async () => {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
 
-    // const data = await PaymentApi.customerPayment({
-    //   body: {
-    //     customerId: customer.value.id,
-    //     paymentMethodId: paymentMethodId.value,
-    //     reason: reason.value,
-    //     totalMoney: totalMoney.value,
-    //     note: '',
-    //     paymentItemData: {
-    //       moneyTopUpAdd: moneyTopUp.value,
-    //       payDebt: payDebtTicketList.value
-    //         .map((i) => ({ ticketId: i.ticket.id, paidAmount: i.money }))
-    //         .filter((i) => i.paidAmount > 0),
-    //       prepayment: prepaymentTicket.value
-    //         ? {
-    //             ticketId: prepaymentTicket.value.ticket.id,
-    //             itemList: [
-    //               {
-    //                 paidAmount: prepaymentTicket.value.money,
-    //                 expectedPrice: prepaymentTicket.value.money,
-    //                 actualPrice: prepaymentTicket.value.money,
-    //                 quantity: 1,
-    //                 discountMoney: 0,
-    //                 discountPercent: 0,
-    //                 ticketItemId: 0,
-    //                 paymentInteractId: 0,
-    //                 voucherItemType: PaymentVoucherItemType.Other,
-    //               },
-    //             ],
-    //           }
-    //         : undefined,
-    //     },
-    //   },
-    // })
     AlertStore.addSuccess(`KH ${customer.value.fullName} thanh toán thành công`)
     // emit('success', { customer: data.customerModified })
     closeModal()
@@ -180,29 +106,12 @@ const handleSave = async () => {
 }
 
 const handleClickPayAll = () => {
-  const totalDebt = payDebtTicketList.value.reduce((acc, item) => {
-    return acc + item.ticket.debt
-  }, 0)
-  const totalPrepayment = prepaymentTicketList.value.reduce((acc, item) => {
-    return acc + item.ticket.debt
-  }, 0)
-  totalMoney.value = totalDebt + totalPrepayment
   calculatorEachVoucherPayment()
 }
 
 const calculatorEachVoucherPayment = () => {
   let moneyRemain = totalMoney.value
-  payDebtTicketList.value.forEach((item) => {
-    if (item.ticket.paid < item.ticket.totalMoney) {
-      const number = Math.min(moneyRemain, item.ticket.debt)
-      item.money = number
-      moneyRemain = moneyRemain - number
-    }
-  })
-  if (moneyRemain > 0 && prepaymentTicket.value) {
-    prepaymentTicket.value.money = moneyRemain
-    moneyRemain = moneyRemain - moneyRemain
-  }
+
   moneyTopUp.value = moneyRemain
 }
 
@@ -296,83 +205,12 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="mt-4">
-        <div class="flex flex-wrap justify-between">
-          <span>Chọn phiếu thanh toán</span>
-          <span v-if="customer.debt > 0"></span>
-        </div>
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th v-if="CONFIG.MODE === 'development'">ID</th>
-                <th>Phiếu</th>
-                <th>Hiện tại</th>
-                <th>Dự kiến</th>
-              </tr>
-            </thead>
-            <tbody v-if="ticketLoading">
-              <tr>
-                <td colspan="100">
-                  <div class="vue-skeleton-loading"></div>
-                  <div class="vue-skeleton-loading mt-2"></div>
-                </td>
-              </tr>
-              <tr>
-                <td colspan="100">
-                  <div class="vue-skeleton-loading"></div>
-                  <div class="vue-skeleton-loading mt-2"></div>
-                </td>
-              </tr>
-            </tbody>
-            <tbody>
-              <tr v-for="(ticketPayment, index) in payDebtTicketList" :key="index">
-                <td v-if="CONFIG.MODE === 'development'" style="color: violet">
-                  {{ ticketPayment.ticket.id }}
-                </td>
-                <td>
-                  <LinkAndStatusTicket :ticket="ticketPayment.ticket" />
-                  <div>
-                    {{ ESTimer.timeToText(ticketPayment.ticket.createdAt, 'DD/MM/YYYY hh:mm') }}
-                  </div>
-                </td>
-                <td class="text-right">
-                  {{ formatMoney(ticketPayment.ticket.paid) }}/
-                  {{ formatMoney(ticketPayment.ticket.totalMoney) }}
-                </td>
-                <td class="text-right">
-                  {{ formatMoney(ticketPayment.money) }}
-                </td>
-              </tr>
-              <tr v-for="(ticketPayment, index) in prepaymentTicketList" :key="index">
-                <td v-if="CONFIG.MODE === 'development'" style="color: violet">
-                  {{ ticketPayment.ticket.id }}
-                </td>
-                <td>
-                  <LinkAndStatusTicket :ticket="ticketPayment.ticket" />
-                  <div>
-                    {{ ESTimer.timeToText(ticketPayment.ticket.createdAt, 'DD/MM/YYYY hh:mm') }}
-                  </div>
-                </td>
-                <td class="text-right">
-                  {{ formatMoney(ticketPayment.ticket.paid) }}/
-                  {{ formatMoney(ticketPayment.ticket.totalMoney) }}
-                </td>
-                <td class="text-right">
-                  {{ formatMoney(ticketPayment.money) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       <div class="flex flex-wrap gap-4 mt-4">
         <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
           <div>
             <div>Phương thức thanh toán</div>
             <div>
-              <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+              <InputSelect v-model:value="walletId" :options="walletOptions" />
             </div>
           </div>
           <div class="mt-4">

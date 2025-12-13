@@ -7,7 +7,7 @@ import {
   TicketProcedureType,
 } from '@/modules/ticket-procedure'
 import { ESTimer } from '@/utils'
-import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
+import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -85,11 +85,9 @@ watch(
               <div class="font-medium">
                 {{ ticketProcedure.procedure!.name }}
               </div>
-              <LinkAndStatusTicket :ticket="ticketProcedure.ticketProcess!" />
+              <TicketLink :ticket="ticketProcedure.ticket!" :ticketId="ticketProcedure.ticketId" />
               <div style="font-size: 0.8rem">
-                {{
-                  ESTimer.timeToText(ticketProcedure.ticketProcess?.createdAt, 'DD/MM/YYYY hh:mm')
-                }}
+                {{ ESTimer.timeToText(ticketProcedure.ticket?.createdAt, 'DD/MM/YYYY hh:mm') }}
               </div>
             </td>
             <td class="text-center">
@@ -132,11 +130,9 @@ watch(
           </tr>
           <tr v-for="(ticketProcedure, index) in ticketProcedureList" :key="index">
             <td>
-              <LinkAndStatusTicket :ticket="ticketProcedure.ticketProcess!" />
+              <TicketLink :ticket="ticketProcedure.ticket!" :ticketId="ticketProcedure.ticketId" />
               <div style="font-size: 0.8rem">
-                {{
-                  ESTimer.timeToText(ticketProcedure.ticketProcess?.createdAt, 'hh:mm DD/MM/YYYY')
-                }}
+                {{ ESTimer.timeToText(ticketProcedure.ticket?.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td>{{ ticketProcedure.procedure?.name }}</td>

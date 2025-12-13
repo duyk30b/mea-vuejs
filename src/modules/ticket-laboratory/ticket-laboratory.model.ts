@@ -29,6 +29,8 @@ export class TicketLaboratory {
 
   status: TicketLaboratoryStatus
   paymentMoneyStatus: PaymentMoneyStatus
+  paid: number
+  debt: number
 
   createdAt: number
   completedAt: number | null
@@ -42,6 +44,8 @@ export class TicketLaboratory {
   static init(): TicketLaboratory {
     const ins = new TicketLaboratory()
     ins.id = ''
+    ins.paid = 0
+    ins.debt = 0
     ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
     return ins
   }
@@ -116,6 +120,9 @@ export class TicketLaboratory {
     if (a.actualPrice != b.actualPrice) return false
 
     if (a.status != b.status) return false
+    if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
+    if (a.paid != b.paid) return false
+    if (a.debt != b.debt) return false
 
     if (a.createdAt != b.createdAt) return false
     if (a.completedAt != b.completedAt) return false

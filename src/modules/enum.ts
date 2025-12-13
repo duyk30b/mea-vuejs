@@ -104,9 +104,10 @@ export enum AttributeLayoutType {
 }
 
 export enum PaymentMoneyStatus {
-  NoEffect = -1,
+  NoEffect = -1, // không cần thanh toán, không cộng tiền (trường hợp vật tư tiêu hao của dịch vụ)
   TicketPaid = 1,
   PendingPayment = 2,
   PartialPaid = 3,
   FullPaid = 4,
+  Debt = 5,
 }

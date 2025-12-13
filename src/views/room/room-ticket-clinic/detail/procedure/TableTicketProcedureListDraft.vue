@@ -1,7 +1,7 @@
 <!-- eslint-disable vue/no-mutating-props -->
 <script setup lang="ts">
 import { VueTag } from '@/common'
-import { IconDelete, IconDollar, IconFileSearch, IconTeam } from '@/common/icon-antd'
+import { IconBug, IconDelete, IconDollar, IconFileSearch, IconTeam } from '@/common/icon-antd'
 import { InputNumber } from '@/common/vue-form'
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
@@ -18,6 +18,7 @@ import ModalTicketProcedureUpdateUser from './ModalTicketProcedureUpdateUser.vue
 import ModalTicketRegimenUpdateMoney from './ModalTicketRegimenUpdateMoney.vue'
 import ModalTicketRegimenUpdateUser from './ModalTicketRegimenUpdateUser.vue'
 import { IconEditSquare } from '@/common/icon-google'
+import { VueTooltip } from '@/common/popover'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
@@ -126,42 +127,61 @@ const selectRegimen = async (data: { regimen: Regimen }) => {
 
   temp.regimen = regimenData
 
-  let totalExpectedPriceRemain = temp.expectedPrice
-  let totalActualPriceRemain = temp.actualPrice
-  let totalDiscountMoneyRemain = temp.discountMoney
-  let trLength = temp.ticketRegimenItemList?.length || 0
-  temp.ticketRegimenItemList = (regimenData.regimenItemList || []).map((ri, index) => {
+  const totalMoneyAmountRoot = (regimenData.regimenItemList || []).reduce((acc, item) => {
+    return acc + (item.procedure?.price || 0) * item.quantity
+  }, 0)
+  let totalMoneyAmountRegularRemain = temp.expectedPrice
+  let totalMoneyAmountSaleRemain = temp.actualPrice
+  let totalDiscountMoneyAmountRemain = temp.discountMoney
+
+  temp.ticketRegimenItemList = []
+  for (let index = (regimenData.regimenItemList || []).length - 1; index >= 0; index--) {
+    const ri = (regimenData.regimenItemList || [])[index]
+
     const tri = TicketRegimenItem.blank()
     tri.regimenId = ri.regimenId
     tri.procedureId = ri.procedureId
-
     tri.quantityRegular = ri.quantity
     tri.quantityUsed = 0
     tri.gapDay = 1
-
     tri.procedure = ri.procedure
 
-    if (index + 1 !== trLength) {
-      tri.moneyAmountRegular = (ri.procedure?.price || 0) * ri.quantity
-      tri.discountType = DiscountType.Percent
-      tri.discountPercent = temp.discountPercent
-      tri.discountMoneyAmount =
-        Math.floor(((ri.procedure?.price || 0) * temp.discountPercent) / 100 / 1000) * 1000
-      tri.moneyAmountSale = tri.moneyAmountRegular - tri.discountMoneyAmount
+    tri.moneyAmountRegular =
+      totalMoneyAmountRoot === 0
+        ? 0
+        : Math.floor(
+            ((ri.procedure?.price || 0) * (temp.expectedPrice / totalMoneyAmountRoot)) / 1000,
+          ) *
+          1000 *
+          tri.quantityRegular
+    tri.discountType = DiscountType.Percent
+    tri.discountPercent = temp.discountPercent
 
-      totalExpectedPriceRemain -= tri.moneyAmountRegular
-      totalDiscountMoneyRemain -= tri.discountMoneyAmount
-      totalActualPriceRemain -= tri.moneyAmountSale
+    if (index !== 0) {
+      tri.moneyAmountSale =
+        tri.quantityRegular === 0
+          ? 0
+          : Math.floor(
+              (tri.moneyAmountRegular * (100 - tri.discountPercent)) /
+                100 /
+                tri.quantityRegular /
+                1000,
+            ) *
+            tri.quantityRegular *
+            1000
+      tri.discountMoneyAmount = tri.moneyAmountRegular - tri.moneyAmountSale
+
+      totalMoneyAmountRegularRemain -= tri.moneyAmountRegular
+      totalMoneyAmountSaleRemain -= tri.moneyAmountSale
+      totalDiscountMoneyAmountRemain -= tri.discountMoneyAmount
     } else {
-      tri.moneyAmountRegular = totalExpectedPriceRemain
-      tri.discountMoneyAmount = totalDiscountMoneyRemain
-      tri.moneyAmountSale = totalActualPriceRemain
-      tri.discountType = DiscountType.Percent
-      tri.discountPercent = temp.discountPercent
+      tri.moneyAmountRegular = totalMoneyAmountRegularRemain
+      tri.moneyAmountSale = totalMoneyAmountSaleRemain
+      tri.discountMoneyAmount = totalDiscountMoneyAmountRemain
     }
 
-    return tri
-  })
+    temp.ticketRegimenItemList.unshift(tri)
+  }
 
   return temp
 }
@@ -223,18 +243,23 @@ const handleChangeTicketRegimenItemQuantityExpected = (data: {
   })
   if (!ticketRegimenItem) return
 
-  const oldQuantityRegular = ticketRegimenItem.quantityRegular
-  ticketRegimenItem.quantityRegular = quantityRegular
+  const totalMoneyAmountRoot = (ticketRegimen.ticketRegimenItemList || []).reduce((acc, item) => {
+    return acc + (item.procedure?.price || 0) * item.quantityRegular
+  }, 0)
+  const rateRegular =
+    totalMoneyAmountRoot === 0 ? 1 : ticketRegimen.expectedPrice / totalMoneyAmountRoot
 
-  ticketRegimenItem.moneyAmountRegular = Math.floor(
-    (ticketRegimenItem.moneyAmountRegular / oldQuantityRegular) * quantityRegular,
-  )
-  ticketRegimenItem.discountMoneyAmount = Math.floor(
-    (ticketRegimenItem.discountMoneyAmount / oldQuantityRegular) * quantityRegular,
-  )
-  ticketRegimenItem.moneyAmountSale = Math.floor(
-    (ticketRegimenItem.moneyAmountSale / oldQuantityRegular) * quantityRegular,
-  )
+  ticketRegimenItem.quantityRegular = quantityRegular
+  ticketRegimenItem.moneyAmountRegular =
+    (ticketRegimenItem.procedure?.price || 0) * rateRegular * quantityRegular
+
+  ticketRegimenItem.discountMoneyAmount =
+    Math.floor(
+      (ticketRegimenItem.moneyAmountRegular * ticketRegimen.discountPercent) / 100 / 1000,
+    ) * 1000
+  ticketRegimenItem.moneyAmountSale =
+    ticketRegimenItem.moneyAmountRegular - ticketRegimenItem.discountMoneyAmount
+
   ticketRegimen.expectedPrice = ticketRegimen.ticketRegimenItemList!.reduce((acc, item) => {
     return acc + item.moneyAmountRegular
   }, 0)
@@ -279,6 +304,7 @@ defineExpose({ selectProcedure, selectRegimen })
     <table>
       <thead>
         <tr>
+          <th v-if="CONFIG.MODE === 'development'"></th>
           <th>#</th>
           <th>Dịch vụ</th>
           <th style="width: 150px">Số lượng</th>
@@ -295,14 +321,17 @@ defineExpose({ selectProcedure, selectRegimen })
         </tr>
         <template v-for="tr in ticketRegimenListDraft" :key="tr._localId">
           <tr>
-            <td colspan="4">
-              <div class="flex items-center gap-1 font-bold">
-                <span>{{ tr.regimen?.name }}</span>
-                <span v-if="CONFIG.MODE === 'development'" style="color: violet">
-                  ({{ tr.regimenId }})
-                </span>
-              </div>
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(tr, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
             </td>
+            <td colspan="4">{{ tr.regimen?.name }}</td>
             <td>
               <div class="flex gap-2 items-center">
                 <div>
@@ -357,19 +386,22 @@ defineExpose({ selectProcedure, selectRegimen })
             </td>
           </tr>
           <tr v-for="(tri, triIndex) in tr.ticketRegimenItemList" :key="tri._localId">
-            <td style="text-align: center">{{ triIndex + 1 }}</td>
-            <td>
-              <div class="flex flex-wrap gap-1">
-                <span>{{ tri.procedure?.name }}</span>
-                <span v-if="CONFIG.MODE === 'development'" style="color: violet">
-                  ({{ tri.procedureId }})
-                </span>
-              </div>
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(tri, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
             </td>
+            <td style="text-align: center">{{ triIndex + 1 }}</td>
+            <td>{{ tri.procedure?.name }}</td>
             <td class="text-right">
               <InputNumber
                 :value="tri.quantityRegular"
-                buttonControl
+                controlHorizontal
                 textAlign="right"
                 @update:value="
                   (v) =>
@@ -407,7 +439,10 @@ defineExpose({ selectProcedure, selectRegimen })
               </div>
             </td>
             <td class="text-right">
-              {{ formatMoney(tri.moneyAmountSale) }}
+              <div v-if="tri.discountMoneyAmount" class="text-xs italic text-red-500">
+                <del>{{ formatMoney(tri.moneyAmountRegular) }}</del>
+              </div>
+              <div>{{ formatMoney(tri.moneyAmountSale) }}</div>
             </td>
             <td></td>
             <td></td>
@@ -432,7 +467,7 @@ defineExpose({ selectProcedure, selectRegimen })
           </td>
           <td>
             <div class="flex justify-center">
-              <InputNumber v-model:value="tp.quantity" textAlign="right" :buttonControl="true" />
+              <InputNumber v-model:value="tp.quantity" textAlign="right" controlHorizontal />
             </div>
           </td>
           <td v-if="ticketRegimenListDraft.length"></td>
@@ -491,6 +526,7 @@ defineExpose({ selectProcedure, selectRegimen })
           </td>
         </tr>
         <tr>
+          <td v-if="CONFIG.MODE === 'development'"></td>
           <td
             :colspan="ticketRegimenListDraft.length ? 5 : 4"
             class="text-right font-bold uppercase"

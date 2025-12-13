@@ -23,13 +23,14 @@ import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
 import { onBeforeMount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { fromTime, toTime } from './finance-ticket-list.ref'
-import ModalPrepaymentTicketItem from './modal/ModalPrepaymentTicketItem.vue'
-import ModalRefundTicketItem from './modal/ModalRefundTicketItem.vue'
+import ModalTicketPaymentItem from '../../room/room-ticket-base/ModalTicketPaymentItem.vue'
 import ModalTicketChangeAllMoney from './modal/ModalTicketChangeAllMoney.vue'
+import { PaymentActionType } from '@/modules/payment'
+import ModalTicketPaymentHistory from '@/views/room/room-ticket-base/ModalTicketPaymentHistory.vue'
 
 const modalTicketPayment = ref<InstanceType<typeof ModalTicketPayment>>()
-const modalPrepaymentTicketItem = ref<InstanceType<typeof ModalPrepaymentTicketItem>>()
-const modalRefundTicketItem = ref<InstanceType<typeof ModalRefundTicketItem>>()
+const modalTicketPaymentHistory = ref<InstanceType<typeof ModalTicketPaymentHistory>>()
+const modalTicketPaymentItem = ref<InstanceType<typeof ModalTicketPaymentItem>>()
 const modalTicketChangeAllMoney = ref<InstanceType<typeof ModalTicketChangeAllMoney>>()
 
 const router = useRouter()
@@ -157,7 +158,8 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
     @success="handleModalTicketChangeAllMoneySuccess"
   />
   <ModalTicketPayment ref="modalTicketPayment" />
-  <ModalPrepaymentTicketItem ref="modalPrepaymentTicketItem" />
+  <ModalTicketPaymentItem ref="modalTicketPaymentItem" />
+  <ModalTicketPaymentHistory ref="modalTicketPaymentHistory" />
   <ModalRefundTicketItem ref="modalRefundTicketItem" />
 
   <div class="mx-4 mt-4 gap-4 flex items-center justify-between">
@@ -319,15 +321,18 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
               </div>
             </td>
             <td class="text-right">
-              <div>{{ formatMoney(ticket.paid) }} / {{ formatMoney(ticket.totalMoney) }}</div>
-              <div v-if="ticket.status === TicketStatus.Debt" class="text-xs">
-                Nợ: {{ formatMoney(ticket.debt) }}
+              <div>
+                {{ formatMoney(ticket.paidAmount) }} /
+                {{ formatMoney(ticket.totalMoney) }}
+              </div>
+              <div v-if="ticket.debtAmount" class="text-xs">
+                Nợ: {{ formatMoney(ticket.debtAmount) }}
               </div>
             </td>
             <td class="text-right">
               <div
-                v-if="!ticket.isPaymentEachItem"
-                class="flex flex-wrap justify-center items-center"
+                v-if="[TicketStatus.Completed, TicketStatus.Cancelled].includes(ticket.status)"
+                class="flex justify-center"
               >
                 <VueButton
                   v-if="
@@ -337,20 +342,19 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
                   color="cyan"
                   :icon="IconEye"
                   size="small"
-                  @click="
-                    modalTicketPayment?.openModal({
-                      ticket: ticket,
-                      paymentView: PaymentViewType.Success,
-                    })
-                  "
+                  @click="modalTicketPaymentHistory?.openModal({ ticket: ticket, refetch: true })"
                 >
                   <span>XEM</span>
                 </VueButton>
+              </div>
+              <div
+                v-else-if="
+                  !ticket.isPaymentEachItem && userPermission[PermissionId.TICKET_PAYMENT_MONEY]
+                "
+                class="flex flex-wrap justify-center items-center"
+              >
                 <VueButton
-                  v-else-if="
-                    [TicketStatus.Debt].includes(ticket.status) &&
-                    userPermission[PermissionId.TICKET_PAYMENT_MONEY]
-                  "
+                  v-if="[TicketStatus.Debt].includes(ticket.status)"
                   color="green"
                   :icon="IconEye"
                   size="small"
@@ -379,26 +383,11 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
                 </VueButton>
               </div>
               <div
-                v-if="ticket.isPaymentEachItem"
+                v-else-if="
+                  ticket.isPaymentEachItem && userPermission[PermissionId.TICKET_PAYMENT_MONEY]
+                "
                 class="flex flex-wrap justify-center items-center"
               >
-                <VueButton
-                  v-if="
-                    [TicketStatus.Completed, TicketStatus.Cancelled].includes(ticket.status) ||
-                    !userPermission[PermissionId.TICKET_PAYMENT_MONEY]
-                  "
-                  color="cyan"
-                  :icon="IconEye"
-                  size="small"
-                  @click="
-                    modalTicketPayment?.openModal({
-                      ticket: ticket,
-                      paymentView: PaymentViewType.Success,
-                    })
-                  "
-                >
-                  <span>Xem</span>
-                </VueButton>
                 <VueButton
                   v-if="
                     [
@@ -412,9 +401,10 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
                   icon="dollar"
                   size="small"
                   @click="
-                    modalPrepaymentTicketItem?.openModal({
+                    modalTicketPaymentItem?.openModal({
                       ticketId: ticket.id,
                       customer: ticket.customer!,
+                      paymentActionType: PaymentActionType.PaymentMoney,
                     })
                   "
                 >
@@ -478,6 +468,7 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
                     <a
                       v-if="
                         ticket.isPaymentEachItem &&
+                        ticket.paidAmount &&
                         [
                           TicketStatus.Schedule,
                           TicketStatus.Draft,
@@ -488,9 +479,10 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
                       "
                       style="color: var(--text-red); font-weight: bold"
                       @click="
-                        modalRefundTicketItem?.openModal({
+                        modalTicketPaymentItem?.openModal({
                           ticketId: ticket.id,
                           customer: ticket.customer!,
+                          paymentActionType: PaymentActionType.RefundMoney,
                         })
                       "
                     >

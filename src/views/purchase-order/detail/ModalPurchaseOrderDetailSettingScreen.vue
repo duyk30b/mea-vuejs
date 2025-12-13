@@ -131,27 +131,6 @@ defineExpose({ openModal })
                 </InputCheckbox>
               </td>
             </tr>
-            <tr>
-              <td>
-                <InputCheckbox v-model:checked="settingDisplay.paymentInfo.paid">
-                  Hiển thị tiền đã thanh toán
-                </InputCheckbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <InputCheckbox v-model:checked="settingDisplay.paymentInfo.debt">
-                  Hiển thị nợ
-                </InputCheckbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <InputCheckbox v-model:checked="settingDisplay.paymentInfo.debt">
-                  Hiển thị nợ
-                </InputCheckbox>
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>

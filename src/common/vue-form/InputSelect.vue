@@ -11,9 +11,9 @@
       <div v-else class="arrow">&#9652;</div>
     </div>
 
-    <div v-if="CONFIG.MODE === 'development'" class="development" style="color: violet">
+    <!-- <div v-if="CONFIG.MODE === 'development'" class="development" style="color: violet">
       {{ randomId }} - {{ value }} - {{ options.length }}/{{ options.length }}
-    </div>
+    </div> -->
 
     <!-- Teleport dropdown to body -->
     <teleport to="body">
@@ -55,6 +55,7 @@ const props = withDefaults(
     disabled?: boolean
     transitionSlide?: boolean
     tabindex?: number
+    required?: boolean
   }>(),
   {
     options: () => [],
@@ -63,6 +64,7 @@ const props = withDefaults(
     disabled: false,
     transitionSlide: false,
     tabindex: 0,
+    required: false,
   },
 )
 

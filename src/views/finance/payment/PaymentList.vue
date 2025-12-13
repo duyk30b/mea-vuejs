@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { VueButton, VuePagination, VueTag } from '@/common'
 import { IconBug, IconFileSearch, IconPrint } from '@/common/icon-antd'
-import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import { IconEditSquare } from '@/common/icon-google'
+import { VueTooltip } from '@/common/popover'
 import { InputDate, InputSelect, VueSelect } from '@/common/vue-form'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import type { Customer } from '@/modules/customer'
-import { PaymentMethodService } from '@/modules/payment-method'
 import { PaymentApi } from '@/modules/payment/payment.api'
 import type { PaymentPaginationQuery } from '@/modules/payment/payment.dto'
 import {
@@ -23,19 +22,17 @@ import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtmlAction } from '@/modules/print-html'
 import { ESTimer } from '@/utils'
 import { Breadcrumb } from '@/views/component'
+import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
 import ModalDistributorDetail from '@/views/distributor/detail/ModalDistributorDetail.vue'
-import LinkAndStatusPurchaseOrder from '@/views/purchase-order/LinkAndStatusPurchaseOrder.vue'
-import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
+import PurchaseOrderLink from '@/views/purchase-order/PurchaseOrderLink.vue'
+import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 import { onBeforeMount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ModalCustomerPaymentMoneyIn from './ModalCustomerPaymentMoneyIn.vue'
 import ModalDistributorPaymentMoneyOut from './ModalDistributorPaymentMoneyOut.vue'
 import ModalOtherPaymentMoney from './ModalOtherPaymentMoney.vue'
 import ModalPaymentUpdateInfo from './ModalPaymentUpdateInfo.vue'
-import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
-import PurchaseOrderLink from '@/views/purchase-order/PurchaseOrderLink.vue'
-import { VueTooltip } from '@/common/popover'
 
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -58,8 +55,7 @@ const limit = ref(Number(localStorage.getItem('PAYMENT_PAGINATION_LIMIT')) || 10
 const total = ref(0)
 
 const moneyDirection = ref<MoneyDirection | null>(null)
-const paymentMethodId = ref<number>(0)
-const paymentMethodOptions = ref<{ value: number; text: string }[]>([])
+const walletId = ref<string>('')
 const fromTime = ref<number>(ESTimer.startOfMonth(new Date()).getTime())
 const toTime = ref<number>(ESTimer.endOfMonth(new Date()).getTime())
 
@@ -85,7 +81,7 @@ const startFetchData = async () => {
         customer: true,
         distributor: true,
         cashier: true,
-        paymentMethod: true,
+        wallet: true,
         paymentTicketItemList: true,
       },
       filter: {
@@ -97,7 +93,7 @@ const startFetchData = async () => {
               }
             : undefined,
         moneyDirection: moneyDirection.value !== null ? moneyDirection.value : undefined,
-        paymentMethodId: paymentMethodId.value ? paymentMethodId.value : undefined,
+        walletId: walletId.value ? walletId.value : undefined,
       },
       page: page.value,
       limit: limit.value,
@@ -114,19 +110,15 @@ const startFetchData = async () => {
     paymentList.value = paginationResponse.paymentList
     total.value = paginationResponse.total
     statistics.value = sumMoneyResponse.aggregate
-    dataLoading.value = false
   } catch (error) {
     console.log('🚀 ~ file: PurchaseOrderList.vue:52 ~ error:', error)
+  } finally {
+    dataLoading.value = false
   }
 }
 
 onBeforeMount(async () => {
   await startFetchData()
-  const paymentMethodList = await PaymentMethodService.list({})
-  paymentMethodOptions.value = paymentMethodList.map((i) => {
-    return { value: i.id, text: i.name }
-  })
-  paymentMethodOptions.value.unshift({ value: 0, text: 'Tất cả' })
 })
 
 const startSearch = async () => {
@@ -208,7 +200,7 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
         <template v-if="st.moneyDirection === MoneyDirection.Out">
           <div class="card-title">Tổng chi trong kỳ</div>
           <div class="card-number" style="font-weight: 500">
-            {{ formatMoney(st.sumPaidAmount) }}
+            {{ formatMoney(-st.sumPaidAmount) }}
           </div>
         </template>
         <template v-if="st.moneyDirection === MoneyDirection.Other">
@@ -309,13 +301,9 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
       </div>
 
       <div style="flex: 1; flex-basis: 250px">
-        <div>Hình thức thanh toán</div>
+        <div>Ví thanh toán</div>
         <div>
-          <VueSelect
-            v-model:value="paymentMethodId"
-            :options="paymentMethodOptions"
-            @update:value="startSearch"
-          />
+          <InputSelectWallet v-model:walletId="walletId" @update:walletId="startSearch" />
         </div>
       </div>
     </div>
@@ -330,10 +318,7 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
             <th style="min-width: 100px">Lý do</th>
             <th>Tiền thu</th>
             <th>Tiền chi</th>
-            <th>Ghi nợ</th>
-            <th>Trả nợ</th>
-            <th v-if="CONFIG.MODE === 'development'">Nợ</th>
-            <th>HT Thanh toán</th>
+            <th>Ví thanh toán</th>
             <th>NV thu/chi</th>
             <th></th>
             <th></th>
@@ -408,6 +393,13 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
                   <IconFileSearch />
                 </a>
               </div>
+              <div
+                v-if="payment.personOpenDebt !== 0 || payment.personCloseDebt !== 0"
+                style="white-space: nowrap; font-size: 0.9em"
+              >
+                Nợ: {{ formatMoney(payment.personOpenDebt) }} ➞
+                {{ formatMoney(payment.personCloseDebt) }}
+              </div>
             </td>
             <td>
               <div>{{ PaymentActionTypeText[payment.paymentActionType] }}</div>
@@ -416,34 +408,23 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
               </div>
             </td>
             <td class="text-right">
-              <span v-if="payment.moneyDirection === MoneyDirection.In">
-                {{ formatMoney(payment.paidAmount) }}
-              </span>
-            </td>
-            <td class="text-right">
-              <span v-if="payment.moneyDirection === MoneyDirection.Out">
-                {{ formatMoney(payment.paidAmount) }}
-              </span>
-            </td>
-            <td class="text-right">
-              <span v-if="payment.debtAmount > 0">{{ formatMoney(payment.debtAmount) }}</span>
-            </td>
-            <td class="text-right">
-              <span v-if="payment.debtAmount < 0">{{ formatMoney(-payment.debtAmount) }}</span>
-            </td>
-            <td
-              v-if="CONFIG.MODE === 'development'"
-              style="white-space: nowrap; color: violet; text-align: center"
-            >
-              {{ formatMoney(payment.openDebt) }} ➞
-              {{ formatMoney(payment.closeDebt) }}
-            </td>
-            <td>{{ payment.paymentMethod?.name }}</td>
-            <td>
-              <div>
-                {{ payment.cashier?.fullName }}
+              <div v-if="payment.paid + payment.paidItem > 0">
+                {{ formatMoney(payment.paid + payment.paidItem) }}
               </div>
             </td>
+            <td class="text-right">
+              <div v-if="payment.paid + payment.paidItem < 0">
+                {{ formatMoney(-payment.paid - payment.paidItem) }}
+              </div>
+            </td>
+            <td>
+              <div>{{ payment.wallet?.name }}</div>
+              <div v-if="payment.wallet" style="white-space: nowrap; font-size: 0.9em">
+                {{ formatMoney(payment.walletOpenMoney) }} ➞
+                {{ formatMoney(payment.walletCloseMoney) }}
+              </div>
+            </td>
+            <td>{{ payment.cashier?.fullName }}</td>
             <td>
               <IconEditSquare
                 style="font-size: 20px; color: var(--text-orange); cursor: pointer"
@@ -453,22 +434,15 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
             <td class="text-center">
               <IconPrint
                 v-if="
-                  [
-                    PaymentActionType.PrepaymentForTicketItemList,
-                    PaymentActionType.PrepaymentMoney,
-                    PaymentActionType.PayDebt,
-                  ].includes(payment.paymentActionType)
+                  [PaymentActionType.PaymentMoney, PaymentActionType.PayDebt].includes(
+                    payment.paymentActionType,
+                  )
                 "
                 style="font-size: 18px; color: var(--text-blue); cursor: pointer"
                 @click="startPrintCustomerPayment({ payment, customer: payment.customer })"
               />
               <IconPrint
-                v-if="
-                  [
-                    PaymentActionType.RefundForTicketItemList,
-                    PaymentActionType.RefundMoney,
-                  ].includes(payment.paymentActionType)
-                "
+                v-if="[PaymentActionType.RefundMoney].includes(payment.paymentActionType)"
                 style="font-size: 18px; color: var(--text-green); cursor: pointer"
                 @click="startPrintCustomerRefund({ payment, customer: payment.customer })"
               />

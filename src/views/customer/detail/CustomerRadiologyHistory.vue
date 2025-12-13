@@ -1,11 +1,18 @@
 <script setup lang="ts">
+import { IconBug } from '@/common/icon-antd'
 import { IconVisibility } from '@/common/icon-google'
+import { VueTooltip } from '@/common/popover'
 import VuePagination from '@/common/VuePagination.vue'
+import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { TicketRadiology, TicketRadiologyApi } from '@/modules/ticket-radiology'
+import {
+  TicketRadiology,
+  TicketRadiologyApi,
+  TicketRadiologyService,
+} from '@/modules/ticket-radiology'
 import { ESTimer } from '@/utils'
 import ModalTicketRadiologyResult from '@/views/room/room-radiology/ModalTicketRadiologyResult.vue'
-import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
+import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -27,7 +34,7 @@ const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const paginationResponse= await TicketRadiologyApi.pagination({
+    const paginationResponse = await TicketRadiologyApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -39,6 +46,7 @@ const startFetchData = async () => {
       },
       sort: { id: 'DESC' },
     })
+    await TicketRadiologyService.refreshRelation(paginationResponse.ticketRadiologyList)
     ticketRadiologyList.value = paginationResponse.ticketRadiologyList
     total.value = paginationResponse.total
   } catch (error) {
@@ -87,7 +95,7 @@ watch(
               <div>
                 {{ ticketRadiology.result }}
               </div>
-              <LinkAndStatusTicket :ticket="ticketRadiology.ticket!" />
+              <TicketLink :ticket="ticketRadiology.ticket!" :ticketId="ticketRadiology.ticketId" />
               <div style="font-size: 0.8rem">
                 {{ ESTimer.timeToText(ticketRadiology.ticket?.createdAt, 'DD/MM/YYYY hh:mm') }}
               </div>
@@ -117,6 +125,7 @@ watch(
       <table>
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>HĐ</th>
             <th>Phiếu</th>
             <th>Đ.Giá</th>
@@ -127,8 +136,18 @@ watch(
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(ticketRadiology, index) in ticketRadiologyList" :key="index">
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(ticketRadiology, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
+            </td>
             <td>
-              <LinkAndStatusTicket :ticket="ticketRadiology.ticket!" />
+              <TicketLink :ticket="ticketRadiology.ticket!" :ticketId="ticketRadiology.ticketId" />
               <div style="font-size: 0.8rem">
                 {{ ESTimer.timeToText(ticketRadiology.ticket?.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>

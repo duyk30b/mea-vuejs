@@ -48,6 +48,7 @@ const loadingImage = ref(false)
 watch(
   () => props.ticketRadiologyProp,
   async (newValue) => {
+    if (!newValue.id) return
     ticketRadiologyOrigin.value = TicketRadiology.from(newValue)
     if (!ticketRadiologyOrigin.value.completedAt) {
       ticketRadiologyOrigin.value.completedAt = Date.now()
@@ -327,7 +328,7 @@ const handleFixTicketUserResultList = (tuListData: TicketUser[]) => {
 
     <div class="mt-6 flex flex-wrap justify-end gap-4">
       <VueButton
-        v-if="ticketRadiology.status === TicketRadiologyStatus.Completed"
+        v-if="editable && ticketRadiology.status === TicketRadiologyStatus.Completed"
         icon="close"
         color="red"
         @click="clickCancelResult"
@@ -335,7 +336,7 @@ const handleFixTicketUserResultList = (tuListData: TicketUser[]) => {
         Hủy kết quả
       </VueButton>
       <VueButton
-        v-if="ticketRadiology.status === TicketRadiologyStatus.Pending"
+        v-if="editable && ticketRadiology.status === TicketRadiologyStatus.Pending"
         icon="close"
         color="red"
         @click="resetResult"

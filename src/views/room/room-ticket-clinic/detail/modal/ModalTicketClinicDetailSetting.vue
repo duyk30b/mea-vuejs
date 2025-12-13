@@ -151,7 +151,17 @@ defineExpose({ openModal })
                       <th colspan="2">Cài đặt chung</th>
                     </tr>
                   </thead>
-                  <tbody></tbody>
+                  <tbody>
+                    <tr>
+                      <td colspan="2">
+                        <InputCheckbox
+                          v-model:value="settingDisplay.other.hideMoneyTitle"
+                          type-parser="number"
+                          label="Ẩn hiển thị thông tin tiền trên tiêu đề"
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
                 </table>
               </div>
             </VueTabPanel>

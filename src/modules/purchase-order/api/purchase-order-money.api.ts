@@ -5,20 +5,16 @@ import { Payment } from '../../payment'
 import { PurchaseOrder } from '../purchase-order.model'
 
 export class PurchaseOrderMoneyApi {
-  static async prepaymentMoney(object: {
+  static async payment(object: {
     purchaseOrderId: string
     body: {
-      distributorId: number
-      paymentMethodId: number
+      walletId: string
       paidAmount: number
       note: string
     }
   }) {
     const { purchaseOrderId, body } = object
-    const response = await AxiosInstance.post(
-      `/purchase-order/${purchaseOrderId}/prepayment-money`,
-      body,
-    )
+    const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/payment`, body)
     const { data } = response.data as BaseResponse<{
       distributor: any
       paymentCreated: any
@@ -34,7 +30,7 @@ export class PurchaseOrderMoneyApi {
 
   static async payDebt(body: {
     distributorId: number
-    paymentMethodId: number
+    walletId: string
     paidAmount: number
     note: string
     dataList: { purchaseOrderId: string; paidAmount: number }[]
@@ -56,8 +52,7 @@ export class PurchaseOrderMoneyApi {
   static async refundMoney(object: {
     purchaseOrderId: string
     body: {
-      distributorId: number
-      paymentMethodId: number
+      walletId: string
       refundAmount: number
       note: string
     }

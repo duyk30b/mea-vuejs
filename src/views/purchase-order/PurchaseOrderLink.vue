@@ -21,7 +21,8 @@ const props = withDefaults(
         params: { id: purchaseOrderId },
       }"
     >
-      PO_{{ purchaseOrder.id.slice(10) }}
+      <span>PO_</span>
+      <span>{{ purchaseOrder.id.slice(0, 12) }}</span>
     </router-link>
   </span>
 </template>

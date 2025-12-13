@@ -1,12 +1,12 @@
 import { AxiosInstance } from '@/core/axios.instance'
 import { Customer } from '@/modules/customer'
-import type { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
-import { Payment, PaymentResponseParams } from '@/modules/payment'
+import type { DiscountType } from '@/modules/enum'
+import { Payment, PaymentActionType } from '@/modules/payment'
 import type { TicketItemType } from '@/modules/payment-ticket-item'
 import type { BaseResponse } from '../../_base/base-dto'
 import { Ticket } from '../ticket.model'
 
-export type TicketItemPaymentBody = {
+export type TicketPaymentItemBody = {
   ticketItemType: TicketItemType
   ticketItemId: string
   interactId: number
@@ -17,145 +17,65 @@ export type TicketItemPaymentBody = {
   actualPrice: number
   quantity: number
   sessionIndex: number
-  paymentMoneyStatus: PaymentMoneyStatus
+  paidAdd: number
+  debtAdd: number
+}
+
+class TicketPaymentItemMapBody {
+  ticketRegimenBodyList: TicketPaymentItemBody[]
+  ticketProcedureNoEffectBodyList: TicketPaymentItemBody[]
+  ticketProcedureHasEffectBodyList: TicketPaymentItemBody[]
+  ticketProductConsumableBodyList: TicketPaymentItemBody[]
+  ticketProductPrescriptionBodyList: TicketPaymentItemBody[]
+  ticketLaboratoryBodyList: TicketPaymentItemBody[]
+  ticketRadiologyBodyList: TicketPaymentItemBody[]
 }
 
 export class TicketMoneyApi {
-  static async prepaymentMoney(object: {
+  static async paymentMoney(object: {
     ticketId: string
     body: {
-      customerId: number
-      paymentMethodId: number
-      paidAmount: number
+      walletId: string
+      paymentActionType: PaymentActionType
+      paidAdd: number
+      paidItemAdd: number
+      debtAdd: number
+      debtItemAdd: number
       note: string
+      ticketPaymentItemMapBody?: TicketPaymentItemMapBody
     }
   }) {
     const { ticketId, body } = object
-    const response = await AxiosInstance.post(`/ticket/${ticketId}/prepayment-money`, body)
+    const response = await AxiosInstance.post(`/ticket/${ticketId}/payment-money`, body)
     const { data } = response.data as BaseResponse<{
-      customer: any
+      customerModified: any
       paymentCreated: any
       ticketModified: any
     }>
 
-    const customer = Customer.from(data.customer)
+    const customerModified = Customer.from(data.customerModified)
     const ticketModified = Ticket.from(data.ticketModified)
     const paymentCreated = Payment.from(data.paymentCreated)
 
-    return { customer, ticketModified, paymentCreated }
+    return { customerModified, ticketModified, paymentCreated }
   }
 
   static async payDebt(body: {
     customerId: number
-    paymentMethodId: number
-    paidAmount: number
+    walletId: string
+    totalMoney: number
     note: string
-    dataList: { ticketId: string; paidAmount: number }[]
+    dataList: { ticketId: string; debtMinus: number; debtItemMinus: number }[]
   }) {
     const response = await AxiosInstance.post('/ticket/pay-debt', body)
     const { data } = response.data as BaseResponse<{
       customerModified: any
-      paymentCreatedList: any[]
       ticketModifiedList: any[]
     }>
 
     const customerModified = Customer.from(data.customerModified)
     const ticketModifiedList = Ticket.fromList(data.ticketModifiedList)
-    const paymentCreatedList = Payment.fromList(data.paymentCreatedList)
 
-    return { customerModified, ticketModifiedList, paymentCreatedList }
-  }
-
-  static async refundMoney(object: {
-    ticketId: string
-    body: {
-      customerId: number
-      paymentMethodId: number
-      refundAmount: number
-      note: string
-    }
-    params?: PaymentResponseParams
-  }) {
-    const paramsString = PaymentResponseParams.toQuery(object.params || {})
-    const { ticketId, body, params } = object
-
-    const response = await AxiosInstance.post(`/ticket/${ticketId}/refund-money`, body)
-    const { data } = response.data as BaseResponse<{
-      customer: any
-      paymentCreated: any
-      ticketModified: any
-    }>
-
-    const customer = Customer.from(data.customer)
-    const ticketModified = Ticket.from(data.ticketModified)
-    const paymentCreated = Payment.from(data.paymentCreated)
-
-    return { customer, ticketModified, paymentCreated }
-  }
-
-  static async prepaymentTicketItemList(props: {
-    ticketId: string
-    body: {
-      customerId: number
-      paymentMethodId: number
-      paidAmount: number
-      note: string
-      ticketRegimenBodyList: TicketItemPaymentBody[]
-      ticketProcedureBodyList: TicketItemPaymentBody[]
-      ticketProductConsumableBodyList: TicketItemPaymentBody[]
-      ticketProductPrescriptionBodyList: TicketItemPaymentBody[]
-      ticketLaboratoryBodyList: TicketItemPaymentBody[]
-      ticketRadiologyBodyList: TicketItemPaymentBody[]
-    }
-  }) {
-    const { ticketId, body } = props
-    const response = await AxiosInstance.post(
-      `/ticket/${ticketId}/prepayment-ticket-item-list`,
-      body,
-    )
-    const { data } = response.data as BaseResponse<{
-      ticketModified: any
-      customer: any
-      paymentCreated: any
-    }>
-
-    const customer = Customer.from(data.customer)
-    const ticketModified = Ticket.from(data.ticketModified)
-    const paymentCreated = Payment.from(data.paymentCreated)
-
-    return { customer, ticketModified, paymentCreated }
-  }
-
-  static async refundTicketItemList(object: {
-    ticketId: string
-    body: {
-      customerId: number
-      paymentMethodId: number
-      refundAmount: number
-      note: string
-      ticketRegimenBodyList: TicketItemPaymentBody[]
-      ticketProcedureBodyList: TicketItemPaymentBody[]
-      ticketProductConsumableBodyList: TicketItemPaymentBody[]
-      ticketProductPrescriptionBodyList: TicketItemPaymentBody[]
-      ticketLaboratoryBodyList: TicketItemPaymentBody[]
-      ticketRadiologyBodyList: TicketItemPaymentBody[]
-    }
-    params?: PaymentResponseParams
-  }) {
-    const { ticketId, body, params } = object
-    const paramsString = PaymentResponseParams.toQuery(params || {})
-
-    const response = await AxiosInstance.post(`/ticket/${ticketId}/refund-ticket-item-list`, body)
-    const { data } = response.data as BaseResponse<{
-      ticketModified: any
-      customer: any
-      paymentCreated: any
-    }>
-
-    const customer = Customer.from(data.customer)
-    const ticketModified = Ticket.from(data.ticketModified)
-    const paymentCreated = Payment.from(data.paymentCreated)
-
-    return { customer, ticketModified, paymentCreated }
+    return { customerModified, ticketModifiedList }
   }
 }

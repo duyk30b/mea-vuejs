@@ -58,10 +58,6 @@ export const socketInit = () => {
   SocketBase.on(SOCKET_EVENT.SOCKET_PRODUCT_LIST_CHANGE, (data) => {
     SocketService.listenProductListChange(data)
   })
-
-  SocketBase.on(SOCKET_EVENT.SOCKET_BATCH_LIST_CHANGE, (data) => {
-    SocketService.listenBatchListChange(data)
-  })
 }
 
 export const reconnectSocket = () => {

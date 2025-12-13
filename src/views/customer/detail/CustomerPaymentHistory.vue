@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { IconBug } from '@/common/icon-antd'
+import { VueTooltip } from '@/common/popover'
 import VueButton from '@/common/VueButton.vue'
 import VuePagination from '@/common/VuePagination.vue'
 import { CONFIG } from '@/config'
@@ -11,14 +13,14 @@ import {
   PaymentActionTypeText,
   PaymentApi,
   PaymentPersonType,
+  PaymentVoucherType,
 } from '@/modules/payment'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { ESTimer } from '@/utils'
-import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
+import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
-import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
 
@@ -42,7 +44,7 @@ const total = ref(0)
 const startFetchData = async () => {
   try {
     const paginationResponse = await PaymentApi.pagination({
-      relation: { ticket: true, paymentMethod: true },
+      relation: { ticket: true, wallet: true },
       page: page.value,
       limit: limit.value,
       filter: {
@@ -102,7 +104,7 @@ defineExpose({ startFetchData })
       <table v-if="isMobile">
         <thead>
           <tr>
-            <th>Hóa đơn</th>
+            <th style="width: 400px">Hóa đơn</th>
             <th>Tiền</th>
           </tr>
         </thead>
@@ -112,11 +114,7 @@ defineExpose({ startFetchData })
           </tr>
           <tr v-for="(payment, index) in paymentList" :key="index">
             <td>
-              <LinkAndStatusTicket
-                :ticket="payment.ticket!"
-                :ticketId="payment.voucherId"
-                :status="false"
-              />
+              <TicketLink :ticket="payment.ticket!" :ticketId="payment.voucherId" />
               <div style="white-space: nowrap">
                 {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
@@ -127,17 +125,17 @@ defineExpose({ startFetchData })
             <td class="text-right">
               <div class="flex justify-between item-center" style="white-space: nowrap">
                 <span>T.Toán:</span>
-                <span>{{ formatMoney(payment.paidAmount) }}</span>
+                <span>{{ formatMoney(payment.paid + payment.paidItem) }}</span>
               </div>
               <div class="flex justify-between item-center">
                 <span>Ghi nợ:</span>
-                <span>{{ formatMoney(payment.debtAmount) }}</span>
+                <span>{{ formatMoney(payment.debt + payment.debtItem) }}</span>
               </div>
               <div class="flex justify-between item-center">
                 <span>Nợ:</span>
                 <span>
-                  {{ formatMoney(payment.openDebt) }} ➞
-                  {{ formatMoney(payment.closeDebt) }}
+                  {{ formatMoney(payment.personOpenDebt) }} ➞
+                  {{ formatMoney(payment.personCloseDebt) }}
                 </span>
               </div>
             </td>
@@ -147,14 +145,12 @@ defineExpose({ startFetchData })
       <table v-if="!isMobile">
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'">ID</th>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>Hóa đơn</th>
             <th>PT.Thanh Toán</th>
             <th>Note</th>
             <th>Tiền thu</th>
-            <th>Tiền chi</th>
-            <th>Nợ thêm</th>
-            <th>Trả nợ</th>
+            <th>Ghi Nợ</th>
             <th>Nợ hiện tại</th>
           </tr>
         </thead>
@@ -163,8 +159,15 @@ defineExpose({ startFetchData })
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="(payment, index) in paymentList" :key="index">
-            <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
-              {{ payment.id }}
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(payment, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
             </td>
             <td>
               <TicketLink :ticketId="payment.voucherId" :ticket="payment.ticket!" target="_blank" />
@@ -173,38 +176,24 @@ defineExpose({ startFetchData })
               </div>
             </td>
             <td class="text-center">
-              {{ payment.paymentMethod?.name }}
+              {{ payment.wallet?.name }}
             </td>
-            <td>
+            <td style="width: 300px">
               <div>{{ PaymentActionTypeText[payment.paymentActionType] }}</div>
-              <div v-if="payment.note" style="font-size: 0.9em">
+              <div v-if="payment.note" style="font-size: 0.9em; max-width: 300px; text-overflow: ellipsis; overflow: hidden">
                 {{ payment.note }}
               </div>
             </td>
             <td class="text-right">
-              <span v-if="payment.moneyDirection === MoneyDirection.In">
-                {{ formatMoney(payment.paidAmount) }}
-              </span>
-            </td>
-            <td class="text-right">
-              <span v-if="payment.moneyDirection === MoneyDirection.Out">
-                {{ formatMoney(payment.paidAmount) }}
-              </span>
+              {{ formatMoney(payment.paid + payment.paidItem) }}
             </td>
             <td style="white-space: nowrap; text-align: right">
-              <span v-if="payment.debtAmount > 0">
-                {{ formatMoney(payment.debtAmount) }}
-              </span>
-            </td>
-            <td style="white-space: nowrap; text-align: right">
-              <span v-if="payment.debtAmount < 0">
-                {{ formatMoney(-payment.debtAmount) }}
-              </span>
+              {{ formatMoney(payment.debt + payment.debtItem) }}
             </td>
             <td class="text-right">
               <span>
-                {{ formatMoney(payment.openDebt) }} ➞
-                {{ formatMoney(payment.closeDebt) }}
+                {{ formatMoney(payment.personOpenDebt) }} ➞
+                {{ formatMoney(payment.personCloseDebt) }}
               </span>
             </td>
           </tr>

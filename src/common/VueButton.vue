@@ -169,7 +169,7 @@ const props = withDefaults(
 
   &.btn-size-small {
     font-size: 13px;
-    padding: 0 12px;
+    padding: 0 8px;
   }
 
   &.btn-size-large {

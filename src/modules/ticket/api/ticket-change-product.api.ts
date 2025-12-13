@@ -28,7 +28,6 @@ export class TicketChangeProductApi {
           discountMoney: i.discountMoney,
           discountPercent: i.discountPercent,
           discountType: i.discountType,
-          costAmount: i.costAmount,
           actualPrice: i.actualPrice,
 
           createdAt: i.createdAt,
@@ -63,7 +62,6 @@ export class TicketChangeProductApi {
           discountPercent: i.discountPercent,
           discountType: i.discountType,
           actualPrice: i.actualPrice,
-          costAmount: i.costAmount,
 
           hintUsage: i.hintUsage,
           createdAt: i.createdAt,
@@ -145,7 +143,6 @@ export class TicketChangeProductApi {
             discountType: ticketProduct.discountType,
             discountMoney: ticketProduct.discountMoney,
             discountPercent: ticketProduct.discountPercent,
-            costAmount: ticketProduct.costAmount,
             actualPrice: ticketProduct.actualPrice,
             hintUsage: ticketProduct.hintUsage,
           }
@@ -182,7 +179,6 @@ export class TicketChangeProductApi {
             discountType: ticketProduct.discountType,
             discountMoney: ticketProduct.discountMoney,
             discountPercent: ticketProduct.discountPercent,
-            costAmount: ticketProduct.costAmount,
             actualPrice: ticketProduct.actualPrice,
             hintUsage: ticketProduct.hintUsage,
           }

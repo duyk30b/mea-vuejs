@@ -345,8 +345,8 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             </td>
             <td class="text-right">
               <div>{{ formatMoney(ticket.totalMoney) }}</div>
-              <div v-if="ticket.status === TicketStatus.Debt" class="text-xs">
-                Nợ: {{ formatMoney(ticket.debt) }}
+              <div v-if="ticket.debtAmount" class="text-xs">
+                Nợ: {{ formatMoney(ticket.debtAmount) }}
               </div>
               <div v-if="settingStore.SCREEN_TICKET_ORDER_LIST.profit" class="text-xs italic">
                 Lãi: {{ formatMoney(ticket.profit) }}
@@ -441,8 +441,12 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             </td>
             <td class="text-right">
               <div>{{ formatMoney(ticket.totalMoney) }}</div>
-              <div v-if="ticket.status === TicketStatus.Debt" class="text-xs">
-                Nợ: {{ formatMoney(ticket.debt) }}
+              <div
+                v-if="ticket.debtAmount"
+                class="text-xs"
+                style="font-weight: bold; color: var(--text-red)"
+              >
+                Nợ: {{ formatMoney(ticket.debtAmount) }}
               </div>
             </td>
             <td v-if="settingStore.SCREEN_TICKET_ORDER_LIST.profit" class="text-right">

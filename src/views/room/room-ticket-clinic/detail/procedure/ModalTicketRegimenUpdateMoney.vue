@@ -1,14 +1,13 @@
 <script lang="ts" setup>
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
-import { AlertStore } from '@/common/vue-alert'
 import { InputMoney, InputNumber, VueSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DiscountType } from '@/modules/enum'
 import { TicketChangeProcedureApi } from '@/modules/ticket'
 import { TicketProcedure } from '@/modules/ticket-procedure'
-import { TicketRegimen, TicketRegimenStatus } from '@/modules/ticket-regimen'
+import { TicketRegimen } from '@/modules/ticket-regimen'
 import { computed, ref } from 'vue'
 
 const emit = defineEmits<{
@@ -103,41 +102,56 @@ const closeModal = () => {
 
 const handleSave = async () => {
   try {
-    if (ticketRegimen.value.status !== TicketRegimenStatus.Pending) {
-      AlertStore.addError('Liệu trình đã thực hiện không thể sửa thông tin thanh toán')
-      return
-    }
-
     if (hasChangeTicketRegimen.value) {
-      let totalExpectedMoneyRemain = ticketRegimen.value.expectedPrice
-      let totalActualMoneyRemain = ticketRegimen.value.actualPrice
+      ticketRegimen.value.ticketRegimenItemList ||= []
+      const totalMoneyAmountRoot = ticketRegimen.value.ticketRegimenItemList.reduce((acc, item) => {
+        return acc + (item.procedure?.price || 0) * item.quantityRegular
+      }, 0)
+
+      let totalMoneyAmountRegularRemain = ticketRegimen.value.expectedPrice
+      let totalMoneyAmountSaleRemain = ticketRegimen.value.actualPrice
       let totalDiscountMoneyRemain = ticketRegimen.value.discountMoney
-      let trLength = ticketRegimen.value.ticketRegimenItemList?.length || 0
 
-      ticketRegimen.value.ticketRegimenItemList?.forEach((tri, index) => {
-        if (index + 1 !== trLength) {
-          tri.moneyAmountRegular =
-            Math.floor(
-              (tri.moneyAmountRegular * ticketRegimen.value.expectedPrice) /
-                ticketRegimenOrigin.expectedPrice /
-                1000,
-            ) * 1000
-          tri.discountPercent = ticketRegimen.value.discountPercent
-          tri.discountMoneyAmount =
-            Math.floor((tri.moneyAmountRegular * tri.discountPercent) / 100 / 1000) * 1000
-          tri.moneyAmountSale = tri.moneyAmountRegular - tri.discountMoneyAmount
+      let trLength = ticketRegimen.value.ticketRegimenItemList.length
 
-          totalExpectedMoneyRemain -= tri.moneyAmountRegular
+      for (let index = ticketRegimen.value.ticketRegimenItemList.length - 1; index >= 0; index--) {
+        const tri = ticketRegimen.value.ticketRegimenItemList[index]
+        tri.moneyAmountRegular =
+          totalMoneyAmountRoot === 0
+            ? 0
+            : Math.floor(
+                ((tri.procedure?.price || 0) *
+                  (ticketRegimen.value.expectedPrice / totalMoneyAmountRoot)) /
+                  1000,
+              ) *
+              1000 *
+              tri.quantityRegular
+        tri.discountType = DiscountType.Percent
+        tri.discountPercent = ticketRegimen.value.discountPercent
+
+        if (index !== 0) {
+          tri.moneyAmountSale =
+            tri.quantityRegular === 0
+              ? 0
+              : Math.floor(
+                  (tri.moneyAmountRegular * (100 - tri.discountPercent)) /
+                    100 /
+                    tri.quantityRegular /
+                    1000,
+                ) *
+                tri.quantityRegular *
+                1000
+          tri.discountMoneyAmount = tri.moneyAmountRegular - tri.moneyAmountSale
+
+          totalMoneyAmountRegularRemain -= tri.moneyAmountRegular
+          totalMoneyAmountSaleRemain -= tri.moneyAmountSale
           totalDiscountMoneyRemain -= tri.discountMoneyAmount
-          totalActualMoneyRemain -= tri.moneyAmountSale
         } else {
-          tri.moneyAmountRegular = totalExpectedMoneyRemain
+          tri.moneyAmountRegular = totalMoneyAmountRegularRemain
           tri.discountMoneyAmount = totalDiscountMoneyRemain
-          tri.moneyAmountSale = totalActualMoneyRemain
-          tri.discountType = DiscountType.Percent
-          tri.discountPercent = ticketRegimen.value.discountPercent
+          tri.moneyAmountSale = totalMoneyAmountSaleRemain
         }
-      })
+      }
     }
 
     if (ticketRegimen.value.id) {

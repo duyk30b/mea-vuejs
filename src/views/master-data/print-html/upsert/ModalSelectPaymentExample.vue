@@ -32,7 +32,7 @@ const startFetchData = async () => {
       relation: {
         paymentTicketItemList: true,
         cashier: true,
-        paymentMethod: true,
+        wallet: true,
         customer: true,
       },
       sort: { id: 'DESC' },
@@ -105,7 +105,7 @@ defineExpose({ openModal })
                 </td>
                 <td>{{ payment.customer?.fullName }}</td>
                 <td>{{ PaymentActionTypeText[payment.paymentActionType] }}</td>
-                <td>{{ formatMoney(payment.paidAmount) }}</td>
+                <td>{{ formatMoney(payment.paid + payment.paidItem) }}</td>
                 <td class="text-center">
                   <a @click="selectPaymentDemo(payment)">Chọn</a>
                 </td>

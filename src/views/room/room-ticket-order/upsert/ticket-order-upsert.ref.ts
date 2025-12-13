@@ -5,14 +5,11 @@ import { ref, watchEffect } from 'vue'
 export const ticketOrderUpsertRef = ref<Ticket>(Ticket.blank())
 
 watchEffect(() => {
-  let itemsCostAmount = 0
   let productMoney = 0
   let procedureMoney = 0
   let itemsDiscount = 0
 
   ticketOrderUpsertRef.value.ticketProductList?.forEach((item) => {
-    item.costAmount = item.quantity * (item.product?.costPrice || 0)
-    itemsCostAmount += item.costAmount
     productMoney += item.actualPrice * item.quantity
     itemsDiscount += item.discountMoney * item.quantity
   })
@@ -48,9 +45,7 @@ watchEffect(() => {
     }, 0) || 0
 
   const totalMoney = itemsActualMoney - discountMoney + surcharge
-  const profit = totalMoney - itemsCostAmount - expense
 
-  ticketOrderUpsertRef.value.itemsCostAmount = itemsCostAmount
   ticketOrderUpsertRef.value.productMoney = productMoney
   ticketOrderUpsertRef.value.procedureMoney = procedureMoney
   ticketOrderUpsertRef.value.itemsActualMoney = itemsActualMoney
@@ -64,9 +59,9 @@ watchEffect(() => {
   ticketOrderUpsertRef.value.expense = expense
 
   ticketOrderUpsertRef.value.totalMoney = totalMoney
-  ticketOrderUpsertRef.value.profit = profit
+  // ticketOrderUpsertRef.value.profit = 0
   // ticketOrderUpsertRef.value.paid = ...
-  ticketOrderUpsertRef.value.debt = totalMoney - ticketOrderUpsertRef.value.paid
+  // ticketOrderUpsertRef.value.debt = totalMoney - ticketOrderUpsertRef.value.paid
 })
 
 export enum ETicketOrderUpsertMode {

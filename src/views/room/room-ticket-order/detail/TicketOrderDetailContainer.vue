@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
 import {
+  IconBug,
   IconCloseCircle,
   IconCopy,
   IconDollar,
@@ -38,12 +39,15 @@ import { ticketOrderHtmlContent } from './preview/ticket-order-html-content'
 import { ticketOrderDetailRef } from './ticket-order-detail.ref'
 import { TicketOrderApi } from '@/modules/ticket/api/ticket-order.api'
 import { TicketProcedureService } from '@/modules/ticket-procedure'
+import ModalTicketOrderTerminal from './ModalTicketOrderTerminal.vue'
+import { VueTooltip } from '@/common/popover'
 
 const modalTicketOrderDetailSetting = ref<InstanceType<typeof ModalTicketOrderDetailSetting>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalTicketOrderPreview = ref<InstanceType<typeof ModalTicketOrderPreview>>()
 const modalTicketOrderPayment = ref<InstanceType<typeof ModalTicketOrderPayment>>()
+const modalTicketOrderTerminal = ref<InstanceType<typeof ModalTicketOrderTerminal>>()
 
 const route = useRoute()
 const router = useRouter()
@@ -73,7 +77,7 @@ const startFetchData = async (ticketId: string) => {
       TicketProcedureService.refreshRelation(ticketOrderDetailRef.value.ticketProcedureList),
     ])
   } catch (error) {
-    console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
+    console.log('🚀 ~ TicketOrderDetailContainer.vue:80 ~ startFetchData ~ error:', error)
   }
 }
 
@@ -130,53 +134,15 @@ const close = async () => {
       ticketId: ticketOrderDetailRef.value.id!,
     })
     Object.assign(ticketOrderDetailRef.value, response.ticketModified)
-    ticketOrderDetailRef.value.paymentList ||= []
-    ticketOrderDetailRef.value.paymentList.push(...response.paymentCreatedList)
+    if (response.paymentCreated) {
+      ticketOrderDetailRef.value.paymentList ||= []
+      ticketOrderDetailRef.value.paymentList.push(response.paymentCreated)
+    }
   } catch (error) {
     console.log('🚀 ~ startShipAndPayment ~ error:', error)
   } finally {
     loadingProcess.value = false
   }
-}
-
-const clickTerminate = () => {
-  ModalStore.confirm({
-    title: 'Bạn có chắc chắn muốn "HỦY" hóa đơn này',
-    content: [
-      ...(ticketOrderDetailRef.value.deliveryStatus === DeliveryStatus.Delivered
-        ? ['- Kho hàng sẽ nhập lại tất cả hàng hóa trong đơn']
-        : []),
-      ...(ticketOrderDetailRef.value.debt > 0
-        ? [`- Trừ nợ khách hàng: ${formatMoney(ticketOrderDetailRef.value.debt)}`]
-        : []),
-      ...(ticketOrderDetailRef.value.paid > 0
-        ? [
-            `- Khách hàng nhận lại số tiền đã thanh toán là: ${formatMoney(ticketOrderDetailRef.value.paid)}`,
-          ]
-        : []),
-      '- Đơn bị hủy sẽ không thể phục hồi lại được',
-    ],
-    okText: 'Xác nhận HỦY ĐƠN',
-    async onOk() {
-      try {
-        loadingProcess.value = true
-        const response = await TicketActionApi.terminate({
-          ticketId: ticketOrderDetailRef.value.id!,
-        })
-        Object.assign(ticketOrderDetailRef.value, response.ticketModified)
-        ticketOrderDetailRef.value.paymentList ||= []
-        ticketOrderDetailRef.value.paymentList.push(...response.paymentCreatedList)
-        ticketOrderDetailRef.value.ticketProductList = TicketProduct.updateListByPartialList(
-          ticketOrderDetailRef.value.ticketProductList || [],
-          response.ticketProductModifiedAll,
-        )
-      } catch (error) {
-        console.log('🚀 ~ file: TicketOrderDetail.vue:203 ~ clickTerminate ~ error:', error)
-      } finally {
-        loadingProcess.value = false
-      }
-    },
-  })
 }
 
 const clickReturnProduct = () => {
@@ -194,19 +160,12 @@ const clickReopen = () => {
   ModalStore.confirm({
     title: 'Bạn có chắc chắn mở lại đơn hàng này ?',
     content: [
-      ...(ticketOrderDetailRef.value.debt > 0
-        ? [
-            `- Khi mở lại đơn hàng, trạng thái đơn hàng sẽ chuyển từ "NỢ" => "Đang thực hiện"`,
-            `- Đơn hàng không còn trạng thái NỢ, vì vậy khách hàng cũng không còn nợ tiền đơn hàng này`,
-            `- Trừ nợ khách hàng: ${formatMoney(ticketOrderDetailRef.value.debt)}`,
-          ]
-        : ['- Đơn hàng này sẽ quay lại trạng thái: "Đang thực hiện"']),
+      '- Đơn hàng này sẽ quay lại trạng thái: "Đang thực hiện"',
+      '- Đơn hàng đang thực hiện có thể tiếp tục các hành động: Thanh toán, Gửi hàng, Hoàn trả ...',
     ],
     async onOk() {
       const response = await TicketActionApi.reopen({ ticketId: ticketOrderDetailRef.value.id })
       Object.assign(ticketOrderDetailRef.value, response.ticketModified)
-      ticketOrderDetailRef.value.paymentList ||= []
-      ticketOrderDetailRef.value.paymentList.push(...response.paymentCreatedList)
     },
   })
 }
@@ -218,15 +177,7 @@ const clickDestroy = () => {
     async onOk() {
       try {
         loadingProcess.value = true
-        if (ticketOrderDetailRef.value.status === TicketStatus.Draft) {
-          await TicketOrderApi.draftDestroy(ticketOrderDetailRef.value.id!)
-        }
-        if (ticketOrderDetailRef.value.status === TicketStatus.Deposited) {
-          await TicketOrderApi.depositedDestroy(ticketOrderDetailRef.value.id!)
-        }
-        if (ticketOrderDetailRef.value.status === TicketStatus.Cancelled) {
-          await TicketOrderApi.cancelledDestroy(ticketOrderDetailRef.value.id!)
-        }
+        await TicketOrderApi.destroy(ticketOrderDetailRef.value.id!)
         AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
         router.push({ name: 'TicketOrderList' })
       } catch (error) {
@@ -255,6 +206,7 @@ const openModalTicketOrderPreview = () => {
 </script>
 
 <template>
+  <ModalTicketOrderTerminal ref="modalTicketOrderTerminal" />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalTicketReturnProduct
     ref="modalTicketReturnProduct"
@@ -292,6 +244,14 @@ const openModalTicketOrderPreview = () => {
       </div>
     </div>
     <div class="mr-2 flex items-center gap-4 flex-wrap">
+      <VueTooltip style="color: violet">
+        <template #trigger>
+          <IconBug width="1.4em" height="1.4em" />
+        </template>
+        <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+          <pre>{{ JSON.stringify(ticketOrderDetailRef, null, 4) }}</pre>
+        </div>
+      </VueTooltip>
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">
@@ -373,10 +333,23 @@ const openModalTicketOrderPreview = () => {
         <VueButton icon="print" @click="startPrint">In</VueButton>
         <VueButton
           v-if="
+            ticketOrderDetailRef.deliveryStatus === DeliveryStatus.Pending &&
+            userPermission[PermissionId.TICKET_CHANGE_PRODUCT_SEND_PRODUCT]
+          "
+          icon="send"
+          @click="sendProduct"
+        >
+          Gửi hàng
+        </VueButton>
+        <VueButton
+          v-if="
             userPermission[PermissionId.TICKET_PAYMENT_MONEY] &&
-            [TicketStatus.Draft, TicketStatus.Deposited, TicketStatus.Executing].includes(
-              ticketOrderDetailRef.status,
-            )
+            [
+              TicketStatus.Draft,
+              TicketStatus.Schedule,
+              TicketStatus.Deposited,
+              TicketStatus.Executing,
+            ].includes(ticketOrderDetailRef.status)
           "
           color="green"
           icon="dollar"
@@ -427,15 +400,26 @@ const openModalTicketOrderPreview = () => {
             </a>
             <a
               v-if="
-                [TicketStatus.Debt, TicketStatus.Completed, TicketStatus.Executing].includes(
-                  ticketOrderDetailRef.status,
-                )
+                [TicketStatus.Debt, TicketStatus.Completed].includes(ticketOrderDetailRef.status)
               "
               @click="clickReopen()"
             >
               <span class="text-red-500">
                 <IconFileSync />
                 Mở lại phiếu
+              </span>
+            </a>
+            <a
+              v-if="
+                ![TicketStatus.Debt, TicketStatus.Completed].includes(
+                  ticketOrderDetailRef.status,
+                ) && ticketOrderDetailRef.paidAmount
+              "
+              @click="modalTicketOrderPayment?.openModal(PaymentViewType.RefundOverpaid)"
+            >
+              <span class="text-red-500">
+                <IconFileSync />
+                Hoàn trả tiền
               </span>
             </a>
             <a
@@ -448,7 +432,7 @@ const openModalTicketOrderPreview = () => {
                   TicketStatus.Completed,
                 ].includes(ticketOrderDetailRef.status)
               "
-              @click="clickTerminate()"
+              @click="modalTicketOrderTerminal?.openModal()"
             >
               <span class="text-red-500">
                 <IconCloseCircle />
@@ -458,32 +442,10 @@ const openModalTicketOrderPreview = () => {
             <a
               v-if="
                 userPermission[PermissionId.TICKET_DRAFT_CRUD] &&
-                ticketOrderDetailRef.status === TicketStatus.Draft
-              "
-              @click="clickDestroy()"
-            >
-              <span class="text-red-500">
-                <IconDelete />
-                Xóa Đơn
-              </span>
-            </a>
-            <a
-              v-if="
-                userPermission[PermissionId.TICKET_DESTROY] &&
-                ticketOrderDetailRef.status === TicketStatus.Deposited &&
-                ticketOrderDetailRef.paid === 0
-              "
-              @click="clickDestroy()"
-            >
-              <span class="text-red-500">
-                <IconDelete />
-                Xóa Đơn
-              </span>
-            </a>
-            <a
-              v-if="
-                userPermission[PermissionId.TICKET_DESTROY] &&
-                ticketOrderDetailRef.status === TicketStatus.Cancelled
+                ticketOrderDetailRef.paidAmount === 0 &&
+                (ticketOrderDetailRef.status === TicketStatus.Draft ||
+                  ticketOrderDetailRef.status === TicketStatus.Cancelled ||
+                  ticketOrderDetailRef.status === TicketStatus.Deposited)
               "
               @click="clickDestroy()"
             >
@@ -539,10 +501,11 @@ const openModalTicketOrderPreview = () => {
 
         <VueButton
           v-if="
-            ticketOrderDetailRef.paid > ticketOrderDetailRef.totalMoney &&
+            ticketOrderDetailRef.paidAmount > ticketOrderDetailRef.totalMoney &&
             userPermission[PermissionId.TICKET_REFUND_MONEY]
           "
-          color="green"
+          color="cyan"
+          :loading="loadingProcess"
           icon="dollar"
           @click="modalTicketOrderPayment?.openModal(PaymentViewType.RefundOverpaid)"
         >
@@ -553,14 +516,14 @@ const openModalTicketOrderPreview = () => {
           v-if="
             userPermission[PermissionId.TICKET_CLOSE] &&
             ticketOrderDetailRef.deliveryStatus === DeliveryStatus.Delivered &&
-            ticketOrderDetailRef.paid <= ticketOrderDetailRef.totalMoney
+            ticketOrderDetailRef.paidAmount <= ticketOrderDetailRef.totalMoney
           "
           color="blue"
           :loading="loadingProcess"
           @click="close()"
         >
           <IconFileDone />
-          <span v-if="ticketOrderDetailRef.debt > 0">Đóng phiếu và Ghi nợ</span>
+          <span v-if="ticketOrderDetailRef.debtAmount > 0">Đóng phiếu và Ghi nợ</span>
           <span v-else>Kết thúc</span>
         </VueButton>
       </template>

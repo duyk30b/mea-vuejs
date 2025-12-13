@@ -2,17 +2,19 @@
 import { onMounted } from 'vue'
 import { ref, watch, watchEffect } from 'vue'
 import { ESNumber } from '../../utils'
+import { IconSortDown, IconSortUp } from '../icon-font-awesome'
 
 const props = withDefaults(
   defineProps<{
     value: number | string
     prepend?: string
     append?: string
-    textAlign?: 'left' | 'right'
+    textAlign?: 'left' | 'right' | 'center'
     disabled?: boolean
     placeholder?: string
     required?: boolean
-    buttonControl?: boolean
+    controlHorizontal?: boolean
+    controlVertical?: boolean
     step?: number
     validate?: {
       'gt'?: number
@@ -38,7 +40,8 @@ const props = withDefaults(
     placeholder: '',
     required: false,
     validate: () => ({}),
-    buttonControl: false,
+    controlHorizontal: false,
+    controlVertical: false,
     step: 1,
   },
 )
@@ -143,19 +146,33 @@ defineExpose({ focus })
 </script>
 
 <template>
-  <div :class="{ 'vue-input': true, 'disabled': disabled }">
+  <div
+    :class="{
+      'vue-input': true,
+      'disabled': disabled,
+      'vue-button-vertical': !!controlVertical,
+    }"
+  >
     <div v-if="prepend" class="prepend">
       {{ prepend }}
     </div>
     <button
       type="button"
-      v-if="buttonControl"
-      class="button-control button-minus"
+      v-if="controlHorizontal"
+      class="button-control-horizontal button-minus"
       @click.prevent="clickDown"
     >
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path d="M19,13H5V11H19V13Z"></path>
       </svg>
+    </button>
+    <button
+      type="button"
+      v-if="controlVertical"
+      class="button-control-vertical button-up"
+      @click.prevent="clickDown"
+    >
+      <IconSortUp style="opacity: 0.6" />
     </button>
     <div class="input-area">
       <input
@@ -171,13 +188,21 @@ defineExpose({ focus })
     </div>
     <button
       type="button"
-      v-if="buttonControl"
-      class="button-control button-plus"
+      v-if="controlHorizontal"
+      class="button-control-horizontal button-plus"
       @click.prevent="clickUp"
     >
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"></path>
       </svg>
+    </button>
+    <button
+      type="button"
+      v-if="controlVertical"
+      class="button-control-vertical button-down"
+      @click.prevent="clickDown"
+    >
+      <IconSortDown style="opacity: 0.6" />
     </button>
     <div v-if="append" class="append">
       {{ append }}
@@ -186,11 +211,44 @@ defineExpose({ focus })
 </template>
 
 <style lang="scss" scoped>
+.vue-button-vertical {
+  flex-direction: column;
+  border: none !important;
+  &:focus-within {
+    border: none !important;
+    box-shadow: none;
+  }
+
+  &:not(.disabled):hover {
+    border: none !important;
+  }
+  .button-control-vertical {
+    width: 100%;
+    height: 2em;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    & > svg {
+      width: 1.6em;
+      height: 1.6em;
+    }
+    &:active {
+      & > svg {
+        width: 1.8em;
+        height: 1.8em;
+      }
+    }
+  }
+  input {
+    text-align: center !important;
+  }
+}
 input {
   padding-right: 12px !important;
 }
 
-.button-control {
+.button-control-horizontal {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -209,10 +267,21 @@ input {
   }
 }
 
+.button-up {
+  // border-bottom: 1px solid #cdcdcd;
+  & > svg {
+    transform: translateY(25%);
+  }
+}
+.button-down {
+  // border-top: 1px solid #cdcdcd;
+  & > svg {
+    transform: translateY(-25%);
+  }
+}
 .button-minus {
   border-right: 1px solid #cdcdcd;
 }
-
 .button-plus {
   border-left: 1px solid #cdcdcd;
 }

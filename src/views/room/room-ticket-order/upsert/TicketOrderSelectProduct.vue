@@ -155,7 +155,6 @@ const selectProduct = async (productProp?: Product) => {
   tpItem.warehouseIds = JSON.stringify(
     settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.warehouseIdList,
   )
-  tpItem.costAmount = tpItem.quantity * (tpItem.product.quantity || 0) // xuất hàng mới tính được costAmount, đây chỉ là tính lãi tạm thời
 
   product.value = Product.from(productProp)
   productOutSellType.value = 'retailPrice'

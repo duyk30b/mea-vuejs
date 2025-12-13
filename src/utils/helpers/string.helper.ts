@@ -9,7 +9,8 @@ export const randomString = (length = 10, characters = _CHARSET): string => {
   return result
 }
 
-export const randomId = (): string => Date.now().toString(36) + randomString()
+export const 
+randomId = (): string => Date.now().toString(36) + randomString()
 
 const generateCharset = (privateKey: string, charset = _CHARSET): string => {
   let tempString = charset

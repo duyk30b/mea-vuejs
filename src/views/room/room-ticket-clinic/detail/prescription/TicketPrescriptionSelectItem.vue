@@ -231,10 +231,8 @@ const addPrescriptionItem = () => {
     }
   }
 
-  // gán số lượng và costAmount trong đơn
+  // gán số lượng trong đơn
   ticketProductPrescription.value.quantityPrescription = ticketProductPrescription.value.quantity
-  ticketProductPrescription.value.costAmount =
-    ticketProductPrescription.value.quantity * (product?.costPrice || 0)
 
   emit('success', [ticketProductPrescription.value])
   clear()

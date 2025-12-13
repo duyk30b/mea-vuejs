@@ -1,12 +1,12 @@
-import { PaymentMethodService } from '../payment-method'
+import { WalletService } from '../wallet'
 import type { Payment } from './payment.model'
 
 export class PaymentService {
   static async refreshRelation(data?: Payment[]) {
     if (!data?.length) return
-    const paymentMethodMap = await PaymentMethodService.getMap()
+    const walletMap = await WalletService.getMap()
     data.forEach((i) => {
-      i.paymentMethod = paymentMethodMap![i.paymentMethodId]
+      i.wallet = walletMap![i.walletId]
     })
   }
 }

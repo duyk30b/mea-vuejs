@@ -25,6 +25,8 @@ export class TicketProduct {
   pickupStrategy: PickupStrategy
   deliveryStatus: DeliveryStatus
   paymentMoneyStatus: PaymentMoneyStatus
+  paid: number
+  debt: number
 
   quantity: number
   quantityPrescription: number
@@ -106,6 +108,8 @@ export class TicketProduct {
     ins.pickupStrategy = PickupStrategy.AutoWithFIFO
     ins.deliveryStatus = DeliveryStatus.Pending
     ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
+    ins.paid = 0
+    ins.debt = 0
 
     ins.quantity = 0
     ins.quantityPrescription = 0
@@ -193,6 +197,8 @@ export class TicketProduct {
     if (a.pickupStrategy != b.pickupStrategy) return false
     if (a.deliveryStatus != b.deliveryStatus) return false
     if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
+    if (a.paid != b.paid) return false
+    if (a.debt != b.debt) return false
 
     if (a.quantity != b.quantity) return false
     if (a.quantityPrescription != b.quantityPrescription) return false

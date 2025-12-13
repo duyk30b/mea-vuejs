@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import VueTag from '@/common/VueTag.vue'
-import { IconExclamationCircle, IconFileSearch } from '@/common/icon-antd'
+import { IconBug, IconExclamationCircle, IconFileSearch } from '@/common/icon-antd'
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { PaymentViewType } from '@/modules/enum'
@@ -10,6 +10,7 @@ import { timeToText } from '@/utils'
 import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import { computed, onMounted, ref } from 'vue'
 import { purchaseOrder } from './purchase-order-detail.ref'
+import { VueTooltip } from '@/common/popover'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const emit = defineEmits<{ (e: 'showPurchaseOrderPayment', value: PaymentViewType): void }>()
@@ -43,8 +44,8 @@ const colspan = computed(() => {
     <table>
       <thead>
         <tr>
+          <th v-if="CONFIG.MODE === 'development'"></th>
           <th>#</th>
-          <th v-if="CONFIG.MODE === 'development'">ID</th>
           <th>Sản phẩm</th>
           <th v-if="settingStore.SCREEN_PURCHASE_ORDER_DETAIL.purchaseOrderItemsTable.warehouse">
             Kho
@@ -60,10 +61,17 @@ const colspan = computed(() => {
           v-for="(purchaseOrderItem, index) in purchaseOrder.purchaseOrderItemList || []"
           :key="index"
         >
-          <td class="text-center">{{ index + 1 }}</td>
-          <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
-            {{ purchaseOrderItem.id }}
+          <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+            <VueTooltip>
+              <template #trigger>
+                <IconBug width="1.2em" height="1.2em" />
+              </template>
+              <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                <pre>{{ JSON.stringify(purchaseOrderItem, null, 4) }}</pre>
+              </div>
+            </VueTooltip>
           </td>
+          <td class="text-center">{{ index + 1 }}</td>
           <td>
             <div class="text-justify">
               <div style="font-weight: 500">
@@ -160,12 +168,7 @@ const colspan = computed(() => {
             {{ formatMoney(purchaseOrder.totalMoney) }}
           </td>
         </tr>
-        <tr
-          v-if="
-            settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.paid ||
-            purchaseOrder.paid !== purchaseOrder.totalMoney
-          "
-        >
+        <tr>
           <td
             class="text-right cursor-pointer"
             :colspan="colspan"
@@ -180,19 +183,25 @@ const colspan = computed(() => {
             {{ formatMoney(purchaseOrder.paid) }}
           </td>
         </tr>
-        <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt || purchaseOrder.debt">
-          <template v-if="purchaseOrder.debt >= 0">
-            <td class="text-right" :colspan="colspan">Còn thiếu</td>
-            <td colspan="2" class="text-right">{{ formatMoney(purchaseOrder.debt) }}</td>
-          </template>
-          <template v-if="purchaseOrder.debt < 0">
-            <td class="text-right" :colspan="colspan" style="color: var(--text-green)">
-              <span>Thanh toán dư</span>
-            </td>
-            <td colspan="2" class="text-right font-medium" style="color: var(--text-green)">
-              {{ formatMoney(-purchaseOrder.debt) }}
-            </td>
-          </template>
+        <tr v-if="purchaseOrder.debt" style="color: var(--text-red)">
+          <td class="text-right" :colspan="colspan">Nợ</td>
+          <td colspan="2" class="text-right font-bold">
+            {{ formatMoney(purchaseOrder.debt) }}
+          </td>
+        </tr>
+        <tr v-if="purchaseOrder.paid > purchaseOrder.totalMoney">
+          <td class="text-right" :colspan="colspan" style="color: var(--text-green)">
+            Thanh toán dư
+          </td>
+          <td colspan="2" class="text-right font-medium" style="color: var(--text-green)">
+            {{ formatMoney(purchaseOrder.paid - purchaseOrder.totalMoney) }}
+          </td>
+        </tr>
+        <tr v-else-if="purchaseOrder.debt !== purchaseOrder.totalMoney - purchaseOrder.paid">
+          <td class="text-right" :colspan="colspan">Còn thiếu</td>
+          <td colspan="2" class="text-right">
+            {{ formatMoney(purchaseOrder.totalMoney - purchaseOrder.paid) }}
+          </td>
         </tr>
       </tbody>
     </table>

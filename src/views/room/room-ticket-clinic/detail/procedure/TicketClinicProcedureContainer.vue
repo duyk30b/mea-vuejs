@@ -133,7 +133,13 @@ const clickDestroyTicketProcedure = async (ticketProcedureId: string) => {
 const clickDestroyTicketRegimen = async (ticketRegimenId: string) => {
   const trCurrent = ticketRegimenList.value.find((i) => i.id === ticketRegimenId)
   if (!trCurrent) return
-  if (trCurrent.moneyAmountPaid != 0 || trCurrent.moneyAmountWallet != 0) {
+  if (
+    trCurrent.paid != 0 ||
+    trCurrent.paidItem != 0 ||
+    trCurrent.debt != 0 ||
+    trCurrent.debtItem != 0 ||
+    trCurrent.moneyAmountUsed != 0
+  ) {
     return AlertStore.addError('Liệu trình có tiền không thể xóa')
   }
   for (let i = 0; i < (trCurrent.ticketRegimenItemList || []).length; i++) {
@@ -386,8 +392,15 @@ const totalMoney = computed(() => {
           </template>
           <template v-for="tr in ticketRegimenList" :key="tr.id">
             <tr>
-              <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
-                {{ tr.id }}
+              <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+                <VueTooltip>
+                  <template #trigger>
+                    <IconBug width="1.2em" height="1.2em" />
+                  </template>
+                  <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                    <pre>{{ JSON.stringify(tr, null, 4) }}</pre>
+                  </div>
+                </VueTooltip>
               </td>
               <td></td>
               <!-- <td>
@@ -425,8 +438,10 @@ const totalMoney = computed(() => {
                           ![TicketStatus.Debt, TicketStatus.Completed].includes(
                             ticketRoomRef.status,
                           ) &&
-                          !tr.moneyAmountUsed &&
-                          !tr.moneyAmountPaid &&
+                          !tr.paid &&
+                          !tr.paidItem &&
+                          !tr.debt &&
+                          !tr.debtItem &&
                           userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
                         "
                         @click="modalTicketRegimenUpdateMoney?.openModal({ ticketRegimen: tr })"
@@ -436,33 +451,19 @@ const totalMoney = computed(() => {
                       </a>
                     </div>
                   </div>
-                  <div v-if="!ticketRoomRef.isPaymentEachItem" class="text-right">
-                    <div>Đã thực hiện</div>
-                    <div class="text-lg" style="font-weight: bold; color: var(--text-green)">
-                      {{ formatMoney(tr.moneyAmountUsed) }}
-                    </div>
-                  </div>
                   <div v-if="ticketRoomRef.isPaymentEachItem" class="text-right">
                     <div>Đã thanh toán</div>
                     <div class="text-lg" style="font-weight: bold; color: var(--text-green)">
-                      {{ formatMoney(tr.moneyAmountPaid) }}
+                      {{ formatMoney(tr.paidItem) }}
                     </div>
                   </div>
-                  <div
-                    v-if="ticketRoomRef.isPaymentEachItem && tr.moneyAmountWallet != 0"
-                    class="text-right"
-                  >
-                    <div>Ví</div>
-                    <div class="text-lg" style="font-weight: bold; color: violet">
-                      {{ formatMoney(tr.moneyAmountWallet) }}
-                    </div>
-                  </div>
-                  <div v-if="ticketRoomRef.isPaymentEachItem" class="text-right">
-                    <div>Còn thiếu</div>
+                  <div class="text-right">
+                    <div>Đã thực hiện</div>
                     <div class="text-lg" style="font-weight: bold; color: var(--text-green)">
-                      {{
-                        formatMoney(tr.actualPrice - (tr.moneyAmountPaid + tr.moneyAmountWallet))
-                      }}
+                      {{ formatMoney(tr.moneyAmountUsed) }}
+                      <span v-if="tr.moneyAmountUsed !== tr.moneyAmountActual">
+                        / {{ formatMoney(tr.moneyAmountActual) }}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -532,8 +533,15 @@ const totalMoney = computed(() => {
             </tr>
             <template v-for="tp in tr.ticketProcedureList" :key="tp.id">
               <tr>
-                <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
-                  {{ tp.id }}
+                <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+                  <VueTooltip>
+                    <template #trigger>
+                      <IconBug width="1.2em" height="1.2em" />
+                    </template>
+                    <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                      <pre>{{ JSON.stringify(tp, null, 4) }}</pre>
+                    </div>
+                  </VueTooltip>
                 </td>
                 <td>
                   <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />

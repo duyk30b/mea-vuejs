@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { VueButton } from '@/common'
 import {
+  IconBug,
   IconContacts,
   IconDelete,
   IconDisconnect,
   IconDollar,
+  IconExclamationCircle,
   IconFileSearch,
   IconFileSync,
   IconLogin,
@@ -21,6 +23,7 @@ import {
   IconRadiology,
   IconStethoscope,
 } from '@/common/icon-google'
+import { VueTooltip } from '@/common/popover'
 import VueDropdown from '@/common/popover/VueDropdown.vue'
 import { AlertStore } from '@/common/vue-alert'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
@@ -31,17 +34,20 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer } from '@/modules/customer'
 import { DeliveryStatus, PaymentViewType, PickupStrategy } from '@/modules/enum'
+import { PaymentActionType } from '@/modules/payment'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { Room, RoomService, RoomTicketStyle, ticketRoomRef } from '@/modules/room'
 import { Ticket, TicketActionApi, TicketService, TicketStatus } from '@/modules/ticket'
 import { TicketProcedureStatus } from '@/modules/ticket-procedure'
 import { TicketRadiologyStatus } from '@/modules/ticket-radiology'
 import { TicketUserService } from '@/modules/ticket-user'
+import { ESString } from '@/utils'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
-import ModalPrepaymentTicketItem from '@/views/finance/finance-ticket/modal/ModalPrepaymentTicketItem.vue'
+import ModalTicketPaymentItem from '@/views/room/room-ticket-base/ModalTicketPaymentItem.vue'
 import { computed, onBeforeMount, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalTicketPayment from '../../room-ticket-base/ModalTicketPayment.vue'
+import ModalTicketPaymentHistory from '../../room-ticket-base/ModalTicketPaymentHistory.vue'
 import ModalTicketReturnProduct from '../../room-ticket-base/ModalTicketReturnProduct.vue'
 import ModalTicketClinicHistory from '../history/ModalTicketClinicHistory.vue'
 import TicketClinicConsumableContainer from './consumable/TicketClinicConsumableContainer.vue'
@@ -54,15 +60,14 @@ import TicketClinicProcedureContainer from './procedure/TicketClinicProcedureCon
 import TicketClinicRadiologyContainer from './radiology/TicketClinicRadiologyContainer.vue'
 import TicketClinicSummaryContainer from './summary/TicketClinicSummaryContainer.vue'
 import TicketClinicUserContainer from './user/TicketClinicUserContainer.vue'
-import ModalRefundTicketItem from '@/views/finance/finance-ticket/modal/ModalRefundTicketItem.vue'
 
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
-const modalPrepaymentTicketItem = ref<InstanceType<typeof ModalPrepaymentTicketItem>>()
-const modalRefundTicketItem = ref<InstanceType<typeof ModalRefundTicketItem>>()
+const modalTicketPaymentItem = ref<InstanceType<typeof ModalTicketPaymentItem>>()
 const modalTicketPayment = ref<InstanceType<typeof ModalTicketPayment>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
+const modalTicketPaymentHistory = ref<InstanceType<typeof ModalTicketPaymentHistory>>()
 
 const route = useRoute()
 const router = useRouter()
@@ -154,7 +159,7 @@ const startFetchData = async (ticketId?: string) => {
     await TicketUserService.refreshRelation(ticketData.ticketUserList || [])
     ticketData.refreshTreeData()
   } catch (error) {
-    console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
+    console.log('🚀 ~ TicketClinicDetailContainer.vue:160 ~ startFetchData ~ error:', error)
   }
 }
 
@@ -162,7 +167,7 @@ const handleChangeTabs = (activeKey: any) => {}
 
 const startExecuting = async () => {
   const response = await TicketActionApi.startExecuting({ ticketId: ticketRoomRef.value.id })
-  Object.assign(ticketRoomRef.value.id, response.ticket)
+  Object.assign(ticketRoomRef.value.id, response.ticketModified)
 }
 
 const startCloseTicket = async () => {
@@ -209,24 +214,52 @@ const clickCloseTicket = () => {
   //     content: 'Cần trả kết quả xét nghiệm trước khi đóng phiếu khám',
   //   })
   // }
-  if (ticketRoomRef.value.paid > ticketRoomRef.value.totalMoney) {
+  if (ticketRoomRef.value.paidAmount > ticketRoomRef.value.totalMoney) {
     return ModalStore.alert({
       title: 'Khách hàng còn thừa tiền tạm ứng',
       content: 'Cần hoàn trả tiền thừa trước khi đóng hồ sơ',
     })
   }
-  if (ticketRoomRef.value.debt > 0) {
-    return ModalStore.confirm({
-      title: 'Đóng phiếu khám khi khách hàng chưa thanh toán đủ ?',
-      content: [
-        '- Vẫn đóng phiếu khám.',
-        `- Ghi nợ khách hàng: ${formatMoney(ticketRoomRef.value?.debt || 0)}.`,
-      ],
-      okText: 'Xác nhận Đóng phiếu',
-      async onOk() {
-        await startCloseTicket()
-      },
-    })
+  if (ticketRoomRef.value.isPaymentEachItem) {
+    if (
+      ticketRoomRef.value.paidAmount + ticketRoomRef.value.debtAmount <
+      ticketRoomRef.value.totalMoney
+    ) {
+      return ModalStore.alert({
+        title: 'Khách hàng chưa thanh toán đủ',
+        content: 'Nếu vẫn muốn kết thúc phiếu, cần ghi nợ những dịch vụ chưa thanh toán',
+      })
+    }
+    if (ticketRoomRef.value.paid > 0) {
+      return ModalStore.alert({
+        title: 'Không thể đóng phiếu khi vẫn còn tiền thừa trong ví tạm',
+        content: 'Bắt buộc phải thanh toán hết tiền từ ví tạm vào các dịch vụ chưa thanh toán',
+      })
+    }
+  }
+
+  if (
+    ticketRoomRef.value.paidAmount + ticketRoomRef.value.debtAmount <
+    ticketRoomRef.value.totalMoney
+  ) {
+    if (ticketRoomRef.value.isPaymentEachItem) {
+      return ModalStore.alert({
+        title: 'Khách hàng chưa thanh toán đủ',
+        content: 'Nếu vẫn muốn kết thúc phiếu, cần ghi nợ những dịch vụ chưa thanh toán',
+      })
+    } else {
+      return ModalStore.confirm({
+        title: 'Đóng phiếu khám khi khách hàng chưa thanh toán đủ ?',
+        content: [
+          '- Vẫn đóng phiếu khám.',
+          `- Ghi nợ khách hàng: ${formatMoney(ticketRoomRef.value.totalMoney - ticketRoomRef.value.paidAmount)}.`,
+        ],
+        okText: 'Xác nhận Đóng phiếu',
+        async onOk() {
+          await startCloseTicket()
+        },
+      })
+    }
   }
 
   startCloseTicket()
@@ -319,14 +352,7 @@ const startReopenVisit = async () => {
 const clickReopenTicket = () => {
   ModalStore.confirm({
     title: 'Bạn có chắc chắn mở lại hồ sơ của phiếu khám này ?',
-    content: [
-      ...(ticketRoomRef.value.debt > 0
-        ? [
-            `- Số tiền nợ sẽ được hoàn trả, khi đóng hồ sơ lại sẽ ghi nợ trở lại`,
-            `- Trừ nợ khách hàng: ${formatMoney(ticketRoomRef.value.debt)}`,
-          ]
-        : ['- Hồ sơ này sẽ quay lại trạng thái: "Đang điều trị"']),
-    ],
+    content: ['- Hồ sơ này sẽ quay lại trạng thái: "Đang điều trị"'],
     async onOk() {
       await startReopenVisit()
     },
@@ -368,7 +394,7 @@ const clickDestroyTicket = () => {
     })
   }
 
-  if (ticketRoomRef.value.paid > 0) {
+  if (ticketRoomRef.value.paidAmount > 0) {
     return ModalStore.alert({
       title: 'Khách hàng còn tiền tạm ứng',
       content: 'Cần HOÀN TRẢ tất cả tiền đã thanh toán trước khi HỦY phiếu khám',
@@ -407,7 +433,24 @@ const clickRefundTicketItem = () => {
       content: 'Cần mở lại hồ sơ trước khi hoàn trả tiền',
     })
   } else {
-    modalRefundTicketItem.value?.openModalByTicket(ticketRoomRef.value)
+    modalTicketPaymentItem.value?.openModalByTicket({
+      ticket: ticketRoomRef.value,
+      paymentActionType: PaymentActionType.RefundMoney,
+    })
+  }
+}
+
+const clickDebitTicketItem = () => {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+    return ModalStore.alert({
+      title: 'Trạng thái hồ sơ không hợp lệ ?',
+      content: 'Cần mở lại hồ sơ trước khi thanh toán',
+    })
+  } else {
+    modalTicketPaymentItem.value?.openModalByTicket({
+      ticket: ticketRoomRef.value,
+      paymentActionType: PaymentActionType.Debit,
+    })
   }
 }
 
@@ -426,13 +469,16 @@ const clickReturnProduct = () => {
 <template>
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalTicketClinicDetailSetting ref="modalTicketClinicDetailSetting" />
-  <ModalPrepaymentTicketItem ref="modalPrepaymentTicketItem" />
-  <ModalRefundTicketItem ref="modalRefundTicketItem" />
+  <ModalTicketPaymentItem ref="modalTicketPaymentItem" />
   <ModalTicketPayment ref="modalTicketPayment" />
+  <ModalTicketPaymentHistory ref="modalTicketPaymentHistory" />
   <ModalTicketReturnProduct ref="modalTicketReturnProduct" />
   <ModalTicketClinicHistory ref="modalTicketClinicHistory" />
-  <div class="mx-4 mt-4 gap-4 flex flex-wrap items-center justify-between">
-    <div class="flex flex-wrap items-center gap-4">
+  <div
+    class="mx-4 p-4 mt-4 gap-4 flex flex-wrap items-center justify-between"
+    style="background-color: white"
+  >
+    <div class="">
       <div class="flex items-center gap-2 text-xl font-medium">
         <IconContacts />
         <span>
@@ -450,19 +496,61 @@ const clickReturnProduct = () => {
           Lịch sử khám
         </VueButton>
       </div>
-      <div class="flex items-center gap-2 flex-wrap"></div>
+      <div class="flex items-center gap-2 flex-wrap" style="font-size: 0.9em; color: #555">
+        <span>
+          {{ ESString.formatAddress(ticketRoomRef.customer!) }}
+        </span>
+        <span v-if="ticketRoomRef.customer?.getAge">
+          {{ ticketRoomRef.customer?.getAge + ' Tuổi' }}
+        </span>
+        <div v-if="ticketRoomRef.customer?.phone" class="flex gap-2">
+          <span>SĐT:</span>
+          <a :href="'tel:' + ticketRoomRef.customer?.phone">
+            {{ ESString.formatPhone(ticketRoomRef.customer?.phone) }}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="!settingStore.TICKET_CLINIC_DETAIL.other.hideMoneyTitle"
+      class="ml-auto mx-8 flex flex-wrap items-center gap-8"
+    >
+      <div v-if="ticketRoomRef.isPaymentEachItem && ticketRoomRef.paid" style="text-align: right">
+        <div style="font-weight: bold; color: #555">Ví (tiền chờ)</div>
+        <div style="font-weight: bold; font-size: 1.2em; color: violet">
+          {{ formatMoney(ticketRoomRef.paid) }}
+        </div>
+      </div>
+      <div
+        style="text-align: right; cursor: pointer"
+        @click="modalTicketPaymentHistory?.openModal({ ticket: ticketRoomRef, refetch: true })"
+        class="hover:opacity-70"
+      >
+        <div style="font-weight: bold; color: #555">Đã thanh toán</div>
+        <div
+          style="font-weight: bold; font-size: 1.2em; color: var(--text-green)"
+          class="flex items-center gap-1"
+        >
+          <IconExclamationCircle width="14" height="14" />
+          {{ formatMoney(ticketRoomRef.paidAmount) }}
+        </div>
+      </div>
+      <div v-if="ticketRoomRef.debtAmount" style="text-align: right">
+        <div style="font-weight: bold; color: #555">Ghi nợ</div>
+        <div style="font-weight: bold; font-size: 1.2em; color: var(--text-red)">
+          {{ formatMoney(ticketRoomRef.debtAmount) }}
+        </div>
+      </div>
+      <div style="text-align: right">
+        <div style="font-weight: bold; color: #555">Tổng tiền</div>
+        <div style="font-weight: bold; font-size: 1.2em; color: var(--text-green)">
+          {{ formatMoney(ticketRoomRef.totalMoney) }}
+        </div>
+      </div>
     </div>
 
     <div class="mr-2 flex flex-wrap items-center gap-4">
-      <div>
-        <span>{{ formatMoney(ticketRoomRef.paid) }}</span>
-        /
-        <span>{{ formatMoney(ticketRoomRef.totalMoney) }}</span>
-      </div>
-      <div v-if="CONFIG.MODE === 'development'" style="color: violet">
-        Cost {{ formatMoney(ticketRoomRef.itemsCostAmount) }} - Commission
-        {{ formatMoney(ticketRoomRef.commissionMoney) }}
-      </div>
       <VueButton
         v-if="
           [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Deposited].includes(
@@ -482,8 +570,14 @@ const clickReturnProduct = () => {
       <VueButton
         v-if="ticketRoomRef.isPaymentEachItem"
         color="red"
+        size="default"
         icon="dollar"
-        @click="modalPrepaymentTicketItem?.openModalByTicket(ticketRoomRef)"
+        @click="
+          modalTicketPaymentItem?.openModalByTicket({
+            ticket: ticketRoomRef,
+            paymentActionType: PaymentActionType.PaymentMoney,
+          })
+        "
       >
         <span class="font-bold">THANH TOÁN</span>
       </VueButton>
@@ -499,6 +593,7 @@ const clickReturnProduct = () => {
         "
         color="green"
         icon="dollar"
+        size="default"
         @click="
           modalTicketPayment?.openModal({
             ticket: ticketRoomRef,
@@ -514,6 +609,7 @@ const clickReturnProduct = () => {
         "
         color="green"
         icon="dollar"
+        size="default"
         @click="
           modalTicketPayment?.openModal({
             ticket: ticketRoomRef,
@@ -522,22 +618,6 @@ const clickReturnProduct = () => {
         "
       >
         <span class="font-bold">TRẢ NỢ</span>
-      </VueButton>
-      <VueButton
-        v-if="
-          !ticketRoomRef.isPaymentEachItem &&
-          [TicketStatus.Completed, TicketStatus.Cancelled].includes(ticketRoomRef.status)
-        "
-        color="green"
-        icon="dollar"
-        @click="
-          modalTicketPayment?.openModal({
-            ticket: ticketRoomRef,
-            paymentView: PaymentViewType.Success,
-          })
-        "
-      >
-        <span class="font-bold">THANH TOÁN</span>
       </VueButton>
       <VueButton
         v-if="
@@ -550,23 +630,24 @@ const clickReturnProduct = () => {
         :disabled="disableSendProduct"
         :loading="sendProductLoading"
         icon="send"
+        size="default"
         @click="startSendProduct"
       >
         <span v-if="ticketRoomRef.deliveryStatus === DeliveryStatus.Pending" class="font-bold">
-          XUẤT THUỐC - VẬT TƯ
+          XUẤT HÀNG
         </span>
         <span
           v-else-if="ticketRoomRef.deliveryStatus === DeliveryStatus.Delivered"
           class="font-bold"
         >
-          ĐÃ XUẤT THUỐC - VẬT TƯ
+          ĐÃ XUẤT HÀNG
         </span>
       </VueButton>
       <VueButton
         v-if="userPermission[PermissionId.TICKET_CLOSE]"
         color="blue"
-        size="default"
         icon="save"
+        size="default"
         style="margin-left: -4px; margin-right: -4px"
         :disabled="![TicketStatus.Executing].includes(ticketRoomRef.status)"
         @click="clickCloseTicket"
@@ -607,6 +688,19 @@ const clickReturnProduct = () => {
             <span class="text-red-500 font-bold">HOÀN TIỀN</span>
           </a>
           <a
+            @click="clickDebitTicketItem"
+            v-if="
+              ticketRoomRef.isPaymentEachItem &&
+              [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketRoomRef.status) &&
+              userPermission[PermissionId.TICKET_PAYMENT_MONEY]
+            "
+          >
+            <span class="text-red-500">
+              <IconDollar />
+            </span>
+            <span class="text-red-500 font-bold">GHI NỢ</span>
+          </a>
+          <a
             @click="clickReturnProduct"
             v-if="userPermission[PermissionId.TICKET_CHANGE_PRODUCT_RETURN_PRODUCT]"
           >
@@ -635,6 +729,14 @@ const clickReturnProduct = () => {
           </a>
         </div>
       </VueDropdown>
+      <VueTooltip v-if="CONFIG.MODE === 'development'" style="color: violet">
+        <template #trigger>
+          <IconBug width="1.4em" height="1.4em" />
+        </template>
+        <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+          <pre>{{ JSON.stringify(ticketRoomRef, null, 4) }}</pre>
+        </div>
+      </VueTooltip>
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.4rem; cursor: pointer">

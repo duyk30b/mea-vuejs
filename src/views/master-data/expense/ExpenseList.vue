@@ -156,7 +156,7 @@ const handleModalExpenseUpsertSuccess = async (
             <td class="text-center">{{ expense.code }}</td>
             <td>{{ expense.name }}</td>
             <td
-              v-if="userPermission[PermissionId.MASTER_DATA_PAYMENT_METHOD]"
+              v-if="userPermission[PermissionId.MASTER_DATA_WALLET]"
               class="text-center"
               style="width: 100px"
             >

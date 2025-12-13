@@ -351,12 +351,12 @@ const changeLimit = async (limitSelect: any) => {
               </div>
             </td>
             <td class="text-right">
-              {{ formatMoney(ticket.paid) }}
+              {{ formatMoney(ticket.paidAmount) }}
             </td>
             <td class="text-right">
               <div>{{ formatMoney(ticket.totalMoney) }}</div>
-              <div v-if="ticket.status === TicketStatus.Debt" class="text-xs">
-                Nợ: {{ formatMoney(ticket.debt) }}
+              <div v-if="ticket.debtAmount" class="text-xs">
+                Nợ: {{ formatMoney(ticket.debtAmount) }}
               </div>
             </td>
           </tr>

@@ -1,7 +1,6 @@
 import { Customer } from '../customer/customer.model'
 import { Distributor } from '../distributor'
 import { LaboratoryService } from '../laboratory'
-import { PaymentMethod } from '../payment-method'
 import { PaymentTicketItem, TicketItemType } from '../payment-ticket-item'
 import { ProcedureService } from '../procedure'
 import { ProductService } from '../product'
@@ -10,6 +9,7 @@ import type { PurchaseOrder } from '../purchase-order'
 import type { Ticket } from '../ticket'
 import { User, UserService } from '../user'
 import { RegimenService } from '../regimen'
+import { Wallet } from '../wallet/wallet.model'
 
 export enum PaymentPersonType {
   Other = 0,
@@ -26,25 +26,25 @@ export enum PaymentVoucherType {
 
 export enum PaymentActionType {
   Other = 0, // Tạm ứng
-  PrepaymentMoney = 1, // Tạm ứng
-  RefundMoney = 2, // Hoàn trả tiền
-  PayDebt = 3, // Trả nợ
-  Close = 4, // Đóng phiếu, thường chỉ có thể ghi nợ khi đóng phiếu
-  Reopen = 5, // Mở lại phiếu, thường thì chỉ có thể là hoàn trả nợ
-  PrepaymentForTicketItemList = 6,
-  RefundForTicketItemList = 7,
+  PaymentMoney = 1, // Thanh toán
+  RefundMoney = 2, // Hoàn tiền
+  Debit = 3, // Ghi nợ
+  CancelDebt = 4, // Hủy nợ
+  PayDebt = 5, // Trả nợ
+  Close = 6, // Đóng phiếu
+  Terminal = 7, // Hủy phiếu
   FixByExcel = 8,
 }
 
 export const PaymentActionTypeText = {
   [PaymentActionType.Other]: 'Khác',
-  [PaymentActionType.PrepaymentMoney]: 'Tạm ứng',
+  [PaymentActionType.PaymentMoney]: 'Thanh toán',
   [PaymentActionType.RefundMoney]: 'Hoàn tiền',
+  [PaymentActionType.Debit]: 'Ghi nợ',
+  [PaymentActionType.CancelDebt]: 'Hủy nợ',
   [PaymentActionType.PayDebt]: 'Trả nợ',
-  [PaymentActionType.Close]: 'Đóng phiếu và ghi nợ',
-  [PaymentActionType.Reopen]: 'Mở phiếu và hoàn nợ',
-  [PaymentActionType.PrepaymentForTicketItemList]: 'Thanh toán',
-  [PaymentActionType.RefundForTicketItemList]: 'Hoàn tiền',
+  [PaymentActionType.Close]: 'Đóng phiếu',
+  [PaymentActionType.Terminal]: 'Hủy phiếu',
   [PaymentActionType.FixByExcel]: 'Cập nhật bởi Excel',
 }
 
@@ -61,17 +61,21 @@ export class Payment {
   personType: PaymentPersonType
   personId: number
 
-  paymentMethodId: number
+  walletId: string
   createdAt: number
   moneyDirection: MoneyDirection
   paymentActionType: PaymentActionType
   cashierId: number
   note: string // Ghi chú
 
-  paidAmount: number
-  debtAmount: number
-  openDebt: number
-  closeDebt: number
+  paid: number
+  paidItem: number
+  debt: number
+  debtItem: number
+  personOpenDebt: number
+  personCloseDebt: number
+  walletOpenMoney: number
+  walletCloseMoney: number
 
   ticket: Ticket
   purchaseOrder: PurchaseOrder
@@ -81,7 +85,7 @@ export class Payment {
   cashier: User
 
   paymentTicketItemList: PaymentTicketItem[]
-  paymentMethod: PaymentMethod
+  wallet: Wallet
 
   static init(): Payment {
     const ins = new Payment()
@@ -91,14 +95,18 @@ export class Payment {
     ins.personType = PaymentPersonType.Other
     ins.personId = 0
 
-    ins.paymentMethodId = 0
+    ins.walletId = ''
     ins.cashierId = 0
     ins.note = ''
 
-    ins.paidAmount = 0
-    ins.debtAmount = 0
-    ins.openDebt = 0
-    ins.closeDebt = 0
+    ins.paid = 0
+    ins.debt = 0
+    ins.paidItem = 0
+    ins.debtItem = 0
+    ins.personOpenDebt = 0
+    ins.personCloseDebt = 0
+    ins.walletOpenMoney = 0
+    ins.walletCloseMoney = 0
 
     ins.paymentTicketItemList = []
     return ins
@@ -139,10 +147,8 @@ export class Payment {
     if (Object.prototype.hasOwnProperty.call(source, 'cashier')) {
       target.cashier = source.cashier ? User.basic(source.cashier) : source.cashier
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'paymentMethod')) {
-      target.paymentMethod = source.paymentMethod
-        ? PaymentMethod.basic(source.paymentMethod)
-        : source.paymentMethod
+    if (Object.prototype.hasOwnProperty.call(source, 'wallet')) {
+      target.wallet = source.wallet ? Wallet.basic(source.wallet) : source.wallet
     }
     if (source.paymentTicketItemList) {
       target.paymentTicketItemList = PaymentTicketItem.basicList(source.paymentTicketItemList)
@@ -158,12 +164,7 @@ export class Payment {
     if (payment.voucherType !== PaymentVoucherType.Ticket) {
       return payment
     }
-    if (
-      ![
-        PaymentActionType.PrepaymentForTicketItemList,
-        PaymentActionType.RefundForTicketItemList,
-      ].includes(payment.paymentActionType)
-    ) {
+    if (!payment.paidItem && !payment.debtItem) {
       return payment
     }
     const productIdList = payment.paymentTicketItemList

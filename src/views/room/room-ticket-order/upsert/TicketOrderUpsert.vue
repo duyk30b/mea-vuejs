@@ -33,6 +33,7 @@ import {
   ticketOrderUpsertRef,
 } from './ticket-order-upsert.ref'
 import { TicketOrderApi } from '@/modules/ticket/api/ticket-order.api'
+import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
 
 const TABS_KEY = {
   PRODUCT: 'PRODUCT',
@@ -61,6 +62,7 @@ if (![TABS_KEY.PRODUCT, TABS_KEY.PROCEDURE].includes(defaultTabStart)) {
 const tabStart = ref(defaultTabStart as any)
 
 const mode = ref<ETicketOrderUpsertMode>(ETicketOrderUpsertMode.CREATE)
+const walletId = ref('')
 
 const oldTicket = ref<Ticket>(Ticket.blank())
 const customer = ref<Customer>(Customer.blank())
@@ -88,6 +90,7 @@ onMounted(async () => {
           ticketExpenseList: true,
         },
       })
+      await ticketResponse.refreshAllData()
 
       ticketOrderUpsertRef.value = ticketResponse
       oldTicket.value = Ticket.from(ticketResponse)
@@ -247,8 +250,7 @@ const saveInvoice = async (type: ETicketOrderSave) => {
 
     switch (type) {
       case ETicketOrderSave.CREATE_DRAFT: {
-        const ticketResponse = await TicketOrderApi.draftUpsert({
-          ticketId: '',
+        const ticketResponse = await TicketOrderApi.draftInsert({
           ticket: ticketOrderUpsertRef.value,
         })
         router.push({
@@ -258,7 +260,7 @@ const saveInvoice = async (type: ETicketOrderSave) => {
         break
       }
       case ETicketOrderSave.UPDATE_DRAFT: {
-        const ticketResponse = await TicketOrderApi.draftUpsert({
+        const ticketResponse = await TicketOrderApi.draftUpdate({
           ticketId: ticketOrderUpsertRef.value.id,
           ticket: ticketOrderUpsertRef.value,
         })
@@ -282,6 +284,7 @@ const saveInvoice = async (type: ETicketOrderSave) => {
       case ETicketOrderSave.CREATE_DEBT_SUCCESS: {
         await TicketOrderApi.debtSuccessCreate({
           ticket: ticketOrderUpsertRef.value,
+          walletId: walletId.value,
         })
         ticketOrderUpsertRef.value = Ticket.blank()
 
@@ -304,23 +307,23 @@ const saveInvoice = async (type: ETicketOrderSave) => {
           title: 'Bạn có chắc chắn cập nhật hóa đơn này',
           content: [
             '- Nếu có thay đổi hàng hóa, kho hàng sẽ nhập lại hàng cũ và xuất hàng mới',
-            ...(ticketOrderUpsertRef.value.paid != oldTicket.value.paid
+            ...(ticketOrderUpsertRef.value.paidAmount != oldTicket.value.paidAmount
               ? [
                   `- Số tiền thanh toán thay đổi: ${formatMoney(
-                    oldTicket.value.paid,
-                  )} --> ${formatMoney(ticketOrderUpsertRef.value.paid)}`,
+                    oldTicket.value.paidAmount,
+                  )} --> ${formatMoney(ticketOrderUpsertRef.value.paidAmount)}`,
                 ]
               : []),
-            ...(ticketOrderUpsertRef.value.paid > oldTicket.value.paid
+            ...(ticketOrderUpsertRef.value.paidAmount > oldTicket.value.paidAmount
               ? [
                   `- Khách hàng cần thanh toán thêm: ${formatMoney(
-                    ticketOrderUpsertRef.value.paid - oldTicket.value.paid,
+                    ticketOrderUpsertRef.value.paidAmount - oldTicket.value.paidAmount,
                   )}`,
                 ]
               : []),
-            ...(ticketOrderUpsertRef.value.paid < oldTicket.value.paid
+            ...(ticketOrderUpsertRef.value.paidAmount < oldTicket.value.paidAmount
               ? [
-                  `- Trả lại khách hàng: ${formatMoney(oldTicket.value.paid - ticketOrderUpsertRef.value.paid)}`,
+                  `- Trả lại khách hàng: ${formatMoney(oldTicket.value.paidAmount - ticketOrderUpsertRef.value.paidAmount)}`,
                 ]
               : []),
             ...(ticketOrderUpsertRef.value.debt != oldTicket.value.debt
@@ -345,6 +348,7 @@ const saveInvoice = async (type: ETicketOrderSave) => {
             const res = await TicketOrderApi.debtSuccessUpdate({
               ticketId: ticketOrderUpsertRef.value.id,
               ticket: ticketOrderUpsertRef.value,
+              walletId: walletId.value,
             })
             router.push({
               name: 'TicketOrderDetailContainer',
@@ -578,22 +582,51 @@ const handleChangeTabs = (activeKey: any) => {
                     {{ formatMoney(ticketOrderUpsertRef.totalMoney) }}
                   </td>
                 </tr>
-                <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.paid">
+                <tr
+                  v-if="
+                    settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.paid ||
+                    [TicketStatus.Debt, TicketStatus.Completed].includes(
+                      ticketOrderUpsertRef.status,
+                    )
+                  "
+                >
+                  <td style="white-space: nowrap; padding-right: 10px">PT thanh toán</td>
+                  <td>
+                    <InputSelectWallet v-model:walletId="walletId" autoSelectFirstValue />
+                  </td>
+                </tr>
+                <tr
+                  v-if="
+                    settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.paid ||
+                    [TicketStatus.Debt, TicketStatus.Completed].includes(
+                      ticketOrderUpsertRef.status,
+                    )
+                  "
+                >
                   <td style="white-space: nowrap; padding-right: 10px">Thanh toán</td>
                   <td>
                     <InputMoney
                       v-model:value="ticketOrderUpsertRef.paid"
+                      textAlign="right"
                       class="input-payment"
                       style="width: 100%"
                     />
                   </td>
                 </tr>
-                <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.debt">
+                <tr
+                  v-if="
+                    settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.debt ||
+                    [TicketStatus.Debt, TicketStatus.Completed].includes(
+                      ticketOrderUpsertRef.status,
+                    )
+                  "
+                >
                   <td style="white-space: nowrap; padding-right: 10px">Ghi nợ</td>
                   <td>
                     <InputMoney
                       :value="ticketOrderUpsertRef.totalMoney - ticketOrderUpsertRef.paid"
                       class="input-payment"
+                      textAlign="right"
                       style="width: 100%"
                       @update:value="
                         (v) => (ticketOrderUpsertRef.paid = ticketOrderUpsertRef.totalMoney - v)
@@ -620,15 +653,15 @@ const handleChangeTabs = (activeKey: any) => {
                   <td></td>
                 </tr>
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.profit">
-                  <td class="font-bold whitespace-nowrap">Tổng vốn</td>
+                  <td class="font-bold whitespace-nowrap">Dự kiến vốn</td>
                   <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px">
-                    {{ formatMoney(ticketOrderUpsertRef.itemsCostAmount) }}
+                    {{ formatMoney(ticketOrderUpsertRef.itemsCostAmountExpected) }}
                   </td>
                 </tr>
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.profit">
                   <td class="whitespace-nowrap">Dự kiến lãi</td>
                   <td class="text-right" style="padding-right: 11px; font-size: 16px">
-                    {{ formatMoney(ticketOrderUpsertRef.profit) }}
+                    {{ formatMoney(ticketOrderUpsertRef.profitExpected) }}
                   </td>
                 </tr>
                 <tr>

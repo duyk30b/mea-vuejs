@@ -58,12 +58,12 @@ defineExpose({ openModal })
       </div>
 
       <div class="p-4">
-        <div class="flex justify-between">
-          <div class="flex flex-col items-center">
+        <div class="flex justify-between flex-wrap">
+          <div class="flex flex-col items-center" style="flex-grow: 1">
             <div>{{ organization.name }}</div>
-            <div>{{ organization.phone }}</div>
+            <div style="font-weight: bold">{{ ESString.formatPhone(organization.phone) }}</div>
           </div>
-          <div class="flex flex-col items-center">
+          <div class="flex flex-col items-center" style="flex-grow: 1">
             <div>Mã KH: C{{ ticket.customerId }}</div>
             <div>Mã HĐ: VS{{ ticket.id }}</div>
           </div>
@@ -135,6 +135,7 @@ defineExpose({ openModal })
                     <div
                       v-if="settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.substance"
                       style="font-size: 0.8rem"
+                      class="max-line-2"
                     >
                       {{ ticketProduct.product!.substance }}
                     </div>
@@ -219,13 +220,13 @@ defineExpose({ openModal })
               <tr v-if="settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.paid">
                 <td :colspan="colspan" style="text-align: right">Đã thanh toán</td>
                 <td :colspan="2" style="text-align: right">
-                  {{ formatMoney(ticket.paid) }}
+                  {{ formatMoney(ticket.paidAmount) }}
                 </td>
               </tr>
               <tr v-if="settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.debt">
                 <td :colspan="colspan" style="text-align: right">Nợ</td>
                 <td :colspan="2" style="text-align: right">
-                  {{ formatMoney(ticket.debt) }}
+                  {{ formatMoney(ticket.debtAmount) }}
                 </td>
               </tr>
             </tbody>

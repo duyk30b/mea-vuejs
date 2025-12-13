@@ -78,10 +78,10 @@ const startFetchData = async (options?: { refetch?: boolean }) => {
     )
     procedureList.value = response.data
     total.value = response.meta.total
-
-    dataLoading.value = false
   } catch (error) {
     console.log('🚀 ~ file: ProcedureList.vue:73 ~ error:', error)
+  } finally {
+    dataLoading.value = false
   }
 }
 

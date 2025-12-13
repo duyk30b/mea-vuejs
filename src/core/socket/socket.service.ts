@@ -1,9 +1,11 @@
 import { Batch } from '@/modules/batch'
-import { Discount, DiscountService } from '@/modules/discount'
+import { DiscountService } from '@/modules/discount'
 import { ExpenseService } from '@/modules/expense'
-import { Laboratory, LaboratoryService } from '@/modules/laboratory'
-import { Procedure, ProcedureService } from '@/modules/procedure'
-import { Radiology, RadiologyService } from '@/modules/radiology'
+import { LaboratoryService } from '@/modules/laboratory'
+import { LaboratoryGroupService } from '@/modules/laboratory-group'
+import { ProcedureService } from '@/modules/procedure'
+import { RadiologyService } from '@/modules/radiology'
+import { RadiologyGroupService } from '@/modules/radiology-group'
 import { RegimenService } from '@/modules/regimen'
 import { RoomService } from '@/modules/room'
 import {
@@ -13,18 +15,17 @@ import {
   ticketRoomRef,
 } from '@/modules/room/room.ref'
 import { SurchargeService } from '@/modules/surcharge'
+import { WalletService } from '@/modules/wallet'
 import { MeService } from '../../modules/_me/me.service'
 import { Customer } from '../../modules/customer'
-import { Distributor, DistributorService } from '../../modules/distributor'
+import { DistributorService } from '../../modules/distributor'
 import { Organization } from '../../modules/organization'
-import { Position, PositionService } from '../../modules/position'
+import { PositionService } from '../../modules/position'
 import { Product } from '../../modules/product'
 import { Ticket } from '../../modules/ticket'
 import { BatchDB } from '../indexed-db/repository/batch.repository'
 import { CustomerDB } from '../indexed-db/repository/customer.repository'
 import { ProductDB } from '../indexed-db/repository/product.repository'
-import { LaboratoryGroupService } from '@/modules/laboratory-group'
-import { RadiologyGroupService } from '@/modules/radiology-group'
 
 export class SocketService {
   static listenServerEmitDemo(data: any) {
@@ -54,6 +55,7 @@ export class SocketService {
     discount?: boolean
     surcharge?: boolean
     expense?: boolean
+    wallet?: boolean
   }) {
     if (data.distributor) DistributorService.loadedAll = false
     if (data.procedure) ProcedureService.loadedAll = false
@@ -66,6 +68,7 @@ export class SocketService {
     if (data.discount) DiscountService.loadedAll = false
     if (data.surcharge) SurchargeService.loadedAll = false
     if (data.expense) ExpenseService.loadedAll = false
+    if (data.wallet) WalletService.loadedAll = false
   }
 
   static async listenCustomerUpsert(data: { customer: any }) {
@@ -80,6 +83,8 @@ export class SocketService {
   static async listenProductListChange(data: {
     productDestroyedList?: Product[]
     productUpsertedList?: Product[]
+    batchDestroyedList?: any[]
+    batchUpsertedList?: any[]
   }) {
     if (data.productUpsertedList?.length) {
       const productUpsertedList = Product.fromList(data.productUpsertedList)
@@ -89,12 +94,6 @@ export class SocketService {
       const productIdDestroyList = data.productDestroyedList.map((i) => i.id)
       await ProductDB.deleteMany(productIdDestroyList)
     }
-  }
-
-  static async listenBatchListChange(data: {
-    batchDestroyedList?: any[]
-    batchUpsertedList?: any[]
-  }) {
     if (data.batchUpsertedList?.length) {
       const batchUpsertedList = Batch.fromList(data.batchUpsertedList)
       await BatchDB.upsertMany(batchUpsertedList)

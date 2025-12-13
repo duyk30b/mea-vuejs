@@ -7,8 +7,8 @@ import VueModal from '@/common/vue-modal/VueModal.vue'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { PaymentViewType } from '@/modules/enum'
-import { PaymentVoucherType } from '@/modules/payment'
-import { PaymentMethodService } from '@/modules/payment-method'
+import { PaymentActionType, PaymentVoucherType } from '@/modules/payment'
+import { WalletService } from '@/modules/wallet'
 import { PaymentApi } from '@/modules/payment/payment.api'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { Ticket, TicketMoneyApi, TicketStatus } from '@/modules/ticket'
@@ -29,14 +29,14 @@ const paymentView = ref(PaymentViewType.Success)
 const ticketClone = ref(Ticket.blank())
 
 const money = ref(0)
-const paymentMethodId = ref<number>(0)
+const walletId = ref<string>('')
 const note = ref('')
-const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
+const walletOptions = ref<{ value: any; label: string }[]>([])
 
 onMounted(async () => {
-  const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
-  paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
-  paymentMethodId.value = paymentMethodAll[0]?.id || 0
+  const walletAll = await WalletService.list({ sort: { code: 'ASC' } })
+  walletOptions.value = walletAll.map((i) => ({ value: i.id, label: i.name }))
+  walletId.value = walletAll[0]?.id || ''
 })
 
 const openModal = async (options: { ticket: Ticket; paymentView: PaymentViewType }) => {
@@ -63,18 +63,21 @@ const closeModal = () => {
   showModal.value = false
   money.value = 0
   note.value = ''
-  paymentMethodId.value = 0
+  walletId.value = ''
 }
 
 const startPrepayment = async () => {
   paymentLoading.value = true
   try {
-    const result = await TicketMoneyApi.prepaymentMoney({
+    const result = await TicketMoneyApi.paymentMoney({
       ticketId: ticketClone.value.id,
       body: {
-        customerId: ticketClone.value.customerId,
-        paymentMethodId: paymentMethodId.value,
-        paidAmount: money.value,
+        walletId: walletId.value,
+        paymentActionType: PaymentActionType.PaymentMoney,
+        paidAdd: money.value,
+        paidItemAdd: 0,
+        debtAdd: 0,
+        debtItemAdd: 0,
         note: '',
       },
     })
@@ -88,17 +91,20 @@ const startPrepayment = async () => {
 }
 
 const startRefundOverpaid = async () => {
-  if (ticketClone.value.paid < money.value) {
+  if (ticketClone.value.paidAmount < money.value) {
     return AlertStore.addError('Số tiền hoàn trả không hợp lệ')
   }
   paymentLoading.value = true
   try {
-    const result = await TicketMoneyApi.refundMoney({
+    const result = await TicketMoneyApi.paymentMoney({
       ticketId: ticketClone.value.id,
       body: {
-        customerId: ticketClone.value.customerId,
-        paymentMethodId: paymentMethodId.value,
-        refundAmount: money.value,
+        walletId: walletId.value,
+        paymentActionType: PaymentActionType.RefundMoney,
+        paidAdd: -money.value,
+        paidItemAdd: 0,
+        debtAdd: 0,
+        debtItemAdd: 0,
         note: '',
       },
     })
@@ -114,17 +120,17 @@ const startRefundOverpaid = async () => {
 const startPayDebt = async () => {
   paymentLoading.value = true
   try {
-    const result = await TicketMoneyApi.payDebt({
-      customerId: ticketClone.value.customerId,
-      paymentMethodId: paymentMethodId.value,
-      paidAmount: money.value,
-      note: '',
-      dataList: [
-        {
-          paidAmount: money.value,
-          ticketId: ticketClone.value.id,
-        },
-      ],
+    const result = await TicketMoneyApi.paymentMoney({
+      ticketId: ticketClone.value.id,
+      body: {
+        walletId: walletId.value,
+        paymentActionType: PaymentActionType.PayDebt,
+        paidAdd: money.value,
+        paidItemAdd: 0,
+        debtAdd: -money.value,
+        debtItemAdd: 0,
+        note: '',
+      },
     })
     emit('success')
     closeModal()
@@ -165,7 +171,7 @@ defineExpose({ openModal })
             <div>
               <div>Phương thức thanh toán</div>
               <div>
-                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+                <InputSelect v-model:value="walletId" :options="walletOptions" />
               </div>
             </div>
             <div class="mt-4">
@@ -185,7 +191,12 @@ defineExpose({ openModal })
                   <VueButton
                     color="default"
                     type="button"
-                    @click="money = ticketClone.debt > 0 ? ticketClone.debt : 0"
+                    @click="
+                      money =
+                        ticketClone.totalMoney > ticketClone.paidAmount
+                          ? ticketClone.totalMoney - ticketClone.paidAmount
+                          : 0
+                    "
                   >
                     Tất cả
                   </VueButton>
@@ -199,11 +210,11 @@ defineExpose({ openModal })
               </div>
             </div>
             <div class="mt-4">
-              <div v-if="ticketClone.totalMoney >= ticketClone.paid + money">Còn thiếu</div>
+              <div v-if="ticketClone.totalMoney >= ticketClone.paidAmount + money">Còn thiếu</div>
               <div v-else>Còn thừa</div>
               <div>
                 <InputMoney
-                  :value="Math.abs(ticketClone.totalMoney - (ticketClone.paid + money))"
+                  :value="Math.abs(ticketClone.totalMoney - (ticketClone.paidAmount + money))"
                   disabled
                   textAlign="right"
                 />
@@ -245,7 +256,7 @@ defineExpose({ openModal })
             <div>
               <div>Phương thức hoàn trả</div>
               <div>
-                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+                <InputSelect v-model:value="walletId" :options="walletOptions" />
               </div>
             </div>
             <div class="mt-4">
@@ -267,9 +278,9 @@ defineExpose({ openModal })
                     type="button"
                     @click="
                       money =
-                        ticketClone.paid > ticketClone.totalMoney
-                          ? ticketClone.paid - ticketClone.totalMoney
-                          : ticketClone.paid
+                        ticketClone.paidAmount > ticketClone.totalMoney
+                          ? ticketClone.paidAmount - ticketClone.totalMoney
+                          : ticketClone.paidAmount
                     "
                   >
                     Tất cả
@@ -284,11 +295,11 @@ defineExpose({ openModal })
               </div>
             </div>
             <div class="mt-4">
-              <div v-if="ticketClone.totalMoney >= ticketClone.paid - money">Còn thiếu</div>
+              <div v-if="ticketClone.totalMoney >= ticketClone.paidAmount - money">Còn thiếu</div>
               <div v-else>Còn thừa</div>
               <div>
                 <InputMoney
-                  :value="Math.abs(ticketClone.totalMoney - (ticketClone.paid - money))"
+                  :value="Math.abs(ticketClone.totalMoney - (ticketClone.paidAmount - money))"
                   disabled
                   textAlign="right"
                 />
@@ -325,7 +336,7 @@ defineExpose({ openModal })
             <div>
               <div>Phương thức thanh toán</div>
               <div>
-                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+                <InputSelect v-model:value="walletId" :options="walletOptions" />
               </div>
             </div>
             <div class="mt-4">
@@ -342,14 +353,14 @@ defineExpose({ openModal })
               </div>
               <div>
                 <div class="flex">
-                  <VueButton color="default" type="button" @click="money = ticketClone.debt">
+                  <VueButton color="default" type="button" @click="money = ticketClone.debtAmount">
                     Tất cả
                   </VueButton>
                   <InputMoney
                     ref="inputMoneyPayment"
                     v-model:value="money"
                     text-align="right"
-                    :validate="{ gt: 0, lte: ticketClone.debt }"
+                    :validate="{ gt: 0, lte: ticketClone.debtAmount }"
                   />
                 </div>
               </div>
@@ -357,7 +368,7 @@ defineExpose({ openModal })
             <div class="mt-4">
               <div>Nợ còn</div>
               <div>
-                <InputMoney :value="ticketClone.debt - money" disabled textAlign="right" />
+                <InputMoney :value="ticketClone.debtAmount - money" disabled textAlign="right" />
               </div>
             </div>
           </div>
@@ -374,8 +385,8 @@ defineExpose({ openModal })
             "
           >
             <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
-              <template v-if="ticketClone.debt === money">Trả nợ và Hoàn thành</template>
-              <template v-if="ticketClone.debt != money">Trả nợ</template>
+              <template v-if="ticketClone.debtAmount === money">Trả nợ và Hoàn thành</template>
+              <template v-if="ticketClone.debtAmount != money">Trả nợ</template>
             </VueButton>
           </div>
         </div>

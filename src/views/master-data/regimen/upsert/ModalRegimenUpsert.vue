@@ -275,7 +275,7 @@ defineExpose({ openModal })
                         <InputNumber
                           v-model:value="regimenItem.quantity"
                           textAlign="right"
-                          buttonControl
+                          controlHorizontal
                           :step="1"
                         ></InputNumber>
                       </td>

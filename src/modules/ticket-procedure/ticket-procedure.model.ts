@@ -40,8 +40,10 @@ export class TicketProcedure extends BaseModel {
   discountType: DiscountType // Loại giảm giá
   actualPrice: number // Giá thực tế
 
-  paymentMoneyStatus: PaymentMoneyStatus
   status: TicketProcedureStatus
+  paymentMoneyStatus: PaymentMoneyStatus
+  paid: number
+  debt: number
 
   createdAt: number
   completedAt: number
@@ -52,7 +54,7 @@ export class TicketProcedure extends BaseModel {
   commissionAmount: number
 
   customer?: Customer
-  ticketProcess?: Ticket
+  ticket?: Ticket
   procedure?: Procedure
 
   ticketRegimen: TicketRegimen
@@ -82,6 +84,8 @@ export class TicketProcedure extends BaseModel {
 
     ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
     ins.status = TicketProcedureStatus.NoAction
+    ins.paid = 0
+    ins.debt = 0
 
     return ins
   }
@@ -117,10 +121,8 @@ export class TicketProcedure extends BaseModel {
     if (Object.prototype.hasOwnProperty.call(source, 'procedure')) {
       target.procedure = source.procedure ? Procedure.basic(source.procedure) : source.procedure
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'ticketProcess')) {
-      target.ticketProcess = source.ticketProcess
-        ? Ticket.basic(source.ticketProcess)
-        : source.ticketProcess
+    if (Object.prototype.hasOwnProperty.call(source, 'ticket')) {
+      target.ticket = source.ticket ? Ticket.basic(source.ticket) : source.ticket
     }
     if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
       target.customer = source.customer ? Customer.basic(source.customer) : source.customer
@@ -164,6 +166,8 @@ export class TicketProcedure extends BaseModel {
 
     if (a.status != b.status) return false
     if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
+    if (a.paid != b.paid) return false
+    if (a.debt != b.debt) return false
 
     if (a.createdAt != b.createdAt) return false
     if (a.completedAt != b.completedAt) return false

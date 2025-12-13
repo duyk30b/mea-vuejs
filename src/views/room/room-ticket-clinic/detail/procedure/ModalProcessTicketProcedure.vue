@@ -13,8 +13,7 @@ import type { Product } from '@/modules/product'
 import { TicketChangeProcedureApi } from '@/modules/ticket'
 import {
   TicketProcedure,
-  TicketProcedureStatus,
-  TicketProcedureType,
+  TicketProcedureStatus
 } from '@/modules/ticket-procedure'
 import { TicketProduct } from '@/modules/ticket-product'
 import { TicketRegimen } from '@/modules/ticket-regimen'
@@ -277,7 +276,7 @@ defineExpose({ openModal })
                       <InputNumber
                         v-model:value="consumable.quantity"
                         textAlign="right"
-                        :buttonControl="true"
+                        controlHorizontal
                       />
                     </div>
                   </td>

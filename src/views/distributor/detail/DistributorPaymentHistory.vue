@@ -27,7 +27,7 @@ const total = ref(0)
 const startFetchData = async () => {
   try {
     const paginationResponse = await PaymentApi.pagination({
-      relation: { purchaseOrder: true, paymentMethod: true },
+      relation: { purchaseOrder: true, wallet: true },
       page: page.value,
       limit: limit.value,
       filter: {
@@ -87,17 +87,17 @@ defineExpose({ startFetchData })
           <td class="text-right">
             <div class="flex justify-between item-center">
               <span>T.Toán:</span>
-              <span>{{ formatMoney(payment.paidAmount) }}</span>
+              <span>{{ formatMoney(payment.paid + payment.paidItem) }}</span>
             </div>
             <div class="flex justify-between item-center">
               <span>Ghi nợ:</span>
-              <span>{{ formatMoney(payment.debtAmount) }}</span>
+              <span>{{ formatMoney(payment.debt + payment.debtItem) }}</span>
             </div>
             <div class="flex justify-between item-center">
               <span>Nợ:</span>
               <span>
-                {{ formatMoney(payment.openDebt) }} ➞
-                {{ formatMoney(payment.closeDebt) }}
+                {{ formatMoney(payment.personOpenDebt) }} ➞
+                {{ formatMoney(payment.personCloseDebt) }}
               </span>
             </div>
           </td>
@@ -109,7 +109,7 @@ defineExpose({ startFetchData })
         <tr>
           <th v-if="CONFIG.MODE === 'development'">ID</th>
           <th>Phiếu nhập</th>
-          <th>PT.Thanh Toán</th>
+          <th>Ví Thanh Toán</th>
           <th>Note</th>
           <th>Số tiền</th>
           <th>Ghi nợ</th>
@@ -135,7 +135,11 @@ defineExpose({ startFetchData })
             </div>
           </td>
           <td class="text-center">
-            {{ payment.paymentMethod?.name }}
+            <div>{{ payment.wallet?.name }}</div>
+            <div>
+              {{ formatMoney(payment.walletOpenMoney) }} ➞
+              {{ formatMoney(payment.walletCloseMoney) }}
+            </div>
           </td>
           <td>
             <div>{{ PaymentActionTypeText[payment.paymentActionType] }}</div>
@@ -144,14 +148,14 @@ defineExpose({ startFetchData })
             </div>
           </td>
           <td style="white-space: nowrap; text-align: right">
-            {{ formatMoney(payment.paidAmount) }}
+            {{ formatMoney(payment.paid + payment.paidItem) }}
           </td>
           <td style="white-space: nowrap; text-align: right">
-            {{ formatMoney(payment.debtAmount) }}
+            {{ formatMoney(payment.debt + payment.debtItem) }}
           </td>
           <td class="text-center">
-            {{ formatMoney(payment.openDebt) }} ➞
-            {{ formatMoney(payment.closeDebt) }}
+            {{ formatMoney(payment.personOpenDebt) }} ➞
+            {{ formatMoney(payment.personCloseDebt) }}
           </td>
         </tr>
       </tbody>

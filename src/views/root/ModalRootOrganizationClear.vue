@@ -42,7 +42,6 @@ const tableNameDeleteMapDefault = {
   LaboratorySample: 0,
   Payment: 1,
   PaymentTicketItem: 1,
-  PaymentMethod: 0,
   Position: 0,
   PrescriptionSample: 0,
   PrintHtml: 0,
@@ -83,6 +82,7 @@ const tableNameDeleteMapDefault = {
   UserRole: 0,
   UserRoom: 0,
   Warehouse: 0,
+  Wallet: 0,
 }
 const tableNameClearMap = ref({
   ...tableNameClearMapDefault,

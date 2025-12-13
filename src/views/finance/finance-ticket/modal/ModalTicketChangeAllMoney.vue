@@ -170,7 +170,7 @@ const startChangeAllMoney = async () => {
           })) || [],
     })
 
-    emit('success', ticketResponse)
+    emit('success', ticketResponse.ticketModified)
     closeModal()
   } catch (error) {
   } finally {

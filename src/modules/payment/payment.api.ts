@@ -30,8 +30,8 @@ export class PaymentApi {
     paymentId: string
     body: {
       createdAt: number
-      paymentMethodId: number
       note: string
+      walletId: string
     }
   }) {
     const { paymentId, body } = options
@@ -54,35 +54,21 @@ export class PaymentApi {
     return data
   }
 
-  static async otherCreateMoneyOut(body: {
-    paymentMethodId: number
-    paidAmount: number
-    note: string
-  }) {
+  static async otherCreateMoneyOut(body: { walletId: string; paidAmount: number; note: string }) {
     const response = await AxiosInstance.post('/payment/other/create-money-out', body)
     const { data } = response.data as BaseResponse<{ payment: any }>
     return Payment.from(data.payment)
   }
 
-  static async otherCreateMoneyIn(body: {
-    paymentMethodId: number
-    paidAmount: number
-    note: string
-  }) {
+  static async otherCreateMoneyIn(body: { walletId: string; paidAmount: number; note: string }) {
     const response = await AxiosInstance.post('/payment/other/create-money-in', body)
     const { data } = response.data as BaseResponse<{ payment: any }>
     return Payment.from(data.payment)
   }
 
-  static async otherDestroyMoneyOut(options: { paymentId: string }) {
+  static async destroy(options: { paymentId: string }) {
     const { paymentId } = options
-    const response = await AxiosInstance.post(`/payment/other/destroy-money-out/${paymentId}`)
-    const { data } = response.data as BaseResponse<{ payment: any }>
-  }
-
-  static async otherDestroyMoneyIn(options: { paymentId: string }) {
-    const { paymentId } = options
-    const response = await AxiosInstance.post(`/payment/other/destroy-money-in/${paymentId}`)
+    const response = await AxiosInstance.post(`/payment/destroy/${paymentId}`)
     const { data } = response.data as BaseResponse<{ payment: any }>
   }
 }

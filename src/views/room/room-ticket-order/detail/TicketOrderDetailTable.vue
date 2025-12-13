@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import VueTag from '@/common/VueTag.vue'
-import { IconExclamationCircle, IconFileSearch } from '@/common/icon-antd'
+import { IconBug, IconExclamationCircle, IconFileSearch } from '@/common/icon-antd'
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { PaymentViewType } from '@/modules/enum'
+import { DeliveryStatus, PaymentViewType } from '@/modules/enum'
 import { ExpenseService } from '@/modules/expense'
 import { SurchargeService } from '@/modules/surcharge'
 import { TicketStatus } from '@/modules/ticket'
@@ -12,6 +12,7 @@ import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import TicketDeliveryStatusTooltip from '@/views/room/room-ticket-base/TicketDeliveryStatusTooltip.vue'
 import { computed, onMounted, ref } from 'vue'
 import { ticketOrderDetailRef } from './ticket-order-detail.ref'
+import { VueTooltip } from '@/common/popover'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
@@ -32,6 +33,7 @@ const emit = defineEmits<{ (e: 'showInvoicePayment', value: PaymentViewType): vo
 const showModalInvoicePayment = (paymentView: PaymentViewType) => {
   emit('showInvoicePayment', paymentView)
 }
+
 const colspan = computed(() => {
   if (isMobile) return 2
   return (
@@ -140,7 +142,7 @@ const colspan = computed(() => {
               <div
                 v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance"
                 style="font-size: 0.8rem"
-                class="text-justify"
+                class="max-line-2"
               >
                 {{ ticketProduct.product!.substance }}
               </div>
@@ -212,7 +214,7 @@ const colspan = computed(() => {
       <template v-if="!isMobile">
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'">ID</th>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th style="width: 40px">#</th>
             <th style="width: 40px"></th>
             <th>Tên</th>
@@ -229,8 +231,15 @@ const colspan = computed(() => {
             v-for="(ticketProcedure, index) in ticketOrderDetailRef.ticketProcedureList"
             :key="index"
           >
-            <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
-              {{ ticketProcedure.id }}
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(ticketProcedure, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
             </td>
             <td class="text-center">{{ index + 1 }}</td>
             <td class="text-center"></td>
@@ -277,8 +286,15 @@ const colspan = computed(() => {
             </td>
           </tr>
           <tr v-for="(ticketProduct, index) in ticketOrderDetailRef.ticketProductList" :key="index">
-            <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
-              {{ ticketProduct.id }}
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(ticketProduct, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
             </td>
             <td class="text-center">{{ index + 1 }}</td>
             <td class="text-center">
@@ -297,6 +313,7 @@ const colspan = computed(() => {
               </div>
               <div
                 v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance"
+                class="max-line-2"
                 style="font-size: 0.8rem"
               >
                 {{ ticketProduct.product!.substance }}
@@ -348,7 +365,12 @@ const colspan = computed(() => {
               v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsCostAmount"
               class="text-right"
             >
-              {{ formatMoney(ticketProduct.costAmount) }}
+              <span v-if="ticketOrderDetailRef.deliveryStatus === DeliveryStatus.Pending">
+                {{ formatMoney(ticketProduct.quantity * ticketProduct.product!.costPrice) }}
+              </span>
+              <span v-else>
+                {{ formatMoney(ticketProduct.costAmount) }}
+              </span>
             </td>
             <td class="text-right">
               {{ formatMoney(ticketProduct.actualPrice * ticketProduct.quantity) }}
@@ -415,10 +437,18 @@ const colspan = computed(() => {
           </td>
         </tr>
         <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsCostAmount">
-          <td class="text-right" :colspan="colspan">Tiền vốn</td>
-          <td class="text-right" :colspan="2">
-            {{ formatMoney(ticketOrderDetailRef.itemsCostAmount) }}
-          </td>
+          <template v-if="ticketOrderDetailRef.deliveryStatus === DeliveryStatus.Pending">
+            <td class="text-right" :colspan="colspan">Dự kiến vốn</td>
+            <td class="text-right" :colspan="2">
+              {{ formatMoney(ticketOrderDetailRef.itemsCostAmountExpected) }}
+            </td>
+          </template>
+          <template v-else>
+            <td class="text-right" :colspan="colspan">Tiền vốn</td>
+            <td class="text-right" :colspan="2">
+              {{ formatMoney(ticketOrderDetailRef.itemsCostAmount) }}
+            </td>
+          </template>
         </tr>
         <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.expense">
           <td class="text-right" :colspan="colspan">
@@ -438,20 +468,20 @@ const colspan = computed(() => {
           </td>
         </tr>
         <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.profit">
-          <td class="text-right" :colspan="colspan">
-            <span v-if="ticketOrderDetailRef.status === TicketStatus.Draft">Dự kiến lãi</span>
-            <span v-else>Tiền lãi</span>
-          </td>
-          <td class="text-right font-medium" :colspan="2">
-            {{ formatMoney(ticketOrderDetailRef.profit) }}
-          </td>
+          <template v-if="ticketOrderDetailRef.deliveryStatus === DeliveryStatus.Pending">
+            <td class="text-right" :colspan="colspan">Dự kiến lãi</td>
+            <td class="text-right font-medium" :colspan="2">
+              {{ formatMoney(ticketOrderDetailRef.profitExpected) }}
+            </td>
+          </template>
+          <template v-else>
+            <td class="text-right" :colspan="colspan">Tiền lãi</td>
+            <td class="text-right font-medium" :colspan="2">
+              {{ formatMoney(ticketOrderDetailRef.profit) }}
+            </td>
+          </template>
         </tr>
-        <tr
-          v-if="
-            settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.paid ||
-            ticketOrderDetailRef.paid !== ticketOrderDetailRef.totalMoney
-          "
-        >
+        <tr>
           <td
             class="text-right cursor-pointer"
             :colspan="colspan"
@@ -464,22 +494,31 @@ const colspan = computed(() => {
           </td>
 
           <td class="text-right" :colspan="2">
-            {{ formatMoney(ticketOrderDetailRef.paid) }}
+            {{ formatMoney(ticketOrderDetailRef.paidAmount) }}
           </td>
         </tr>
-        <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt || ticketOrderDetailRef.debt">
-          <template v-if="ticketOrderDetailRef.debt >= 0">
-            <td class="text-right" :colspan="colspan">Còn thiếu</td>
-            <td colspan="2" class="text-right">{{ formatMoney(ticketOrderDetailRef.debt) }}</td>
-          </template>
-          <template v-if="ticketOrderDetailRef.debt < 0">
-            <td class="text-right" :colspan="colspan" style="color: var(--text-green)">
-              <span>Thanh toán dư</span>
-            </td>
-            <td colspan="2" class="text-right font-medium" style="color: var(--text-green)">
-              {{ formatMoney(-ticketOrderDetailRef.debt) }}
-            </td>
-          </template>
+        <tr v-if="ticketOrderDetailRef.debtAmount" style="color: var(--text-red)">
+          <td class="text-right" :colspan="colspan">Nợ</td>
+          <td colspan="2" class="text-right font-bold">
+            {{ formatMoney(ticketOrderDetailRef.debtAmount) }}
+          </td>
+        </tr>
+        <tr v-if="ticketOrderDetailRef.paidAmount > ticketOrderDetailRef.totalMoney">
+          <td class="text-right" :colspan="colspan" style="color: var(--text-green)">Đang thừa</td>
+          <td colspan="2" class="text-right font-medium" style="color: var(--text-green)">
+            {{ formatMoney(ticketOrderDetailRef.paidAmount - ticketOrderDetailRef.totalMoney) }}
+          </td>
+        </tr>
+        <tr
+          v-else-if="
+            ticketOrderDetailRef.debtAmount !==
+            ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paidAmount
+          "
+        >
+          <td class="text-right" :colspan="colspan">Còn thiếu</td>
+          <td colspan="2" class="text-right">
+            {{ formatMoney(ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paidAmount) }}
+          </td>
         </tr>
       </tbody>
     </table>

@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import VueButton from '@/common/VueButton.vue'
 import VuePagination from '@/common/VuePagination.vue'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { PermissionId } from '@/modules/permission/permission.enum'
 import { Ticket, TicketQueryApi, TicketStatus } from '@/modules/ticket'
 import { ESTimer } from '@/utils'
-import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
 import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
 import { ref, watch } from 'vue'
@@ -93,10 +90,10 @@ watch(
                 {{ formatMoney(ticket.totalMoney) }}
               </div>
               <div v-if="ticket.status === TicketStatus.Debt" class="text-xs">
-                Nợ: {{ formatMoney(ticket.debt) }}
+                Nợ: {{ formatMoney(ticket.debtAmount) }}
               </div>
               <div v-if="ticket.status === TicketStatus.Deposited" class="text-xs">
-                Đã thanh toán: {{ formatMoney(ticket.paid) }}
+                Đã thanh toán: {{ formatMoney(ticket.paidAmount) }}
               </div>
             </td>
           </tr>

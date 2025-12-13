@@ -6,8 +6,8 @@ import { InputDate, InputMoney, InputText } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { PaymentApi } from '@/modules/payment/payment.api'
-import { MoneyDirection, Payment } from '@/modules/payment/payment.model'
-import InputSelectPaymentMethod from '@/views/component/InputSelectPaymentMethod.vue'
+import { MoneyDirection, Payment, PaymentVoucherType } from '@/modules/payment/payment.model'
+import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
 import { onMounted, ref } from 'vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
@@ -17,8 +17,6 @@ const emit = defineEmits<{
 }>()
 
 const payment = ref<Payment>(Payment.blank())
-
-const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -42,8 +40,8 @@ const handleUpdateInfo = async () => {
       paymentId: payment.value.id,
       body: {
         createdAt: payment.value.createdAt,
-        paymentMethodId: payment.value.paymentMethodId,
         note: payment.value.note,
+        walletId: payment.value.walletId,
       },
     })
     emit('success')
@@ -62,18 +60,8 @@ const handleClickDestroy = async (prescriptionId: number) => {
     content: 'Phiếu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
     onOk: async () => {
       try {
-        if (payment.value.moneyDirection === MoneyDirection.In) {
-          await PaymentApi.otherDestroyMoneyIn({
-            paymentId: payment.value.id,
-          })
-          emit('success')
-        }
-        if (payment.value.moneyDirection === MoneyDirection.Out) {
-          await PaymentApi.otherDestroyMoneyOut({
-            paymentId: payment.value.id,
-          })
-          emit('success')
-        }
+        await PaymentApi.destroy({ paymentId: payment.value.id })
+        emit('success')
         AlertStore.addSuccess(`Xóa phiếu thành công`)
         closeModal()
       } catch (error) {
@@ -114,10 +102,13 @@ defineExpose({ openModal })
             <InputDate v-model:value="payment.createdAt" showTime typeParser="number" />
           </div>
         </div>
-        <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
+        <div
+          v-if="[MoneyDirection.In, MoneyDirection.Out].includes(payment.moneyDirection)"
+          style="flex-grow: 1; flex-basis: 90%; min-width: 300px"
+        >
           <div>Phương thức thanh toán</div>
           <div>
-            <InputSelectPaymentMethod v-model:paymentMethodId="payment.paymentMethodId" />
+            <InputSelectWallet v-model:walletId="payment.walletId" />
           </div>
         </div>
         <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
@@ -131,7 +122,12 @@ defineExpose({ openModal })
       <div class="mt-8 flex gap-4">
         <VueButton type="reset" icon="close" @click="closeModal">Hủy bỏ</VueButton>
         <VueButton
-          v-if="!payment.voucherId || payment.voucherId === '0'"
+          v-if="
+            !payment.voucherId ||
+            payment.voucherId === '0' ||
+            (payment.voucherType === PaymentVoucherType.Ticket && !payment.ticket) ||
+            (payment.voucherType === PaymentVoucherType.PurchaseOrder && !payment.purchaseOrder)
+          "
           type="button"
           icon="trash"
           color="red"

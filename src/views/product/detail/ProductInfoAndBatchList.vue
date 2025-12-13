@@ -1,13 +1,14 @@
 <script setup lang="ts">
+import { VueTooltip } from '@/common/popover'
+import { CONFIG } from '@/config'
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconMergeCells, IconRead } from '../../../common/icon-antd'
+import { IconBug, IconMergeCells, IconRead } from '../../../common/icon-antd'
 import { IconEditSquare } from '../../../common/icon-google'
 import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchService } from '../../../modules/batch'
 import { Distributor, DistributorService } from '../../../modules/distributor'
-import { PickupStrategy } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, ProductService } from '../../../modules/product'
 import type { Warehouse } from '../../../modules/warehouse'
@@ -15,7 +16,6 @@ import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { ESTimer } from '../../../utils'
 import ModalBatchMerge from './ModalBatchMerge.vue'
 import ModalBatchUpdate from './ModalBatchUpdate.vue'
-import { CONFIG } from '@/config'
 
 const modalBatchUpdate = ref<InstanceType<typeof ModalBatchUpdate>>()
 const modalBatchMerge = ref<InstanceType<typeof ModalBatchMerge>>()
@@ -119,16 +119,23 @@ const closeExpiryDate = computed(() => {
   />
   <div class="mt-4 flex flex-wrap">
     <div style="flex-basis: 45%; flex: 1; min-width: 300px">
-      <div v-if="CONFIG.MODE === 'development'" class="my-2 flex gap-4" style="color: violet;">
-        <div style="width: 100px; flex-shrink: 0">ID</div>
-        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0" class="font-medium">
-          {{ product.id }}
-        </div>
-      </div>
       <div class="my-2 flex gap-4">
         <div style="width: 100px; flex-shrink: 0">Mã sản phẩm</div>
-        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0" class="font-medium">
-          {{ product.productCode }}
+        <div
+          style="flex-shrink: 1; flex-grow: 1; flex-basis: 0"
+          class="flex items-center gap-2 font-medium"
+        >
+          <div>{{ product.productCode }}</div>
+          <div v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+            <VueTooltip>
+              <template #trigger>
+                <IconBug width="1em" height="1em" />
+              </template>
+              <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                <pre>{{ JSON.stringify(product, null, 4) }}</pre>
+              </div>
+            </VueTooltip>
+          </div>
         </div>
       </div>
       <div class="my-2 flex gap-4">

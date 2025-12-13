@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
-import { IconClose } from '@/common/icon-antd'
+import { IconBug, IconClose } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert'
 import { InputMoney, InputSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
@@ -9,12 +9,14 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { PaymentViewType } from '@/modules/enum'
 import { PaymentActionTypeText, PaymentApi } from '@/modules/payment'
-import { PaymentMethod, PaymentMethodService } from '@/modules/payment-method'
+import { Wallet, WalletService } from '@/modules/wallet'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { ESArray, timeToText } from '@/utils'
 import { onMounted, ref } from 'vue'
 import { purchaseOrder } from './purchase-order-detail.ref'
 import { PurchaseOrderActionApi, PurchaseOrderMoneyApi } from '@/modules/purchase-order'
+import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
+import { VueTooltip } from '@/common/popover'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputMoney>>()
 
@@ -29,19 +31,8 @@ const paymentLoading = ref(false)
 const paymentView = ref(PaymentViewType.Success)
 
 const money = ref(0)
-const paymentMethodId = ref<number>(0)
-const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
-const paymentMethodMap = PaymentMethodService.paymentMethodMap
-
-onMounted(async () => {
-  try {
-    const paymentMethodAll = await PaymentMethodService.getAll()
-    paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
-    paymentMethodId.value = paymentMethodAll[0]?.id || 0
-  } catch (error) {
-    console.log('🚀 ~ ModalPurchaseOrderPayment.vue:43 ~ openModal ~ error:', error)
-  }
-})
+const walletId = ref<string>('')
+const walletMap = WalletService.walletMap
 
 const openModal = async (view = PaymentViewType.Success) => {
   paymentView.value = view
@@ -70,8 +61,7 @@ const handlePayment = async () => {
         purchaseOrder.value.id,
         {
           paidAmount: money.value,
-          distributorId: purchaseOrder.value.distributorId,
-          paymentMethodId: paymentMethodId.value,
+          walletId: walletId.value,
           note: '',
         },
       )
@@ -82,11 +72,10 @@ const handlePayment = async () => {
       if (money.value <= 0) {
         return AlertStore.addError('Số tiền không hợp lệ')
       }
-      const result = await PurchaseOrderMoneyApi.prepaymentMoney({
+      const result = await PurchaseOrderMoneyApi.payment({
         purchaseOrderId: purchaseOrder.value.id,
         body: {
-          distributorId: purchaseOrder.value.distributorId,
-          paymentMethodId: paymentMethodId.value,
+          walletId: walletId.value,
           paidAmount: money.value,
           note: '',
         },
@@ -104,14 +93,9 @@ const handlePayment = async () => {
       }
       const result = await PurchaseOrderMoneyApi.payDebt({
         distributorId: purchaseOrder.value.distributorId,
-        paymentMethodId: paymentMethodId.value,
+        walletId: walletId.value,
         paidAmount: money.value,
-        dataList: [
-          {
-            paidAmount: money.value,
-            purchaseOrderId: purchaseOrder.value.id,
-          },
-        ],
+        dataList: [{ paidAmount: money.value, purchaseOrderId: purchaseOrder.value.id }],
         note: '',
       })
       Object.assign(purchaseOrder.value, result.purchaseOrderModifiedList[0])
@@ -128,8 +112,7 @@ const handlePayment = async () => {
       const result = await PurchaseOrderMoneyApi.refundMoney({
         purchaseOrderId: purchaseOrder.value.id,
         body: {
-          distributorId: purchaseOrder.value.distributorId,
-          paymentMethodId: paymentMethodId.value,
+          walletId: walletId.value,
           refundAmount: money.value,
           note: '',
         },
@@ -180,20 +163,30 @@ defineExpose({ openModal })
                 <th>Note</th>
                 <th>Tiền</th>
                 <th v-if="CONFIG.MODE === 'development'">Ghi nợ</th>
-                <th v-if="CONFIG.MODE === 'development'">Nợ</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(payment, index) in purchaseOrder.paymentList" :key="index">
-                <td v-if="CONFIG.MODE === 'development'" style="color: violet" class="text-center">
-                  {{ payment.id }}
+                <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+                  <VueTooltip>
+                    <template #trigger>
+                      <IconBug width="1.2em" height="1.2em" />
+                    </template>
+                    <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                      <pre>{{ JSON.stringify(payment, null, 4) }}</pre>
+                    </div>
+                  </VueTooltip>
                 </td>
                 <td class="text-center">{{ index + 1 }}</td>
                 <td class="text-left">
                   {{ timeToText(payment.createdAt, 'DD/MM/YY hh:mm') }}
                 </td>
-                <td class="text-center">
-                  {{ paymentMethodMap[payment.paymentMethodId]?.name }}
+                <td class="text-left">
+                  <div>{{ walletMap[payment.walletId]?.name }}</div>
+                  <div v-if="CONFIG.MODE === 'development'" style="color: violet">
+                    {{ formatMoney(payment.walletOpenMoney) }} ->
+                    {{ formatMoney(payment.walletCloseMoney) }}
+                  </div>
                 </td>
                 <td>
                   <div>{{ PaymentActionTypeText[payment.paymentActionType] }}</div>
@@ -202,14 +195,14 @@ defineExpose({ openModal })
                   </div>
                 </td>
                 <td class="text-right" style="padding-right: 8px">
-                  <div>{{ formatMoney(payment.paidAmount) }}</div>
+                  <div>{{ formatMoney(-payment.paid - payment.paidItem) }}</div>
                 </td>
                 <td class="text-right" v-if="CONFIG.MODE === 'development'" style="color: violet">
-                  {{ formatMoney(payment.debtAmount) }}
-                </td>
-                <td class="text-right" v-if="CONFIG.MODE === 'development'" style="color: violet">
-                  {{ formatMoney(payment.openDebt) }} ->
-                  {{ formatMoney(payment.closeDebt) }}
+                  <div>{{ formatMoney(-payment.debt - payment.debtItem) }}</div>
+                  <div>
+                    {{ formatMoney(payment.personOpenDebt) }} ->
+                    {{ formatMoney(payment.personCloseDebt) }}
+                  </div>
                 </td>
               </tr>
               <tr>
@@ -217,20 +210,35 @@ defineExpose({ openModal })
                 <td colspan="4" class="text-right">Tổng đã thanh toán :</td>
                 <td class="text-right font-bold">{{ formatMoney(purchaseOrder.paid) }}</td>
                 <td v-if="CONFIG.MODE === 'development'"></td>
-                <td v-if="CONFIG.MODE === 'development'"></td>
               </tr>
-              <tr v-if="purchaseOrder.debt >= 0">
+              <tr v-if="purchaseOrder.debt" style="color: var(--text-red)">
                 <td v-if="CONFIG.MODE === 'development'"></td>
-                <td colspan="4" class="text-right">Đang thiếu :</td>
+                <td colspan="4" class="text-right">Đang nợ :</td>
                 <td class="text-right font-bold">{{ formatMoney(purchaseOrder.debt) }}</td>
                 <td v-if="CONFIG.MODE === 'development'"></td>
+              </tr>
+              <tr
+                v-if="
+                  purchaseOrder.debt != purchaseOrder.totalMoney - purchaseOrder.paid &&
+                  purchaseOrder.totalMoney > purchaseOrder.paid
+                "
+              >
+                <td v-if="CONFIG.MODE === 'development'"></td>
+                <td colspan="4" class="text-right">Đang thiếu :</td>
+                <td class="text-right font-bold">
+                  {{ formatMoney(purchaseOrder.totalMoney - purchaseOrder.paid) }}
+                </td>
                 <td v-if="CONFIG.MODE === 'development'"></td>
               </tr>
-              <tr v-else style="color: var(--text-green)">
+              <tr
+                v-if="purchaseOrder.totalMoney < purchaseOrder.paid"
+                style="color: var(--text-green)"
+              >
                 <td v-if="CONFIG.MODE === 'development'"></td>
                 <td colspan="4" class="text-right">Đang thừa</td>
-                <td class="text-right font-bold">{{ formatMoney(-purchaseOrder.debt) }}</td>
-                <td v-if="CONFIG.MODE === 'development'"></td>
+                <td class="text-right font-bold">
+                  {{ formatMoney(purchaseOrder.paid - purchaseOrder.totalMoney) }}
+                </td>
                 <td v-if="CONFIG.MODE === 'development'"></td>
               </tr>
             </tbody>
@@ -249,7 +257,7 @@ defineExpose({ openModal })
                 <td class="pr-4 py-2 text-right" style="white-space: nowrap">PT Thanh toán :</td>
                 <td>
                   <div class="pl-6">
-                    <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+                    <InputSelectWallet v-model:walletId="walletId" autoSelectFirstValue />
                   </div>
                 </td>
               </tr>
@@ -319,7 +327,7 @@ defineExpose({ openModal })
                 <td class="pr-4 py-2 text-right" style="white-space: nowrap">PT Thanh toán :</td>
                 <td>
                   <div class="pl-6">
-                    <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+                    <InputSelectWallet v-model:walletId="walletId" autoSelectFirstValue />
                   </div>
                 </td>
               </tr>

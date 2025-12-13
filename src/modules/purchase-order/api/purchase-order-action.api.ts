@@ -5,20 +5,8 @@ import { Payment } from '../../payment'
 import { PurchaseOrder } from '../purchase-order.model'
 
 export class PurchaseOrderActionApi {
-  static async draftDestroy(purchaseOrderId: string) {
-    const response = await AxiosInstance.delete(`/purchase-order/${purchaseOrderId}/draft-destroy`)
-    const { data } = response.data as BaseResponse<{ purchaseOrderId: string }>
-    return data
-  }
-
-  static async depositedDestroy(purchaseOrderId: string) {
-    const response = await AxiosInstance.delete(`/purchase-order/${purchaseOrderId}/deposited-destroy`)
-    const { data } = response.data as BaseResponse<{ purchaseOrderId: string }>
-    return data
-  }
-
-  static async cancelledDestroy(purchaseOrderId: string) {
-    const response = await AxiosInstance.delete(`/purchase-order/${purchaseOrderId}/cancelled-destroy`)
+  static async destroy(purchaseOrderId: string) {
+    const response = await AxiosInstance.delete(`/purchase-order/${purchaseOrderId}/destroy`)
     const { data } = response.data as BaseResponse<{ purchaseOrderId: string }>
     return data
   }
@@ -26,8 +14,7 @@ export class PurchaseOrderActionApi {
   static async sendProductAndPaymentAndClose(
     purchaseOrderId: string,
     body: {
-      distributorId: number
-      paymentMethodId: number
+      walletId: string
       paidAmount: number
       note: string
     },
@@ -64,28 +51,32 @@ export class PurchaseOrderActionApi {
     const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/close`)
     const { data } = response.data as BaseResponse<{
       purchaseOrderModified: any
-      paymentCreatedList: any[]
+      paymentCreated: any
       distributorModified: any
     }>
     return {
       purchaseOrderModified: PurchaseOrder.from(data.purchaseOrderModified),
-      paymentCreatedList: Payment.fromList(data.paymentCreatedList || []),
+      paymentCreated: data.paymentCreated ? Payment.from(data.paymentCreated) : undefined,
       distributorModified: data.distributorModified
         ? Distributor.from(data.distributorModified)
         : undefined,
     }
   }
 
-  static async terminate(purchaseOrderId: string) {
-    const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/terminate`)
+  static async terminate(props: { purchaseOrderId: string; walletId: string; note: string }) {
+    const { purchaseOrderId, walletId, note } = props
+    const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/terminate`, {
+      walletId,
+      note,
+    })
     const { data } = response.data as BaseResponse<{
       purchaseOrderModified: any
-      paymentCreatedList: any[]
+      paymentCreated: any
       distributorModified: any
     }>
     return {
       purchaseOrderModified: PurchaseOrder.from(data.purchaseOrderModified),
-      paymentCreatedList: Payment.fromList(data.paymentCreatedList || []),
+      paymentCreated: data.paymentCreated ? Payment.from(data.paymentCreated) : undefined,
       distributorModified: data.distributorModified
         ? Distributor.from(data.distributorModified)
         : undefined,

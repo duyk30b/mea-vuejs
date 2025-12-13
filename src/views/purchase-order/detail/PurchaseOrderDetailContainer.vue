@@ -36,11 +36,13 @@ import ModalPurchaseOrderDetailSettingScreen from './ModalPurchaseOrderDetailSet
 import ModalPurchaseOrderPayment from './ModalPurchaseOrderPayment.vue'
 import PurchaseOrderDetailTable from './PurchaseOrderDetailTable.vue'
 import { purchaseOrder } from './purchase-order-detail.ref'
+import ModalPurchaseOrderTerminal from './ModalPurchaseOrderTerminal.vue'
 
 const modalPurchaseOrderDetailSettingScreen =
   ref<InstanceType<typeof ModalPurchaseOrderDetailSettingScreen>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 const modalPurchaseOrderPayment = ref<InstanceType<typeof ModalPurchaseOrderPayment>>()
+const modalPurchaseOrderTerminal = ref<InstanceType<typeof ModalPurchaseOrderTerminal>>()
 
 const route = useRoute()
 const router = useRouter()
@@ -113,44 +115,14 @@ const close = async () => {
     loadingProcess.value = true
     const result = await PurchaseOrderActionApi.close({ purchaseOrderId: purchaseOrder.value.id! })
     Object.assign(purchaseOrder.value, result.purchaseOrderModified)
-    purchaseOrder.value.paymentList?.push(...result.paymentCreatedList)
+    if (result.paymentCreated) {
+      purchaseOrder.value.paymentList?.push(result.paymentCreated)
+    }
   } catch (error) {
     console.log('🚀 ~ PurchaseOrderDetail.vue:124 ~ close ~ error:', error)
   } finally {
     loadingProcess.value = false
   }
-}
-
-const clickTerminate = () => {
-  ModalStore.confirm({
-    title: 'Bạn có chắc chắn hủy phiếu nhập này ?',
-    content: [
-      ...(purchaseOrder.value.deliveryStatus === DeliveryStatus.Delivered
-        ? ['- Kho hàng sẽ xuất ra tất cả hàng hóa trong phiếu']
-        : []),
-      ...(purchaseOrder.value.debt > 0 &&
-      [PurchaseOrderStatus.Debt].includes(purchaseOrder.value.status)
-        ? [`- Trừ nợ NCC: ${formatMoney(purchaseOrder.value.debt)}`]
-        : []),
-      ...(purchaseOrder.value.paid > 0
-        ? [`- NCC trả lại số tiền đã thanh toán là: ${formatMoney(purchaseOrder.value.paid)}`]
-        : []),
-    ],
-    okText: 'Xác nhận HỦY PHIẾU',
-    async onOk() {
-      try {
-        loadingProcess.value = true
-        const result = await PurchaseOrderActionApi.terminate(purchaseOrder.value.id!)
-        Object.assign(purchaseOrder.value, result.purchaseOrderModified)
-        purchaseOrder.value.paymentList?.push(...result.paymentCreatedList)
-        AlertStore.add({ type: 'success', message: 'Hủy phiếu thành công', time: 1000 })
-      } catch (error) {
-        console.log('🚀 ~ file: PurchaseOrderDetail.vue:114 ~ startTerminate ~ error:', error)
-      } finally {
-        loadingProcess.value = false
-      }
-    },
-  })
 }
 
 const clickDestroy = () => {
@@ -160,15 +132,7 @@ const clickDestroy = () => {
     async onOk() {
       try {
         loadingProcess.value = true
-        if (purchaseOrder.value.status === PurchaseOrderStatus.Draft) {
-          await PurchaseOrderActionApi.draftDestroy(purchaseOrder.value.id!)
-        }
-        if (purchaseOrder.value.status === PurchaseOrderStatus.Deposited) {
-          await PurchaseOrderActionApi.draftDestroy(purchaseOrder.value.id!)
-        }
-        if (purchaseOrder.value.status === PurchaseOrderStatus.Cancelled) {
-          await PurchaseOrderActionApi.draftDestroy(purchaseOrder.value.id!)
-        }
+        await PurchaseOrderActionApi.destroy(purchaseOrder.value.id!)
         AlertStore.add({ type: 'success', message: 'Xóa phiếu thành công', time: 1000 })
         router.push({ name: 'PurchaseOrderList' })
       } catch (error) {
@@ -192,6 +156,7 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
 </script>
 
 <template>
+  <ModalPurchaseOrderTerminal ref="modalPurchaseOrderTerminal" />
   <ModalPurchaseOrderDetailSettingScreen
     v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalPurchaseOrderDetailSettingScreen"
@@ -367,7 +332,7 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
                   PurchaseOrderStatus.Completed,
                 ].includes(purchaseOrder.status)
               "
-              @click="clickTerminate()"
+              @click="modalPurchaseOrderTerminal?.openModal()"
             >
               <IconCloseCircle width="16" height="16" />
               Hủy phiếu

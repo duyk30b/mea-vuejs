@@ -30,7 +30,7 @@ import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
 import { onBeforeMount, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalReceptionCreate from '../../reception/create/ModalReceptionCreate.vue'
-import ModalTicketClinicPayment from '../../room-ticket-base/ModalTicketPayment.vue'
+import ModalTicketPayment from '../../room-ticket-base/ModalTicketPayment.vue'
 import TicketLink from '../../room-ticket-base/TicketLink.vue'
 import { fromTime, toTime } from '../../room-ticket-base/room-ticket.ref'
 import ModalTicketClinicListSetting from './ModalTicketClinicListSetting.vue'
@@ -43,7 +43,7 @@ const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalReceptionCreate = ref<InstanceType<typeof ModalReceptionCreate>>()
 const modalTicketClinicListSetting = ref<InstanceType<typeof ModalTicketClinicListSetting>>()
 
-const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
+const modalTicketPayment = ref<InstanceType<typeof ModalTicketPayment>>()
 const modalTicketChangeAllMoney = ref<InstanceType<typeof ModalTicketChangeAllMoney>>()
 
 const router = useRouter()
@@ -228,19 +228,19 @@ const clickCloseTicket = (ticket: Ticket) => {
     })
   }
 
-  if (ticket.paid > ticket.totalMoney) {
+  if (ticket.paidAmount > ticket.totalMoney) {
     return ModalStore.alert({
       title: 'Khách hàng còn thừa tiền tạm ứng',
       content: 'Cần hoàn trả tiền thừa trước khi đóng hồ sơ',
     })
   }
 
-  if (ticket.debt) {
+  if (ticket.debtAmount) {
     return ModalStore.confirm({
       title: 'Đóng phiếu khám khi khách hàng chưa thanh toán đủ ?',
       content: [
         '- Vẫn đóng phiếu khám.',
-        `- Ghi nợ khách hàng: ${formatMoney(ticket?.debt || 0)}.`,
+        `- Ghi nợ khách hàng: ${formatMoney(ticket.debtAmount)}.`,
       ],
       okText: 'Xác nhận Đóng phiếu',
       async onOk() {
@@ -267,7 +267,7 @@ const clickCloseTicket = (ticket: Ticket) => {
     @success="handleModalTicketClinicListSettingSuccess"
   />
 
-  <ModalTicketClinicPayment ref="modalTicketClinicPayment" />
+  <ModalTicketPayment ref="modalTicketPayment" />
 
   <div class="mx-4 mt-4 gap-4 flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -424,9 +424,15 @@ const clickCloseTicket = (ticket: Ticket) => {
             <td style="width: 160px">
               <template v-if="ticket.ticketReceptionList?.length">
                 <div
-                  v-for="tr in ticket.ticketReceptionList"
+                  v-if="ticket.ticketReceptionList?.length > 4"
+                  style="font-size: 0.9em; font-style: italic; color: #555; cursor: pointer"
+                >
+                  ...Đang điều trị {{ ticket.ticketReceptionList?.length }} buổi
+                </div>
+                <div
+                  v-for="tr in ticket.ticketReceptionList.slice(-4)"
                   :key="tr.id"
-                  class="flex flex-wrap items-center gap-x-2 italic whitespace-nowrap"
+                  class="flex flex-nowrap items-center gap-x-2 italic whitespace-nowrap"
                 >
                   <span>
                     {{ ESTimer.timeToText(tr.receptionAt, 'hh:mm DD/MM/YYYY') }}
@@ -459,8 +465,8 @@ const clickCloseTicket = (ticket: Ticket) => {
               </template>
             </td>
             <td>
-              <div>
-                {{ ticket.customer?.fullName }}
+              <div class="">
+                <span>{{ ticket.customer?.fullName }}</span>
                 <a class="ml-1" @click="modalCustomerDetail?.openModal(ticket.customerId)">
                   <IconFileSearch />
                 </a>
@@ -537,7 +543,7 @@ const clickCloseTicket = (ticket: Ticket) => {
                   icon="dollar"
                   color="green"
                   @click="
-                    modalTicketClinicPayment?.openModal({
+                    modalTicketPayment?.openModal({
                       ticket,
                       paymentView: PaymentViewType.Prepayment,
                     })
@@ -553,7 +559,7 @@ const clickCloseTicket = (ticket: Ticket) => {
                   size="small"
                   icon="dollar"
                   @click="
-                    modalTicketClinicPayment?.openModal({
+                    modalTicketPayment?.openModal({
                       ticket,
                       paymentView: PaymentViewType.PayDebt,
                     })
@@ -564,32 +570,30 @@ const clickCloseTicket = (ticket: Ticket) => {
               </div>
               <div v-if="settingStore.TICKET_CLINIC_LIST.paymentList">
                 <div v-for="payment in ticket.paymentList" :key="payment.id">
-                  {{ payment.paymentMethod?.name }}: {{ formatMoney(payment.paidAmount) }}
+                  {{ payment.wallet?.name }}: {{ formatMoney(payment.paid + payment.paidItem) }}
                 </div>
               </div>
               <div v-else>
-                <span
-                  v-if="ticket.paid !== ticket.totalMoney"
+                <div
+                  :style="
+                    ticket.paidAmount !== ticket.totalMoney
+                      ? 'font-weight: 500; color: var(--text-red)'
+                      : ''
+                  "
+                >
+                  {{ formatMoney(ticket.paidAmount) }}
+                </div>
+                <div
+                  v-if="ticket.debtAmount"
+                  class="text-xs"
                   style="font-weight: 500; color: var(--text-red)"
                 >
-                  {{ formatMoney(ticket.paid) }}
-                </span>
-                <span v-else>
-                  {{ formatMoney(ticket.paid) }}
-                </span>
+                  Nợ: {{ formatMoney(ticket.debtAmount) }}
+                </div>
               </div>
             </td>
             <td class="text-right">
-              <div>
-                {{ formatMoney(ticket.totalMoney) }}
-              </div>
-              <div
-                v-if="ticket.status === TicketStatus.Debt"
-                class="text-xs"
-                style="font-weight: 500; color: var(--text-red)"
-              >
-                Nợ: {{ formatMoney(ticket.debt) }}
-              </div>
+              {{ formatMoney(ticket.totalMoney) }}
             </td>
             <td></td>
             <td>
@@ -615,12 +619,12 @@ const clickCloseTicket = (ticket: Ticket) => {
                     </a>
                     <a
                       v-if="
-                        ticket.paid > ticket.totalMoney &&
+                        ticket.paidAmount > ticket.totalMoney &&
                         userPermission[PermissionId.TICKET_REFUND_MONEY]
                       "
                       style="color: var(--text-red)"
                       @click="
-                        modalTicketClinicPayment?.openModal({
+                        modalTicketPayment?.openModal({
                           ticket,
                           paymentView: PaymentViewType.RefundOverpaid,
                         })

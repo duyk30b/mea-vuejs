@@ -88,7 +88,7 @@ defineExpose({ openModal })
   <VueModal v-model:show="showModal" style="width: 800px; margin-top: 50px">
     <div class="bg-white">
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
-        <div class="flex-1 text-lg font-medium">Nhân viên và hoa hồng</div>
+        <div class="flex-1 text-lg font-medium">Phụ phí</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
         </div>

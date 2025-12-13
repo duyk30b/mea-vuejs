@@ -71,7 +71,9 @@ export class Ticket {
   commissionMoney: number
   profit: number
   paid: number
+  paidItem: number
   debt: number
+  debtItem: number
 
   imageDiagnosisIds: string
 
@@ -123,6 +125,25 @@ export class Ticket {
 
   ticketAttributeMap: TicketAttributeMap // chỉ convert tại front-end
 
+  get paidAmount() {
+    return this.paid + this.paidItem
+  }
+  get debtAmount() {
+    return this.debt + this.debtItem
+  }
+
+  get itemsCostAmountExpected() {
+    let itemsCostAmount = 0
+    this.ticketProductList?.forEach((item) => {
+      itemsCostAmount += (item.product?.costPrice || 0) * item.quantity
+    })
+    return itemsCostAmount
+  }
+
+  get profitExpected() {
+    return this.totalMoney - this.expense - this.itemsCostAmountExpected
+  }
+
   static init(): Ticket {
     const ins = new Ticket()
     ins.id = ''
@@ -142,6 +163,8 @@ export class Ticket {
     ins.profit = 0
     ins.paid = 0
     ins.debt = 0
+    ins.paidItem = 0
+    ins.debtItem = 0
     ins.note = ''
     return ins
   }

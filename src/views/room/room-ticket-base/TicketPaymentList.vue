@@ -3,11 +3,11 @@ import { IconBug } from '@/common/icon-antd'
 import { VueTooltip } from '@/common/popover'
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { MoneyDirection, PaymentActionTypeText } from '@/modules/payment'
-import { PaymentMethodService } from '@/modules/payment-method'
+import { PaymentActionTypeText } from '@/modules/payment'
 import { Ticket } from '@/modules/ticket'
+import { WalletService } from '@/modules/wallet'
 import { timeToText } from '@/utils'
-import { computed, onMounted } from 'vue'
+import { onMounted } from 'vue'
 
 const props = defineProps<{
   ticket: Ticket
@@ -15,30 +15,14 @@ const props = defineProps<{
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const paymentMethodMap = PaymentMethodService.paymentMethodMap
+const walletMap = WalletService.walletMap
 
 onMounted(async () => {
   try {
-    await PaymentMethodService.getAll()
+    await WalletService.getAll()
   } catch (error) {
     console.log('🚀 ~ TicketPaymentList.vue:22 ~ error:', error)
   }
-})
-
-const hasPaymentOut = computed(() => {
-  return props.ticket.paymentList?.some((i) => {
-    return i.moneyDirection === MoneyDirection.Out
-  })
-})
-const hasDebtPlus = computed(() => {
-  return props.ticket.paymentList?.some((i) => {
-    return i.debtAmount > 0
-  })
-})
-const hasDebtMinus = computed(() => {
-  return props.ticket.paymentList?.some((i) => {
-    return i.debtAmount < 0
-  })
 })
 </script>
 
@@ -60,12 +44,10 @@ const hasDebtMinus = computed(() => {
             <th v-if="CONFIG.MODE === 'development'"></th>
             <th>#</th>
             <th>Thời gian</th>
+            <th>PT Thanh toán</th>
             <th>Note</th>
-            <th>Tiền thu</th>
-            <th v-if="hasPaymentOut">Tiền chi</th>
-            <th v-if="CONFIG.MODE === 'development' || hasDebtPlus">Ghi nợ</th>
-            <th v-if="CONFIG.MODE === 'development' || hasDebtMinus">Trừ nợ</th>
-            <th v-if="CONFIG.MODE === 'development' || hasDebtPlus || hasDebtMinus">Nợ hiện tại</th>
+            <th>Tiền</th>
+            <th v-if="CONFIG.MODE === 'development'">Ghi nợ</th>
           </tr>
         </thead>
         <tbody>
@@ -82,9 +64,13 @@ const hasDebtMinus = computed(() => {
             </td>
             <td class="text-center">{{ index + 1 }}</td>
             <td class="">
-              <div>{{ timeToText(payment.createdAt, 'DD/MM/YY hh:mm') }}</div>
-              <div style="font-size: 0.9em; font-style: italic">
-                {{ paymentMethodMap[payment.paymentMethodId]?.name }}
+              {{ timeToText(payment.createdAt, 'DD/MM/YY hh:mm') }}
+            </td>
+            <td class="text-left">
+              <div>{{ walletMap[payment.walletId]?.name }}</div>
+              <div v-if="CONFIG.MODE === 'development'" style="color: violet">
+                {{ formatMoney(payment.walletOpenMoney) }} ->
+                {{ formatMoney(payment.walletCloseMoney) }}
               </div>
             </td>
             <td>
@@ -93,60 +79,45 @@ const hasDebtMinus = computed(() => {
                 {{ payment.note }}
               </div>
             </td>
-            <td>
-              <div v-if="payment.moneyDirection === MoneyDirection.In" class="flex justify-end">
-                {{ formatMoney(payment.paidAmount) }}
+            <td class="text-right" style="padding-right: 8px">
+              <div>{{ formatMoney(payment.paid + payment.paidItem) }}</div>
+            </td>
+            <td class="text-right" v-if="CONFIG.MODE === 'development'" style="color: violet">
+              <div>{{ formatMoney(payment.debt + payment.debtItem) }}</div>
+              <div>
+                {{ formatMoney(payment.personOpenDebt) }} ->
+                {{ formatMoney(payment.personCloseDebt) }}
               </div>
-            </td>
-            <td v-if="hasPaymentOut">
-              <div v-if="payment.moneyDirection === MoneyDirection.Out" class="flex justify-end">
-                {{ formatMoney(payment.paidAmount) }}
-              </div>
-            </td>
-            <td class="text-right" v-if="CONFIG.MODE === 'development' || hasDebtPlus">
-              <span v-if="payment.debtAmount > 0">
-                {{ formatMoney(payment.debtAmount) }}
-              </span>
-            </td>
-            <td class="text-right" v-if="CONFIG.MODE === 'development' || hasDebtMinus">
-              <span v-if="payment.debtAmount < 0">
-                {{ formatMoney(payment.debtAmount) }}
-              </span>
-            </td>
-            <td
-              class="text-center"
-              v-if="CONFIG.MODE === 'development' || hasDebtPlus || hasDebtMinus"
-            >
-              {{ formatMoney(payment.openDebt) }} ->
-              {{ formatMoney(payment.closeDebt) }}
             </td>
           </tr>
+
           <tr>
             <td v-if="CONFIG.MODE === 'development'"></td>
-            <td colspan="3" class="text-right">Tổng đã thanh toán :</td>
-            <td colspan="1" class="text-right font-bold">{{ formatMoney(ticket.paid) }}</td>
-            <td v-if="hasPaymentOut"></td>
-            <td v-if="CONFIG.MODE === 'development' || hasDebtPlus"></td>
-            <td v-if="CONFIG.MODE === 'development' || hasDebtMinus"></td>
-            <td v-if="CONFIG.MODE === 'development' || hasDebtPlus || hasDebtMinus"></td>
-          </tr>
-          <tr v-if="ticket.debt >= 0">
+            <td colspan="4" class="text-right">Đã thanh toán :</td>
+            <td class="text-right font-bold">{{ formatMoney(ticket.paidAmount) }}</td>
             <td v-if="CONFIG.MODE === 'development'"></td>
-            <td colspan="3" class="text-right font-bold">Đang thiếu :</td>
-            <td colspan="1" class="text-right font-bold">{{ formatMoney(ticket.debt) }}</td>
-            <td v-if="hasPaymentOut"></td>
-            <td v-if="CONFIG.MODE === 'development' || hasDebtPlus"></td>
-            <td v-if="CONFIG.MODE === 'development' || hasDebtMinus"></td>
-            <td v-if="CONFIG.MODE === 'development' || hasDebtPlus || hasDebtMinus"></td>
           </tr>
-          <tr v-else style="color: var(--text-green)">
+          <tr v-if="ticket.debtAmount" style="color: var(--text-red)">
             <td v-if="CONFIG.MODE === 'development'"></td>
-            <td colspan="3" class="text-right font-bold">Đang thừa</td>
-            <td colspan="1" class="text-right font-bold">{{ formatMoney(-ticket.debt) }}</td>
-            <td v-if="hasPaymentOut"></td>
-            <td v-if="CONFIG.MODE === 'development' || hasDebtPlus"></td>
-            <td v-if="CONFIG.MODE === 'development' || hasDebtMinus"></td>
-            <td v-if="CONFIG.MODE === 'development' || hasDebtPlus || hasDebtMinus"></td>
+            <td colspan="4" class="text-right">Đang nợ :</td>
+            <td class="text-right font-bold">{{ formatMoney(ticket.debtAmount) }}</td>
+            <td v-if="CONFIG.MODE === 'development'"></td>
+          </tr>
+          <tr v-if="ticket.paidAmount > ticket.totalMoney" style="color: var(--text-green)">
+            <td v-if="CONFIG.MODE === 'development'"></td>
+            <td colspan="4" class="text-right">Đang thừa</td>
+            <td class="text-right font-bold">
+              {{ formatMoney(ticket.paidAmount - ticket.totalMoney) }}
+            </td>
+            <td v-if="CONFIG.MODE === 'development'"></td>
+          </tr>
+          <tr v-else-if="ticket.debtAmount !== ticket.totalMoney - ticket.paidAmount">
+            <td v-if="CONFIG.MODE === 'development'"></td>
+            <td colspan="4" class="text-right">Đang thiếu :</td>
+            <td class="text-right font-bold" style="color: var(--text-red)">
+              {{ formatMoney(ticket.totalMoney - ticket.paidAmount) }}
+            </td>
+            <td v-if="CONFIG.MODE === 'development'"></td>
           </tr>
         </tbody>
       </table>

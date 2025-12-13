@@ -8,7 +8,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer, CustomerService } from '@/modules/customer'
 import { PaymentApi } from '@/modules/payment'
-import { PaymentMethodService } from '@/modules/payment-method'
+import { WalletService } from '@/modules/wallet'
 import { TicketMoneyApi, TicketQueryApi, TicketStatus, type Ticket } from '@/modules/ticket'
 import { ESTimer } from '@/utils'
 import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
@@ -26,27 +26,27 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const { userPermission, user } = MeService
 
-const money = ref(0)
+const totalMoney = ref(0)
 const note = ref('')
 const customer = ref<Customer>(Customer.blank())
-const paymentMethodId = ref<number>(0)
-const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
+const walletId = ref<string>('')
+const walletOptions = ref<{ value: any; label: string }[]>([])
 
-const ticketPaymentList = ref<{ ticket: Ticket; money: number }[]>([])
+const ticketPaymentList = ref<{ ticket: Ticket; money: number; moneyItem: number }[]>([])
 
 const showModal = ref(false)
 const dataLoading = ref(false)
 const saveLoading = ref(false)
 
 onMounted(async () => {
-  const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
-  paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
-  paymentMethodId.value = paymentMethodAll[0]?.id || 0
+  const walletAll = await WalletService.list({ sort: { code: 'ASC' } })
+  walletOptions.value = walletAll.map((i) => ({ value: i.id, label: i.name }))
+  walletId.value = walletAll[0]?.id || ''
 })
 
 const openModal = async (customerId: number) => {
   showModal.value = true
-  money.value = 0
+  totalMoney.value = 0
   note.value = ''
   try {
     dataLoading.value = true
@@ -59,10 +59,14 @@ const openModal = async (customerId: number) => {
         },
         sort: { id: 'ASC' },
       }),
-      PaymentMethodService.list({ sort: { priority: 'ASC' } }),
+      WalletService.list({ sort: { code: 'ASC' } }),
     ])
     customer.value = fetchPromise[0] || Customer.blank()
-    ticketPaymentList.value = fetchPromise[1].ticketList.map((i) => ({ ticket: i, money: 0 }))
+    ticketPaymentList.value = fetchPromise[1].ticketList.map((i) => ({
+      ticket: i,
+      money: 0,
+      moneyItem: 0,
+    }))
   } catch (error) {
     console.log('🚀 ~ ModalCustomerPayDebt.vue:70 ~ openModal ~ error:', error)
   } finally {
@@ -73,27 +77,27 @@ const openModal = async (customerId: number) => {
 const closeModal = () => {
   showModal.value = false
   ticketPaymentList.value = []
-  money.value = 0
+  totalMoney.value = 0
   note.value = ''
   customer.value = Customer.blank()
-  paymentMethodId.value = 0
+  walletId.value = ''
 }
 
 const handleSave = async () => {
   saveLoading.value = true
   try {
-    if (money.value === 0) {
+    if (totalMoney.value === 0) {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
 
     const data = await TicketMoneyApi.payDebt({
       customerId: customer.value.id,
-      paymentMethodId: paymentMethodId.value,
-      paidAmount: money.value,
+      walletId: walletId.value,
+      totalMoney: totalMoney.value,
       note: '',
       dataList: ticketPaymentList.value
-        .map((i) => ({ ticketId: i.ticket.id, paidAmount: i.money }))
-        .filter((i) => i.paidAmount > 0),
+        .map((i) => ({ ticketId: i.ticket.id, debtMinus: i.money, debtItemMinus: i.moneyItem }))
+        .filter((i) => i.debtMinus + i.debtItemMinus > 0),
     })
     AlertStore.addSuccess(`Trả nợ cho KH ${customer.value.fullName} thành công`)
     emit('success', { customer: data.customerModified })
@@ -106,16 +110,20 @@ const handleSave = async () => {
 }
 
 const handleClickPayAllDebt = () => {
-  money.value = customer.value.debt
+  totalMoney.value = customer.value.debt
   calculatorEachVoucherPayment()
 }
 
 const calculatorEachVoucherPayment = () => {
-  let totalMoney = money.value
+  let totalMoneyRemain = totalMoney.value
   ticketPaymentList.value.forEach((item) => {
-    const number = Math.min(totalMoney, item.ticket.debt)
+    const number = Math.min(totalMoneyRemain, item.ticket.debt)
     item.money = number
-    totalMoney = totalMoney - number
+    totalMoneyRemain = totalMoneyRemain - number
+
+    const numberItem = Math.min(totalMoneyRemain, item.ticket.debtItem)
+    item.moneyItem = numberItem
+    totalMoneyRemain = totalMoneyRemain - numberItem
   })
 }
 
@@ -174,7 +182,7 @@ defineExpose({ openModal })
                   </div>
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(ticketPayment.ticket.debt) }}
+                  {{ formatMoney(ticketPayment.ticket.debtAmount) }}
                 </td>
                 <td class="text-right">
                   {{ formatMoney(ticketPayment.money) }}
@@ -188,7 +196,7 @@ defineExpose({ openModal })
             <div>
               <div>Phương thức thanh toán</div>
               <div>
-                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+                <InputSelect v-model:value="walletId" :options="walletOptions" />
               </div>
             </div>
             <div class="mt-4">
@@ -208,7 +216,7 @@ defineExpose({ openModal })
                   <VueButton color="blue" @click="handleClickPayAllDebt">Tất cả</VueButton>
                   <InputMoney
                     ref="inputMoneyPay"
-                    v-model:value="money"
+                    v-model:value="totalMoney"
                     textAlign="right"
                     :validate="{ lte: customer.debt, gt: 0 }"
                     required
@@ -220,7 +228,7 @@ defineExpose({ openModal })
             <div class="mt-4">
               <div>Số nợ còn lại</div>
               <div>
-                <InputMoney :value="customer.debt - money" disabled textAlign="right" />
+                <InputMoney :value="customer.debt - totalMoney" disabled textAlign="right" />
               </div>
             </div>
           </div>

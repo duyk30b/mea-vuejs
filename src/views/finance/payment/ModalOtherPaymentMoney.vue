@@ -4,10 +4,11 @@ import { IconClose } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputMoney, InputSelect, InputText, VueSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
-import { PaymentMethodService } from '@/modules/payment-method'
+import { WalletService, WalletType } from '@/modules/wallet'
 import { PaymentApi } from '@/modules/payment/payment.api'
 import { MoneyDirection, Payment } from '@/modules/payment/payment.model'
 import { onMounted, ref } from 'vue'
+import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -17,19 +18,12 @@ const emit = defineEmits<{
 
 const money = ref(0)
 const note = ref('')
-const paymentMethodId = ref<number>(0)
-const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
+const walletId = ref<string>('')
 
 const moneyDirection = ref(MoneyDirection.In)
 
 const showModal = ref(false)
 const saveLoading = ref(false)
-
-onMounted(async () => {
-  const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
-  paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
-  paymentMethodId.value = paymentMethodAll[0]?.id || 0
-})
 
 const openModal = async (moneyDirectionProp: MoneyDirection) => {
   showModal.value = true
@@ -40,19 +34,21 @@ const closeModal = () => {
   showModal.value = false
   money.value = 0
   note.value = ''
-  paymentMethodId.value = 0
-  paymentMethodOptions.value = []
+  walletId.value = ''
 }
 
 const handleSave = async () => {
-  saveLoading.value = true
   if (money.value === 0) {
     return AlertStore.addError('Số tiền trả nợ phải khác 0')
   }
+  if (walletId.value === '') {
+    return AlertStore.addError('Chưa chọn phương thức thanh toán')
+  }
   try {
+    saveLoading.value = true
     if (moneyDirection.value === MoneyDirection.In) {
       const payment = await PaymentApi.otherCreateMoneyIn({
-        paymentMethodId: paymentMethodId.value,
+        walletId: walletId.value,
         note: note.value,
         paidAmount: money.value,
       })
@@ -60,7 +56,7 @@ const handleSave = async () => {
     }
     if (moneyDirection.value === MoneyDirection.Out) {
       const payment = await PaymentApi.otherCreateMoneyOut({
-        paymentMethodId: paymentMethodId.value,
+        walletId: walletId.value,
         note: note.value,
         paidAmount: money.value,
       })
@@ -92,20 +88,6 @@ defineExpose({ openModal })
     <form class="bg-white p-4" @submit.prevent="handleSave">
       <div class="flex flex-wrap gap-4">
         <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-          <div>
-            <div>Phương thức thanh toán</div>
-            <div>
-              <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
-            </div>
-          </div>
-          <div class="mt-4">
-            <div>Lý do</div>
-            <div>
-              <InputText v-model:value="note" />
-            </div>
-          </div>
-        </div>
-        <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
           <div style="flex: 1; flex-basis: 250px">
             <div>Loại phiếu</div>
             <div>
@@ -128,10 +110,26 @@ defineExpose({ openModal })
               <InputMoney
                 ref="inputMoneyPay"
                 v-model:value="money"
-                textAlign="right"
+                textAlign="left"
                 :validate="{ gt: 0 }"
                 required
               />
+            </div>
+          </div>
+        </div>
+        <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+          <div>
+            <div>Phương thức thanh toán</div>
+            <InputSelectWallet
+              v-model:walletId="walletId"
+              :walletTypeList="[WalletType.Bank, WalletType.Cash]"
+              required
+            />
+          </div>
+          <div class="mt-4">
+            <div>Lý do</div>
+            <div>
+              <InputText v-model:value="note" />
             </div>
           </div>
         </div>

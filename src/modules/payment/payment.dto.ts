@@ -12,14 +12,14 @@ export class PaymentGetParams {
     distributor?: boolean
     employee?: boolean
     cashier?: boolean
-    paymentMethod?: boolean
+    wallet?: boolean
     paymentTicketItemList?: boolean
   }
 
   filter?: {
     voucherType?: PaymentVoucherType
     voucherId?: string
-    paymentMethodId?: number
+    walletId?: string
     personType?: PaymentPersonType | ConditionEnum<PaymentPersonType>
     personId?: number
     moneyDirection?: MoneyDirection | ConditionEnum<MoneyDirection>

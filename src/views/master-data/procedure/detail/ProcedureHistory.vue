@@ -6,6 +6,7 @@ import { Procedure } from '@/modules/procedure'
 import { TicketProcedure, TicketProcedureApi } from '@/modules/ticket-procedure'
 import { timeToText } from '@/utils'
 import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
+import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 import { ref, watch } from 'vue'
 
 const props = withDefaults(defineProps<{ procedure: Procedure }>(), {
@@ -74,9 +75,9 @@ watch(
         </tr>
         <tr v-for="(ticketProcedure, index) in ticketProcedureList" :key="index">
           <td>
-            <LinkAndStatusTicket :ticket="ticketProcedure.ticketProcess!" />
+            <TicketLink :ticket="ticketProcedure.ticket!" :ticketId="ticketProcedure.ticketId" />
             <div style="font-size: 0.8rem; white-space: nowrap">
-              {{ timeToText(ticketProcedure.ticketProcess?.createdAt, 'hh:mm DD/MM/YYYY') }}
+              {{ timeToText(ticketProcedure.ticket?.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
           </td>
           <td class="">

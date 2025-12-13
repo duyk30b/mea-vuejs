@@ -2,17 +2,18 @@
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { InputMoney, InputSelect, InputText } from '@/common/vue-form'
+import { InputMoney, InputText } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { PaymentViewType } from '@/modules/enum'
-import { PaymentMethodService } from '@/modules/payment-method'
+import { PaymentActionType } from '@/modules/payment'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { TicketMoneyApi, TicketOrderApi, TicketStatus } from '@/modules/ticket'
 import { TicketProduct } from '@/modules/ticket-product'
+import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
 import TicketPaymentList from '@/views/room/room-ticket-base/TicketPaymentList.vue'
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { ticketOrderDetailRef } from './ticket-order-detail.ref'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputMoney>>()
@@ -24,22 +25,12 @@ const { userPermission } = MeService
 
 const showModal = ref(false)
 const paymentLoading = ref(false)
+
 const paymentView = ref(PaymentViewType.Success)
 
 const money = ref(0)
-const paymentMethodId = ref<number>(0)
+const walletId = ref<string>('')
 const note = ref('')
-const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
-
-onMounted(async () => {
-  try {
-    const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
-    paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
-    paymentMethodId.value = paymentMethodAll[0]?.id || 0
-  } catch (error) {
-    console.log('🚀 ~ ModalTicketOrderPayment.vue:40 ~ error:', error)
-  }
-})
 
 const openModal = async (view = PaymentViewType.Success) => {
   showModal.value = true
@@ -51,7 +42,7 @@ const closeModal = () => {
   showModal.value = false
   money.value = 0
   note.value = ''
-  paymentMethodId.value = 0
+  walletId.value = ''
 }
 
 const startPrepayment = async () => {
@@ -60,12 +51,15 @@ const startPrepayment = async () => {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
     paymentLoading.value = true
-    const result = await TicketMoneyApi.prepaymentMoney({
+    const result = await TicketMoneyApi.paymentMoney({
       ticketId: ticketOrderDetailRef.value.id,
       body: {
-        customerId: ticketOrderDetailRef.value.customerId,
-        paymentMethodId: paymentMethodId.value,
-        paidAmount: money.value,
+        walletId: walletId.value,
+        paymentActionType: PaymentActionType.PaymentMoney,
+        paidAdd: money.value,
+        paidItemAdd: 0,
+        debtAdd: 0,
+        debtItemAdd: 0,
         note: '',
       },
     })
@@ -86,7 +80,7 @@ const startSendProductAndPaymentAndClose = async () => {
     paymentLoading.value = true
     if (
       money.value < 0 ||
-      ticketOrderDetailRef.value.totalMoney < ticketOrderDetailRef.value.paid + money.value
+      ticketOrderDetailRef.value.totalMoney < ticketOrderDetailRef.value.paidAmount + money.value
     ) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
@@ -95,7 +89,7 @@ const startSendProductAndPaymentAndClose = async () => {
       {
         customerId: ticketOrderDetailRef.value.customerId,
         paidAmount: money.value,
-        paymentMethodId: paymentMethodId.value,
+        walletId: walletId.value,
         note: note.value,
         ticketProductIdList: (ticketOrderDetailRef.value.ticketProductList || []).map((i: any) => {
           return i.id
@@ -122,18 +116,21 @@ const startRefundOverpaid = async () => {
     paymentLoading.value = true
     if (
       money.value <= 0 ||
-      ticketOrderDetailRef.value.totalMoney > ticketOrderDetailRef.value.paid - money.value
+      ticketOrderDetailRef.value.totalMoney > ticketOrderDetailRef.value.paidAmount - money.value
     ) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
 
-    const result = await TicketMoneyApi.refundMoney({
+    const result = await TicketMoneyApi.paymentMoney({
       ticketId: ticketOrderDetailRef.value.id,
       body: {
-        customerId: ticketOrderDetailRef.value.customerId,
-        paymentMethodId: paymentMethodId.value,
+        walletId: walletId.value,
+        paymentActionType: PaymentActionType.RefundMoney,
         note: '',
-        refundAmount: money.value,
+        paidAdd: -money.value,
+        paidItemAdd: 0,
+        debtAdd: 0,
+        debtItemAdd: 0,
       },
     })
     Object.assign(ticketOrderDetailRef.value, result.ticketModified)
@@ -153,24 +150,25 @@ const startPayDebt = async () => {
     paymentLoading.value = true
     if (
       money.value <= 0 ||
-      ticketOrderDetailRef.value.totalMoney < ticketOrderDetailRef.value.paid + money.value
+      ticketOrderDetailRef.value.totalMoney < ticketOrderDetailRef.value.paidAmount + money.value
     ) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
-    const result = await TicketMoneyApi.payDebt({
-      customerId: ticketOrderDetailRef.value.customerId,
-      paymentMethodId: paymentMethodId.value,
-      paidAmount: money.value,
-      note: '',
-      dataList: [
-        {
-          paidAmount: money.value,
-          ticketId: ticketOrderDetailRef.value.id,
-        },
-      ],
+
+    const result = await TicketMoneyApi.paymentMoney({
+      ticketId: ticketOrderDetailRef.value.id,
+      body: {
+        walletId: walletId.value,
+        paymentActionType: PaymentActionType.PayDebt,
+        note: '',
+        paidAdd: money.value,
+        paidItemAdd: 0,
+        debtAdd: -money.value,
+        debtItemAdd: 0,
+      },
     })
-    Object.assign(ticketOrderDetailRef.value, result.ticketModifiedList[0])
-    ticketOrderDetailRef.value.paymentList!.push(...result.paymentCreatedList)
+    Object.assign(ticketOrderDetailRef.value, result.ticketModified)
+    ticketOrderDetailRef.value.paymentList!.push(result.paymentCreated)
 
     emit('success')
     showModal.value = false
@@ -209,7 +207,7 @@ defineExpose({ openModal })
             <div>
               <div>Phương thức hoàn trả</div>
               <div>
-                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+                <InputSelectWallet v-model:walletId="walletId" required autoSelectFirstValue />
               </div>
             </div>
             <div class="mt-4">
@@ -229,7 +227,9 @@ defineExpose({ openModal })
                   <VueButton
                     color="default"
                     type="button"
-                    @click="money = ticketOrderDetailRef.paid - ticketOrderDetailRef.totalMoney"
+                    @click="
+                      money = ticketOrderDetailRef.paidAmount - ticketOrderDetailRef.totalMoney
+                    "
                   >
                     Tất cả
                   </VueButton>
@@ -239,7 +239,7 @@ defineExpose({ openModal })
                     text-align="right"
                     :validate="{
                       gt: 0,
-                      lte: ticketOrderDetailRef.paid - ticketOrderDetailRef.totalMoney,
+                      lte: ticketOrderDetailRef.paidAmount - ticketOrderDetailRef.totalMoney,
                     }"
                   />
                 </div>
@@ -249,7 +249,7 @@ defineExpose({ openModal })
               <div>Còn thừa</div>
               <div>
                 <InputMoney
-                  :value="ticketOrderDetailRef.paid - money - ticketOrderDetailRef.totalMoney"
+                  :value="ticketOrderDetailRef.paidAmount - money - ticketOrderDetailRef.totalMoney"
                   disabled
                   textAlign="right"
                 />
@@ -286,7 +286,7 @@ defineExpose({ openModal })
             <div>
               <div>Phương thức thanh toán</div>
               <div>
-                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+                <InputSelectWallet v-model:walletId="walletId" required autoSelectFirstValue />
               </div>
             </div>
             <div class="mt-4">
@@ -306,7 +306,9 @@ defineExpose({ openModal })
                   <VueButton
                     color="default"
                     type="button"
-                    @click="money = ticketOrderDetailRef.debt > 0 ? ticketOrderDetailRef.debt : 0"
+                    @click="
+                      money = ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paidAmount
+                    "
                   >
                     Tất cả
                   </VueButton>
@@ -322,14 +324,18 @@ defineExpose({ openModal })
               </div>
             </div>
             <div class="mt-4">
-              <div v-if="ticketOrderDetailRef.totalMoney >= ticketOrderDetailRef.paid + money">
+              <div
+                v-if="ticketOrderDetailRef.totalMoney >= ticketOrderDetailRef.paidAmount + money"
+              >
                 Còn thiếu
               </div>
               <div v-else>Còn thừa</div>
               <div>
                 <InputMoney
                   :value="
-                    Math.abs(ticketOrderDetailRef.totalMoney - (ticketOrderDetailRef.paid + money))
+                    Math.abs(
+                      ticketOrderDetailRef.totalMoney - (ticketOrderDetailRef.paidAmount + money),
+                    )
                   "
                   disabled
                   textAlign="right"
@@ -369,7 +375,7 @@ defineExpose({ openModal })
             <div>
               <div>Phương thức thanh toán</div>
               <div>
-                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+                <InputSelectWallet v-model:walletId="walletId" required autoSelectFirstValue />
               </div>
             </div>
             <div class="mt-4">
@@ -389,7 +395,9 @@ defineExpose({ openModal })
                   <VueButton
                     color="default"
                     type="button"
-                    @click="money = ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid"
+                    @click="
+                      money = ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paidAmount
+                    "
                   >
                     Tất cả
                   </VueButton>
@@ -399,7 +407,7 @@ defineExpose({ openModal })
                     text-align="right"
                     :validate="{
                       gte: 0,
-                      lte: ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid,
+                      lte: ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paidAmount,
                     }"
                   />
                 </div>
@@ -409,7 +417,9 @@ defineExpose({ openModal })
               <div>Ghi nợ</div>
               <div>
                 <InputMoney
-                  :value="ticketOrderDetailRef.totalMoney - (ticketOrderDetailRef.paid + money)"
+                  :value="
+                    ticketOrderDetailRef.totalMoney - (ticketOrderDetailRef.paidAmount + money)
+                  "
                   disabled
                   textAlign="right"
                 />
@@ -432,11 +442,13 @@ defineExpose({ openModal })
           >
             <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
               <template
-                v-if="ticketOrderDetailRef.totalMoney === ticketOrderDetailRef.paid + money"
+                v-if="ticketOrderDetailRef.totalMoney === ticketOrderDetailRef.paidAmount + money"
               >
                 Gửi hàng và Thanh toán
               </template>
-              <template v-if="ticketOrderDetailRef.totalMoney != ticketOrderDetailRef.paid + money">
+              <template
+                v-if="ticketOrderDetailRef.totalMoney != ticketOrderDetailRef.paidAmount + money"
+              >
                 Gửi hàng và Ghi nợ
               </template>
             </VueButton>
@@ -455,7 +467,7 @@ defineExpose({ openModal })
             <div>
               <div>Phương thức thanh toán</div>
               <div>
-                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+                <InputSelectWallet v-model:walletId="walletId" required autoSelectFirstValue />
               </div>
             </div>
             <div class="mt-4">
@@ -475,7 +487,9 @@ defineExpose({ openModal })
                   <VueButton
                     color="default"
                     type="button"
-                    @click="money = ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid"
+                    @click="
+                      money = ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paidAmount
+                    "
                   >
                     Tất cả
                   </VueButton>
@@ -485,7 +499,7 @@ defineExpose({ openModal })
                     text-align="right"
                     :validate="{
                       gt: 0,
-                      lte: ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid,
+                      lte: ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paidAmount,
                     }"
                   />
                 </div>
@@ -495,7 +509,7 @@ defineExpose({ openModal })
               <div>Nợ còn</div>
               <div>
                 <InputMoney
-                  :value="ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid - money"
+                  :value="ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paidAmount - money"
                   disabled
                   textAlign="right"
                 />
@@ -516,11 +530,13 @@ defineExpose({ openModal })
           >
             <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
               <template
-                v-if="ticketOrderDetailRef.totalMoney === ticketOrderDetailRef.paid + money"
+                v-if="ticketOrderDetailRef.totalMoney === ticketOrderDetailRef.paidAmount + money"
               >
                 Trả nợ và Kết thúc
               </template>
-              <template v-if="ticketOrderDetailRef.totalMoney != ticketOrderDetailRef.paid + money">
+              <template
+                v-if="ticketOrderDetailRef.totalMoney != ticketOrderDetailRef.paidAmount + money"
+              >
                 Trả nợ
               </template>
             </VueButton>

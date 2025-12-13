@@ -22,7 +22,7 @@ export class TicketActionApi {
     const response = await AxiosInstance.post(`/ticket/${ticketId}/start-executing`)
     const { data } = response.data as BaseResponse<{ ticketModified: any }>
     return {
-      ticket: Ticket.from(data.ticketModified),
+      ticketModified: Ticket.from(data.ticketModified),
     }
   }
 
@@ -39,7 +39,10 @@ export class TicketActionApi {
       discountMoney: body.discountMoney,
       discountPercent: body.discountPercent,
     })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as BaseResponse<{ ticketModified: any }>
+    return {
+      ticketModified: Ticket.from(data.ticketModified),
+    }
   }
 
   static async changeSurchargeList(
@@ -56,7 +59,10 @@ export class TicketActionApi {
         }
       }),
     })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as BaseResponse<{ ticketModified: any }>
+    return {
+      ticketModified: Ticket.from(data.ticketModified),
+    }
   }
 
   static async changeAllMoney(
@@ -70,7 +76,9 @@ export class TicketActionApi {
   ) {
     const response = await AxiosInstance.post(`/ticket/${ticketId}/change-all-money`, body)
     const { data } = response.data as BaseResponse<{ ticketModified: any }>
-    return Ticket.from(data.ticketModified)
+    return {
+      ticketModified: Ticket.from(data.ticketModified),
+    }
   }
 
   static async sendProduct(body: { ticketId: string; ticketProductIdList: string[] }) {
@@ -101,8 +109,16 @@ export class TicketActionApi {
     const response = await AxiosInstance.post(`/ticket/${ticketId}/return-product`, {
       returnList,
     })
-    const { data } = response.data as BaseResponse
-    return data
+    const { data } = response.data as BaseResponse<{
+      ticketModified: any
+      ticketProductModifiedAll?: any[]
+    }>
+    return {
+      ticketModified: Ticket.from(data.ticketModified),
+      ticketProductModifiedAll: data.ticketProductModifiedAll
+        ? TicketProduct.fromList(data.ticketProductModifiedAll)
+        : undefined,
+    }
   }
 
   static async close(options: { ticketId: string }) {
@@ -111,12 +127,11 @@ export class TicketActionApi {
     const { data } = response.data as BaseResponse<{
       ticketModified: any
       customerModified?: any
-      paymentCreatedList: any[]
+      paymentCreated: any
     }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
-      customerModified: data.customerModified ? Customer.from(data.customerModified) : undefined,
-      paymentCreatedList: Payment.fromList(data.paymentCreatedList),
+      paymentCreated: data.paymentCreated ? Payment.from(data.paymentCreated) : undefined,
     }
   }
 
@@ -125,29 +140,28 @@ export class TicketActionApi {
     const response = await AxiosInstance.post(`/ticket/${ticketId}/reopen`)
     const { data } = response.data as BaseResponse<{
       ticketModified: any
-      customerModified: any
-      paymentCreatedList: any[]
     }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
-      customerModified: data.customerModified ? Customer.from(data.customerModified) : undefined,
-      paymentCreatedList: Payment.fromList(data.paymentCreatedList),
     }
   }
 
-  static async terminate(options: { ticketId: string }) {
+  static async terminate(options: { ticketId: string; walletId: string; note: string }) {
     const { ticketId } = options
-    const response = await AxiosInstance.post(`/ticket/${ticketId}/terminate`)
+    const response = await AxiosInstance.post(`/ticket/${ticketId}/terminate`, {
+      walletId: options.walletId,
+      note: options.note,
+    })
     const { data } = response.data as BaseResponse<{
       ticketModified: any
       customerModified?: any
-      paymentCreatedList: any[]
+      paymentCreated: any
       ticketProductModifiedAll?: any[]
     }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
       customerModified: data.customerModified ? Customer.from(data.customerModified) : undefined,
-      paymentCreatedList: Payment.fromList(data.paymentCreatedList),
+      paymentCreated: data.paymentCreated ? Payment.from(data.paymentCreated) : undefined,
       ticketProductModifiedAll: data.ticketProductModifiedAll
         ? TicketProduct.fromList(data.ticketProductModifiedAll)
         : undefined,

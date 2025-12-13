@@ -1,5 +1,7 @@
 <script lang="ts" setup>
+import { IconBug } from '@/common/icon-antd'
 import { IconEditSquare } from '@/common/icon-google'
+import { VueTooltip } from '@/common/popover'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
@@ -71,20 +73,11 @@ const handleModalTicketUserUpdateCommissionSuccess = (
       <table>
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>#</th>
-            <th v-if="CONFIG.MODE === 'development'">
-              <div>ID-PositionId</div>
-              <div>PositionType</div>
-            </th>
             <th>Vai trò</th>
             <th>Nhân viên</th>
-            <th>
-              <div v-if="CONFIG.MODE === 'development'">
-                <div>ticketItemId</div>
-                <div>positionInteractId</div>
-              </div>
-              <div>DV/SP/XN...</div>
-            </th>
+            <th>DV/SP/XN...</th>
             <th>T.Gian</th>
             <th>Giá</th>
             <th>SL</th>
@@ -102,32 +95,22 @@ const handleModalTicketUserUpdateCommissionSuccess = (
               v-for="(ticketUser, index) in ticketRoomRef.ticketUserList || []"
               :key="ticketUser.id"
             >
+              <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+                <VueTooltip>
+                  <template #trigger>
+                    <IconBug width="1.2em" height="1.2em" />
+                  </template>
+                  <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                    <pre>{{ JSON.stringify(ticketUser, null, 4) }}</pre>
+                  </div>
+                </VueTooltip>
+              </td>
               <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
                 {{ index + 1 }}
               </td>
-              <td
-                v-if="CONFIG.MODE === 'development'"
-                class="text-center whitespace-nowrap"
-                style="color: violet"
-              >
-                {{ ticketUser.id }} - {{ ticketUser.positionId }} - {{ ticketUser.positionType }}
-              </td>
-              <td style="">
-                <span v-if="CONFIG.MODE === 'development'" style="color: violet">
-                  ({{ ticketUser.roleId }})
-                </span>
-                <span>{{ ticketUser.role?.name || '' }}</span>
-              </td>
+              <td>{{ ticketUser.role?.name || '' }}</td>
+              <td>{{ ticketUser.user?.fullName }}</td>
               <td>
-                <span v-if="CONFIG.MODE === 'development'" style="color: violet">
-                  ({{ ticketUser.userId }})
-                </span>
-                <span>{{ ticketUser.user?.fullName }}</span>
-              </td>
-              <td>
-                <span v-if="CONFIG.MODE === 'development'" style="color: violet">
-                  ({{ ticketUser.ticketItemId }} - {{ ticketUser.positionInteractId }})
-                </span>
                 <template v-if="ticketUser.positionType === PositionType.Reception">
                   Phiếu khám
                 </template>

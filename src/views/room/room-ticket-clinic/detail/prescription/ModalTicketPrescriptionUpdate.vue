@@ -43,7 +43,6 @@ const handleChangeUnitQuantityPrescription = (data: number) => {
     const { product, unitRate } = ticketProduct.value
     ticketProduct.value.unitQuantityPrescription = data
     ticketProduct.value.unitQuantity = data
-    ticketProduct.value.costAmount = data * unitRate * (product?.costPrice || 0)
   }
 }
 
@@ -51,7 +50,6 @@ const handleChangeUnitQuantity = (data: number) => {
   if (ticketProduct.value.deliveryStatus !== DeliveryStatus.Delivered) {
     const { product, unitRate } = ticketProduct.value
     ticketProduct.value.unitQuantity = data
-    ticketProduct.value.costAmount = data * unitRate * (product?.costPrice || 0)
   }
 }
 

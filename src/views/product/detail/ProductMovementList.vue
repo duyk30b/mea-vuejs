@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import VuePagination from '@/common/VuePagination.vue'
 import VueTag from '@/common/VueTag.vue'
+import { IconBug } from '@/common/icon-antd'
+import { VueTooltip } from '@/common/popover'
 import { InputCheckbox, VueSelect } from '@/common/vue-form'
 import type { VueSelectOption } from '@/common/vue-form/VueSelect.vue'
 import { CONFIG } from '@/config'
@@ -14,8 +16,7 @@ import {
   type ProductMovement,
 } from '@/modules/product-movement/product-movement.model'
 import { ESTypescript, timeToText } from '@/utils'
-import PurchaseOrderStatusTag from '@/views/purchase-order/PurchaseOrderStatusTag.vue'
-import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
+import PurchaseOrderLink from '@/views/purchase-order/PurchaseOrderLink.vue'
 import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 import StockCheckStatusTag from '@/views/stock-check/StockCheckStatusTag.vue'
 import { ref, watch } from 'vue'
@@ -105,14 +106,6 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const openBlankPurchaseOrderDetail = async (voucherId: string) => {
-  const route = router.resolve({
-    name: 'PurchaseOrderDetailContainer',
-    params: { id: voucherId },
-  })
-  window.open(route.href, '_blank')
-}
-
 const openBlankStockCheckDetail = async (voucherId: string) => {
   const route = router.resolve({
     name: 'StockCheckDetail',
@@ -154,13 +147,11 @@ const openBlankStockCheckDetail = async (voucherId: string) => {
               <div>
                 {{ productMovement.distributor?.fullName }}
               </div>
-              <div style="font-size: 0.8rem">
-                <a @click="openBlankPurchaseOrderDetail(productMovement.voucherId)">
-                  NH{{ productMovement.voucherId }}
-                </a>
-                <span class="ml-2">
-                  <PurchaseOrderStatusTag :purchaseOrder="productMovement.purchaseOrder" />
-                </span>
+              <div>
+                <PurchaseOrderLink
+                  :purchaseOrder="productMovement.purchaseOrder!"
+                  :purchaseOrderId="productMovement.voucherId"
+                />
               </div>
               <div style="font-size: 0.8rem; white-space: nowrap">
                 {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
@@ -232,6 +223,7 @@ const openBlankStockCheckDetail = async (voucherId: string) => {
     <table>
       <thead>
         <tr>
+          <th v-if="CONFIG.MODE === 'development'"></th>
           <th>Loại</th>
           <th>Tên</th>
           <th>Phiếu</th>
@@ -250,6 +242,16 @@ const openBlankStockCheckDetail = async (voucherId: string) => {
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
         <tr v-for="(productMovement, index) in productMovementList" :key="index">
+          <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+            <VueTooltip>
+              <template #trigger>
+                <IconBug width="1.2em" height="1.2em" />
+              </template>
+              <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                <pre>{{ JSON.stringify(productMovement, null, 4) }}</pre>
+              </div>
+            </VueTooltip>
+          </td>
           <template v-if="productMovement.movementType === MovementType.PurchaseOrder">
             <td>Nhập hàng</td>
             <td>
@@ -260,15 +262,10 @@ const openBlankStockCheckDetail = async (voucherId: string) => {
             </td>
             <td>
               <div>
-                <a
-                  style="font-size: 0.8rem"
-                  @click="openBlankPurchaseOrderDetail(productMovement.voucherId)"
-                >
-                  NH{{ productMovement.voucherId }}
-                </a>
-                <span class="ml-2">
-                  <PurchaseOrderStatusTag :purchaseOrder="productMovement.purchaseOrder" />
-                </span>
+                <PurchaseOrderLink
+                  :purchaseOrder="productMovement.purchaseOrder!"
+                  :purchaseOrderId="productMovement.voucherId"
+                />
               </div>
               <div>{{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}</div>
             </td>

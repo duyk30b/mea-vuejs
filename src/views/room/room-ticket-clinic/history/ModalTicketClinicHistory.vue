@@ -326,24 +326,13 @@ defineExpose({ openModal })
                             <div v-if="ticket.isPaymentEachItem" class="text-right">
                               <div>Đã thanh toán</div>
                               <div style="font-weight: bold; color: var(--text-green)">
-                                {{ formatMoney(ticketRegimen.moneyAmountPaid) }}
+                                {{ formatMoney(ticketRegimen.paid + ticketRegimen.paidItem) }}
                               </div>
                             </div>
                             <div v-if="!ticket.isPaymentEachItem" class="text-right">
                               <div>Đã thực hiện</div>
                               <div style="font-weight: bold; color: var(--text-green)">
                                 {{ formatMoney(ticketRegimen.moneyAmountUsed) }}
-                              </div>
-                            </div>
-                            <div
-                              v-if="
-                                ticket.isPaymentEachItem && ticketRegimen.moneyAmountWallet != 0
-                              "
-                              class="text-right"
-                            >
-                              <div>Ví</div>
-                              <div style="font-weight: bold; color: violet">
-                                {{ formatMoney(ticketRegimen.moneyAmountWallet) }}
                               </div>
                             </div>
                           </div>
@@ -767,11 +756,11 @@ defineExpose({ openModal })
                     </tr>
                     <tr>
                       <td>- Đã thanh toán:</td>
-                      <td class="px-4">{{ formatMoney(ticket.paid) }}</td>
+                      <td class="px-4">{{ formatMoney(ticket.paidAmount) }}</td>
                     </tr>
                     <tr>
                       <td>- Nợ:</td>
-                      <td class="px-4">{{ formatMoney(ticket.debt) }}</td>
+                      <td class="px-4">{{ formatMoney(ticket.debtAmount) }}</td>
                     </tr>
                   </tbody>
                 </table>

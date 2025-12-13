@@ -128,8 +128,6 @@ export const SETTING_DEFAULT = {
       itemsActualMoney: true,
       discount: true,
       surcharge: true,
-      paid: true,
-      debt: true,
     },
   },
   SCREEN_PURCHASE_ORDER_UPSERT: {
@@ -160,7 +158,7 @@ export const SETTING_DEFAULT = {
   },
 
   SCREEN_TICKET_ORDER_LIST: {
-    profit: true,
+    profit: false,
     ticketProductList: false,
     note: true,
   },
@@ -180,8 +178,6 @@ export const SETTING_DEFAULT = {
       itemsCostAmount: true,
       expense: true,
       profit: true,
-      paid: true,
-      debt: true,
     },
     process: {
       forceEdit: false,
@@ -286,6 +282,9 @@ export const SETTING_DEFAULT = {
     buttonPayment: false,
   },
   TICKET_CLINIC_DETAIL: {
+    other: {
+      hideMoneyTitle: 0,
+    },
     diagnosis: { icd10: 0 },
     procedure: {},
     regimen: { isEffectTotalMoney: 1 },

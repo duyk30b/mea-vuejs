@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import { IconFileSearch } from '@/common/icon-antd'
-import { IconMinus, IconPlus, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
+import { IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import { IconEditSquare } from '@/common/icon-google'
 import { InputNumber } from '@/common/vue-form'
 import VueTag from '@/common/VueTag.vue'
-import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType, PickupStrategy } from '@/modules/enum'
 import type { Procedure } from '@/modules/procedure'
 import type { Product } from '@/modules/product'
-import type { TicketProduct } from '@/modules/ticket-product'
 import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import { ref } from 'vue'
@@ -24,83 +21,6 @@ const modalTicketOrderUpdateProduct = ref<InstanceType<typeof ModalTicketOrderUp
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-
-const pickupStrategy = ref(MeService.getPickupStrategy().order)
-
-const handleChangeHintUsage = (data: string, index: number) => {
-  ticketOrderUpsertRef.value.ticketProductList![index].hintUsage = data
-}
-
-const overQuantityTicketProduct = (ticketProduct: TicketProduct): boolean => {
-  if (
-    ticketProduct.product?.warehouseIds !== '[]' &&
-    pickupStrategy.value !== PickupStrategy.NoImpact
-  ) {
-    return ticketProduct.quantity >= ticketProduct.product!.quantity
-  }
-  return false
-}
-
-const handleChangeTicketProductUnitDiscountMoney = (data: number, index: number) => {
-  const discountMoney = data / ticketOrderUpsertRef.value.ticketProductList![index].unitRate
-  const expectedPrice = ticketOrderUpsertRef.value.ticketProductList![index].expectedPrice || 0
-  const discountPercent = expectedPrice == 0 ? 0 : Math.floor((discountMoney * 100) / expectedPrice)
-  const actualPrice = expectedPrice - discountMoney
-  ticketOrderUpsertRef.value.ticketProductList![index].discountMoney = discountMoney
-  ticketOrderUpsertRef.value.ticketProductList![index].discountPercent = discountPercent
-  ticketOrderUpsertRef.value.ticketProductList![index].actualPrice = actualPrice
-  ticketOrderUpsertRef.value.ticketProductList![index].discountType = DiscountType.VND
-}
-
-const handleChangeTicketProductDiscountPercent = (discountPercent: number, index: number) => {
-  const expectedPrice = ticketOrderUpsertRef.value.ticketProductList![index].expectedPrice || 0
-  const discountMoney = Math.floor((discountPercent * expectedPrice) / 100)
-  const actualPrice = expectedPrice - discountMoney
-  ticketOrderUpsertRef.value.ticketProductList![index].discountPercent = discountPercent
-  ticketOrderUpsertRef.value.ticketProductList![index].discountMoney = discountMoney
-  ticketOrderUpsertRef.value.ticketProductList![index].actualPrice = actualPrice
-  ticketOrderUpsertRef.value.ticketProductList![index].discountType = DiscountType.Percent
-}
-
-const handleChangeTicketProductUnitActualPrice = (data: number, index: number) => {
-  const actualPrice = data / ticketOrderUpsertRef.value.ticketProductList![index].unitRate
-  const expectedPrice = ticketOrderUpsertRef.value.ticketProductList![index].expectedPrice
-  const discountMoney = expectedPrice - actualPrice
-  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
-  ticketOrderUpsertRef.value.ticketProductList![index].discountPercent = discountPercent
-  ticketOrderUpsertRef.value.ticketProductList![index].discountMoney = discountMoney
-  ticketOrderUpsertRef.value.ticketProductList![index].actualPrice = actualPrice
-  ticketOrderUpsertRef.value.ticketProductList![index].discountType = DiscountType.VND
-}
-
-const handleChangeTicketProductUnitQuantity = (unitQuantity: number, index: number) => {
-  ticketOrderUpsertRef.value.ticketProductList![index].unitQuantity = unitQuantity
-}
-
-const handleChangeTicketProcedureDiscountMoney = (data: number, index: number) => {
-  const discountMoney = data
-  const expectedPrice = ticketOrderUpsertRef.value.ticketProcedureList![index].expectedPrice || 0
-  const discountPercent = expectedPrice == 0 ? 0 : Math.floor((discountMoney * 100) / expectedPrice)
-  const actualPrice = expectedPrice - discountMoney
-  ticketOrderUpsertRef.value.ticketProcedureList![index].discountMoney = discountMoney
-  ticketOrderUpsertRef.value.ticketProcedureList![index].discountPercent = discountPercent
-  ticketOrderUpsertRef.value.ticketProcedureList![index].actualPrice = actualPrice
-  ticketOrderUpsertRef.value.ticketProcedureList![index].discountType = DiscountType.VND
-}
-
-const handleChangeTicketProcedureDiscountPercent = (discountPercent: number, index: number) => {
-  const expectedPrice = ticketOrderUpsertRef.value.ticketProcedureList![index].expectedPrice || 0
-  const discountMoney = Math.floor((discountPercent * expectedPrice) / 100)
-  const actualPrice = expectedPrice - discountMoney
-  ticketOrderUpsertRef.value.ticketProcedureList![index].discountPercent = discountPercent
-  ticketOrderUpsertRef.value.ticketProcedureList![index].discountMoney = discountMoney
-  ticketOrderUpsertRef.value.ticketProcedureList![index].actualPrice = actualPrice
-  ticketOrderUpsertRef.value.ticketProcedureList![index].discountType = DiscountType.Percent
-}
-
-const handleChangeTicketProcedureQuantity = (quantity: number, index: number) => {
-  ticketOrderUpsertRef.value.ticketProcedureList![index].quantity = quantity
-}
 
 const openModalProductDetail = (product?: Product) => {
   if (product) modalProductDetail.value?.openModal(product)
@@ -234,56 +154,8 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
                   </div>
                 </div>
               </td>
-              <td class="text-center whitespace-nowrap">
-                <!-- <div class="flex items-center justify-between">
-                <div
-                  style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
-                  @click="ticketOrderUpsertRef.ticketItems![index].unitQuantity--"
-                >
-                  <font-awesome-icon :icon="['fas', 'minus']" />
-                </div>
-                <div style="width: calc(100% - 60px)">
-                  <InputNumber v-model:value="ticketItem.unitQuantity" textAlign="right" />
-                </div>
-                <div
-                  style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
-                  @click="ticketOrderUpsertRef.ticketItems![index].unitQuantity++"
-                >
-                  <font-awesome-icon :icon="['fas', 'plus']" />
-                </div>
-              </div> -->
-                <div>
-                  <button
-                    style="border: none; font-size: 1.2rem; line-height: 0.5; background: none"
-                    class="disabled:opacity-[30%] disabled:cursor-not-allowed"
-                    @click="ticketProcedure.quantity++"
-                  >
-                    <IconSortUp style="opacity: 0.6" />
-                  </button>
-                  <div
-                    style="font-size: 1.1rem"
-                    contenteditable="true"
-                    @input="
-                      (e) =>
-                        handleChangeTicketProcedureQuantity(
-                          Number((e.target as HTMLElement)?.innerText) || 0,
-                          index,
-                        )
-                    "
-                  >
-                    {{ ticketProcedure.quantity }}
-                  </div>
-                  <button
-                    style="border: none; font-size: 1.2rem; line-height: 0.5; background: none"
-                    class="disabled:opacity-[30%] disabled:cursor-not-allowed"
-                    :disabled="ticketProcedure.quantity == 0"
-                    @click="ticketProcedure.quantity--"
-                  >
-                    <IconSortDown style="opacity: 0.6" />
-                  </button>
-                </div>
+              <td style="width: 100px">
+                <InputNumber v-model:value="ticketProcedure.quantity" controlVertical />
               </td>
               <td class="text-right whitespace-nowrap">
                 {{ formatMoney(ticketProcedure.actualPrice * ticketProcedure.quantity) }}
@@ -412,66 +284,8 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
                   </div>
                 </div>
               </td>
-              <td class="text-center whitespace-nowrap">
-                <!-- <div class="flex items-center justify-between">
-                <div
-                  style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
-                  @click="ticketOrderUpsertRef.ticketItems![index].unitQuantity--"
-                >
-                  <font-awesome-icon :icon="['fas', 'minus']" />
-                </div>
-                <div style="width: calc(100% - 60px)">
-                  <InputNumber v-model:value="ticketItem.unitQuantity" textAlign="right" />
-                </div>
-                <div
-                  style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
-                  @click="ticketOrderUpsertRef.ticketItems![index].unitQuantity++"
-                >
-                  <font-awesome-icon :icon="['fas', 'plus']" />
-                </div>
-              </div> -->
-                <div>
-                  <button
-                    style="border: none; font-size: 1.2rem; line-height: 0.5; background: none"
-                    class="disabled:opacity-[30%] disabled:cursor-not-allowed"
-                    :disabled="
-                      !settingStore.PRODUCT_SETTING.allowNegativeQuantity &&
-                      overQuantityTicketProduct(ticketProduct)
-                    "
-                    @click="
-                      (e) =>
-                        handleChangeTicketProductUnitQuantity(ticketProduct.unitQuantity + 1, index)
-                    "
-                  >
-                    <IconSortUp style="opacity: 0.6" />
-                  </button>
-                  <div
-                    style="font-size: 1.1rem"
-                    contenteditable="true"
-                    @input="
-                      (e) =>
-                        handleChangeTicketProductUnitQuantity(
-                          Number((e.target as HTMLElement)?.innerText) || 0,
-                          index,
-                        )
-                    "
-                  >
-                    {{ ticketProduct.unitQuantity }}
-                  </div>
-                  <button
-                    style="border: none; font-size: 1.2rem; line-height: 0.5; background: none"
-                    class="disabled:opacity-[30%] disabled:cursor-not-allowed"
-                    :disabled="ticketProduct.unitQuantity == 0"
-                    @click="
-                      (e) =>
-                        handleChangeTicketProductUnitQuantity(ticketProduct.unitQuantity - 1, index)
-                    "
-                  >
-                    <IconSortDown style="opacity: 0.6" />
-                  </button>
-                </div>
+              <td style="width: 100px">
+                <InputNumber v-model:value="ticketProduct.unitQuantity" controlVertical />
               </td>
               <td class="text-right whitespace-nowrap">
                 {{ formatMoney(ticketProduct.actualPrice * ticketProduct.quantity) }}
@@ -568,26 +382,11 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
                 </div>
               </td>
               <td style="width: 150px">
-                <div class="flex items-center justify-between">
-                  <button
-                    style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                    class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                    :disabled="ticketProcedure.quantity <= 0"
-                    @click="ticketProcedure.quantity--"
-                  >
-                    <IconMinus />
-                  </button>
-                  <div style="width: calc(100% - 60px); min-width: 50px">
-                    <InputNumber v-model:value="ticketProcedure.quantity" textAlign="right" />
-                  </div>
-                  <button
-                    style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                    class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                    @click="ticketProcedure.quantity++"
-                  >
-                    <IconPlus />
-                  </button>
-                </div>
+                <InputNumber
+                  v-model:value="ticketProcedure.quantity"
+                  textAlign="right"
+                  controlHorizontal
+                />
               </td>
               <td
                 v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount"
@@ -692,40 +491,11 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
                 {{ ticketProduct.unitName }}
               </td>
               <td style="width: 150px">
-                <div class="flex items-center justify-between">
-                  <button
-                    style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                    class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                    :disabled="ticketProduct.quantity === 0"
-                    @click="
-                      (e) =>
-                        handleChangeTicketProductUnitQuantity(ticketProduct.unitQuantity - 1, index)
-                    "
-                  >
-                    <IconMinus />
-                  </button>
-                  <div style="width: calc(100% - 60px); min-width: 50px">
-                    <InputNumber
-                      :value="ticketProduct.unitQuantity"
-                      textAlign="right"
-                      @update:value="(v) => handleChangeTicketProductUnitQuantity(v, index)"
-                    />
-                  </div>
-                  <button
-                    style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                    class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                    :disabled="
-                      !settingStore.PRODUCT_SETTING.allowNegativeQuantity &&
-                      overQuantityTicketProduct(ticketProduct)
-                    "
-                    @click="
-                      (e) =>
-                        handleChangeTicketProductUnitQuantity(ticketProduct.unitQuantity + 1, index)
-                    "
-                  >
-                    <IconPlus />
-                  </button>
-                </div>
+                <InputNumber
+                  v-model:value="ticketProduct.unitQuantity"
+                  textAlign="right"
+                  controlHorizontal
+                />
               </td>
               <td
                 v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount"

@@ -8,7 +8,7 @@ import VueModal from '@/common/vue-modal/VueModal.vue'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Distributor, DistributorService } from '@/modules/distributor'
-import { PaymentMethodService } from '@/modules/payment-method'
+import { WalletService } from '@/modules/wallet'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import {
   PurchaseOrderQueryApi,
@@ -38,18 +38,18 @@ const distributor = ref<Distributor>(Distributor.blank())
 
 const money = ref(0)
 const reason = ref('')
-const paymentMethodId = ref<number>(0)
+const walletId = ref<string>('')
 const purchaseOrderPaymentList = ref<{ purchaseOrder: PurchaseOrder; money: number }[]>([])
-const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
+const walletOptions = ref<{ value: any; label: string }[]>([])
 
 const showModal = ref(false)
 const purchaseOrderLoading = ref(false)
 const saveLoading = ref(false)
 
 onMounted(async () => {
-  const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
-  paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
-  paymentMethodId.value = paymentMethodAll[0]?.id || 0
+  const walletAll = await WalletService.list({ sort: { code: 'ASC' } })
+  walletOptions.value = walletAll.map((i) => ({ value: i.id, label: i.name }))
+  walletId.value = walletAll[0]?.id || ''
 
   await DistributorService.getAll()
 })
@@ -102,7 +102,7 @@ const closeModal = () => {
   money.value = 0
   reason.value = ''
   distributor.value = Distributor.blank()
-  paymentMethodId.value = 0
+  walletId.value = ''
 }
 
 const handleSave = async () => {
@@ -113,7 +113,7 @@ const handleSave = async () => {
     }
     // const data = await PaymentApi.distributorPayment({
     //   distributorId: distributor.value.id,
-    //   paymentMethodId: paymentMethodId.value,
+    //   walletId: walletId.value,
     //   totalMoney: money.value,
     //   reason: reason.value,
     //   note: '',
@@ -285,7 +285,7 @@ defineExpose({ openModal })
           <div>
             <div>Phương thức thanh toán</div>
             <div>
-              <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+              <InputSelect v-model:value="walletId" :options="walletOptions" />
             </div>
           </div>
           <div class="mt-4">

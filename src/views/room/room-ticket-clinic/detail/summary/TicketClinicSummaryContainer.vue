@@ -6,6 +6,7 @@ import {
   IconClockCircle,
   IconContainer,
   IconDollar,
+  IconExclamationCircle,
   IconPhone,
   IconSend,
   IconUser,
@@ -16,13 +17,13 @@ import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Appointment } from '@/modules/appointment'
-import { PaymentViewType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtmlAction } from '@/modules/print-html'
 import { ticketRoomRef } from '@/modules/room/room.ref'
 import { TicketStatus } from '@/modules/ticket'
+import { TicketSurchargeService } from '@/modules/ticket-surcharge'
 import { ESString, ESTimer } from '@/utils'
-import ModalTicketPayment from '@/views/room/room-ticket-base/ModalTicketPayment.vue'
+import ModalTicketPaymentHistory from '@/views/room/room-ticket-base/ModalTicketPaymentHistory.vue'
 import ModalTicketRegisterAppointment from '@/views/room/room-ticket-base/ModalTicketRegisterAppointment.vue'
 import TicketDeliveryStatusTag from '@/views/room/room-ticket-base/TicketDeliveryStatusTag.vue'
 import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
@@ -34,12 +35,11 @@ import TicketSummaryLaboratory from './TicketSummaryLaboratory.vue'
 import TicketSummaryProcedure from './TicketSummaryProcedure.vue'
 import TicketSummaryProduct from './TicketSummaryProduct.vue'
 import TicketSummaryRadiology from './TicketSummaryRadiology.vue'
-import { TicketSurchargeService } from '@/modules/ticket-surcharge'
 
 const modalTicketChangeDiscount = ref<InstanceType<typeof ModalTicketChangeDiscount>>()
 const modalTicketChangeSurcharge = ref<InstanceType<typeof ModalTicketChangeSurcharge>>()
 const modalTicketRegisterAppointment = ref<InstanceType<typeof ModalTicketRegisterAppointment>>()
-const modalTicketPayment = ref<InstanceType<typeof ModalTicketPayment>>()
+const modalTicketPaymentHistory = ref<InstanceType<typeof ModalTicketPaymentHistory>>()
 
 const route = useRoute()
 const router = useRouter()
@@ -80,8 +80,9 @@ const handleClickModalRegisterAppointment = () => {
 <template>
   <ModalTicketChangeDiscount ref="modalTicketChangeDiscount" />
   <ModalTicketChangeSurcharge ref="modalTicketChangeSurcharge" />
-  <ModalTicketPayment ref="modalTicketPayment" />
   <ModalTicketRegisterAppointment ref="modalTicketRegisterAppointment" />
+  <ModalTicketPaymentHistory ref="modalTicketPaymentHistory" />
+
   <div class="flex flex-wrap gap-4">
     <div style="flex-grow: 5; flex-basis: 400px">
       <div class="mt-4 table-wrapper">
@@ -204,33 +205,70 @@ const handleClickModalRegisterAppointment = () => {
             <tr>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
-              <td class="uppercase text-right font-bold" colspan="8">Đã thanh toán</td>
+              <td class="uppercase text-right font-bold" colspan="8">
+                <a
+                  @click="
+                    modalTicketPaymentHistory?.openModal({ ticket: ticketRoomRef, refetch: true })
+                  "
+                >
+                  <span class="mr-1">Đã thanh toán</span>
+                  <IconExclamationCircle />
+                </a>
+              </td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="font-bold text-right whitespace-nowrap">
+                {{ formatMoney(ticketRoomRef.paidAmount) }}
+              </td>
+              <td></td>
+            </tr>
+            <tr v-if="ticketRoomRef.isPaymentEachItem && ticketRoomRef.paid">
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+              <td class="text-right font-bold uppercase" style="color: violet" colspan="8">
+                Ví (tiền chờ)
+              </td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td class="font-bold text-right whitespace-nowrap" style="color: violet">
                 {{ formatMoney(ticketRoomRef.paid) }}
               </td>
               <td></td>
             </tr>
-            <tr v-if="ticketRoomRef.debt >= 0">
+            <tr v-if="ticketRoomRef.debtAmount">
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
-              <td class="uppercase text-right font-bold" colspan="8">Còn thiếu</td>
+              <td class="uppercase text-right font-bold" colspan="8">Đang nợ</td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>
-              <td class="font-bold text-right whitespace-nowrap">
-                {{ formatMoney(ticketRoomRef.debt) }}
+              <td class="font-bold text-right whitespace-nowrap" style="color: var(--text-red)">
+                {{ formatMoney(ticketRoomRef.debtAmount) }}
               </td>
               <td></td>
             </tr>
-            <tr v-if="ticketRoomRef.debt < 0">
+            <tr v-if="ticketRoomRef.paidAmount > ticketRoomRef.totalMoney">
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
-              <td class="uppercase text-right font-bold" colspan="8">Tiền Thừa</td>
+              <td class="uppercase text-right font-bold" colspan="8">Đang thừa</td>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="CONFIG.MODE === 'development'"></td>
-              <td class="font-bold text-right whitespace-nowrap">
-                {{ formatMoney(-ticketRoomRef.debt) }}
+              <td class="font-bold text-right whitespace-nowrap" style="color: var(--text-green)">
+                {{ formatMoney(ticketRoomRef.paidAmount - ticketRoomRef.totalMoney) }}
+              </td>
+              <td></td>
+            </tr>
+            <tr
+              v-else-if="
+                ticketRoomRef.debtAmount !== ticketRoomRef.totalMoney - ticketRoomRef.paidAmount
+              "
+            >
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+              <td class="uppercase text-right font-bold" colspan="8">Đang thiếu</td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td class="font-bold text-right whitespace-nowrap" style="color: var(--text-red)">
+                {{ formatMoney(ticketRoomRef.totalMoney - ticketRoomRef.paidAmount) }}
               </td>
               <td></td>
             </tr>
@@ -307,95 +345,55 @@ const handleClickModalRegisterAppointment = () => {
             <td><TicketStatusTag :ticket="ticketRoomRef" /></td>
           </tr>
           <tr>
-            <td><IconClockCircle /></td>
-            <td>Thanh toán</td>
+            <td><IconDollar /></td>
+            <td class="cursor-pointer">
+              <a
+                @click="
+                  modalTicketPaymentHistory?.openModal({ ticket: ticketRoomRef, refetch: true })
+                "
+              >
+                Đã thanh toán
+              </a>
+            </td>
             <td>:</td>
             <td>
-              <div class="flex flex-wrap items-center gap-x-4">
-                <div>
-                  <VueButton
-                    v-if="
-                      !ticketRoomRef.isPaymentEachItem &&
-                      [
-                        TicketStatus.Schedule,
-                        TicketStatus.Draft,
-                        TicketStatus.Deposited,
-                        TicketStatus.Executing,
-                      ].includes(ticketRoomRef.status)
-                    "
-                    size="small"
-                    color="green"
-                    icon="dollar"
-                    @click="
-                      modalTicketPayment?.openModal({
-                        ticket: ticketRoomRef,
-                        paymentView: PaymentViewType.Prepayment,
-                      })
-                    "
-                  >
-                    <span class="font-bold">THANH TOÁN</span>
-                  </VueButton>
-                  <VueButton
-                    v-if="
-                      !ticketRoomRef.isPaymentEachItem &&
-                      [TicketStatus.Debt].includes(ticketRoomRef.status)
-                    "
-                    size="small"
-                    color="green"
-                    icon="dollar"
-                    @click="
-                      modalTicketPayment?.openModal({
-                        ticket: ticketRoomRef,
-                        paymentView: PaymentViewType.PayDebt,
-                      })
-                    "
-                  >
-                    <span class="font-bold">TRẢ NỢ</span>
-                  </VueButton>
-                  <VueButton
-                    v-if="
-                      !ticketRoomRef.isPaymentEachItem &&
-                      [TicketStatus.Completed, TicketStatus.Cancelled].includes(
-                        ticketRoomRef.status,
-                      )
-                    "
-                    size="small"
-                    color="green"
-                    icon="dollar"
-                    @click="
-                      modalTicketPayment?.openModal({
-                        ticket: ticketRoomRef,
-                        paymentView: PaymentViewType.Success,
-                      })
-                    "
-                  >
-                    <span class="font-bold">THANH TOÁN</span>
-                  </VueButton>
-                </div>
-                <span class="">
-                  {{ formatMoney(ticketRoomRef.paid) }} /
-                  {{ formatMoney(ticketRoomRef.totalMoney) }}
-                </span>
+              <div class="text-lg font-bold" style="color: var(--text-green)">
+                {{ formatMoney(ticketRoomRef.paidAmount) }} /
+                {{ formatMoney(ticketRoomRef.totalMoney) }}
               </div>
             </td>
           </tr>
-          <tr v-if="ticketRoomRef.totalMoney < ticketRoomRef.paid">
+          <tr v-if="ticketRoomRef.debtAmount">
+            <td><IconDollar /></td>
+            <td>Đang nợ</td>
+            <td>:</td>
+            <td>
+              <div class="text-lg font-bold" style="color: var(--text-red)">
+                {{ formatMoney(ticketRoomRef.debtAmount) }}
+              </div>
+            </td>
+          </tr>
+          <tr v-if="ticketRoomRef.paidAmount > ticketRoomRef.totalMoney">
             <td><IconDollar /></td>
             <td>Tiền thừa</td>
             <td>:</td>
             <td>
-              <div class="text-lg text-green-500 font-bold">
-                {{ formatMoney(Math.abs(ticketRoomRef.totalMoney - ticketRoomRef.paid)) }}
+              <div class="text-lg font-bold" style="color: var(--text-green)">
+                {{ formatMoney(ticketRoomRef.paidAmount - ticketRoomRef.totalMoney) }}
               </div>
             </td>
           </tr>
-          <tr v-if="ticketRoomRef.totalMoney > ticketRoomRef.paid">
+          <tr
+            v-else-if="
+              ticketRoomRef.debtAmount !== ticketRoomRef.totalMoney - ticketRoomRef.paidAmount
+            "
+          >
             <td><IconDollar /></td>
             <td>Còn thiếu</td>
             <td>:</td>
             <td>
-              <div class="text-lg text-red-500 font-bold">
-                {{ formatMoney(Math.abs(ticketRoomRef.totalMoney - ticketRoomRef.paid)) }}
+              <div class="text-lg font-bold" style="color: var(--text-red)">
+                {{ formatMoney(ticketRoomRef.totalMoney - ticketRoomRef.paidAmount) }}
               </div>
             </td>
           </tr>

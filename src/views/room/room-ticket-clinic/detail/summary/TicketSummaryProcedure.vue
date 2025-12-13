@@ -122,13 +122,7 @@ const procedureDiscount = computed(() => {
               <div v-if="ticketRoomRef.isPaymentEachItem" class="text-right">
                 <div>Đã thanh toán</div>
                 <div style="font-weight: bold; color: var(--text-green)">
-                  {{ formatMoney(ticketRegimen.moneyAmountPaid) }}
-                </div>
-              </div>
-              <div v-if="!ticketRoomRef.isPaymentEachItem" class="text-right">
-                <div>Đã thực hiện</div>
-                <div style="font-weight: bold; color: var(--text-green)">
-                  {{ formatMoney(ticketRegimen.moneyAmountUsed) }}
+                  {{ formatMoney(ticketRegimen.paid + ticketRegimen.paidItem) }}
                 </div>
               </div>
             </div>
@@ -148,18 +142,7 @@ const procedureDiscount = computed(() => {
             {{ formatMoney(ticketRegimen.commissionAmount) }}
           </td>
 
-          <td class="text-center">
-            <!-- {{ formatMoney(ticketRegimen.moneyAmountPaid) }} -->
-            <div
-              v-if="ticketRoomRef.isPaymentEachItem && ticketRegimen.moneyAmountWallet != 0"
-              class="text-right"
-            >
-              <div>Ví</div>
-              <div style="font-weight: bold; color: violet">
-                {{ formatMoney(ticketRegimen.moneyAmountWallet) }}
-              </div>
-            </div>
-          </td>
+          <td class="text-right">{{ formatMoney(ticketRegimen.moneyAmountActual) }}</td>
           <td></td>
         </tr>
         <tr v-for="(tri, triIndex) in ticketRegimen.ticketRegimenItemList" :key="tri.id">

@@ -32,6 +32,9 @@ export class PaymentTicketItem {
   actualPrice: number
   quantity: number
 
+  paidItem: number
+  debItem: number
+
   payment: Payment
   ticket: Ticket
   ticketProcedure: TicketProcedure

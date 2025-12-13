@@ -322,14 +322,14 @@ const handleClickDestroy = async (obj: { ticketId: string; ticketReceptionId: st
             <td class="text-right">
               <template v-if="ticketReception.ticket">
                 <div
-                  v-if="ticketReception.ticket.paid > ticketReception.ticket.totalMoney"
+                  v-if="ticketReception.ticket.paidAmount > ticketReception.ticket.totalMoney"
                   style="font-weight: 500; color: var(--text-green)"
                 >
-                  {{ formatMoney(ticketReception.ticket.paid) }} /
+                  {{ formatMoney(ticketReception.ticket.paidAmount) }} /
                   {{ formatMoney(ticketReception.ticket.totalMoney) }}
                 </div>
                 <div v-else>
-                  {{ formatMoney(ticketReception.ticket.paid) }} /
+                  {{ formatMoney(ticketReception.ticket.paidAmount) }} /
                   {{ formatMoney(ticketReception.ticket.totalMoney) }}
                 </div>
               </template>
