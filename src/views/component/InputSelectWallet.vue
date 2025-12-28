@@ -14,12 +14,14 @@ const props = withDefaults(
     disabled?: boolean
     required?: boolean
     autoSelectFirstValue?: boolean
+    optionNull?: boolean
   }>(),
   {
     walletId: '',
     disabled: false,
     required: false,
     autoSelectFirstValue: false,
+    optionNull: false,
   },
 )
 
@@ -38,6 +40,13 @@ onMounted(async () => {
   walletOptions.value = walletAll.map((i) => {
     return { value: i.id, label: i.name, data: i }
   })
+  if (props.optionNull) {
+    walletOptions.value.unshift({
+      value: '',
+      label: '.',
+      data: Wallet.init(),
+    })
+  }
 
   if (props.walletId == '' && props.autoSelectFirstValue && walletAll.length) {
     const firstValue = walletAll[0]

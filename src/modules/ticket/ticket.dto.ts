@@ -10,6 +10,7 @@ export class TicketFilterQuery {
   deliveryStatus?: DeliveryStatus | ConditionEnum<DeliveryStatus>
   createdAt?: ConditionDate
   receptionAt?: ConditionDate
+  debtTotal?: ConditionNumber
   $OR?: TicketFilterQuery[]
   $AND?: TicketFilterQuery[]
 }
@@ -19,6 +20,7 @@ export class TicketGetQuery {
   limit?: number
   relation?: {
     customer?: boolean
+    ticketPaymentDetail?: boolean
     paymentList?: boolean
 
     ticketReceptionList?: boolean

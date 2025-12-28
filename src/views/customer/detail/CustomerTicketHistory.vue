@@ -90,10 +90,10 @@ watch(
                 {{ formatMoney(ticket.totalMoney) }}
               </div>
               <div v-if="ticket.status === TicketStatus.Debt" class="text-xs">
-                Nợ: {{ formatMoney(ticket.debtAmount) }}
+                Nợ: {{ formatMoney(ticket.debtTotal) }}
               </div>
               <div v-if="ticket.status === TicketStatus.Deposited" class="text-xs">
-                Đã thanh toán: {{ formatMoney(ticket.paidAmount) }}
+                Đã thanh toán: {{ formatMoney(ticket.paidTotal) }}
               </div>
             </td>
           </tr>

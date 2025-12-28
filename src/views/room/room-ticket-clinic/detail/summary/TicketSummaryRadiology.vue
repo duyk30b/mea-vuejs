@@ -35,11 +35,6 @@ const radiologyDiscount = computed(() => {
   }, 0)
 })
 
-const radiologyCostAmount = computed(() => {
-  return ticketRoomRef.value.ticketRadiologyList?.reduce((acc, item) => {
-    return acc + item.costPrice
-  }, 0)
-})
 </script>
 
 <template>
@@ -58,8 +53,6 @@ const radiologyCostAmount = computed(() => {
         <th></th>
         <th>Đơn Giá</th>
         <th>Chiết khấu</th>
-        <th v-if="CONFIG.MODE === 'development'">Vốn</th>
-        <th v-if="CONFIG.MODE === 'development'">H.Hồng</th>
         <th>Thanh Toán</th>
         <th></th>
       </tr>
@@ -112,10 +105,6 @@ const radiologyCostAmount = computed(() => {
             </VueTag>
           </div>
         </td>
-        <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: right">
-          {{ formatMoney(ticketRadiology.costPrice) }}
-        </td>
-        <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: right"></td>
         <td class="text-right whitespace-nowrap">
           <div v-if="ticketRadiology.discountMoney" class="text-xs italic text-red-500">
             <del>
@@ -151,10 +140,6 @@ const radiologyCostAmount = computed(() => {
             </span>
           </div>
         </td>
-        <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
-          {{ formatMoney(radiologyCostAmount) }}
-        </td>
-        <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet"></td>
         <td class="font-bold text-right whitespace-nowrap">
           {{ formatMoney(ticketRoomRef.radiologyMoney) }}
         </td>

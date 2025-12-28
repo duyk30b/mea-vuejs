@@ -5,7 +5,7 @@ export const CONFIG = reactive({
   MODE: import.meta.env.MODE,
   API_URL:
     import.meta.env.MODE === 'production'
-      ? 'https://api.medihome.vn'
+      ? `https://api.${location.hostname}`
       : `http://${location.hostname}:20000`,
   BUILD_TIME: '',
 })

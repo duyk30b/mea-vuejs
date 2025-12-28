@@ -113,12 +113,7 @@ export class TicketActionApi {
       ticketModified: any
       ticketProductModifiedAll?: any[]
     }>
-    return {
-      ticketModified: Ticket.from(data.ticketModified),
-      ticketProductModifiedAll: data.ticketProductModifiedAll
-        ? TicketProduct.fromList(data.ticketProductModifiedAll)
-        : undefined,
-    }
+    return data
   }
 
   static async close(options: { ticketId: string }) {

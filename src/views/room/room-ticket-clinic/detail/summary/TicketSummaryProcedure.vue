@@ -67,8 +67,6 @@ const procedureDiscount = computed(() => {
         <th>SL</th>
         <th>Đơn Giá</th>
         <th>Chiết khấu</th>
-        <th v-if="CONFIG.MODE === 'development'">Vốn</th>
-        <th v-if="CONFIG.MODE === 'development'">H.Hồng</th>
         <th>T.Tiền</th>
         <th></th>
       </tr>
@@ -127,21 +125,6 @@ const procedureDiscount = computed(() => {
               </div>
             </div>
           </td>
-          <td
-            v-if="CONFIG.MODE === 'development'"
-            class="text-right whitespace-nowrap"
-            style="color: violet"
-          >
-            {{ formatMoney(ticketRegimen.costAmount) }}
-          </td>
-          <td
-            v-if="CONFIG.MODE === 'development'"
-            class="text-right whitespace-nowrap"
-            style="color: violet"
-          >
-            {{ formatMoney(ticketRegimen.commissionAmount) }}
-          </td>
-
           <td class="text-right">{{ formatMoney(ticketRegimen.moneyAmountActual) }}</td>
           <td></td>
         </tr>
@@ -190,8 +173,6 @@ const procedureDiscount = computed(() => {
               </VueTag>
             </div>
           </td>
-          <td v-if="CONFIG.MODE === 'development'"></td>
-          <td v-if="CONFIG.MODE === 'development'"></td>
           <td class="text-right whitespace-nowrap">
             <span>
               {{ formatMoney(tri.moneyAmountActual) }}
@@ -262,20 +243,6 @@ const procedureDiscount = computed(() => {
             </VueTag>
           </div>
         </td>
-        <td
-          v-if="CONFIG.MODE === 'development'"
-          class="text-right whitespace-nowrap"
-          style="color: violet"
-        >
-          {{ formatMoney(ticketProcedure.costAmount) }}
-        </td>
-        <td
-          v-if="CONFIG.MODE === 'development'"
-          class="text-right whitespace-nowrap"
-          style="color: violet"
-        >
-          {{ formatMoney(ticketProcedure.commissionAmount) }}
-        </td>
         <td class="text-right whitespace-nowrap">
           {{ formatMoney(ticketProcedure.actualPrice * ticketProcedure.quantity) }}
         </td>
@@ -310,8 +277,6 @@ const procedureDiscount = computed(() => {
             </span>
           </div>
         </td>
-        <td v-if="CONFIG.MODE === 'development'"></td>
-        <td v-if="CONFIG.MODE === 'development'"></td>
         <td class="font-bold text-right whitespace-nowrap" colspan="1">
           {{ formatMoney(ticketRoomRef.procedureMoney) }}
         </td>

@@ -322,11 +322,11 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
             </td>
             <td class="text-right">
               <div>
-                {{ formatMoney(ticket.paidAmount) }} /
+                {{ formatMoney(ticket.paidTotal) }} /
                 {{ formatMoney(ticket.totalMoney) }}
               </div>
-              <div v-if="ticket.debtAmount" class="text-xs">
-                Nợ: {{ formatMoney(ticket.debtAmount) }}
+              <div v-if="ticket.debtTotal" class="text-xs">
+                Nợ: {{ formatMoney(ticket.debtTotal) }}
               </div>
             </td>
             <td class="text-right">
@@ -468,7 +468,7 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
                     <a
                       v-if="
                         ticket.isPaymentEachItem &&
-                        ticket.paidAmount &&
+                        ticket.paidTotal &&
                         [
                           TicketStatus.Schedule,
                           TicketStatus.Draft,

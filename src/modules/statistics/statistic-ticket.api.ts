@@ -12,7 +12,8 @@ export type StatisticTicketResponseType = {
   sumSurcharge: number
   sumTotalMoney: number
   sumProfit: number
-  sumDebt: number
+  sumPaidTotal: number
+  sumDebtTotal: number
   customer?: Customer
 }
 
@@ -33,7 +34,8 @@ export type StatisticTicketQueryTimeResponseType = {
   sumSurcharge: number
   sumExpense: number
   sumProfit: number
-  sumDebt: number
+  sumPaidTotal: number
+  sumDebtTotal: number
 }
 
 export class StatisticTicketQuery extends OmitClass(TicketGetQuery, ['sort']) {
@@ -68,7 +70,8 @@ export class StatisticTicketApi {
           sumSurcharge: i.sumSurcharge as number,
           sumTotalMoney: i.sumTotalMoney as number,
           sumProfit: i.sumProfit as number,
-          sumDebt: i.sumDebt as number,
+          sumPaidTotal: i.sumPaidTotal as number,
+          sumDebtTotal: i.sumDebtTotal as number,
           customer: Customer.from(i.customer),
         }
         return item

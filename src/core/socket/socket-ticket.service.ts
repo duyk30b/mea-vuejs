@@ -4,7 +4,7 @@ import {
   roomFinancePagination,
   roomLaboratory,
   roomRadiology,
-  roomTicketPaginationMapRoomId,
+  roomTicketMapRoomId,
   ticketRoomRef,
 } from '@/modules/room/room.ref'
 import { Ticket } from '@/modules/ticket'
@@ -26,11 +26,18 @@ import { TicketReception } from '@/modules/ticket-reception'
 import { TicketRegimen, TicketRegimenItem, TicketRegimenService } from '@/modules/ticket-regimen'
 import { TicketSurcharge, TicketSurchargeService } from '@/modules/ticket-surcharge'
 import { TicketUser, TicketUserService } from '@/modules/ticket-user'
+import { TicketPaymentDetail } from '@/modules/ticket/ticket-payment-detail.model'
 
 export class SocketTicketService {
+  static async listenSocketRoomTicketPaginationChange(data: { roomId: number }) {
+    const { roomId } = data
+    roomTicketMapRoomId.value[roomId].paginationTime = new Date().toISOString()
+  }
+
   static async listenSocketTicketChange(data: {
     ticketId: string
     ticketModified?: Ticket
+    ticketPaymentDetailModified?: TicketPaymentDetail
     imageList?: { destroyedList?: Image[]; upsertedList?: Image[] }
     ticketAttribute?: { destroyedList?: TicketAttribute[]; upsertedList?: TicketAttribute[] }
     ticketUser?: { destroyedList?: TicketUser[]; upsertedList?: TicketUser[] }
@@ -82,7 +89,9 @@ export class SocketTicketService {
 
     const ticketActionList: Ticket[] = [
       ticketRoomRef.value,
-      ...Object.values(roomTicketPaginationMapRoomId.value).flat(),
+      ...Object.values(roomTicketMapRoomId.value)
+        .map((i) => i.paginationData)
+        .flat(),
       ...roomFinancePagination.value,
       ...roomDeliveryPagination.value,
     ]
@@ -93,6 +102,12 @@ export class SocketTicketService {
 
       if (data.ticketModified) {
         Object.assign(ticketAction, data.ticketModified)
+      }
+
+      if (data.ticketPaymentDetailModified) {
+        ticketAction.ticketPaymentDetail = TicketPaymentDetail.from(
+          data.ticketPaymentDetailModified,
+        )
       }
 
       if (data.imageList && ticketAction.imageList) {

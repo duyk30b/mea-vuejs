@@ -11,7 +11,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer, CustomerService } from '@/modules/customer'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Room, RoomType, RoomService, roomTicketPaginationMapRoomId } from '@/modules/room'
+import { Room, RoomType, RoomService, roomTicketMapRoomId } from '@/modules/room'
 import { TicketStatus } from '@/modules/ticket'
 import { TicketQueryApi } from '@/modules/ticket/api/ticket-query.api'
 import { ESString, ESTimer } from '@/utils'
@@ -54,22 +54,6 @@ const customerId = ref<number>()
 const sortColumn = ref<'full_name_en' | 'debt' | 'id' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
-watch(
-  () => route.params.roomId,
-  async (newValue) => {
-    const roomId = Number(newValue) || 0
-    await RoomService.getMap()
-    currentRoom.value = roomMap.value[roomId]
-    if (!currentRoom.value) {
-      currentRoom.value = Room.blank()
-      currentRoom.value.isCommon = 1
-      currentRoom.value.roomType = RoomType.Ticket
-    }
-    startFetchData()
-  },
-  { immediate: true },
-)
-
 const startFetchData = async () => {
   try {
     dataLoading.value = true
@@ -102,7 +86,7 @@ const startFetchData = async () => {
         : { receptionAt: 'DESC' },
     })
 
-    roomTicketPaginationMapRoomId.value[currentRoom.value.id] = paginationResult.ticketList
+    roomTicketMapRoomId.value[currentRoom.value.id].paginationData = paginationResult.ticketList
     total.value = paginationResult.total
   } catch (error) {
     console.log('🚀 ~ file: InvoiceList.vue:50 ~ error:', error)
@@ -110,6 +94,39 @@ const startFetchData = async () => {
     dataLoading.value = false
   }
 }
+
+let currentRefreshTime = new Date().toISOString()
+watch(
+  () => route.params.roomId,
+  async (newValue) => {
+    const roomId = Number(newValue) || 0
+    await RoomService.getMap()
+    currentRoom.value = roomMap.value[roomId]
+    if (!currentRoom.value) {
+      currentRoom.value = Room.blank()
+      currentRoom.value.isCommon = 1
+      currentRoom.value.roomType = RoomType.Ticket
+    }
+    // startFetchData()
+    roomTicketMapRoomId.value[roomId] = {
+      paginationData: [],
+      paginationTime: new Date().toISOString(),
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => roomTicketMapRoomId.value,
+  async (newValue) => {
+    const roomId = currentRoom.value.id
+    if (newValue[roomId].paginationTime !== currentRefreshTime) {
+      currentRefreshTime = newValue[roomId].paginationTime
+      await startFetchData()
+    }
+  },
+  { deep: true },
+)
 
 onBeforeMount(async () => {})
 
@@ -310,11 +327,11 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           </tr>
         </tbody>
         <tbody v-else>
-          <tr v-if="roomTicketPaginationMapRoomId[currentRoom.id]?.length === 0">
+          <tr v-if="roomTicketMapRoomId[currentRoom.id]?.paginationData?.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr
-            v-for="ticket in roomTicketPaginationMapRoomId[currentRoom.id]"
+            v-for="ticket in roomTicketMapRoomId[currentRoom.id]?.paginationData || []"
             :key="ticket.id"
             @dblclick="
               router.push({
@@ -345,8 +362,8 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             </td>
             <td class="text-right">
               <div>{{ formatMoney(ticket.totalMoney) }}</div>
-              <div v-if="ticket.debtAmount" class="text-xs">
-                Nợ: {{ formatMoney(ticket.debtAmount) }}
+              <div v-if="ticket.debtTotal" class="text-xs">
+                Nợ: {{ formatMoney(ticket.debtTotal) }}
               </div>
               <div v-if="settingStore.SCREEN_TICKET_ORDER_LIST.profit" class="text-xs italic">
                 Lãi: {{ formatMoney(ticket.profit) }}
@@ -401,10 +418,13 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           </tr>
         </tbody>
         <tbody v-if="!dataLoading">
-          <tr v-if="roomTicketPaginationMapRoomId[currentRoom.id]?.length === 0">
+          <tr v-if="roomTicketMapRoomId[currentRoom.id]?.paginationData?.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="ticket in roomTicketPaginationMapRoomId[currentRoom.id]" :key="ticket.id">
+          <tr
+            v-for="ticket in roomTicketMapRoomId[currentRoom.id]?.paginationData || []"
+            :key="ticket.id"
+          >
             <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
               <VueTooltip>
                 <template #trigger>
@@ -442,11 +462,11 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             <td class="text-right">
               <div>{{ formatMoney(ticket.totalMoney) }}</div>
               <div
-                v-if="ticket.debtAmount"
+                v-if="ticket.debtTotal"
                 class="text-xs"
                 style="font-weight: bold; color: var(--text-red)"
               >
-                Nợ: {{ formatMoney(ticket.debtAmount) }}
+                Nợ: {{ formatMoney(ticket.debtTotal) }}
               </div>
             </td>
             <td v-if="settingStore.SCREEN_TICKET_ORDER_LIST.profit" class="text-right">

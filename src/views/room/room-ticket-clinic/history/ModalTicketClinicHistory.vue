@@ -756,11 +756,11 @@ defineExpose({ openModal })
                     </tr>
                     <tr>
                       <td>- Đã thanh toán:</td>
-                      <td class="px-4">{{ formatMoney(ticket.paidAmount) }}</td>
+                      <td class="px-4">{{ formatMoney(ticket.paidTotal) }}</td>
                     </tr>
                     <tr>
                       <td>- Nợ:</td>
-                      <td class="px-4">{{ formatMoney(ticket.debtAmount) }}</td>
+                      <td class="px-4">{{ formatMoney(ticket.debtTotal) }}</td>
                     </tr>
                   </tbody>
                 </table>

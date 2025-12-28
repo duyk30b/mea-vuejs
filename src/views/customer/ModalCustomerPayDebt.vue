@@ -32,7 +32,7 @@ const customer = ref<Customer>(Customer.blank())
 const walletId = ref<string>('')
 const walletOptions = ref<{ value: any; label: string }[]>([])
 
-const ticketPaymentList = ref<{ ticket: Ticket; money: number; moneyItem: number }[]>([])
+const ticketPaymentList = ref<{ ticket: Ticket; money: number }[]>([])
 
 const showModal = ref(false)
 const dataLoading = ref(false)
@@ -55,7 +55,7 @@ const openModal = async (customerId: number) => {
       TicketQueryApi.list({
         filter: {
           customerId,
-          status: TicketStatus.Debt,
+          debtTotal: { GT: 0 },
         },
         sort: { id: 'ASC' },
       }),
@@ -96,8 +96,14 @@ const handleSave = async () => {
       totalMoney: totalMoney.value,
       note: '',
       dataList: ticketPaymentList.value
-        .map((i) => ({ ticketId: i.ticket.id, debtMinus: i.money, debtItemMinus: i.moneyItem }))
-        .filter((i) => i.debtMinus + i.debtItemMinus > 0),
+        .map((i) => {
+          return {
+            ticketId: i.ticket.id,
+            isPaymentEachItem: i.ticket.isPaymentEachItem,
+            debtTotalMinus: i.money,
+          }
+        })
+        .filter((i) => i.debtTotalMinus > 0),
     })
     AlertStore.addSuccess(`Trả nợ cho KH ${customer.value.fullName} thành công`)
     emit('success', { customer: data.customerModified })
@@ -117,13 +123,9 @@ const handleClickPayAllDebt = () => {
 const calculatorEachVoucherPayment = () => {
   let totalMoneyRemain = totalMoney.value
   ticketPaymentList.value.forEach((item) => {
-    const number = Math.min(totalMoneyRemain, item.ticket.debt)
+    const number = Math.min(totalMoneyRemain, item.ticket.debtTotal)
     item.money = number
     totalMoneyRemain = totalMoneyRemain - number
-
-    const numberItem = Math.min(totalMoneyRemain, item.ticket.debtItem)
-    item.moneyItem = numberItem
-    totalMoneyRemain = totalMoneyRemain - numberItem
   })
 }
 
@@ -182,7 +184,7 @@ defineExpose({ openModal })
                   </div>
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(ticketPayment.ticket.debtAmount) }}
+                  {{ formatMoney(ticketPayment.ticket.debtTotal) }}
                 </td>
                 <td class="text-right">
                   {{ formatMoney(ticketPayment.money) }}

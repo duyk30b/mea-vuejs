@@ -8,7 +8,7 @@ import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer } from '@/modules/customer'
-import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
+import { PaymentMoneyStatus } from '@/modules/enum'
 import {
   MoneyDirection,
   Payment,
@@ -19,7 +19,7 @@ import {
 import { PaymentTicketItem, TicketItemType } from '@/modules/payment-ticket-item'
 import { PrintHtmlAction } from '@/modules/print-html'
 import { ticketRoomRef } from '@/modules/room'
-import { Ticket, TicketMoneyApi, TicketService, type TicketPaymentItemBody } from '@/modules/ticket'
+import { Ticket, TicketMoneyApi, TicketService, type PaymentTicketItemBody } from '@/modules/ticket'
 import type { TicketLaboratory } from '@/modules/ticket-laboratory'
 import type { TicketProcedure } from '@/modules/ticket-procedure'
 import type { TicketProduct } from '@/modules/ticket-product'
@@ -40,7 +40,6 @@ const showModal = ref(false)
 const dataLoading = ref(false)
 const ticket = ref(Ticket.blank())
 
-const ticketPaid = ref(0)
 const walletId = ref<string>('')
 const note = ref('')
 const pickAll = ref(false)
@@ -52,51 +51,57 @@ const ticketRegimenAction = ref<
       checked: boolean
       indeterminate: boolean
       data: TicketRegimen
-      money: number
-      moneyItem: number
+      paidMoney: number
+      debtMoney: number
+      paidItemMoney: number
+      debtItemMoney: number
       trpCheckbox: Record<
         string, // trpId
-        { data: TicketProcedure; checked: boolean; money: number }
+        { data: TicketProcedure; checked: boolean; paidMoney: number; debtMoney: number }
       >
     }
   >
 >({})
 
 const ticketProcedureNormalAction = ref<
-  Record<string, { data: TicketProcedure; checked: boolean; money: number }>
+  Record<string, { data: TicketProcedure; checked: boolean; paidMoney: number; debtMoney: number }>
 >({})
 const ticketPrescriptionAction = ref<
-  Record<string, { data: TicketProduct; checked: boolean; money: number }>
+  Record<string, { data: TicketProduct; checked: boolean; paidMoney: number; debtMoney: number }>
 >({})
 const ticketConsumableAction = ref<
-  Record<string, { data: TicketProduct; checked: boolean; money: number }>
+  Record<string, { data: TicketProduct; checked: boolean; paidMoney: number; debtMoney: number }>
 >({})
 const ticketLaboratoryAction = ref<
-  Record<string, { data: TicketLaboratory; checked: boolean; money: number }>
+  Record<string, { data: TicketLaboratory; checked: boolean; paidMoney: number; debtMoney: number }>
 >({})
 const ticketRadiologyAction = ref<
-  Record<string, { data: TicketRadiology; checked: boolean; money: number }>
+  Record<string, { data: TicketRadiology; checked: boolean; paidMoney: number; debtMoney: number }>
 >({})
 
-const ticketAllItemMoney = computed(() => {
+const paidWait = ref(0)
+const paidSurchargeAction = ref({ checked: false, paidMoney: 0, debtMoney: 0 })
+const paidDiscountAction = ref({ checked: false, paidMoney: 0, debtMoney: 0 })
+
+const paidItemMoney = computed(() => {
   const regimenMoney = Object.values(ticketRegimenAction.value).reduce((acc, item) => {
-    return acc + item.money + item.moneyItem
+    return acc + item.paidMoney + item.paidItemMoney
   }, 0)
   const procedureNormalMoney = Object.entries(ticketProcedureNormalAction.value)
     .filter(([id, value]) => !!value && value.checked)
-    .reduce((acc, [id, value]) => acc + value.money, 0)
+    .reduce((acc, [id, value]) => acc + value.paidMoney, 0)
   const prescriptionMoney = Object.entries(ticketPrescriptionAction.value)
     .filter(([id, value]) => !!value && value.checked)
-    .reduce((acc, [id, value]) => acc + value.money, 0)
+    .reduce((acc, [id, value]) => acc + value.paidMoney, 0)
   const consumableMoney = Object.entries(ticketConsumableAction.value)
     .filter(([id, value]) => !!value && value.checked)
-    .reduce((acc, [id, value]) => acc + value.money, 0)
+    .reduce((acc, [id, value]) => acc + value.paidMoney, 0)
   const laboratoryMoney = Object.entries(ticketLaboratoryAction.value)
     .filter(([id, value]) => !!value && value.checked)
-    .reduce((acc, [id, value]) => acc + value.money, 0)
+    .reduce((acc, [id, value]) => acc + value.paidMoney, 0)
   const radiologyMoney = Object.entries(ticketRadiologyAction.value)
     .filter(([id, value]) => !!value && value.checked)
-    .reduce((acc, [id, value]) => acc + value.money, 0)
+    .reduce((acc, [id, value]) => acc + value.paidMoney, 0)
   return (
     regimenMoney +
     procedureNormalMoney +
@@ -107,12 +112,84 @@ const ticketAllItemMoney = computed(() => {
   )
 })
 
-const totalMoney = computed(() => {
-  return ticketPaid.value + ticketAllItemMoney.value
+const debtItemMoney = computed(() => {
+  const regimenMoney = Object.values(ticketRegimenAction.value).reduce((acc, item) => {
+    return acc + item.debtMoney + item.debtItemMoney
+  }, 0)
+  const procedureNormalMoney = Object.entries(ticketProcedureNormalAction.value)
+    .filter(([id, value]) => !!value && value.checked)
+    .reduce((acc, [id, value]) => acc + value.debtMoney, 0)
+  const prescriptionMoney = Object.entries(ticketPrescriptionAction.value)
+    .filter(([id, value]) => !!value && value.checked)
+    .reduce((acc, [id, value]) => acc + value.debtMoney, 0)
+  const consumableMoney = Object.entries(ticketConsumableAction.value)
+    .filter(([id, value]) => !!value && value.checked)
+    .reduce((acc, [id, value]) => acc + value.debtMoney, 0)
+  const laboratoryMoney = Object.entries(ticketLaboratoryAction.value)
+    .filter(([id, value]) => !!value && value.checked)
+    .reduce((acc, [id, value]) => acc + value.debtMoney, 0)
+  const radiologyMoney = Object.entries(ticketRadiologyAction.value)
+    .filter(([id, value]) => !!value && value.checked)
+    .reduce((acc, [id, value]) => acc + value.debtMoney, 0)
+  return (
+    regimenMoney +
+    procedureNormalMoney +
+    prescriptionMoney +
+    consumableMoney +
+    laboratoryMoney +
+    radiologyMoney
+  )
+})
+
+const paidTotal = computed(() => {
+  const surchargeMoney = paidSurchargeAction.value.checked ? paidSurchargeAction.value.paidMoney : 0
+  const discountMoney = paidDiscountAction.value.checked ? paidDiscountAction.value.paidMoney : 0
+  return paidWait.value + surchargeMoney + discountMoney + paidItemMoney.value
+})
+
+const debtTotal = computed(() => {
+  const surchargeMoney = paidSurchargeAction.value.checked ? paidSurchargeAction.value.debtMoney : 0
+  const discountMoney = paidDiscountAction.value.checked ? paidDiscountAction.value.debtMoney : 0
+  return surchargeMoney + discountMoney + debtItemMoney.value
 })
 
 const refreshData = async () => {
   await ticket.value.refreshAllData()
+
+  paidSurchargeAction.value = { checked: false, paidMoney: 0, debtMoney: 0 }
+  paidDiscountAction.value = { checked: false, paidMoney: 0, debtMoney: 0 }
+
+  if (paymentActionType.value === PaymentActionType.PaymentMoney) {
+    paidSurchargeAction.value.paidMoney =
+      ticket.value.surcharge - ticket.value.ticketPaymentDetail.paidSurcharge
+    paidSurchargeAction.value.debtMoney = -Math.min(
+      paidSurchargeAction.value.paidMoney,
+      ticket.value.ticketPaymentDetail.debtSurcharge,
+    )
+    // do discountMoney là số âm
+    paidDiscountAction.value.paidMoney =
+      -ticket.value.discountMoney - ticket.value.ticketPaymentDetail.paidDiscount
+    paidDiscountAction.value.debtMoney = -Math.max(
+      paidDiscountAction.value.paidMoney,
+      ticket.value.ticketPaymentDetail.debtDiscount,
+    )
+  } else if (paymentActionType.value === PaymentActionType.RefundMoney) {
+    paidSurchargeAction.value.paidMoney = -ticket.value.ticketPaymentDetail.paidSurcharge
+    paidDiscountAction.value.paidMoney = -ticket.value.ticketPaymentDetail.paidDiscount
+
+    paidSurchargeAction.value.debtMoney = -ticket.value.ticketPaymentDetail.debtSurcharge
+    paidDiscountAction.value.debtMoney = -ticket.value.ticketPaymentDetail.debtDiscount
+  } else if (paymentActionType.value === PaymentActionType.Debit) {
+    paidSurchargeAction.value.debtMoney =
+      ticket.value.surcharge -
+      ticket.value.ticketPaymentDetail.paidSurcharge -
+      ticket.value.ticketPaymentDetail.debtSurcharge
+    // thêm dấu trừ do discountMoney lẽ ra phải là âm
+    paidDiscountAction.value.debtMoney =
+      -ticket.value.discountMoney -
+      ticket.value.ticketPaymentDetail.paidDiscount -
+      ticket.value.ticketPaymentDetail.debtDiscount
+  }
 
   ticketRegimenAction.value = {}
   ticketProcedureNormalAction.value = {}
@@ -132,26 +209,32 @@ const refreshData = async () => {
       ticketRegimenAction.value[tr.id] = {
         checked: false,
         indeterminate: false,
-        money: 0,
-        moneyItem: 0,
+        paidMoney: 0,
+        debtMoney: 0,
+        paidItemMoney: 0,
+        debtItemMoney: 0,
         data: tr,
         trpCheckbox: {},
       }
       tr.ticketProcedureList?.forEach((trp) => {
-        let money = 0
+        let paidMoney = 0
+        let debtMoney = 0
         if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-          money = trp.actualPrice * trp.quantity - trp.paid
+          paidMoney = trp.actualPrice * trp.quantity - trp.paid
+          debtMoney = Math.min(paidMoney, trp.debt)
         } else if (paymentActionType.value === PaymentActionType.RefundMoney) {
-          money = trp.paid
+          paidMoney = -trp.paid
+          debtMoney = -trp.debt
         } else if (paymentActionType.value === PaymentActionType.Debit) {
-          money = trp.actualPrice * trp.quantity - trp.paid - trp.debt
+          debtMoney = trp.actualPrice * trp.quantity - trp.paid - trp.debt
         }
 
-        if (money > 0) {
+        if (paidMoney != 0 || debtMoney != 0) {
           ticketRegimenAction.value[tr.id].trpCheckbox[trp.id] = {
             checked: false,
             data: trp,
-            money,
+            paidMoney,
+            debtMoney,
           }
         }
       })
@@ -168,15 +251,18 @@ const refreshData = async () => {
       }
     })
     .forEach((i) => {
-      let money = 0
+      let paidMoney = 0
+      let debtMoney = 0
       if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-        money = i.actualPrice * i.quantity - i.paid
+        paidMoney = i.actualPrice * i.quantity - i.paid
+        debtMoney = Math.min(paidMoney, i.debt)
       } else if (paymentActionType.value === PaymentActionType.RefundMoney) {
-        money = i.paid
+        paidMoney = -i.paid
+        debtMoney = -i.debt
       } else if (paymentActionType.value === PaymentActionType.Debit) {
-        money = i.actualPrice * i.quantity - i.paid - i.debt
+        debtMoney = i.actualPrice * i.quantity - i.paid - i.debt
       }
-      ticketProcedureNormalAction.value[i.id] = { checked: false, data: i, money }
+      ticketProcedureNormalAction.value[i.id] = { checked: false, data: i, paidMoney, debtMoney }
     })
 
   const ticketConsumablePayment = (ticket.value.ticketProductConsumableList || [])
@@ -190,15 +276,18 @@ const refreshData = async () => {
       }
     })
     .forEach((i) => {
-      let money = 0
+      let paidMoney = 0
+      let debtMoney = 0
       if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-        money = i.actualPrice * i.quantity - i.paid
+        paidMoney = i.actualPrice * i.quantity - i.paid
+        debtMoney = Math.min(paidMoney, i.debt)
       } else if (paymentActionType.value === PaymentActionType.RefundMoney) {
-        money = i.paid
+        paidMoney = -i.paid
+        debtMoney = -i.debt
       } else if (paymentActionType.value === PaymentActionType.Debit) {
-        money = i.actualPrice * i.quantity - i.paid - i.debt
+        debtMoney = i.actualPrice * i.quantity - i.paid - i.debt
       }
-      ticketConsumableAction.value[i.id] = { checked: false, data: i, money }
+      ticketConsumableAction.value[i.id] = { checked: false, data: i, paidMoney, debtMoney }
     })
 
   const ticketPrescriptionPayment = (ticket.value.ticketProductPrescriptionList || [])
@@ -212,15 +301,18 @@ const refreshData = async () => {
       }
     })
     .forEach((i) => {
-      let money = 0
+      let paidMoney = 0
+      let debtMoney = 0
       if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-        money = i.actualPrice * i.quantity - i.paid
+        paidMoney = i.actualPrice * i.quantity - i.paid
+        debtMoney = Math.min(paidMoney, i.debt)
       } else if (paymentActionType.value === PaymentActionType.RefundMoney) {
-        money = i.paid
+        paidMoney = -i.paid
+        debtMoney = -i.debt
       } else if (paymentActionType.value === PaymentActionType.Debit) {
-        money = i.actualPrice * i.quantity - i.paid - i.debt
+        debtMoney = i.actualPrice * i.quantity - i.paid - i.debt
       }
-      ticketPrescriptionAction.value[i.id] = { checked: false, data: i, money }
+      ticketPrescriptionAction.value[i.id] = { checked: false, data: i, paidMoney, debtMoney }
     })
 
   const ticketLaboratoryPayment = (ticket.value.ticketLaboratoryList || [])
@@ -234,15 +326,18 @@ const refreshData = async () => {
       }
     })
     .forEach((i) => {
-      let money = 0
+      let paidMoney = 0
+      let debtMoney = 0
       if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-        money = i.actualPrice - i.paid
+        paidMoney = i.actualPrice - i.paid
+        debtMoney = Math.min(paidMoney, i.debt)
       } else if (paymentActionType.value === PaymentActionType.RefundMoney) {
-        money = i.paid
+        paidMoney = -i.paid
+        debtMoney = -i.debt
       } else if (paymentActionType.value === PaymentActionType.Debit) {
-        money = i.actualPrice - i.paid - i.debt
+        debtMoney = i.actualPrice - i.paid - i.debt
       }
-      ticketLaboratoryAction.value[i.id] = { checked: false, data: i, money }
+      ticketLaboratoryAction.value[i.id] = { checked: false, data: i, paidMoney, debtMoney }
     })
 
   const ticketRadiologyPayment = (ticket.value.ticketRadiologyList || [])
@@ -256,15 +351,18 @@ const refreshData = async () => {
       }
     })
     .forEach((i) => {
-      let money = 0
+      let paidMoney = 0
+      let debtMoney = 0
       if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-        money = i.actualPrice - i.paid
+        paidMoney = i.actualPrice - i.paid
+        debtMoney = Math.min(paidMoney, i.debt)
       } else if (paymentActionType.value === PaymentActionType.RefundMoney) {
-        money = i.paid
+        paidMoney = -i.paid
+        debtMoney = -i.debt
       } else if (paymentActionType.value === PaymentActionType.Debit) {
-        money = i.actualPrice - i.paid - i.debt
+        debtMoney = i.actualPrice - i.paid - i.debt
       }
-      ticketRadiologyAction.value[i.id] = { checked: false, data: i, money }
+      ticketRadiologyAction.value[i.id] = { checked: false, data: i, paidMoney, debtMoney }
     })
 
   note.value = ''
@@ -278,7 +376,7 @@ const openModal = async (props: {
 }) => {
   showModal.value = true
   const { ticketId } = props
-  ticketPaid.value = 0
+  paidWait.value = 0
   note.value = ''
   paymentActionType.value = props.paymentActionType
   try {
@@ -314,7 +412,9 @@ const openModalByTicket = async (props: {
 
 const closeModal = () => {
   showModal.value = false
-  ticketPaid.value = 0
+  paidWait.value = 0
+  paidSurchargeAction.value = { checked: false, paidMoney: 0, debtMoney: 0 }
+  paidDiscountAction.value = { checked: false, paidMoney: 0, debtMoney: 0 }
   note.value = ''
   walletId.value = ''
   ticket.value = Ticket.blank()
@@ -330,23 +430,28 @@ const closeModal = () => {
 
 const startPickAll = (checked: boolean) => {
   if (!checked) {
-    ticketPaid.value = 0
+    paidWait.value = 0
   }
   if (checked) {
     if (paymentActionType.value === PaymentActionType.RefundMoney) {
-      ticketPaid.value = ticket.value.paid
+      paidWait.value = -ticket.value.ticketPaymentDetail.paidWait
     }
   }
+  paidSurchargeAction.value.checked = checked
+  paidDiscountAction.value.checked = checked
   Object.values(ticketRegimenAction.value).forEach((trContainer) => {
     trContainer.checked = checked
-    let moneyItem = 0
+    let paidItemMoney = 0
+    let debtItemMoney = 0
     Object.values(trContainer.trpCheckbox).forEach((tpContainer) => {
       tpContainer.checked = checked
       if (checked) {
-        moneyItem += tpContainer.money
+        paidItemMoney += tpContainer.paidMoney
+        debtItemMoney += tpContainer.debtMoney
       }
     })
-    trContainer.moneyItem = moneyItem
+    trContainer.paidItemMoney = paidItemMoney
+    trContainer.debtItemMoney = debtItemMoney
   })
 
   Object.values(ticketProcedureNormalAction.value).forEach((i) => {
@@ -373,41 +478,33 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
       body: {
         walletId: paymentActionType.value === PaymentActionType.Debit ? '' : walletId.value,
         paymentActionType: paymentActionType.value,
-        paidAdd: (() => {
-          if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-            return ticketPaid.value
-          }
-          if (paymentActionType.value === PaymentActionType.RefundMoney) {
-            return -ticketPaid.value
-          }
-          return 0
-        })(),
-        paidItemAdd: (() => {
-          if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-            return ticketAllItemMoney.value
-          }
-          if (paymentActionType.value === PaymentActionType.RefundMoney) {
-            return -ticketAllItemMoney.value
-          }
-          return 0
-        })(),
-        debtAdd: (() => {
-          if (paymentActionType.value === PaymentActionType.Debit) {
-            return ticketPaid.value
-          }
-          return 0
-        })(),
-        debtItemAdd: (() => {
-          if (paymentActionType.value === PaymentActionType.Debit) {
-            return ticketAllItemMoney.value
-          }
-          return 0
-        })(),
+        hasPaymentItem: 1,
+        paidTotal: paidTotal.value,
+        debtTotal: debtTotal.value,
         note: note.value,
-        ticketPaymentItemMapBody: {
+        paymentTicketItemMapDto: {
+          paymentWait: { paidMoney: paidWait.value },
+          paymentSurcharge: (() => {
+            let paidMoney = 0
+            let debtMoney = 0
+            if (paidSurchargeAction.value.checked) {
+              paidMoney = paidSurchargeAction.value.paidMoney
+              debtMoney = paidSurchargeAction.value.debtMoney
+            }
+            return { paidMoney, debtMoney }
+          })(),
+          paymentDiscount: (() => {
+            let paidMoney = 0
+            let debtMoney = 0
+            if (paidDiscountAction.value.checked) {
+              paidMoney = paidDiscountAction.value.paidMoney
+              debtMoney = paidDiscountAction.value.debtMoney
+            }
+            return { paidMoney, debtMoney }
+          })(),
           ticketRegimenBodyList: [],
           ticketProcedureNoEffectBodyList: Object.values(ticketRegimenAction.value)
-            .filter((v) => v.moneyItem !== 0)
+            .filter((v) => v.paidItemMoney !== 0 || v.debtItemMoney !== 0)
             .map((value) => {
               const trpCheckbox = value.trpCheckbox
               return Object.values(trpCheckbox)
@@ -419,7 +516,7 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
                 })
                 .map((tpContainer) => {
                   const tp = tpContainer.data
-                  const ticketPaymentItem: TicketPaymentItemBody = {
+                  const ticketPaymentItem: PaymentTicketItemBody = {
                     ticketItemType: TicketItemType.TicketProcedure,
                     ticketItemId: tp.id,
                     interactId: tp.procedureId,
@@ -430,24 +527,8 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
                     actualPrice: tp.actualPrice,
                     quantity: tp.quantity,
                     sessionIndex: tp.indexSession,
-                    paidAdd: (() => {
-                      if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-                        return tpContainer.money
-                      }
-                      if (paymentActionType.value === PaymentActionType.RefundMoney) {
-                        return -tpContainer.money
-                      }
-                      return 0
-                    })(),
-                    debtAdd: (() => {
-                      if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-                        return -Math.min(tpContainer.money, tpContainer.data.debt)
-                      }
-                      if (paymentActionType.value === PaymentActionType.Debit) {
-                        return tpContainer.money
-                      }
-                      return 0
-                    })(),
+                    paidMoney: tpContainer.paidMoney,
+                    debtMoney: tpContainer.debtMoney,
                   }
                   return ticketPaymentItem
                 })
@@ -455,7 +536,7 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
             .flat(),
           ticketProcedureHasEffectBodyList: [
             ...Object.values(ticketRegimenAction.value)
-              .filter((v) => v.moneyItem !== 0)
+              .filter((v) => v.paidItemMoney !== 0 || v.debtItemMoney !== 0)
               .map((value) => {
                 const trpCheckbox = value.trpCheckbox
                 return Object.values(trpCheckbox)
@@ -467,7 +548,7 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
                   })
                   .map((tpContainer) => {
                     const tp = tpContainer.data
-                    const ticketPaymentItem: TicketPaymentItemBody = {
+                    const ticketPaymentItem: PaymentTicketItemBody = {
                       ticketItemType: TicketItemType.TicketProcedure,
                       ticketItemId: tp.id,
                       interactId: tp.procedureId,
@@ -478,24 +559,8 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
                       actualPrice: tp.actualPrice,
                       quantity: tp.quantity,
                       sessionIndex: tp.indexSession,
-                      paidAdd: (() => {
-                        if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-                          return tpContainer.money
-                        }
-                        if (paymentActionType.value === PaymentActionType.RefundMoney) {
-                          return -tpContainer.money
-                        }
-                        return 0
-                      })(),
-                      debtAdd: (() => {
-                        if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-                          return -Math.min(tpContainer.money, tpContainer.data.debt)
-                        }
-                        if (paymentActionType.value === PaymentActionType.Debit) {
-                          return tpContainer.money
-                        }
-                        return 0
-                      })(),
+                      paidMoney: tpContainer.paidMoney,
+                      debtMoney: tpContainer.debtMoney,
                     }
                     return ticketPaymentItem
                   })
@@ -510,7 +575,7 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
               })
               .map(([id, tpContainer]) => {
                 const tp = tpContainer.data
-                const ticketPaymentItem: TicketPaymentItemBody = {
+                const ticketPaymentItem: PaymentTicketItemBody = {
                   ticketItemId: tp!.id,
                   ticketItemType: TicketItemType.TicketProcedure,
                   interactId: tp!.procedureId,
@@ -521,24 +586,8 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
                   actualPrice: tp!.actualPrice,
                   quantity: tp!.quantity,
                   sessionIndex: tp!.indexSession,
-                  paidAdd: (() => {
-                    if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-                      return tpContainer.money
-                    }
-                    if (paymentActionType.value === PaymentActionType.RefundMoney) {
-                      return -tpContainer.money
-                    }
-                    return 0
-                  })(),
-                  debtAdd: (() => {
-                    if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-                      return -Math.min(tpContainer.money, tpContainer.data.debt)
-                    }
-                    if (paymentActionType.value === PaymentActionType.Debit) {
-                      return tpContainer.money
-                    }
-                    return 0
-                  })(),
+                  paidMoney: tpContainer.paidMoney,
+                  debtMoney: tpContainer.debtMoney,
                 }
                 return ticketPaymentItem
               }),
@@ -547,7 +596,7 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
             .filter(([id, tpContainer]) => !!tpContainer && tpContainer.checked)
             .map(([id, tpContainer]) => {
               const tp = tpContainer.data
-              const ticketPaymentItem: TicketPaymentItemBody = {
+              const ticketPaymentItem: PaymentTicketItemBody = {
                 ticketItemId: tp!.id,
                 interactId: tp!.productId,
                 ticketItemType: TicketItemType.TicketProductConsumable,
@@ -558,24 +607,8 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
                 actualPrice: tp!.actualPrice,
                 quantity: tp!.quantity,
                 sessionIndex: 0,
-                paidAdd: (() => {
-                  if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-                    return tpContainer.money
-                  }
-                  if (paymentActionType.value === PaymentActionType.RefundMoney) {
-                    return -tpContainer.money
-                  }
-                  return 0
-                })(),
-                debtAdd: (() => {
-                  if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-                    return -Math.min(tpContainer.money, tpContainer.data.debt)
-                  }
-                  if (paymentActionType.value === PaymentActionType.Debit) {
-                    return tpContainer.money
-                  }
-                  return 0
-                })(),
+                paidMoney: tpContainer.paidMoney,
+                debtMoney: tpContainer.debtMoney,
               }
               return ticketPaymentItem
             }),
@@ -583,7 +616,7 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
             .filter(([id, tpContainer]) => !!tpContainer && tpContainer.checked)
             .map(([id, tpContainer]) => {
               const tp = tpContainer.data
-              const ticketPaymentItem: TicketPaymentItemBody = {
+              const ticketPaymentItem: PaymentTicketItemBody = {
                 ticketItemId: tp!.id,
                 interactId: tp!.productId,
                 ticketItemType: TicketItemType.TicketProductPrescription,
@@ -594,24 +627,8 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
                 actualPrice: tp!.actualPrice,
                 quantity: tp!.quantity,
                 sessionIndex: 0,
-                paidAdd: (() => {
-                  if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-                    return tpContainer.money
-                  }
-                  if (paymentActionType.value === PaymentActionType.RefundMoney) {
-                    return -tpContainer.money
-                  }
-                  return 0
-                })(),
-                debtAdd: (() => {
-                  if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-                    return -Math.min(tpContainer.money, tpContainer.data.debt)
-                  }
-                  if (paymentActionType.value === PaymentActionType.Debit) {
-                    return tpContainer.money
-                  }
-                  return 0
-                })(),
+                paidMoney: tpContainer.paidMoney,
+                debtMoney: tpContainer.debtMoney,
               }
               return ticketPaymentItem
             }),
@@ -619,7 +636,7 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
             .filter(([id, tlContainer]) => !!tlContainer && tlContainer.checked)
             .map(([id, tlContainer]) => {
               const tl = tlContainer.data
-              const ticketPaymentItem: TicketPaymentItemBody = {
+              const ticketPaymentItem: PaymentTicketItemBody = {
                 ticketItemId: tl!.id,
                 interactId: tl!.laboratoryId,
                 ticketItemType: TicketItemType.TicketLaboratory,
@@ -630,24 +647,8 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
                 actualPrice: tl!.actualPrice,
                 quantity: 1,
                 sessionIndex: 0,
-                paidAdd: (() => {
-                  if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-                    return tlContainer.money
-                  }
-                  if (paymentActionType.value === PaymentActionType.RefundMoney) {
-                    return -tlContainer.money
-                  }
-                  return 0
-                })(),
-                debtAdd: (() => {
-                  if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-                    return -Math.min(tlContainer.money, tlContainer.data.debt)
-                  }
-                  if (paymentActionType.value === PaymentActionType.Debit) {
-                    return tlContainer.money
-                  }
-                  return 0
-                })(),
+                paidMoney: tlContainer.paidMoney,
+                debtMoney: tlContainer.debtMoney,
               }
               return ticketPaymentItem
             }),
@@ -655,7 +656,7 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
             .filter(([id, trContainer]) => !!trContainer && trContainer.checked)
             .map(([id, trContainer]) => {
               const tr = trContainer.data
-              const ticketPaymentItem: TicketPaymentItemBody = {
+              const ticketPaymentItem: PaymentTicketItemBody = {
                 ticketItemId: tr!.id,
                 interactId: tr!.radiologyId,
                 ticketItemType: TicketItemType.TicketRadiology,
@@ -666,24 +667,8 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
                 actualPrice: tr!.actualPrice,
                 quantity: 1,
                 sessionIndex: 0,
-                paidAdd: (() => {
-                  if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-                    return trContainer.money
-                  }
-                  if (paymentActionType.value === PaymentActionType.RefundMoney) {
-                    return -trContainer.money
-                  }
-                  return 0
-                })(),
-                debtAdd: (() => {
-                  if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-                    return -Math.min(trContainer.money, trContainer.data.debt)
-                  }
-                  if (paymentActionType.value === PaymentActionType.Debit) {
-                    return trContainer.money
-                  }
-                  return 0
-                })(),
+                paidMoney: trContainer.paidMoney,
+                debtMoney: trContainer.debtMoney,
               }
               return ticketPaymentItem
             }),
@@ -720,31 +705,40 @@ const startPrint = async () => {
     paymentTemp.cashierId = MeService.user.value!.id
     paymentTemp.note = note.value
     paymentTemp.walletId = walletId.value
+    paymentTemp.paidTotal = paidTotal.value
+    paymentTemp.debtTotal = debtTotal.value
 
-    if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-      paymentTemp.paid = ticketPaid.value
+    const paymentTicketItemOther: PaymentTicketItem[] = []
+    if (paidWait.value) {
+      const pii = PaymentTicketItem.blank()
+      pii.ticketItemType = TicketItemType.WAIT
+      pii.paidMoney = paidWait.value
+      pii.debtMoney = 0
+      paymentTicketItemOther.push(pii)
     }
-    if (paymentActionType.value === PaymentActionType.RefundMoney) {
-      paymentTemp.paid = -ticketPaid.value
+    if (paidSurchargeAction.value.checked) {
+      const pii = PaymentTicketItem.blank()
+      pii.ticketItemType = TicketItemType.Surcharge
+      pii.paidMoney = paidSurchargeAction.value.paidMoney
+      pii.debtMoney = paidSurchargeAction.value.debtMoney
+      paymentTicketItemOther.push(pii)
     }
-
-    if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-      paymentTemp.paidItem = ticketAllItemMoney.value
+    if (paidDiscountAction.value.checked) {
+      const pii = PaymentTicketItem.blank()
+      pii.ticketItemType = TicketItemType.Surcharge
+      pii.paidMoney = paidDiscountAction.value.paidMoney
+      pii.debtMoney = paidDiscountAction.value.debtMoney
+      paymentTicketItemOther.push(pii)
     }
-    if (paymentActionType.value === PaymentActionType.RefundMoney) {
-      paymentTemp.paidItem = -ticketAllItemMoney.value
-    }
-    if (paymentActionType.value === PaymentActionType.Debit) {
-      paymentTemp.debt = ticketPaid.value
-    }
-    paymentTemp.debtItem = 0 // xử lý sau
 
     const paymentTicketItemRegimen: PaymentTicketItem[] = []
 
     const paymentTicketItemProcedureRegimen: PaymentTicketItem[] = Object.entries(
       ticketRegimenAction.value,
     )
-      .filter(([id, trContainer]) => !!trContainer && trContainer.moneyItem)
+      .filter(([id, trContainer]) => {
+        return !!trContainer && (trContainer.paidItemMoney || trContainer.debtItemMoney)
+      })
       .map(([id, trContainer]) => {
         const trpCheckbox = trContainer.trpCheckbox
         return Object.values(trpCheckbox)
@@ -764,19 +758,8 @@ const startPrint = async () => {
             paymentTicketItem.actualPrice = tp!.actualPrice
             paymentTicketItem.quantity = tp!.quantity
             paymentTicketItem.sessionIndex = tp!.indexSession
-
-            if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-              paymentTicketItem.paidItem = tpContainer.money
-            }
-            if (paymentActionType.value === PaymentActionType.RefundMoney) {
-              paymentTicketItem.paidItem = -tpContainer.money
-            }
-            if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-              paymentTicketItem.debItem = -Math.min(tpContainer.money, tpContainer.data.debt)
-            }
-            if (paymentActionType.value === PaymentActionType.Debit) {
-              paymentTicketItem.debItem = tpContainer.money
-            }
+            paymentTicketItem.paidMoney = tpContainer.paidMoney
+            paymentTicketItem.debtMoney = tpContainer.debtMoney
             return paymentTicketItem
           })
       })
@@ -800,18 +783,10 @@ const startPrint = async () => {
         paymentTicketItem.actualPrice = tp!.actualPrice
         paymentTicketItem.quantity = tp!.quantity
         paymentTicketItem.sessionIndex = tp!.indexSession
-        if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-          paymentTicketItem.paidItem = tpContainer.money
-        }
-        if (paymentActionType.value === PaymentActionType.RefundMoney) {
-          paymentTicketItem.paidItem = -tpContainer.money
-        }
-        if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-          paymentTicketItem.debItem = -Math.min(tpContainer.money, tpContainer.data.debt)
-        }
-        if (paymentActionType.value === PaymentActionType.Debit) {
-          paymentTicketItem.debItem = tpContainer.money
-        }
+
+        paymentTicketItem.paidMoney = tpContainer.paidMoney
+        paymentTicketItem.debtMoney = tpContainer.debtMoney
+
         return paymentTicketItem
       })
 
@@ -834,18 +809,9 @@ const startPrint = async () => {
         paymentTicketItem.discountType = tp!.discountType
         paymentTicketItem.sessionIndex = 0
 
-        if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-          paymentTicketItem.paidItem = tpContainer.money
-        }
-        if (paymentActionType.value === PaymentActionType.RefundMoney) {
-          paymentTicketItem.paidItem = -tpContainer.money
-        }
-        if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-          paymentTicketItem.debItem = -Math.min(tpContainer.money, tpContainer.data.debt)
-        }
-        if (paymentActionType.value === PaymentActionType.Debit) {
-          paymentTicketItem.debItem = tpContainer.money
-        }
+        paymentTicketItem.paidMoney = tpContainer.paidMoney
+        paymentTicketItem.debtMoney = tpContainer.debtMoney
+
         return paymentTicketItem
       })
 
@@ -868,18 +834,9 @@ const startPrint = async () => {
         paymentTicketItem.quantity = tp!.quantity
         paymentTicketItem.sessionIndex = 0
 
-        if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-          paymentTicketItem.paidItem = tpContainer.money
-        }
-        if (paymentActionType.value === PaymentActionType.RefundMoney) {
-          paymentTicketItem.paidItem = -tpContainer.money
-        }
-        if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-          paymentTicketItem.debItem = -Math.min(tpContainer.money, tpContainer.data.debt)
-        }
-        if (paymentActionType.value === PaymentActionType.Debit) {
-          paymentTicketItem.debItem = tpContainer.money
-        }
+        paymentTicketItem.paidMoney = tpContainer.paidMoney
+        paymentTicketItem.debtMoney = tpContainer.debtMoney
+
         return paymentTicketItem
       })
 
@@ -901,18 +858,10 @@ const startPrint = async () => {
         paymentTicketItem.actualPrice = tl!.actualPrice
         paymentTicketItem.quantity = 1
         paymentTicketItem.sessionIndex = 0
-        if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-          paymentTicketItem.paidItem = tlContainer.money
-        }
-        if (paymentActionType.value === PaymentActionType.RefundMoney) {
-          paymentTicketItem.paidItem = -tlContainer.money
-        }
-        if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-          paymentTicketItem.debItem = -Math.min(tlContainer.money, tlContainer.data.debt)
-        }
-        if (paymentActionType.value === PaymentActionType.Debit) {
-          paymentTicketItem.debItem = tlContainer.money
-        }
+
+        paymentTicketItem.paidMoney = tlContainer.paidMoney
+        paymentTicketItem.debtMoney = tlContainer.debtMoney
+
         return paymentTicketItem
       })
 
@@ -934,22 +883,15 @@ const startPrint = async () => {
         paymentTicketItem.actualPrice = tr!.actualPrice
         paymentTicketItem.quantity = 1
         paymentTicketItem.sessionIndex = 0
-        if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-          paymentTicketItem.paidItem = trContainer.money
-        }
-        if (paymentActionType.value === PaymentActionType.RefundMoney) {
-          paymentTicketItem.paidItem = -trContainer.money
-        }
-        if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-          paymentTicketItem.debItem = -Math.min(trContainer.money, trContainer.data.debt)
-        }
-        if (paymentActionType.value === PaymentActionType.Debit) {
-          paymentTicketItem.debItem = trContainer.money
-        }
+
+        paymentTicketItem.paidMoney = trContainer.paidMoney
+        paymentTicketItem.debtMoney = trContainer.debtMoney
+
         return paymentTicketItem
       })
 
     paymentTemp.paymentTicketItemList = [
+      ...paymentTicketItemOther,
       ...paymentTicketItemRegimen,
       ...paymentTicketItemProcedureRegimen,
       ...paymentTicketItemProcedure,
@@ -977,7 +919,13 @@ const startPrint = async () => {
 }
 
 const disabledButtonSave = computed(() => {
-  if (totalMoney.value === 0 && ticketAllItemMoney.value === 0) {
+  if (
+    paidTotal.value === 0 &&
+    paidItemMoney.value === 0 &&
+    paidWait.value === 0 &&
+    debtTotal.value === 0 &&
+    debtItemMoney.value === 0
+  ) {
     return true
   }
   return false
@@ -987,14 +935,17 @@ const handleUpdateCheckedTicketRegimen = (checked: boolean, tr: TicketRegimen) =
   const trContainer = ticketRegimenAction.value[tr.id]
 
   trContainer.checked = checked
-  let moneyItem = 0
+  let paidItemMoney = 0
+  let debtItemMoney = 0
   Object.values(trContainer.trpCheckbox).forEach((tpContainer) => {
     tpContainer.checked = checked
     if (checked) {
-      moneyItem += tpContainer.money
+      paidItemMoney += tpContainer.paidMoney
+      debtItemMoney += tpContainer.debtMoney
     }
   })
-  trContainer.moneyItem = moneyItem
+  trContainer.paidItemMoney = paidItemMoney
+  trContainer.debtItemMoney = debtItemMoney
 }
 
 const handleUpdateCheckedTicketProcedureRegimen = (checked: boolean, trp: TicketProcedure) => {
@@ -1002,9 +953,11 @@ const handleUpdateCheckedTicketProcedureRegimen = (checked: boolean, trp: Ticket
   const tpContainer = trContainer.trpCheckbox[trp.id]
 
   if (checked) {
-    trContainer.moneyItem += tpContainer.money
+    trContainer.paidItemMoney += tpContainer.paidMoney
+    trContainer.debtItemMoney += tpContainer.debtMoney
   } else {
-    trContainer.moneyItem -= tpContainer.money
+    trContainer.paidItemMoney -= tpContainer.paidMoney
+    trContainer.debtItemMoney -= tpContainer.debtMoney
   }
 
   const trpCheckboxList = Object.values(trContainer.trpCheckbox)
@@ -1046,7 +999,7 @@ defineExpose({ openModal, openModalByTicket })
           Thông tin HOÀN TRẢ: {{ ticket.customer?.fullName }}
         </div>
         <div
-          v-if="paymentActionType === PaymentActionType.RefundMoney"
+          v-if="paymentActionType === PaymentActionType.Debit"
           class="font-medium text-lg"
           style="font-weight: bold; color: var(--text-red)"
         >
@@ -1096,13 +1049,16 @@ defineExpose({ openModal, openModalByTicket })
                   <td class="text-center">1</td>
                   <td colspan="3">Thanh toán vào VÍ (tiền chờ)</td>
                   <td colspan="2">
-                    <InputNumber v-model:value="ticketPaid" textAlign="right" />
+                    <InputNumber v-model:value="paidWait" textAlign="right" />
                   </td>
                 </tr>
               </tbody>
             </template>
             <template
-              v-if="paymentActionType === PaymentActionType.RefundMoney && ticketRoomRef.paid"
+              v-if="
+                paymentActionType === PaymentActionType.RefundMoney &&
+                ticketRoomRef.ticketPaymentDetail?.paidWait
+              "
             >
               <thead>
                 <tr>
@@ -1122,10 +1078,15 @@ defineExpose({ openModal, openModalByTicket })
                   <td></td>
                   <td class="text-center">1</td>
                   <td colspan="3">
-                    Hoàn trả tiền trong VÍ (đã thanh toán {{ formatMoney(ticketRoomRef.paid) }})
+                    Hoàn trả tiền trong VÍ (đã thanh toán
+                    {{ formatMoney(ticketRoomRef.ticketPaymentDetail?.paidWait) }})
                   </td>
                   <td colspan="2">
-                    <InputNumber v-model:value="ticketPaid" textAlign="right" />
+                    <InputNumber
+                      :value="-paidWait"
+                      @update:value="(v) => (paidWait = -v)"
+                      textAlign="right"
+                    />
                   </td>
                 </tr>
               </tbody>
@@ -1140,17 +1101,12 @@ defineExpose({ openModal, openModalByTicket })
                   <th>Liệu trình</th>
                   <th></th>
                   <th>Đơn Giá</th>
-                  <th
-                    v-if="
-                      [PaymentActionType.Debit, PaymentActionType.PaymentMoney].includes(
-                        paymentActionType,
-                      )
-                    "
-                  >
-                    T.Tiền
+                  <th v-if="[PaymentActionType.PaymentMoney].includes(paymentActionType)">
+                    Thanh toán
                   </th>
+                  <th v-if="[PaymentActionType.Debit].includes(paymentActionType)">Ghi nợ</th>
                   <th v-if="[PaymentActionType.RefundMoney].includes(paymentActionType)">
-                    Đã T.Toán
+                    Hoàn trả
                   </th>
                 </tr>
               </thead>
@@ -1247,26 +1203,22 @@ defineExpose({ openModal, openModalByTicket })
                           </div>
                         </td>
                         <td
-                          v-if="
-                            [PaymentActionType.PaymentMoney, PaymentActionType.Debit].includes(
-                              paymentActionType,
-                            )
-                          "
+                          v-if="paymentActionType === PaymentActionType.PaymentMoney"
                           class="text-right"
                         >
-                          {{
-                            formatMoney(
-                              Math.round(
-                                trpContainer.data.actualPrice * trpContainer.data.quantity,
-                              ),
-                            )
-                          }}
+                          {{ formatMoney(trpContainer.paidMoney) }}
                         </td>
                         <td
-                          v-if="[PaymentActionType.RefundMoney].includes(paymentActionType)"
+                          v-else-if="paymentActionType === PaymentActionType.Debit"
                           class="text-right"
                         >
-                          {{ formatMoney(trpContainer.data.paid) }}
+                          {{ formatMoney(trpContainer.debtMoney) }}
+                        </td>
+                        <td
+                          v-else-if="paymentActionType === PaymentActionType.RefundMoney"
+                          class="text-right"
+                        >
+                          {{ formatMoney(-trpContainer.paidMoney) }}
                         </td>
                       </tr>
                     </template>
@@ -1286,17 +1238,12 @@ defineExpose({ openModal, openModalByTicket })
                   </th>
                   <th>SL</th>
                   <th>Đơn giá</th>
-                  <th
-                    v-if="
-                      [PaymentActionType.Debit, PaymentActionType.PaymentMoney].includes(
-                        paymentActionType,
-                      )
-                    "
-                  >
-                    T.Tiền
+                  <th v-if="[PaymentActionType.PaymentMoney].includes(paymentActionType)">
+                    Thanh toán
                   </th>
+                  <th v-if="[PaymentActionType.Debit].includes(paymentActionType)">Ghi nợ</th>
                   <th v-if="[PaymentActionType.RefundMoney].includes(paymentActionType)">
-                    Đã T.Toán
+                    Hoàn trả
                   </th>
                 </tr>
               </thead>
@@ -1335,29 +1282,19 @@ defineExpose({ openModal, openModalByTicket })
                     <div>{{ formatMoney(tpContainer.data.actualPrice) }}</div>
                   </td>
                   <td
-                    v-if="
-                      [PaymentActionType.PaymentMoney, PaymentActionType.Debit].includes(
-                        paymentActionType,
-                      )
-                    "
-                    class="text-right whitespace-nowrap"
+                    v-if="paymentActionType === PaymentActionType.PaymentMoney"
+                    class="text-right"
                   >
-                    <div v-if="tpContainer.data.discountMoney" class="text-xs italic text-red-500">
-                      <del>
-                        {{
-                          formatMoney(tpContainer.data.expectedPrice * tpContainer.data.quantity)
-                        }}
-                      </del>
-                    </div>
-                    <div>
-                      {{ formatMoney(tpContainer.data.actualPrice * tpContainer.data.quantity) }}
-                    </div>
+                    {{ formatMoney(tpContainer.paidMoney) }}
+                  </td>
+                  <td v-else-if="paymentActionType === PaymentActionType.Debit" class="text-right">
+                    {{ formatMoney(tpContainer.debtMoney) }}
                   </td>
                   <td
-                    v-if="[PaymentActionType.RefundMoney].includes(paymentActionType)"
-                    class="text-right whitespace-nowrap"
+                    v-else-if="paymentActionType === PaymentActionType.RefundMoney"
+                    class="text-right"
                   >
-                    {{ formatMoney(tpContainer.data.paid) }}
+                    {{ formatMoney(-tpContainer.paidMoney) }}
                   </td>
                 </tr>
               </tbody>
@@ -1374,17 +1311,12 @@ defineExpose({ openModal, openModalByTicket })
                   </th>
                   <th>SL</th>
                   <th>Đơn giá</th>
-                  <th
-                    v-if="
-                      [PaymentActionType.Debit, PaymentActionType.PaymentMoney].includes(
-                        paymentActionType,
-                      )
-                    "
-                  >
-                    T.Tiền
+                  <th v-if="[PaymentActionType.PaymentMoney].includes(paymentActionType)">
+                    Thanh toán
                   </th>
+                  <th v-if="[PaymentActionType.Debit].includes(paymentActionType)">Ghi nợ</th>
                   <th v-if="[PaymentActionType.RefundMoney].includes(paymentActionType)">
-                    Đã T.Toán
+                    Hoàn trả
                   </th>
                 </tr>
               </thead>
@@ -1423,29 +1355,19 @@ defineExpose({ openModal, openModalByTicket })
                     <div>{{ formatMoney(tpContainer.data.actualPrice) }}</div>
                   </td>
                   <td
-                    v-if="
-                      [PaymentActionType.PaymentMoney, PaymentActionType.Debit].includes(
-                        paymentActionType,
-                      )
-                    "
-                    class="text-right whitespace-nowrap"
+                    v-if="paymentActionType === PaymentActionType.PaymentMoney"
+                    class="text-right"
                   >
-                    <div v-if="tpContainer.data.discountMoney" class="text-xs italic text-red-500">
-                      <del>
-                        {{
-                          formatMoney(tpContainer.data.expectedPrice * tpContainer.data.quantity)
-                        }}
-                      </del>
-                    </div>
-                    <div>
-                      {{ formatMoney(tpContainer.data.actualPrice * tpContainer.data.quantity) }}
-                    </div>
+                    {{ formatMoney(tpContainer.paidMoney) }}
+                  </td>
+                  <td v-else-if="paymentActionType === PaymentActionType.Debit" class="text-right">
+                    {{ formatMoney(tpContainer.debtMoney) }}
                   </td>
                   <td
-                    v-if="[PaymentActionType.RefundMoney].includes(paymentActionType)"
-                    class="text-right whitespace-nowrap"
+                    v-else-if="paymentActionType === PaymentActionType.RefundMoney"
+                    class="text-right"
                   >
-                    {{ formatMoney(tpContainer.data.paid) }}
+                    {{ formatMoney(-tpContainer.paidMoney) }}
                   </td>
                 </tr>
               </tbody>
@@ -1462,17 +1384,12 @@ defineExpose({ openModal, openModalByTicket })
                   </th>
                   <th>SL</th>
                   <th>Đơn giá</th>
-                  <th
-                    v-if="
-                      [PaymentActionType.Debit, PaymentActionType.PaymentMoney].includes(
-                        paymentActionType,
-                      )
-                    "
-                  >
-                    T.Tiền
+                  <th v-if="[PaymentActionType.PaymentMoney].includes(paymentActionType)">
+                    Thanh toán
                   </th>
+                  <th v-if="[PaymentActionType.Debit].includes(paymentActionType)">Ghi nợ</th>
                   <th v-if="[PaymentActionType.RefundMoney].includes(paymentActionType)">
-                    Đã T.Toán
+                    Hoàn trả
                   </th>
                 </tr>
               </thead>
@@ -1511,29 +1428,19 @@ defineExpose({ openModal, openModalByTicket })
                     <div>{{ formatMoney(tpContainer.data.actualPrice) }}</div>
                   </td>
                   <td
-                    v-if="
-                      [PaymentActionType.PaymentMoney, PaymentActionType.Debit].includes(
-                        paymentActionType,
-                      )
-                    "
-                    class="text-right whitespace-nowrap"
+                    v-if="paymentActionType === PaymentActionType.PaymentMoney"
+                    class="text-right"
                   >
-                    <div v-if="tpContainer.data.discountMoney" class="text-xs italic text-red-500">
-                      <del>
-                        {{
-                          formatMoney(tpContainer.data.expectedPrice * tpContainer.data.quantity)
-                        }}
-                      </del>
-                    </div>
-                    <div>
-                      {{ formatMoney(tpContainer.data.actualPrice * tpContainer.data.quantity) }}
-                    </div>
+                    {{ formatMoney(tpContainer.paidMoney) }}
+                  </td>
+                  <td v-else-if="paymentActionType === PaymentActionType.Debit" class="text-right">
+                    {{ formatMoney(tpContainer.debtMoney) }}
                   </td>
                   <td
-                    v-if="[PaymentActionType.RefundMoney].includes(paymentActionType)"
-                    class="text-right whitespace-nowrap"
+                    v-else-if="paymentActionType === PaymentActionType.RefundMoney"
+                    class="text-right"
                   >
-                    {{ formatMoney(tpContainer.data.paid) }}
+                    {{ formatMoney(-tpContainer.paidMoney) }}
                   </td>
                 </tr>
               </tbody>
@@ -1550,17 +1457,12 @@ defineExpose({ openModal, openModalByTicket })
                   </th>
                   <th></th>
                   <th></th>
-                  <th
-                    v-if="
-                      [PaymentActionType.Debit, PaymentActionType.PaymentMoney].includes(
-                        paymentActionType,
-                      )
-                    "
-                  >
-                    T.Tiền
+                  <th v-if="[PaymentActionType.PaymentMoney].includes(paymentActionType)">
+                    Thanh toán
                   </th>
+                  <th v-if="[PaymentActionType.Debit].includes(paymentActionType)">Ghi nợ</th>
                   <th v-if="[PaymentActionType.RefundMoney].includes(paymentActionType)">
-                    Đã T.Toán
+                    Hoàn trả
                   </th>
                 </tr>
               </thead>
@@ -1592,27 +1494,19 @@ defineExpose({ openModal, openModalByTicket })
                   </td>
                   <td colspan="3">{{ tlContainer.data.laboratory?.name }}</td>
                   <td
-                    v-if="
-                      [PaymentActionType.PaymentMoney, PaymentActionType.Debit].includes(
-                        paymentActionType,
-                      )
-                    "
-                    class="text-right whitespace-nowrap"
+                    v-if="paymentActionType === PaymentActionType.PaymentMoney"
+                    class="text-right"
                   >
-                    <div v-if="tlContainer.data.discountMoney" class="text-xs italic text-red-500">
-                      <del>
-                        {{ formatMoney(tlContainer.data.expectedPrice) }}
-                      </del>
-                    </div>
-                    <div>
-                      {{ formatMoney(tlContainer.data.actualPrice) }}
-                    </div>
+                    {{ formatMoney(tlContainer.paidMoney) }}
+                  </td>
+                  <td v-else-if="paymentActionType === PaymentActionType.Debit" class="text-right">
+                    {{ formatMoney(tlContainer.debtMoney) }}
                   </td>
                   <td
-                    v-if="[PaymentActionType.RefundMoney].includes(paymentActionType)"
-                    class="text-right whitespace-nowrap"
+                    v-else-if="paymentActionType === PaymentActionType.RefundMoney"
+                    class="text-right"
                   >
-                    {{ formatMoney(tlContainer.data.paid) }}
+                    {{ formatMoney(-tlContainer.paidMoney) }}
                   </td>
                 </tr>
               </tbody>
@@ -1629,17 +1523,12 @@ defineExpose({ openModal, openModalByTicket })
                   </th>
                   <th></th>
                   <th></th>
-                  <th
-                    v-if="
-                      [PaymentActionType.Debit, PaymentActionType.PaymentMoney].includes(
-                        paymentActionType,
-                      )
-                    "
-                  >
-                    T.Tiền
+                  <th v-if="[PaymentActionType.PaymentMoney].includes(paymentActionType)">
+                    Thanh toán
                   </th>
+                  <th v-if="[PaymentActionType.Debit].includes(paymentActionType)">Ghi nợ</th>
                   <th v-if="[PaymentActionType.RefundMoney].includes(paymentActionType)">
-                    Đã T.Toán
+                    Hoàn trả
                   </th>
                 </tr>
               </thead>
@@ -1671,31 +1560,116 @@ defineExpose({ openModal, openModalByTicket })
                   </td>
                   <td colspan="3">{{ trContainer.data.radiology?.name }}</td>
                   <td
-                    v-if="
-                      [PaymentActionType.PaymentMoney, PaymentActionType.Debit].includes(
-                        paymentActionType,
-                      )
-                    "
-                    class="text-right whitespace-nowrap"
+                    v-if="paymentActionType === PaymentActionType.PaymentMoney"
+                    class="text-right"
                   >
-                    <div v-if="trContainer.data.discountMoney" class="text-xs italic text-red-500">
-                      <del>
-                        {{ formatMoney(trContainer.data.expectedPrice) }}
-                      </del>
-                    </div>
-                    <div>
-                      {{ formatMoney(trContainer.data.actualPrice) }}
-                    </div>
+                    {{ formatMoney(trContainer.paidMoney) }}
+                  </td>
+                  <td v-else-if="paymentActionType === PaymentActionType.Debit" class="text-right">
+                    {{ formatMoney(trContainer.debtMoney) }}
                   </td>
                   <td
-                    v-if="[PaymentActionType.RefundMoney].includes(paymentActionType)"
-                    class="text-right whitespace-nowrap"
+                    v-else-if="paymentActionType === PaymentActionType.RefundMoney"
+                    class="text-right"
                   >
-                    {{ formatMoney(trContainer.data.paid) }}
+                    {{ formatMoney(-trContainer.paidMoney) }}
                   </td>
                 </tr>
               </tbody>
             </template>
+
+            <tbody>
+              <template v-if="paymentActionType === PaymentActionType.PaymentMoney">
+                <tr v-if="paidSurchargeAction.paidMoney">
+                  <td v-if="CONFIG.MODE === 'development'"></td>
+                  <td>
+                    <div class="flex justify-center">
+                      <InputCheckbox v-model:checked="paidSurchargeAction.checked" />
+                    </div>
+                  </td>
+                  <td class="text-center"></td>
+                  <td class="text-center"></td>
+                  <td colspan="3">Tiền phụ phí</td>
+                  <td colspan="1" style="text-align: right">
+                    {{ formatMoney(paidSurchargeAction.paidMoney) }}
+                  </td>
+                </tr>
+                <tr v-if="paidDiscountAction.paidMoney">
+                  <td v-if="CONFIG.MODE === 'development'"></td>
+                  <td>
+                    <div class="flex justify-center">
+                      <InputCheckbox v-model:checked="paidDiscountAction.checked" />
+                    </div>
+                  </td>
+                  <td class="text-center"></td>
+                  <td class="text-center"></td>
+                  <td colspan="3">Tiền khuyến mại</td>
+                  <td colspan="1" style="text-align: right">
+                    {{ formatMoney(paidDiscountAction.paidMoney) }}
+                  </td>
+                </tr>
+              </template>
+              <template v-if="paymentActionType === PaymentActionType.Debit">
+                <tr v-if="paidSurchargeAction.debtMoney">
+                  <td v-if="CONFIG.MODE === 'development'"></td>
+                  <td>
+                    <div class="flex justify-center">
+                      <InputCheckbox v-model:checked="paidSurchargeAction.checked" />
+                    </div>
+                  </td>
+                  <td class="text-center"></td>
+                  <td class="text-center"></td>
+                  <td colspan="3">Ghi nợ phụ phí</td>
+                  <td colspan="1" style="text-align: right">
+                    {{ formatMoney(paidSurchargeAction.debtMoney) }}
+                  </td>
+                </tr>
+                <tr v-if="paidDiscountAction.debtMoney">
+                  <td v-if="CONFIG.MODE === 'development'"></td>
+                  <td>
+                    <div class="flex justify-center">
+                      <InputCheckbox v-model:checked="paidDiscountAction.checked" />
+                    </div>
+                  </td>
+                  <td class="text-center"></td>
+                  <td class="text-center"></td>
+                  <td colspan="3">Ghi nợ khuyến mại</td>
+                  <td colspan="1" style="text-align: right">
+                    {{ formatMoney(-paidDiscountAction.debtMoney) }}
+                  </td>
+                </tr>
+              </template>
+              <template v-if="paymentActionType === PaymentActionType.RefundMoney">
+                <tr v-if="paidSurchargeAction.paidMoney || paidSurchargeAction.debtMoney">
+                  <td v-if="CONFIG.MODE === 'development'"></td>
+                  <td>
+                    <div class="flex justify-center">
+                      <InputCheckbox v-model:checked="paidSurchargeAction.checked" />
+                    </div>
+                  </td>
+                  <td class="text-center"></td>
+                  <td class="text-center"></td>
+                  <td colspan="3">Hoàn trả phụ phí</td>
+                  <td colspan="1" style="text-align: right">
+                    {{ formatMoney(-paidSurchargeAction.paidMoney) }}
+                  </td>
+                </tr>
+                <tr v-if="paidDiscountAction.paidMoney || paidDiscountAction.debtMoney">
+                  <td v-if="CONFIG.MODE === 'development'"></td>
+                  <td>
+                    <div class="flex justify-center">
+                      <InputCheckbox v-model:checked="paidDiscountAction.checked" />
+                    </div>
+                  </td>
+                  <td class="text-center"></td>
+                  <td class="text-center"></td>
+                  <td colspan="3">Hoàn trả khuyến mại</td>
+                  <td colspan="1" style="text-align: right">
+                    {{ formatMoney(-paidDiscountAction.paidMoney) }}
+                  </td>
+                </tr>
+              </template>
+            </tbody>
           </table>
         </div>
         <div class="mt-2 ml-2 flex justify-center">
@@ -1725,26 +1699,32 @@ defineExpose({ openModal, openModalByTicket })
             </template>
           </div>
           <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-            <div class="flex flex-wrap justify-between">
-              <span v-if="paymentActionType === PaymentActionType.PaymentMoney">
-                Số tiền thanh toán
-              </span>
-              <span v-if="paymentActionType === PaymentActionType.RefundMoney">
-                Số tiền HOÀN TRẢ
-              </span>
-              <span v-if="paymentActionType === PaymentActionType.Debit">Số tiền GHI NỢ</span>
-            </div>
-            <div>
+            <template v-if="paymentActionType === PaymentActionType.PaymentMoney">
+              <div>Số tiền thanh toán</div>
               <div class="flex">
-                <InputMoney
-                  ref="inputMoneyPay"
-                  :value="totalMoney"
-                  textAlign="right"
-                  :validate="{ gt: 0 }"
-                  required
-                  disabled
-                />
+                <InputMoney ref="inputMoneyPay" :value="paidTotal" textAlign="right" disabled />
               </div>
+            </template>
+            <template v-if="paymentActionType === PaymentActionType.Debit">
+              <div>Số tiền ghi nợ</div>
+              <div class="flex">
+                <InputMoney ref="inputMoneyPay" :value="debtTotal" textAlign="right" disabled />
+              </div>
+            </template>
+            <template v-if="paymentActionType === PaymentActionType.RefundMoney">
+              <div>Số tiền hoàn trả</div>
+              <div class="flex">
+                <InputMoney ref="inputMoneyPay" :value="-paidTotal" textAlign="right" disabled />
+              </div>
+            </template>
+          </div>
+          <div
+            v-if="paymentActionType === PaymentActionType.RefundMoney && debtTotal !== 0"
+            style="flex-grow: 1; flex-basis: 40%; min-width: 300px"
+          >
+            <div>Số tiền hoàn nợ</div>
+            <div class="flex">
+              <InputMoney ref="inputMoneyPay" :value="-debtTotal" textAlign="right" disabled />
             </div>
           </div>
           <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">

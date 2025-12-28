@@ -47,7 +47,8 @@ export class PaymentApi {
     const { data } = response.data as BaseResponse<{
       aggregate: {
         moneyDirection: MoneyDirection
-        sumPaidAmount: number
+        sumPaidTotal: number
+        sumDebtTotal: number
         count: number
       }[]
     }>

@@ -7,11 +7,9 @@ import { ProcedureService } from '@/modules/procedure'
 import { RadiologyService } from '@/modules/radiology'
 import { RadiologyGroupService } from '@/modules/radiology-group'
 import { RegimenService } from '@/modules/regimen'
-import { RoomService } from '@/modules/room'
 import {
   roomDeliveryPagination,
   roomFinancePagination,
-  roomTicketPaginationMapRoomId,
   ticketRoomRef,
 } from '@/modules/room/room.ref'
 import { SurchargeService } from '@/modules/surcharge'
@@ -121,68 +119,5 @@ export class SocketService {
       roomDeliveryPagination.value || [],
       [ticketRoomRef.value],
     ]
-  }
-
-  static async listenSocketTicketListChange(data: {
-    ticketDestroyedList?: any[]
-    ticketUpsertedList?: any[]
-  }) {
-    const roomPaginationList = SocketService.getRoomPaginationAction()
-
-    if (data.ticketUpsertedList) {
-      data.ticketUpsertedList?.forEach((ticketPlain) => {
-        const ticket = Ticket.from(ticketPlain)
-
-        roomPaginationList.forEach((roomPagination) => {
-          const findIndex = roomPagination.findIndex((i) => i.id === ticket.id)
-
-          if (findIndex !== -1) {
-            Object.assign(roomPagination[findIndex], ticket)
-          } else {
-            roomPagination.unshift(ticket)
-          }
-        })
-
-        Object.entries(roomTicketPaginationMapRoomId.value).forEach((entries) => {
-          const roomId = Number(entries[0])
-          const ticketPagination = entries[1]
-
-          if (ticket.roomId === roomId || RoomService.roomMap.value[roomId]?.isCommon) {
-            const findIndex = ticketPagination.findIndex((i) => i.id === ticket.id)
-            if (findIndex !== -1) {
-              Object.assign(ticketPagination[findIndex], ticket)
-            } else {
-              ticketPagination.unshift(ticket)
-            }
-          } else {
-            // Để xử lý trường hợp chuyển phòng
-            const findIndex = ticketPagination.findIndex((i) => i.id === ticket.id)
-            if (findIndex !== -1) {
-              ticketPagination.splice(findIndex, 1)
-            } else {
-            }
-          }
-        })
-      })
-    }
-
-    if (data.ticketDestroyedList) {
-      data.ticketDestroyedList.forEach((ticket) => {
-        roomPaginationList.forEach((roomPagination) => {
-          const findIndex = roomPagination.findIndex((i) => i.id === ticket.id)
-          if (findIndex !== -1) {
-            roomPagination.splice(findIndex, 1)
-          }
-        })
-
-        Object.entries(roomTicketPaginationMapRoomId.value).forEach((entries) => {
-          const ticketPagination = entries[1]
-          const findIndex = ticketPagination.findIndex((i) => i.id === ticket.id)
-          if (findIndex !== -1) {
-            ticketPagination.splice(findIndex, 1)
-          }
-        })
-      })
-    }
   }
 }

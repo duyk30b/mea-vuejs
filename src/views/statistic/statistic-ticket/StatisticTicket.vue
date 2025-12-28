@@ -337,7 +337,7 @@ const downloadTicketList = (menu: { key: string }) => {
       <div v-if="settingStore.TICKET_STATISTIC.sumDebt" class="card">
         <div class="card-title">Tổng nợ</div>
         <div class="card-number" style="font-weight: 500">
-          {{ formatMoney(data.reduce((acc, item) => acc + item.sumDebt, 0)) }}
+          {{ formatMoney(data.reduce((acc, item) => acc + item.sumDebtTotal, 0)) }}
         </div>
       </div>
     </div>
@@ -423,7 +423,7 @@ const downloadTicketList = (menu: { key: string }) => {
               {{ formatMoney(item.sumProfit) }}
             </td>
             <td v-if="settingStore.TICKET_STATISTIC.sumDebt" class="text-right">
-              {{ formatMoney(item.sumDebt) }}
+              {{ formatMoney(item.sumDebtTotal) }}
             </td>
           </tr>
         </tbody>

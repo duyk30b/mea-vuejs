@@ -1,7 +1,9 @@
 import { ref } from 'vue'
 import { Ticket } from '../ticket'
 
-export const roomTicketPaginationMapRoomId = ref<Record<string, Ticket[]>>({}) // {roomId: Ticket[]}
+export const roomTicketMapRoomId = ref<
+  Record<string, { paginationTime: string; paginationData: Ticket[] }>
+>({}) // {roomId: ...}
 
 export const roomDeliveryPagination = ref<Ticket[]>([])
 export const roomFinancePagination = ref<Ticket[]>([])

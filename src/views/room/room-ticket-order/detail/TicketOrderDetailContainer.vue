@@ -41,6 +41,7 @@ import { TicketOrderApi } from '@/modules/ticket/api/ticket-order.api'
 import { TicketProcedureService } from '@/modules/ticket-procedure'
 import ModalTicketOrderTerminal from './ModalTicketOrderTerminal.vue'
 import { VueTooltip } from '@/common/popover'
+import { CONFIG } from '@/config'
 
 const modalTicketOrderDetailSetting = ref<InstanceType<typeof ModalTicketOrderDetailSetting>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
@@ -244,14 +245,16 @@ const openModalTicketOrderPreview = () => {
       </div>
     </div>
     <div class="mr-2 flex items-center gap-4 flex-wrap">
-      <VueTooltip style="color: violet">
-        <template #trigger>
-          <IconBug width="1.4em" height="1.4em" />
-        </template>
-        <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
-          <pre>{{ JSON.stringify(ticketOrderDetailRef, null, 4) }}</pre>
-        </div>
-      </VueTooltip>
+      <div v-if="CONFIG.MODE === 'development'">
+        <VueTooltip style="color: violet">
+          <template #trigger>
+            <IconBug width="1.4em" height="1.4em" />
+          </template>
+          <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+            <pre>{{ JSON.stringify(ticketOrderDetailRef, null, 4) }}</pre>
+          </div>
+        </VueTooltip>
+      </div>
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">
@@ -413,7 +416,7 @@ const openModalTicketOrderPreview = () => {
               v-if="
                 ![TicketStatus.Debt, TicketStatus.Completed].includes(
                   ticketOrderDetailRef.status,
-                ) && ticketOrderDetailRef.paidAmount
+                ) && ticketOrderDetailRef.paidTotal
               "
               @click="modalTicketOrderPayment?.openModal(PaymentViewType.RefundOverpaid)"
             >
@@ -442,7 +445,7 @@ const openModalTicketOrderPreview = () => {
             <a
               v-if="
                 userPermission[PermissionId.TICKET_DRAFT_CRUD] &&
-                ticketOrderDetailRef.paidAmount === 0 &&
+                ticketOrderDetailRef.paidTotal === 0 &&
                 (ticketOrderDetailRef.status === TicketStatus.Draft ||
                   ticketOrderDetailRef.status === TicketStatus.Cancelled ||
                   ticketOrderDetailRef.status === TicketStatus.Deposited)
@@ -501,7 +504,7 @@ const openModalTicketOrderPreview = () => {
 
         <VueButton
           v-if="
-            ticketOrderDetailRef.paidAmount > ticketOrderDetailRef.totalMoney &&
+            ticketOrderDetailRef.paidTotal > ticketOrderDetailRef.totalMoney &&
             userPermission[PermissionId.TICKET_REFUND_MONEY]
           "
           color="cyan"
@@ -516,14 +519,14 @@ const openModalTicketOrderPreview = () => {
           v-if="
             userPermission[PermissionId.TICKET_CLOSE] &&
             ticketOrderDetailRef.deliveryStatus === DeliveryStatus.Delivered &&
-            ticketOrderDetailRef.paidAmount <= ticketOrderDetailRef.totalMoney
+            ticketOrderDetailRef.paidTotal <= ticketOrderDetailRef.totalMoney
           "
           color="blue"
           :loading="loadingProcess"
           @click="close()"
         >
           <IconFileDone />
-          <span v-if="ticketOrderDetailRef.debtAmount > 0">Đóng phiếu và Ghi nợ</span>
+          <span v-if="ticketOrderDetailRef.debtTotal > 0">Đóng phiếu và Ghi nợ</span>
           <span v-else>Kết thúc</span>
         </VueButton>
       </template>

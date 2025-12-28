@@ -307,40 +307,40 @@ const saveInvoice = async (type: ETicketOrderSave) => {
           title: 'Bạn có chắc chắn cập nhật hóa đơn này',
           content: [
             '- Nếu có thay đổi hàng hóa, kho hàng sẽ nhập lại hàng cũ và xuất hàng mới',
-            ...(ticketOrderUpsertRef.value.paidAmount != oldTicket.value.paidAmount
+            ...(ticketOrderUpsertRef.value.paidTotal != oldTicket.value.paidTotal
               ? [
                   `- Số tiền thanh toán thay đổi: ${formatMoney(
-                    oldTicket.value.paidAmount,
-                  )} --> ${formatMoney(ticketOrderUpsertRef.value.paidAmount)}`,
+                    oldTicket.value.paidTotal,
+                  )} --> ${formatMoney(ticketOrderUpsertRef.value.paidTotal)}`,
                 ]
               : []),
-            ...(ticketOrderUpsertRef.value.paidAmount > oldTicket.value.paidAmount
+            ...(ticketOrderUpsertRef.value.paidTotal > oldTicket.value.paidTotal
               ? [
                   `- Khách hàng cần thanh toán thêm: ${formatMoney(
-                    ticketOrderUpsertRef.value.paidAmount - oldTicket.value.paidAmount,
+                    ticketOrderUpsertRef.value.paidTotal - oldTicket.value.paidTotal,
                   )}`,
                 ]
               : []),
-            ...(ticketOrderUpsertRef.value.paidAmount < oldTicket.value.paidAmount
+            ...(ticketOrderUpsertRef.value.paidTotal < oldTicket.value.paidTotal
               ? [
-                  `- Trả lại khách hàng: ${formatMoney(oldTicket.value.paidAmount - ticketOrderUpsertRef.value.paidAmount)}`,
+                  `- Trả lại khách hàng: ${formatMoney(oldTicket.value.paidTotal - ticketOrderUpsertRef.value.paidTotal)}`,
                 ]
               : []),
-            ...(ticketOrderUpsertRef.value.debt != oldTicket.value.debt
+            ...(ticketOrderUpsertRef.value.debtTotal != oldTicket.value.debtTotal
               ? [
                   `- Số tiền nợ đơn này thay đổi: ${formatMoney(
-                    oldTicket.value.debt,
-                  )} --> ${formatMoney(ticketOrderUpsertRef.value.debt)}`,
+                    oldTicket.value.debtTotal,
+                  )} --> ${formatMoney(ticketOrderUpsertRef.value.debtTotal)}`,
                 ]
               : []),
-            ...(ticketOrderUpsertRef.value.debt > oldTicket.value.debt
+            ...(ticketOrderUpsertRef.value.debtTotal > oldTicket.value.debtTotal
               ? [
-                  `- Khách hàng nợ thêm: ${formatMoney(ticketOrderUpsertRef.value.debt - oldTicket.value.debt)}`,
+                  `- Khách hàng nợ thêm: ${formatMoney(ticketOrderUpsertRef.value.debtTotal - oldTicket.value.debtTotal)}`,
                 ]
               : []),
-            ...(ticketOrderUpsertRef.value.debt < oldTicket.value.debt
+            ...(ticketOrderUpsertRef.value.debtTotal < oldTicket.value.debtTotal
               ? [
-                  `- Trừ nợ khách hàng: ${formatMoney(oldTicket.value.debt - ticketOrderUpsertRef.value.debt)}`,
+                  `- Trừ nợ khách hàng: ${formatMoney(oldTicket.value.debtTotal - ticketOrderUpsertRef.value.debtTotal)}`,
                 ]
               : []),
           ],
@@ -606,7 +606,7 @@ const handleChangeTabs = (activeKey: any) => {
                   <td style="white-space: nowrap; padding-right: 10px">Thanh toán</td>
                   <td>
                     <InputMoney
-                      v-model:value="ticketOrderUpsertRef.paid"
+                      v-model:value="ticketOrderUpsertRef.paidTotal"
                       textAlign="right"
                       class="input-payment"
                       style="width: 100%"
@@ -624,12 +624,12 @@ const handleChangeTabs = (activeKey: any) => {
                   <td style="white-space: nowrap; padding-right: 10px">Ghi nợ</td>
                   <td>
                     <InputMoney
-                      :value="ticketOrderUpsertRef.totalMoney - ticketOrderUpsertRef.paid"
+                      :value="ticketOrderUpsertRef.totalMoney - ticketOrderUpsertRef.paidTotal"
                       class="input-payment"
                       textAlign="right"
                       style="width: 100%"
                       @update:value="
-                        (v) => (ticketOrderUpsertRef.paid = ticketOrderUpsertRef.totalMoney - v)
+                        (v) => (ticketOrderUpsertRef.paidTotal = ticketOrderUpsertRef.totalMoney - v)
                       "
                     />
                   </td>

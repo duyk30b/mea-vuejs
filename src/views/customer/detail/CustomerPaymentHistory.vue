@@ -125,11 +125,11 @@ defineExpose({ startFetchData })
             <td class="text-right">
               <div class="flex justify-between item-center" style="white-space: nowrap">
                 <span>T.Toán:</span>
-                <span>{{ formatMoney(payment.paid + payment.paidItem) }}</span>
+                <span>{{ formatMoney(payment.paidTotal) }}</span>
               </div>
               <div class="flex justify-between item-center">
                 <span>Ghi nợ:</span>
-                <span>{{ formatMoney(payment.debt + payment.debtItem) }}</span>
+                <span>{{ formatMoney(payment.debtTotal) }}</span>
               </div>
               <div class="flex justify-between item-center">
                 <span>Nợ:</span>
@@ -180,15 +180,23 @@ defineExpose({ startFetchData })
             </td>
             <td style="width: 300px">
               <div>{{ PaymentActionTypeText[payment.paymentActionType] }}</div>
-              <div v-if="payment.note" style="font-size: 0.9em; max-width: 300px; text-overflow: ellipsis; overflow: hidden">
+              <div
+                v-if="payment.note"
+                style="
+                  font-size: 0.9em;
+                  max-width: 300px;
+                  text-overflow: ellipsis;
+                  overflow: hidden;
+                "
+              >
                 {{ payment.note }}
               </div>
             </td>
             <td class="text-right">
-              {{ formatMoney(payment.paid + payment.paidItem) }}
+              {{ formatMoney(payment.paidTotal) }}
             </td>
             <td style="white-space: nowrap; text-align: right">
-              {{ formatMoney(payment.debt + payment.debtItem) }}
+              {{ formatMoney(payment.debtTotal) }}
             </td>
             <td class="text-right">
               <span>

@@ -68,10 +68,9 @@ export class Payment {
   cashierId: number
   note: string // Ghi chú
 
-  paid: number
-  paidItem: number
-  debt: number
-  debtItem: number
+  hasPaymentItem: number
+  paidTotal: number
+  debtTotal: number
   personOpenDebt: number
   personCloseDebt: number
   walletOpenMoney: number
@@ -99,10 +98,8 @@ export class Payment {
     ins.cashierId = 0
     ins.note = ''
 
-    ins.paid = 0
-    ins.debt = 0
-    ins.paidItem = 0
-    ins.debtItem = 0
+    ins.paidTotal = 0
+    ins.debtTotal = 0
     ins.personOpenDebt = 0
     ins.personCloseDebt = 0
     ins.walletOpenMoney = 0
@@ -164,7 +161,7 @@ export class Payment {
     if (payment.voucherType !== PaymentVoucherType.Ticket) {
       return payment
     }
-    if (!payment.paidItem && !payment.debtItem) {
+    if (!payment.hasPaymentItem) {
       return payment
     }
     const productIdList = payment.paymentTicketItemList

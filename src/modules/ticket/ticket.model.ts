@@ -30,6 +30,7 @@ import { TicketRegimen, TicketRegimenItem, TicketRegimenService } from '../ticke
 import { TicketSurchargeService } from '../ticket-surcharge'
 import { TicketSurcharge } from '../ticket-surcharge/ticket-surcharge.model'
 import { TicketUser, TicketUserService } from '../ticket-user'
+import type { TicketPaymentDetail } from './ticket-payment-detail.model'
 
 export enum TicketStatus {
   Schedule = 1,
@@ -70,10 +71,8 @@ export class Ticket {
   expense: number
   commissionMoney: number
   profit: number
-  paid: number
-  paidItem: number
-  debt: number
-  debtItem: number
+  paidTotal: number
+  debtTotal: number
 
   imageDiagnosisIds: string
 
@@ -123,14 +122,8 @@ export class Ticket {
   imageMap: Record<string, Image>
   imageDiagnosisList: Image[]
 
+  ticketPaymentDetail: TicketPaymentDetail
   ticketAttributeMap: TicketAttributeMap // chỉ convert tại front-end
-
-  get paidAmount() {
-    return this.paid + this.paidItem
-  }
-  get debtAmount() {
-    return this.debt + this.debtItem
-  }
 
   get itemsCostAmountExpected() {
     let itemsCostAmount = 0
@@ -161,10 +154,8 @@ export class Ticket {
     ins.totalMoney = 0
     ins.expense = 0
     ins.profit = 0
-    ins.paid = 0
-    ins.debt = 0
-    ins.paidItem = 0
-    ins.debtItem = 0
+    ins.paidTotal = 0
+    ins.debtTotal = 0
     ins.note = ''
     return ins
   }
@@ -523,8 +514,8 @@ export class Ticket {
     if (a.expense != b.expense) return false
     if (a.commissionMoney != b.commissionMoney) return false
     if (a.profit != b.profit) return false
-    if (a.paid != b.paid) return false
-    if (a.debt != b.debt) return false
+    if (a.paidTotal != b.paidTotal) return false
+    if (a.debtTotal != b.debtTotal) return false
 
     if (a.imageDiagnosisIds != b.imageDiagnosisIds) return false
     if (a.year != b.year) return false

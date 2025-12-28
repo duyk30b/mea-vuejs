@@ -1,3 +1,4 @@
+export * from './organization-payment.model'
 export * from './organization.api'
 export * from './organization.dto'
 export * from './organization.model'

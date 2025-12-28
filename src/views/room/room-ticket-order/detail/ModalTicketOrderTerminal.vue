@@ -70,14 +70,14 @@ defineExpose({ openModal })
         <p v-if="ticketOrderDetailRef.deliveryStatus === DeliveryStatus.Delivered">
           - Kho hàng sẽ nhập lại tất cả hàng hóa trong đơn
         </p>
-        <p v-if="ticketOrderDetailRef.debtAmount">
-          - Trừ nợ khách hàng: {{ formatMoney(ticketOrderDetailRef.debtAmount) }}
+        <p v-if="ticketOrderDetailRef.debtTotal">
+          - Trừ nợ khách hàng: {{ formatMoney(ticketOrderDetailRef.debtTotal) }}
         </p>
-        <p v-if="ticketOrderDetailRef.paidAmount">
+        <p v-if="ticketOrderDetailRef.paidTotal">
           - Khách hàng nhận lại số tiền đã thanh toán là:
-          {{ formatMoney(ticketOrderDetailRef.paidAmount) }}
+          {{ formatMoney(ticketOrderDetailRef.paidTotal) }}
         </p>
-        <div class="flex items-center gap-2 mb-4" v-if="ticketOrderDetailRef.paidAmount">
+        <div class="flex items-center gap-2 mb-4" v-if="ticketOrderDetailRef.paidTotal">
           <div>- Phương thức thanh toán</div>
           <div style="min-width: 150px">
             <InputSelectWallet v-model:walletId="walletId" autoSelectFirstValue />

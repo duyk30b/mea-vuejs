@@ -126,12 +126,12 @@ const startFetchStatisticTicketGroupByCustomer = async (options: {
     )
   }
 
-  if (sortStatistic?.sumDebt) {
+  if (sortStatistic?.sumDebtTotal) {
     barData.datasets.forEach((i) => (i.label = 'Nợ trong kỳ'))
     barData.datasets[0].data.splice(
       0,
       dataStatistic.value.length,
-      ...dataStatistic.value.map((i) => i.sumDebt / moneyDivision),
+      ...dataStatistic.value.map((i) => i.sumDebtTotal / moneyDivision),
     )
   }
 }
@@ -147,7 +147,7 @@ const startFetchData = async () => {
     } else if (typeBestSelling.value === 'topProfit') {
       sortStatistic.sumProfit = 'DESC'
     } else if (typeBestSelling.value === 'topSumDebt') {
-      sortStatistic.sumDebt = 'DESC'
+      sortStatistic.sumDebtTotal = 'DESC'
     }
     await startFetchStatisticTicketGroupByCustomer({ sortStatistic })
   } catch (error) {
@@ -237,7 +237,7 @@ onBeforeMount(async () => await startFetchData())
             <td>{{ item.customer?.fullName }}</td>
             <td class="text-center">{{ item.countTicket }}</td>
             <td class="text-right">{{ formatMoney(item.sumTotalMoney) }}</td>
-            <td class="text-right">{{ formatMoney(item.sumDebt) }}</td>
+            <td class="text-right">{{ formatMoney(item.sumDebtTotal) }}</td>
             <td class="text-right">{{ formatMoney(item.sumProfit) }}</td>
           </tr>
         </tbody>

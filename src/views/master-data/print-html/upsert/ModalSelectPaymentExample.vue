@@ -105,7 +105,7 @@ defineExpose({ openModal })
                 </td>
                 <td>{{ payment.customer?.fullName }}</td>
                 <td>{{ PaymentActionTypeText[payment.paymentActionType] }}</td>
-                <td>{{ formatMoney(payment.paid + payment.paidItem) }}</td>
+                <td>{{ formatMoney(payment.paidTotal) }}</td>
                 <td class="text-center">
                   <a @click="selectPaymentDemo(payment)">Chọn</a>
                 </td>

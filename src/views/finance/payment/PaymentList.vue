@@ -5,6 +5,7 @@ import { IconEditSquare } from '@/common/icon-google'
 import { VueTooltip } from '@/common/popover'
 import { InputDate, InputSelect, VueSelect } from '@/common/vue-form'
 import { CONFIG } from '@/config'
+import type { ConditionEnum } from '@/modules/_base/base-condition'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import type { Customer } from '@/modules/customer'
@@ -54,7 +55,9 @@ const page = ref(1)
 const limit = ref(Number(localStorage.getItem('PAYMENT_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
-const moneyDirection = ref<MoneyDirection | null>(null)
+const moneyDirection = ref<MoneyDirection | ConditionEnum<MoneyDirection> | null>({
+  IN: [MoneyDirection.In, MoneyDirection.Out],
+})
 const walletId = ref<string>('')
 const fromTime = ref<number>(ESTimer.startOfMonth(new Date()).getTime())
 const toTime = ref<number>(ESTimer.endOfMonth(new Date()).getTime())
@@ -65,7 +68,7 @@ const sortValue = ref<'ASC' | 'DESC' | ''>('')
 const statistics = ref<
   {
     moneyDirection: MoneyDirection
-    sumPaidAmount: number
+    sumPaidTotal: number
     count: number
   }[]
 >([])
@@ -194,19 +197,19 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
         <template v-if="st.moneyDirection === MoneyDirection.In">
           <div class="card-title">Tổng thu trong kỳ</div>
           <div class="card-number" style="font-weight: 500">
-            {{ formatMoney(st.sumPaidAmount) }}
+            {{ formatMoney(st.sumPaidTotal) }}
           </div>
         </template>
         <template v-if="st.moneyDirection === MoneyDirection.Out">
           <div class="card-title">Tổng chi trong kỳ</div>
           <div class="card-number" style="font-weight: 500">
-            {{ formatMoney(-st.sumPaidAmount) }}
+            {{ formatMoney(-st.sumPaidTotal) }}
           </div>
         </template>
         <template v-if="st.moneyDirection === MoneyDirection.Other">
           <div class="card-title">Khác</div>
           <div class="card-number" style="font-weight: 500">
-            {{ formatMoney(st.sumPaidAmount) }}
+            {{ formatMoney(st.sumPaidTotal) }}
           </div>
         </template>
       </div>
@@ -291,6 +294,7 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
             v-model:value="moneyDirection"
             :options="[
               { value: null, text: 'Tất cả' },
+              { value: { IN: [MoneyDirection.In, MoneyDirection.Out] }, text: 'Phiếu thu + chi' },
               { value: MoneyDirection.In, text: 'Phiếu thu' },
               { value: MoneyDirection.Out, text: 'Phiếu chi' },
               { value: MoneyDirection.Other, text: 'Khác' },
@@ -303,7 +307,11 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
       <div style="flex: 1; flex-basis: 250px">
         <div>Ví thanh toán</div>
         <div>
-          <InputSelectWallet v-model:walletId="walletId" @update:walletId="startSearch" />
+          <InputSelectWallet
+            v-model:walletId="walletId"
+            @update:walletId="startSearch"
+            optionNull
+          />
         </div>
       </div>
     </div>
@@ -408,13 +416,13 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
               </div>
             </td>
             <td class="text-right">
-              <div v-if="payment.paid + payment.paidItem > 0">
-                {{ formatMoney(payment.paid + payment.paidItem) }}
+              <div v-if="payment.paidTotal > 0">
+                {{ formatMoney(payment.paidTotal) }}
               </div>
             </td>
             <td class="text-right">
-              <div v-if="payment.paid + payment.paidItem < 0">
-                {{ formatMoney(-payment.paid - payment.paidItem) }}
+              <div v-if="payment.paidTotal < 0">
+                {{ formatMoney(-payment.paidTotal) }}
               </div>
             </td>
             <td>

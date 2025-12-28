@@ -36,11 +36,6 @@ const laboratoryDiscount = computed(() => {
     return acc + item.discountMoney
   }, 0)
 })
-const laboratoryCostAmount = computed(() => {
-  return ticketRoomRef.value.ticketLaboratoryList?.reduce((acc, item) => {
-    return acc + item.costPrice
-  }, 0)
-})
 </script>
 
 <template>
@@ -58,8 +53,6 @@ const laboratoryCostAmount = computed(() => {
         <th></th>
         <th>Đơn Giá</th>
         <th>Chiết khấu</th>
-        <th v-if="CONFIG.MODE === 'development'">Vốn</th>
-        <th v-if="CONFIG.MODE === 'development'">H.Hồng</th>
         <th>Thanh Toán</th>
         <th></th>
       </tr>
@@ -121,10 +114,6 @@ const laboratoryCostAmount = computed(() => {
               </VueTag>
             </div>
           </td>
-          <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
-            {{ formatMoney(tl.costPrice) }}
-          </td>
-          <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet"></td>
           <td class="text-right whitespace-nowrap">
             {{ formatMoney(tl.actualPrice) }}
           </td>
@@ -156,11 +145,6 @@ const laboratoryCostAmount = computed(() => {
             </span>
           </div>
         </td>
-        <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
-          {{ formatMoney(laboratoryCostAmount) }}
-        </td>
-        <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet"></td>
-
         <td class="font-bold text-right whitespace-nowrap">
           {{ formatMoney(ticketRoomRef.laboratoryMoney) }}
         </td>

@@ -35,6 +35,8 @@ import TicketSummaryLaboratory from './TicketSummaryLaboratory.vue'
 import TicketSummaryProcedure from './TicketSummaryProcedure.vue'
 import TicketSummaryProduct from './TicketSummaryProduct.vue'
 import TicketSummaryRadiology from './TicketSummaryRadiology.vue'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import { PaymentMoneyStatus } from '@/modules/enum'
 
 const modalTicketChangeDiscount = ref<InstanceType<typeof ModalTicketChangeDiscount>>()
 const modalTicketChangeSurcharge = ref<InstanceType<typeof ModalTicketChangeSurcharge>>()
@@ -103,12 +105,6 @@ const handleClickModalRegisterAppointment = () => {
                   </span>
                 </div>
               </td>
-              <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
-                {{ formatMoney(ticketRoomRef.itemsCostAmount) }}
-              </td>
-              <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet">
-                {{ formatMoney(ticketRoomRef.commissionMoney) }}
-              </td>
               <td class="font-bold text-right whitespace-nowrap">
                 {{ formatMoney(ticketRoomRef.itemsActualMoney) }}
               </td>
@@ -117,9 +113,38 @@ const handleClickModalRegisterAppointment = () => {
             <tr>
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
-              <td class="text-right" colspan="8">Chiết khấu</td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td colspan="8">
+                <div class="flex gap-2 items-center justify-end">
+                  <div v-if="ticketRoomRef.discountMoney">
+                    <PaymentMoneyStatusTooltip
+                      v-if="
+                        ticketRoomRef.discountMoney ===
+                        -ticketRoomRef.ticketPaymentDetail.paidDiscount
+                      "
+                      :paymentMoneyStatus="PaymentMoneyStatus.FullPaid"
+                    />
+                    <PaymentMoneyStatusTooltip
+                      v-else-if="
+                        ticketRoomRef.ticketPaymentDetail.paidDiscount === 0 &&
+                        ticketRoomRef.ticketPaymentDetail.debtDiscount === 0
+                      "
+                      :paymentMoneyStatus="PaymentMoneyStatus.PendingPayment"
+                    />
+                    <PaymentMoneyStatusTooltip
+                      v-else-if="
+                        ticketRoomRef.ticketPaymentDetail.paidDiscount === 0 &&
+                        ticketRoomRef.ticketPaymentDetail.debtDiscount !== 0
+                      "
+                      :paymentMoneyStatus="PaymentMoneyStatus.Debt"
+                    />
+                    <PaymentMoneyStatusTooltip
+                      v-else
+                      :paymentMoneyStatus="PaymentMoneyStatus.PartialPaid"
+                    />
+                  </div>
+                  <div>Chiết khấu</div>
+                </div>
+              </td>
               <td class="text-center" style="width: 40px">
                 <VueTag v-if="ticketRoomRef.discountType === 'VNĐ'" color="green">
                   {{ formatMoney(ticketRoomRef.discountMoney) }}
@@ -144,12 +169,41 @@ const handleClickModalRegisterAppointment = () => {
             <tr v-if="!ticketRoomRef.ticketSurchargeList?.length">
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
-              <td class="text-right" colspan="8">Phụ phí</td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
+              <td colspan="8">
+                <div class="flex gap-2 items-center justify-end">
+                  <div v-if="ticketRoomRef.surcharge">
+                    <PaymentMoneyStatusTooltip
+                      v-if="
+                        ticketRoomRef.surcharge === ticketRoomRef.ticketPaymentDetail.paidSurcharge
+                      "
+                      :paymentMoneyStatus="PaymentMoneyStatus.FullPaid"
+                    />
+                    <PaymentMoneyStatusTooltip
+                      v-else-if="
+                        ticketRoomRef.ticketPaymentDetail.paidSurcharge === 0 &&
+                        ticketRoomRef.ticketPaymentDetail.debtSurcharge === 0
+                      "
+                      :paymentMoneyStatus="PaymentMoneyStatus.PendingPayment"
+                    />
+                    <PaymentMoneyStatusTooltip
+                      v-else-if="
+                        ticketRoomRef.ticketPaymentDetail.paidSurcharge === 0 &&
+                        ticketRoomRef.ticketPaymentDetail.debtSurcharge !== 0
+                      "
+                      :paymentMoneyStatus="PaymentMoneyStatus.Debt"
+                    />
+                    <PaymentMoneyStatusTooltip
+                      v-else
+                      :paymentMoneyStatus="PaymentMoneyStatus.PartialPaid"
+                    />
+                  </div>
+                  <div>Phụ phí</div>
+                </div>
+              </td>
               <td class="text-right" style="width: 40px">
                 {{ formatMoney(ticketRoomRef.surcharge) }}
               </td>
+
               <td class="text-center">
                 <a
                   v-if="
@@ -166,11 +220,37 @@ const handleClickModalRegisterAppointment = () => {
             <tr v-for="(ts, tsIndex) in ticketRoomRef.ticketSurchargeList" :key="ts.id">
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
-              <td class="text-right" colspan="8">
-                {{ ts.surcharge?.name }}
+              <td colspan="8">
+                <div class="flex gap-2 items-center justify-end">
+                  <div v-if="ticketRoomRef.surcharge">
+                    <PaymentMoneyStatusTooltip
+                      v-if="
+                        ticketRoomRef.surcharge === ticketRoomRef.ticketPaymentDetail.paidSurcharge
+                      "
+                      :paymentMoneyStatus="PaymentMoneyStatus.FullPaid"
+                    />
+                    <PaymentMoneyStatusTooltip
+                      v-else-if="
+                        ticketRoomRef.ticketPaymentDetail.paidSurcharge === 0 &&
+                        ticketRoomRef.ticketPaymentDetail.debtSurcharge === 0
+                      "
+                      :paymentMoneyStatus="PaymentMoneyStatus.PendingPayment"
+                    />
+                    <PaymentMoneyStatusTooltip
+                      v-else-if="
+                        ticketRoomRef.ticketPaymentDetail.paidSurcharge === 0 &&
+                        ticketRoomRef.ticketPaymentDetail.debtSurcharge !== 0
+                      "
+                      :paymentMoneyStatus="PaymentMoneyStatus.Debt"
+                    />
+                    <PaymentMoneyStatusTooltip
+                      v-else
+                      :paymentMoneyStatus="PaymentMoneyStatus.PartialPaid"
+                    />
+                  </div>
+                  <div>{{ ts.surcharge?.name }}</div>
+                </div>
               </td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="text-right" style="width: 40px">
                 {{ formatMoney(ts.money) }}
               </td>
@@ -195,8 +275,6 @@ const handleClickModalRegisterAppointment = () => {
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
               <td class="uppercase text-right font-bold" colspan="8">Tổng tiền</td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="font-bold text-right whitespace-nowrap">
                 {{ formatMoney(ticketRoomRef.totalMoney) }}
               </td>
@@ -215,71 +293,52 @@ const handleClickModalRegisterAppointment = () => {
                   <IconExclamationCircle />
                 </a>
               </td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="font-bold text-right whitespace-nowrap">
-                {{ formatMoney(ticketRoomRef.paidAmount) }}
+                {{ formatMoney(ticketRoomRef.paidTotal) }}
               </td>
               <td></td>
             </tr>
-            <tr v-if="ticketRoomRef.isPaymentEachItem && ticketRoomRef.paid">
+            <tr
+              v-if="ticketRoomRef.isPaymentEachItem && ticketRoomRef.ticketPaymentDetail.paidWait"
+            >
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
               <td class="text-right font-bold uppercase" style="color: violet" colspan="8">
                 Ví (tiền chờ)
               </td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="font-bold text-right whitespace-nowrap" style="color: violet">
-                {{ formatMoney(ticketRoomRef.paid) }}
+                {{ formatMoney(ticketRoomRef.ticketPaymentDetail.paidWait) }}
               </td>
               <td></td>
             </tr>
-            <tr v-if="ticketRoomRef.debtAmount">
+            <tr v-if="ticketRoomRef.debtTotal">
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
               <td class="uppercase text-right font-bold" colspan="8">Đang nợ</td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="font-bold text-right whitespace-nowrap" style="color: var(--text-red)">
-                {{ formatMoney(ticketRoomRef.debtAmount) }}
+                {{ formatMoney(ticketRoomRef.debtTotal) }}
               </td>
               <td></td>
             </tr>
-            <tr v-if="ticketRoomRef.paidAmount > ticketRoomRef.totalMoney">
+            <tr v-if="ticketRoomRef.paidTotal > ticketRoomRef.totalMoney">
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
               <td class="uppercase text-right font-bold" colspan="8">Đang thừa</td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="font-bold text-right whitespace-nowrap" style="color: var(--text-green)">
-                {{ formatMoney(ticketRoomRef.paidAmount - ticketRoomRef.totalMoney) }}
+                {{ formatMoney(ticketRoomRef.paidTotal - ticketRoomRef.totalMoney) }}
               </td>
               <td></td>
             </tr>
             <tr
               v-else-if="
-                ticketRoomRef.debtAmount !== ticketRoomRef.totalMoney - ticketRoomRef.paidAmount
+                ticketRoomRef.debtTotal !== ticketRoomRef.totalMoney - ticketRoomRef.paidTotal
               "
             >
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
               <td class="uppercase text-right font-bold" colspan="8">Đang thiếu</td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
               <td class="font-bold text-right whitespace-nowrap" style="color: var(--text-red)">
-                {{ formatMoney(ticketRoomRef.totalMoney - ticketRoomRef.paidAmount) }}
-              </td>
-              <td></td>
-            </tr>
-            <tr v-if="CONFIG.MODE === 'development'" style="color: violet">
-              <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
-              <td class="text-right" colspan="8">profit</td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
-              <td v-if="CONFIG.MODE === 'development'"></td>
-              <td class="text-right whitespace-nowrap">
-                {{ formatMoney(ticketRoomRef.profit) }}
+                {{ formatMoney(ticketRoomRef.totalMoney - ticketRoomRef.paidTotal) }}
               </td>
               <td></td>
             </tr>
@@ -358,34 +417,34 @@ const handleClickModalRegisterAppointment = () => {
             <td>:</td>
             <td>
               <div class="text-lg font-bold" style="color: var(--text-green)">
-                {{ formatMoney(ticketRoomRef.paidAmount) }} /
+                {{ formatMoney(ticketRoomRef.paidTotal) }} /
                 {{ formatMoney(ticketRoomRef.totalMoney) }}
               </div>
             </td>
           </tr>
-          <tr v-if="ticketRoomRef.debtAmount">
+          <tr v-if="ticketRoomRef.debtTotal">
             <td><IconDollar /></td>
             <td>Đang nợ</td>
             <td>:</td>
             <td>
               <div class="text-lg font-bold" style="color: var(--text-red)">
-                {{ formatMoney(ticketRoomRef.debtAmount) }}
+                {{ formatMoney(ticketRoomRef.debtTotal) }}
               </div>
             </td>
           </tr>
-          <tr v-if="ticketRoomRef.paidAmount > ticketRoomRef.totalMoney">
+          <tr v-if="ticketRoomRef.paidTotal > ticketRoomRef.totalMoney">
             <td><IconDollar /></td>
             <td>Tiền thừa</td>
             <td>:</td>
             <td>
               <div class="text-lg font-bold" style="color: var(--text-green)">
-                {{ formatMoney(ticketRoomRef.paidAmount - ticketRoomRef.totalMoney) }}
+                {{ formatMoney(ticketRoomRef.paidTotal - ticketRoomRef.totalMoney) }}
               </div>
             </td>
           </tr>
           <tr
             v-else-if="
-              ticketRoomRef.debtAmount !== ticketRoomRef.totalMoney - ticketRoomRef.paidAmount
+              ticketRoomRef.debtTotal !== ticketRoomRef.totalMoney - ticketRoomRef.paidTotal
             "
           >
             <td><IconDollar /></td>
@@ -393,7 +452,7 @@ const handleClickModalRegisterAppointment = () => {
             <td>:</td>
             <td>
               <div class="text-lg font-bold" style="color: var(--text-red)">
-                {{ formatMoney(ticketRoomRef.totalMoney - ticketRoomRef.paidAmount) }}
+                {{ formatMoney(ticketRoomRef.totalMoney - ticketRoomRef.paidTotal) }}
               </div>
             </td>
           </tr>

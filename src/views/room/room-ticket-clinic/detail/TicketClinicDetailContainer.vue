@@ -120,6 +120,7 @@ const startFetchData = async (ticketId?: string) => {
     const ticketData = await TicketService.detail(ticketId, {
       relation: {
         customer: true,
+        ticketPaymentDetail: true,
         paymentList: false, // query khi bật modal thanh toán
 
         ticketAttributeList: true,
@@ -214,7 +215,7 @@ const clickCloseTicket = () => {
   //     content: 'Cần trả kết quả xét nghiệm trước khi đóng phiếu khám',
   //   })
   // }
-  if (ticketRoomRef.value.paidAmount > ticketRoomRef.value.totalMoney) {
+  if (ticketRoomRef.value.paidTotal > ticketRoomRef.value.totalMoney) {
     return ModalStore.alert({
       title: 'Khách hàng còn thừa tiền tạm ứng',
       content: 'Cần hoàn trả tiền thừa trước khi đóng hồ sơ',
@@ -222,7 +223,7 @@ const clickCloseTicket = () => {
   }
   if (ticketRoomRef.value.isPaymentEachItem) {
     if (
-      ticketRoomRef.value.paidAmount + ticketRoomRef.value.debtAmount <
+      ticketRoomRef.value.paidTotal + ticketRoomRef.value.debtTotal <
       ticketRoomRef.value.totalMoney
     ) {
       return ModalStore.alert({
@@ -230,7 +231,7 @@ const clickCloseTicket = () => {
         content: 'Nếu vẫn muốn kết thúc phiếu, cần ghi nợ những dịch vụ chưa thanh toán',
       })
     }
-    if (ticketRoomRef.value.paid > 0) {
+    if (ticketRoomRef.value.ticketPaymentDetail.paidWait > 0) {
       return ModalStore.alert({
         title: 'Không thể đóng phiếu khi vẫn còn tiền thừa trong ví tạm',
         content: 'Bắt buộc phải thanh toán hết tiền từ ví tạm vào các dịch vụ chưa thanh toán',
@@ -239,7 +240,7 @@ const clickCloseTicket = () => {
   }
 
   if (
-    ticketRoomRef.value.paidAmount + ticketRoomRef.value.debtAmount <
+    ticketRoomRef.value.paidTotal + ticketRoomRef.value.debtTotal <
     ticketRoomRef.value.totalMoney
   ) {
     if (ticketRoomRef.value.isPaymentEachItem) {
@@ -252,7 +253,7 @@ const clickCloseTicket = () => {
         title: 'Đóng phiếu khám khi khách hàng chưa thanh toán đủ ?',
         content: [
           '- Vẫn đóng phiếu khám.',
-          `- Ghi nợ khách hàng: ${formatMoney(ticketRoomRef.value.totalMoney - ticketRoomRef.value.paidAmount)}.`,
+          `- Ghi nợ khách hàng: ${formatMoney(ticketRoomRef.value.totalMoney - ticketRoomRef.value.paidTotal)}.`,
         ],
         okText: 'Xác nhận Đóng phiếu',
         async onOk() {
@@ -394,7 +395,7 @@ const clickDestroyTicket = () => {
     })
   }
 
-  if (ticketRoomRef.value.paidAmount > 0) {
+  if (ticketRoomRef.value.paidTotal > 0) {
     return ModalStore.alert({
       title: 'Khách hàng còn tiền tạm ứng',
       content: 'Cần HOÀN TRẢ tất cả tiền đã thanh toán trước khi HỦY phiếu khám',
@@ -489,6 +490,11 @@ const clickReturnProduct = () => {
             <IconFileSearch />
           </a>
         </span>
+        <span v-if="ticketRoomRef.customer?.debt" style="color: var(--text-red)">
+          (nợ:
+          <b>{{ formatMoney(ticketRoomRef.customer?.debt) }}</b>
+          )
+        </span>
         <VueButton
           size="small"
           @click="modalTicketClinicHistory?.openModal(ticketRoomRef.customer!)"
@@ -516,10 +522,13 @@ const clickReturnProduct = () => {
       v-if="!settingStore.TICKET_CLINIC_DETAIL.other.hideMoneyTitle"
       class="ml-auto mx-8 flex flex-wrap items-center gap-8"
     >
-      <div v-if="ticketRoomRef.isPaymentEachItem && ticketRoomRef.paid" style="text-align: right">
+      <div
+        v-if="ticketRoomRef.isPaymentEachItem && ticketRoomRef.ticketPaymentDetail.paidWait"
+        style="text-align: right"
+      >
         <div style="font-weight: bold; color: #555">Ví (tiền chờ)</div>
         <div style="font-weight: bold; font-size: 1.2em; color: violet">
-          {{ formatMoney(ticketRoomRef.paid) }}
+          {{ formatMoney(ticketRoomRef.ticketPaymentDetail.paidWait) }}
         </div>
       </div>
       <div
@@ -533,13 +542,13 @@ const clickReturnProduct = () => {
           class="flex items-center gap-1"
         >
           <IconExclamationCircle width="14" height="14" />
-          {{ formatMoney(ticketRoomRef.paidAmount) }}
+          {{ formatMoney(ticketRoomRef.paidTotal) }}
         </div>
       </div>
-      <div v-if="ticketRoomRef.debtAmount" style="text-align: right">
+      <div v-if="ticketRoomRef.debtTotal" style="text-align: right">
         <div style="font-weight: bold; color: #555">Ghi nợ</div>
         <div style="font-weight: bold; font-size: 1.2em; color: var(--text-red)">
-          {{ formatMoney(ticketRoomRef.debtAmount) }}
+          {{ formatMoney(ticketRoomRef.debtTotal) }}
         </div>
       </div>
       <div style="text-align: right">

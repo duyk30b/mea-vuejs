@@ -36,6 +36,9 @@ export const socketInit = () => {
     SocketService.listenServerEmitDemo(data)
   })
 
+  SocketBase.on(SOCKET_EVENT.SOCKET_ROOM_TICKET_PAGINATION_CHANGE, (data) => {
+    SocketTicketService.listenSocketRoomTicketPaginationChange(data)
+  })
   SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE, (data) => {
     SocketTicketService.listenSocketTicketChange(data)
   })

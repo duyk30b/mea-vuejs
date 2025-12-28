@@ -80,10 +80,10 @@ onMounted(async () => {
               </div>
             </td>
             <td class="text-right" style="padding-right: 8px">
-              <div>{{ formatMoney(payment.paid + payment.paidItem) }}</div>
+              <div>{{ formatMoney(payment.paidTotal) }}</div>
             </td>
             <td class="text-right" v-if="CONFIG.MODE === 'development'" style="color: violet">
-              <div>{{ formatMoney(payment.debt + payment.debtItem) }}</div>
+              <div>{{ formatMoney(payment.debtTotal) }}</div>
               <div>
                 {{ formatMoney(payment.personOpenDebt) }} ->
                 {{ formatMoney(payment.personCloseDebt) }}
@@ -94,28 +94,28 @@ onMounted(async () => {
           <tr>
             <td v-if="CONFIG.MODE === 'development'"></td>
             <td colspan="4" class="text-right">Đã thanh toán :</td>
-            <td class="text-right font-bold">{{ formatMoney(ticket.paidAmount) }}</td>
+            <td class="text-right font-bold">{{ formatMoney(ticket.paidTotal) }}</td>
             <td v-if="CONFIG.MODE === 'development'"></td>
           </tr>
-          <tr v-if="ticket.debtAmount" style="color: var(--text-red)">
+          <tr v-if="ticket.debtTotal" style="color: var(--text-red)">
             <td v-if="CONFIG.MODE === 'development'"></td>
             <td colspan="4" class="text-right">Đang nợ :</td>
-            <td class="text-right font-bold">{{ formatMoney(ticket.debtAmount) }}</td>
+            <td class="text-right font-bold">{{ formatMoney(ticket.debtTotal) }}</td>
             <td v-if="CONFIG.MODE === 'development'"></td>
           </tr>
-          <tr v-if="ticket.paidAmount > ticket.totalMoney" style="color: var(--text-green)">
+          <tr v-if="ticket.paidTotal > ticket.totalMoney" style="color: var(--text-green)">
             <td v-if="CONFIG.MODE === 'development'"></td>
             <td colspan="4" class="text-right">Đang thừa</td>
             <td class="text-right font-bold">
-              {{ formatMoney(ticket.paidAmount - ticket.totalMoney) }}
+              {{ formatMoney(ticket.paidTotal - ticket.totalMoney) }}
             </td>
             <td v-if="CONFIG.MODE === 'development'"></td>
           </tr>
-          <tr v-else-if="ticket.debtAmount !== ticket.totalMoney - ticket.paidAmount">
+          <tr v-else-if="ticket.debtTotal !== ticket.totalMoney - ticket.paidTotal">
             <td v-if="CONFIG.MODE === 'development'"></td>
             <td colspan="4" class="text-right">Đang thiếu :</td>
             <td class="text-right font-bold" style="color: var(--text-red)">
-              {{ formatMoney(ticket.totalMoney - ticket.paidAmount) }}
+              {{ formatMoney(ticket.totalMoney - ticket.paidTotal) }}
             </td>
             <td v-if="CONFIG.MODE === 'development'"></td>
           </tr>

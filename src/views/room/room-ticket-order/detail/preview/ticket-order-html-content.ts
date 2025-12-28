@@ -101,7 +101,7 @@ export const ticketOrderHtmlContent = (ticket: Ticket) => {
   if (showPaid) {
     paid = `<tr>
       <td colspan="${showUnit ? 4 : 3}" style="text-align: right">Đã thanh toán</td>
-      <td colspan="2" style="text-align: right">${formatMoney(ticket.paidAmount)}</td>
+      <td colspan="2" style="text-align: right">${formatMoney(ticket.paidTotal)}</td>
     </tr>`
   }
 
@@ -109,7 +109,7 @@ export const ticketOrderHtmlContent = (ticket: Ticket) => {
   if (showDebt) {
     debt = `<tr>
       <td colspan="${showUnit ? 4 : 3}" style="text-align: right">Nợ</td>
-      <td colspan="2" style="text-align: right">${formatMoney(ticket.debtAmount)}</td>
+      <td colspan="2" style="text-align: right">${formatMoney(ticket.debtTotal)}</td>
     </tr>`
   }
 

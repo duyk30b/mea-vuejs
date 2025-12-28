@@ -104,7 +104,7 @@ export class TicketOrderApi {
       ...ticketOrderBasicBody,
       customerId: ticket.customerId,
       walletId,
-      paid: ticket.paid,
+      paidTotal: ticket.paidTotal,
     })
     const { data } = response.data as BaseResponse<{ ticketCreated: any }>
     return Ticket.from(data.ticketCreated)
@@ -116,7 +116,7 @@ export class TicketOrderApi {
     const response = await AxiosInstance.patch(`/ticket/order/${ticketId}/debt-success-update`, {
       ...ticketOrderBasicBody,
       walletId,
-      paid: ticket.paid,
+      paidTotal: ticket.paidTotal,
     })
     const { data } = response.data as BaseResponse<{ ticketModified: any }>
     return Ticket.from(data.ticketModified)

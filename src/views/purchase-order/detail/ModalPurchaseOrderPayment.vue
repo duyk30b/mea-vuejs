@@ -195,10 +195,10 @@ defineExpose({ openModal })
                   </div>
                 </td>
                 <td class="text-right" style="padding-right: 8px">
-                  <div>{{ formatMoney(-payment.paid - payment.paidItem) }}</div>
+                  <div>{{ formatMoney(-payment.paidTotal) }}</div>
                 </td>
                 <td class="text-right" v-if="CONFIG.MODE === 'development'" style="color: violet">
-                  <div>{{ formatMoney(-payment.debt - payment.debtItem) }}</div>
+                  <div>{{ formatMoney(-payment.debtTotal) }}</div>
                   <div>
                     {{ formatMoney(payment.personOpenDebt) }} ->
                     {{ formatMoney(payment.personCloseDebt) }}

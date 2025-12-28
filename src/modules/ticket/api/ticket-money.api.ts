@@ -1,34 +1,37 @@
 import { AxiosInstance } from '@/core/axios.instance'
 import { Customer } from '@/modules/customer'
-import type { DiscountType } from '@/modules/enum'
 import { Payment, PaymentActionType } from '@/modules/payment'
-import type { TicketItemType } from '@/modules/payment-ticket-item'
+import type { PaymentTicketItem } from '@/modules/payment-ticket-item'
 import type { BaseResponse } from '../../_base/base-dto'
 import { Ticket } from '../ticket.model'
 
-export type TicketPaymentItemBody = {
-  ticketItemType: TicketItemType
-  ticketItemId: string
-  interactId: number
-  expectedPrice: number
-  discountMoney: number
-  discountPercent: number
-  discountType: DiscountType
-  actualPrice: number
-  quantity: number
-  sessionIndex: number
-  paidAdd: number
-  debtAdd: number
-}
+export type PaymentTicketItemBody = Pick<
+  PaymentTicketItem,
+  | 'ticketItemType'
+  | 'ticketItemId'
+  | 'interactId'
+  | 'expectedPrice'
+  | 'discountMoney'
+  | 'discountPercent'
+  | 'discountType'
+  | 'actualPrice'
+  | 'quantity'
+  | 'sessionIndex'
+  | 'paidMoney'
+  | 'debtMoney'
+>
 
-class TicketPaymentItemMapBody {
-  ticketRegimenBodyList: TicketPaymentItemBody[]
-  ticketProcedureNoEffectBodyList: TicketPaymentItemBody[]
-  ticketProcedureHasEffectBodyList: TicketPaymentItemBody[]
-  ticketProductConsumableBodyList: TicketPaymentItemBody[]
-  ticketProductPrescriptionBodyList: TicketPaymentItemBody[]
-  ticketLaboratoryBodyList: TicketPaymentItemBody[]
-  ticketRadiologyBodyList: TicketPaymentItemBody[]
+class PaymentTicketItemMapBody {
+  paymentWait: { paidMoney: number }
+  paymentSurcharge: { paidMoney: number; debtMoney: number }
+  paymentDiscount: { paidMoney: number; debtMoney: number }
+  ticketRegimenBodyList: PaymentTicketItemBody[]
+  ticketProcedureNoEffectBodyList: PaymentTicketItemBody[]
+  ticketProcedureHasEffectBodyList: PaymentTicketItemBody[]
+  ticketProductConsumableBodyList: PaymentTicketItemBody[]
+  ticketProductPrescriptionBodyList: PaymentTicketItemBody[]
+  ticketLaboratoryBodyList: PaymentTicketItemBody[]
+  ticketRadiologyBodyList: PaymentTicketItemBody[]
 }
 
 export class TicketMoneyApi {
@@ -37,12 +40,11 @@ export class TicketMoneyApi {
     body: {
       walletId: string
       paymentActionType: PaymentActionType
-      paidAdd: number
-      paidItemAdd: number
-      debtAdd: number
-      debtItemAdd: number
+      hasPaymentItem: 0 | 1
+      paidTotal: number
+      debtTotal: number
       note: string
-      ticketPaymentItemMapBody?: TicketPaymentItemMapBody
+      paymentTicketItemMapDto?: PaymentTicketItemMapBody
     }
   }) {
     const { ticketId, body } = object
@@ -65,7 +67,11 @@ export class TicketMoneyApi {
     walletId: string
     totalMoney: number
     note: string
-    dataList: { ticketId: string; debtMinus: number; debtItemMinus: number }[]
+    dataList: {
+      ticketId: string
+      isPaymentEachItem: number
+      debtTotalMinus: number
+    }[]
   }) {
     const response = await AxiosInstance.post('/ticket/pay-debt', body)
     const { data } = response.data as BaseResponse<{

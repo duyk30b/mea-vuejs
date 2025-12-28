@@ -15,8 +15,7 @@ import { DeliveryStatus, PaymentViewType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PositionType } from '@/modules/position'
 import { RoleService } from '@/modules/role'
-import { Room, RoomService, RoomType } from '@/modules/room'
-import { roomTicketPaginationMapRoomId } from '@/modules/room/room.ref'
+import { Room, RoomService, roomTicketMapRoomId, RoomType } from '@/modules/room'
 import { Ticket, TicketActionApi, TicketQueryApi, TicketStatus } from '@/modules/ticket'
 import { TicketUser } from '@/modules/ticket-user'
 import { UserService } from '@/modules/user'
@@ -132,7 +131,7 @@ const startFetchData = async () => {
       ticketItem.refreshTreeData()
     }
 
-    roomTicketPaginationMapRoomId.value[currentRoom.value.id] = paginationResult.ticketList
+    roomTicketMapRoomId.value[currentRoom.value.id].paginationData = paginationResult.ticketList
     total.value = paginationResult.total
   } catch (error) {
     console.log('🚀 ~ file: TicketClinicList.vue:84 ~ startFetchData ~ error:', error)
@@ -140,6 +139,8 @@ const startFetchData = async () => {
     dataLoading.value = false
   }
 }
+
+let currentRefreshTime = new Date().toISOString()
 
 watch(
   () => route.params.roomId,
@@ -152,9 +153,25 @@ watch(
       currentRoom.value.isCommon = 1
       currentRoom.value.roomType = RoomType.Ticket
     }
-    startFetchData()
+    // startFetchData()
+    roomTicketMapRoomId.value[roomId] = {
+      paginationData: [],
+      paginationTime: new Date().toISOString(),
+    }
   },
   { immediate: true },
+)
+
+watch(
+  () => roomTicketMapRoomId.value,
+  async (newValue) => {
+    const roomId = currentRoom.value.id
+    if (newValue[roomId].paginationTime !== currentRefreshTime) {
+      currentRefreshTime = newValue[roomId].paginationTime
+      await startFetchData()
+    }
+  },
+  { deep: true },
 )
 
 onBeforeMount(async () => {
@@ -228,20 +245,17 @@ const clickCloseTicket = (ticket: Ticket) => {
     })
   }
 
-  if (ticket.paidAmount > ticket.totalMoney) {
+  if (ticket.paidTotal > ticket.totalMoney) {
     return ModalStore.alert({
       title: 'Khách hàng còn thừa tiền tạm ứng',
       content: 'Cần hoàn trả tiền thừa trước khi đóng hồ sơ',
     })
   }
 
-  if (ticket.debtAmount) {
+  if (ticket.debtTotal) {
     return ModalStore.confirm({
       title: 'Đóng phiếu khám khi khách hàng chưa thanh toán đủ ?',
-      content: [
-        '- Vẫn đóng phiếu khám.',
-        `- Ghi nợ khách hàng: ${formatMoney(ticket.debtAmount)}.`,
-      ],
+      content: ['- Vẫn đóng phiếu khám.', `- Ghi nợ khách hàng: ${formatMoney(ticket.debtTotal)}.`],
       okText: 'Xác nhận Đóng phiếu',
       async onOk() {
         await startCloseTicket(ticket.id)
@@ -397,10 +411,13 @@ const clickCloseTicket = (ticket: Ticket) => {
           </tr>
         </tbody>
         <tbody v-else>
-          <tr v-if="roomTicketPaginationMapRoomId[currentRoom.id]?.length === 0">
+          <tr v-if="roomTicketMapRoomId[currentRoom.id]?.paginationData?.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="(ticket, index) in roomTicketPaginationMapRoomId[currentRoom.id]" :key="index">
+          <tr
+            v-for="(ticket, index) in roomTicketMapRoomId[currentRoom.id]?.paginationData || []"
+            :key="index"
+          >
             <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
               <VueTooltip>
                 <template #trigger>
@@ -570,25 +587,25 @@ const clickCloseTicket = (ticket: Ticket) => {
               </div>
               <div v-if="settingStore.TICKET_CLINIC_LIST.paymentList">
                 <div v-for="payment in ticket.paymentList" :key="payment.id">
-                  {{ payment.wallet?.name }}: {{ formatMoney(payment.paid + payment.paidItem) }}
+                  {{ payment.wallet?.name }}: {{ formatMoney(payment.paidTotal) }}
                 </div>
               </div>
               <div v-else>
                 <div
                   :style="
-                    ticket.paidAmount !== ticket.totalMoney
+                    ticket.paidTotal !== ticket.totalMoney
                       ? 'font-weight: 500; color: var(--text-red)'
                       : ''
                   "
                 >
-                  {{ formatMoney(ticket.paidAmount) }}
+                  {{ formatMoney(ticket.paidTotal) }}
                 </div>
                 <div
-                  v-if="ticket.debtAmount"
+                  v-if="ticket.debtTotal"
                   class="text-xs"
                   style="font-weight: 500; color: var(--text-red)"
                 >
-                  Nợ: {{ formatMoney(ticket.debtAmount) }}
+                  Nợ: {{ formatMoney(ticket.debtTotal) }}
                 </div>
               </div>
             </td>
@@ -619,7 +636,7 @@ const clickCloseTicket = (ticket: Ticket) => {
                     </a>
                     <a
                       v-if="
-                        ticket.paidAmount > ticket.totalMoney &&
+                        ticket.paidTotal > ticket.totalMoney &&
                         userPermission[PermissionId.TICKET_REFUND_MONEY]
                       "
                       style="color: var(--text-red)"

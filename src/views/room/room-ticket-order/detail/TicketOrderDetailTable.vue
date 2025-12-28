@@ -494,30 +494,30 @@ const colspan = computed(() => {
           </td>
 
           <td class="text-right" :colspan="2">
-            {{ formatMoney(ticketOrderDetailRef.paidAmount) }}
+            {{ formatMoney(ticketOrderDetailRef.paidTotal) }}
           </td>
         </tr>
-        <tr v-if="ticketOrderDetailRef.debtAmount" style="color: var(--text-red)">
+        <tr v-if="ticketOrderDetailRef.debtTotal" style="color: var(--text-red)">
           <td class="text-right" :colspan="colspan">Nợ</td>
           <td colspan="2" class="text-right font-bold">
-            {{ formatMoney(ticketOrderDetailRef.debtAmount) }}
+            {{ formatMoney(ticketOrderDetailRef.debtTotal) }}
           </td>
         </tr>
-        <tr v-if="ticketOrderDetailRef.paidAmount > ticketOrderDetailRef.totalMoney">
+        <tr v-if="ticketOrderDetailRef.paidTotal > ticketOrderDetailRef.totalMoney">
           <td class="text-right" :colspan="colspan" style="color: var(--text-green)">Đang thừa</td>
           <td colspan="2" class="text-right font-medium" style="color: var(--text-green)">
-            {{ formatMoney(ticketOrderDetailRef.paidAmount - ticketOrderDetailRef.totalMoney) }}
+            {{ formatMoney(ticketOrderDetailRef.paidTotal - ticketOrderDetailRef.totalMoney) }}
           </td>
         </tr>
         <tr
           v-else-if="
-            ticketOrderDetailRef.debtAmount !==
-            ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paidAmount
+            ticketOrderDetailRef.debtTotal !==
+            ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paidTotal
           "
         >
           <td class="text-right" :colspan="colspan">Còn thiếu</td>
           <td colspan="2" class="text-right">
-            {{ formatMoney(ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paidAmount) }}
+            {{ formatMoney(ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paidTotal) }}
           </td>
         </tr>
       </tbody>

@@ -7,13 +7,15 @@ import { TicketProduct } from '../ticket-product'
 import { TicketRadiology } from '../ticket-radiology'
 
 export enum TicketItemType {
-  Other = 0,
-  TicketRegimen = 1,
-  TicketProcedure = 2,
-  TicketProductConsumable = 3,
-  TicketProductPrescription = 4,
-  TicketLaboratory = 5,
-  TicketRadiology = 6,
+  WAIT = 1, // Thanh toán vào tiền chờ
+  Surcharge = 2,
+  Discount = 3,
+  TicketRegimen = 4,
+  TicketProcedure = 5,
+  TicketProductConsumable = 6,
+  TicketProductPrescription = 7,
+  TicketLaboratory = 8,
+  TicketRadiology = 9,
 }
 
 export class PaymentTicketItem {
@@ -32,8 +34,8 @@ export class PaymentTicketItem {
   actualPrice: number
   quantity: number
 
-  paidItem: number
-  debItem: number
+  paidMoney: number
+  debtMoney: number
 
   payment: Payment
   ticket: Ticket
@@ -50,7 +52,7 @@ export class PaymentTicketItem {
     ins.id = ''
     ins.paymentId = ''
     ins.ticketId = ''
-    ins.ticketItemType = TicketItemType.Other
+    ins.ticketItemType = TicketItemType.WAIT
     ins.ticketItemId = ''
     ins.interactId = 0
     ins.expectedPrice = 0
@@ -59,6 +61,9 @@ export class PaymentTicketItem {
     ins.discountType = DiscountType.Percent
     ins.actualPrice = 0
     ins.quantity = 1
+    
+    ins.paidMoney = 0
+    ins.debtMoney = 0
     return ins
   }
 

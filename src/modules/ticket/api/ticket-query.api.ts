@@ -13,13 +13,14 @@ export class TicketQueryApi {
     const params = TicketGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/ticket/pagination', { params })
-    const { data } = response.data as BaseResponse<{
+    const { data, time } = response.data as BaseResponse<{
       ticketList: any[]
       total: number
       page: number
       limit: number
     }>
     return {
+      time,
       total: data.total,
       page: data.page,
       limit: data.limit,
