@@ -22,7 +22,7 @@ const props = withDefaults(
       }"
     >
       <span>PO_</span>
-      <span>{{ purchaseOrder.id.slice(0, 12) }}</span>
+      <span>{{ purchaseOrder.id.slice(0, 10) }}</span>
     </router-link>
   </span>
 </template>

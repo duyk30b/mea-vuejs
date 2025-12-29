@@ -10,6 +10,7 @@ import type { Ticket } from '../ticket'
 import { User, UserService } from '../user'
 import { RegimenService } from '../regimen'
 import { Wallet } from '../wallet/wallet.model'
+import { WalletService } from '../wallet'
 
 export enum PaymentPersonType {
   Other = 0,
@@ -158,6 +159,11 @@ export class Payment {
   }
 
   static async refreshData(payment: Payment) {
+    if (payment.walletId) {
+      const walletMap = await WalletService.getMap()
+      payment.wallet = walletMap[payment.walletId]
+    }
+
     if (payment.voucherType !== PaymentVoucherType.Ticket) {
       return payment
     }

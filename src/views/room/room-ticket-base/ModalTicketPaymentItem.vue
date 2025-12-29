@@ -25,6 +25,7 @@ import type { TicketProcedure } from '@/modules/ticket-procedure'
 import type { TicketProduct } from '@/modules/ticket-product'
 import type { TicketRadiology } from '@/modules/ticket-radiology'
 import type { TicketRegimen } from '@/modules/ticket-regimen'
+import { WalletService } from '@/modules/wallet'
 import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import { computed, ref } from 'vue'
@@ -705,6 +706,8 @@ const startPrint = async () => {
     paymentTemp.cashierId = MeService.user.value!.id
     paymentTemp.note = note.value
     paymentTemp.walletId = walletId.value
+
+    paymentTemp.hasPaymentItem = 1
     paymentTemp.paidTotal = paidTotal.value
     paymentTemp.debtTotal = debtTotal.value
 
@@ -725,7 +728,7 @@ const startPrint = async () => {
     }
     if (paidDiscountAction.value.checked) {
       const pii = PaymentTicketItem.blank()
-      pii.ticketItemType = TicketItemType.Surcharge
+      pii.ticketItemType = TicketItemType.Discount
       pii.paidMoney = paidDiscountAction.value.paidMoney
       pii.debtMoney = paidDiscountAction.value.debtMoney
       paymentTicketItemOther.push(pii)
@@ -1742,7 +1745,7 @@ defineExpose({ openModal, openModalByTicket })
 
       <div class="pb-4 pt-8 px-4 flex flex-wrap item-center gap-4">
         <VueButton type="reset" @click="closeModal" icon="close">Đóng lại</VueButton>
-        <div class="mr-auto">
+        <div class="ml-auto">
           <VueButton
             v-if="
               [PaymentActionType.PaymentMoney, PaymentActionType.RefundMoney].includes(

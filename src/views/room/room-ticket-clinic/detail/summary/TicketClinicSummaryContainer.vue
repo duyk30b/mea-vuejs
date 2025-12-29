@@ -116,8 +116,9 @@ const handleClickModalRegisterAppointment = () => {
               <td colspan="8">
                 <div class="flex gap-2 items-center justify-end">
                   <div v-if="ticketRoomRef.discountMoney">
+                    <div v-if="!ticketRoomRef.isPaymentEachItem"></div>
                     <PaymentMoneyStatusTooltip
-                      v-if="
+                      v-else-if="
                         ticketRoomRef.discountMoney ===
                         -ticketRoomRef.ticketPaymentDetail.paidDiscount
                       "
@@ -172,8 +173,9 @@ const handleClickModalRegisterAppointment = () => {
               <td colspan="8">
                 <div class="flex gap-2 items-center justify-end">
                   <div v-if="ticketRoomRef.surcharge">
+                    <div v-if="!ticketRoomRef.isPaymentEachItem"></div>
                     <PaymentMoneyStatusTooltip
-                      v-if="
+                      v-else-if="
                         ticketRoomRef.surcharge === ticketRoomRef.ticketPaymentDetail.paidSurcharge
                       "
                       :paymentMoneyStatus="PaymentMoneyStatus.FullPaid"

@@ -44,13 +44,7 @@ const openLinkBlankTicketClinicDetail = async (ticket: Ticket) => {
           params: { roomId: ticket.roomId, ticketId: ticket.id },
         }"
       >
-        BH_{{
-          ticket.year?.toString().slice(-2) +
-          ticket.month?.toString().padStart(2, '0') +
-          ticket.date?.toString().padStart(2, '0') +
-          '_' +
-          ticket.dailyIndex?.toString().padStart(2, '0')
-        }}
+        BH_{{ ticket.id.slice(-10) }}
       </router-link>
     </span>
     <span v-else>
@@ -60,38 +54,16 @@ const openLinkBlankTicketClinicDetail = async (ticket: Ticket) => {
           params: { roomId: ticket.roomId, ticketId: ticket.id },
         }"
       >
-        PK_{{
-          ticket.year?.toString().slice(-2) +
-          ticket.month?.toString().padStart(2, '0') +
-          ticket.date?.toString().padStart(2, '0') +
-          '_' +
-          ticket.dailyIndex?.toString().padStart(2, '0')
-        }}
+        PK_{{ ticket.id.slice(-10) }}
       </router-link>
     </span>
   </template>
   <template v-else-if="props.target === '_blank'">
     <span v-if="roomMap[ticket.roomId]?.roomStyle === RoomTicketStyle.TicketOrder">
-      <a @click="openLinkBlankTicketOrderDetail(ticket)">
-        BH_{{
-          ticket.year?.toString().slice(-2) +
-          ticket.month?.toString().padStart(2, '0') +
-          ticket.date?.toString().padStart(2, '0') +
-          '_' +
-          ticket.dailyIndex?.toString().padStart(2, '0')
-        }}
-      </a>
+      <a @click="openLinkBlankTicketOrderDetail(ticket)">BH_{{ ticket.id.slice(-10) }}</a>
     </span>
     <span v-else>
-      <a @click="openLinkBlankTicketClinicDetail(ticket)">
-        PK_{{
-          ticket.year?.toString().slice(-2) +
-          ticket.month?.toString().padStart(2, '0') +
-          ticket.date?.toString().padStart(2, '0') +
-          '_' +
-          ticket.dailyIndex?.toString().padStart(2, '0')
-        }}
-      </a>
+      <a @click="openLinkBlankTicketClinicDetail(ticket)">PK_{{ ticket.id.slice(-10) }}</a>
     </span>
   </template>
 </template>
