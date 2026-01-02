@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { VueButton } from '@/common'
-import { IconEye } from '@/common/icon-antd'
+import { IconBug, IconEye } from '@/common/icon-antd'
 import { IconSortChange } from '@/common/icon-font-awesome'
 import { IconDelete, IconEditSquare } from '@/common/icon-google'
+import { VueTooltip } from '@/common/popover'
 import { InputSelect } from '@/common/vue-form'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import VuePagination from '@/common/VuePagination.vue'
@@ -159,8 +160,15 @@ const handleClickDeletePrintHtml = async (printHtml: PrintHtml) => {
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
         <tr v-for="printHtml in printHtmlList" :key="printHtml.id">
-          <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
-            P{{ printHtml.id }}
+          <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+            <VueTooltip>
+              <template #trigger>
+                <IconBug width="1.2em" height="1.2em" />
+              </template>
+              <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                <pre>{{ JSON.stringify(printHtml, null, 4) }}</pre>
+              </div>
+            </VueTooltip>
           </td>
           <td class="text-center">{{ printHtml.priority }}</td>
           <td>{{ printHtml.name }}</td>

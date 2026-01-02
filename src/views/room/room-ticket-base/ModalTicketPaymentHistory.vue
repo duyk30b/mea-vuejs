@@ -21,6 +21,7 @@ const openModal = async (options: { ticket: Ticket; refetch?: boolean }) => {
         voucherId: ticket.value.id,
         voucherType: PaymentVoucherType.Ticket,
       },
+      relation: { paymentTicketItemList: true },
       sort: { id: 'ASC' },
     })
     await PaymentService.refreshRelation(paymentList)

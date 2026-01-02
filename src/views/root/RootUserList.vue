@@ -2,7 +2,7 @@
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import VueTag from '../../common/VueTag.vue'
-import { IconApartment } from '../../common/icon-antd'
+import { IconApartment, IconBug } from '../../common/icon-antd'
 import { IconComputer, IconEditSquare, IconHistory, IconSmartphone } from '../../common/icon-google'
 import { RootUserApi } from '../../modules/root-user/root-user.api'
 import type { User } from '../../modules/user'
@@ -10,6 +10,8 @@ import { ESTimer } from '../../utils'
 import ModalRootUserUpsert from './ModalRootUserUpsert.vue'
 import VuePagination from '../../common/VuePagination.vue'
 import { InputSelect } from '../../common/vue-form'
+import { CONFIG } from '@/config'
+import { VueTooltip } from '@/common/popover'
 
 const modalRootUserUpsert = ref<InstanceType<typeof ModalRootUserUpsert>>()
 
@@ -60,9 +62,9 @@ const handleModalRootUserUpsertSuccess = async (
   await startFetchData()
 }
 
-const deviceLogout = async (params: { userId: number; refreshExp: number; oid: number }) => {
-  const { userId, oid, refreshExp } = params
-  const result = await RootUserApi.deviceLogout({ userId, refreshExp, oid })
+const deviceLogout = async (params: { userId: number; clientId: string; oid: number }) => {
+  const { userId, oid, clientId } = params
+  const result = await RootUserApi.deviceLogout({ userId, clientId, oid })
   await startFetchData()
 }
 
@@ -93,6 +95,7 @@ const logoutAll = async () => {
       <table>
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>ID</th>
             <th>OID</th>
             <th>Login</th>
@@ -107,6 +110,16 @@ const logoutAll = async () => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(user, index) in userList" :key="index">
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(user, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
+            </td>
             <td class="text-center">{{ user.id }}</td>
             <td class="text-center">{{ user.oid }}</td>
             <td>
@@ -132,7 +145,7 @@ const logoutAll = async () => {
                 <div style="white-space: nowrap">IP: {{ device.ip }}</div>
                 <div v-if="device.online !== true">
                   <IconHistory class="mr-1" />
-                  {{ ESTimer.timeToText(device.online as number, 'hh:mm DD/MM/YYYY') }}
+                  {{ ESTimer.timeToText(device.lastOnline, 'hh:mm DD/MM/YYYY') }}
                 </div>
                 <div class="flex gap-2">
                   <VueButton
@@ -140,7 +153,7 @@ const logoutAll = async () => {
                     @click="
                       deviceLogout({
                         userId: user.id!,
-                        refreshExp: device.refreshExp,
+                        clientId: device.clientId,
                         oid: user.oid,
                       })
                     "

@@ -34,7 +34,9 @@ export class BaseIndexedDB {
           if (!db?.objectStoreNames.contains(storeName)) {
             const objectStore = db?.createObjectStore(storeName, { keyPath })
             if (index) {
-              objectStore?.createIndex(index.indexName, index.property as string, { unique: index.unique })
+              objectStore?.createIndex(index.indexName, index.property as string, {
+                unique: index.unique,
+              })
             }
           }
         })

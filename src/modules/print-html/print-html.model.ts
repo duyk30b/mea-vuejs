@@ -1,6 +1,8 @@
 export enum PrintHtmlType {
   _HEADER = 1,
   _FOOTER = 2,
+  _HEADER_PREVIEW = 3,
+  _FOOTER_PREVIEW = 4,
   PurchaseOrderDetail = 10,
   TicketOrderDetail = 20,
   AllMoney = 32,
@@ -16,6 +18,8 @@ export enum PrintHtmlType {
 export const PrintHtmlTypeText = {
   [PrintHtmlType._HEADER]: '_HEADER',
   [PrintHtmlType._FOOTER]: '_FOOTER',
+  [PrintHtmlType._HEADER_PREVIEW]: '_HEADER_PREVIEW',
+  [PrintHtmlType._FOOTER_PREVIEW]: '_FOOTER_PREVIEW',
   [PrintHtmlType.PurchaseOrderDetail]: 'Phiếu nhập hàng chi tiết',
   [PrintHtmlType.TicketOrderDetail]: 'Phiếu bán hàng chi tiết',
   [PrintHtmlType.AllMoney]: 'Bảng kê chi phí',

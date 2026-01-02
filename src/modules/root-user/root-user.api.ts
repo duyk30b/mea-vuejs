@@ -56,10 +56,10 @@ export class RootUserApi {
     return data
   }
 
-  static async deviceLogout(params: { oid: number; userId: number; refreshExp: number }) {
-    const { oid, userId, refreshExp } = params
+  static async deviceLogout(params: { oid: number; userId: number; clientId: string }) {
+    const { oid, userId, clientId } = params
     const response = await AxiosInstance.post(`/root/user/device-logout/${userId}`, {
-      refreshExp,
+      clientId,
       oid,
     })
     const { data } = response.data as BaseResponse

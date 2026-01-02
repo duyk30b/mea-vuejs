@@ -27,6 +27,10 @@ watchEffect(() => {
     routeTitle.value = title
   }
 })
+
+const startLogout = async () => {
+  await AuthService.logout()
+}
 </script>
 
 <template>
@@ -65,7 +69,7 @@ watchEffect(() => {
           </VueButton>
         </template>
         <div class="vue-menu">
-          <a @click="AuthService.logout()">
+          <a @click="startLogout">
             <IconLogout />
             <span>Đăng xuất</span>
           </a>

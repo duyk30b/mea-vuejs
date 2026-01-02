@@ -1,10 +1,13 @@
 <script lang="ts" setup>
+import IconBug from '@/common/icon-antd/IconBug.vue'
+import { VueTooltip } from '@/common/popover'
+import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Payment, PaymentActionTypeText, PaymentApi } from '@/modules/payment'
 import { ref } from 'vue'
 import VuePagination from '../../../../common/VuePagination.vue'
 import { IconClose } from '../../../../common/icon-antd'
-import { InputSelect } from '../../../../common/vue-form'
+import { InputSelect, VueSwitch } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ESTimer } from '../../../../utils'
 
@@ -86,11 +89,13 @@ defineExpose({ openModal })
           <table>
             <thead>
               <tr>
-                <th>ID</th>
+                <th v-if="CONFIG.MODE === 'development'"></th>
                 <th>Thời gian</th>
                 <th>Khách hàng</th>
                 <th>Lý do</th>
+                <th>Ví</th>
                 <th>Số tiền</th>
+                <th>Item</th>
                 <th style="width: 100px">#</th>
               </tr>
             </thead>
@@ -99,13 +104,28 @@ defineExpose({ openModal })
                 <td colspan="20" class="text-center">Không có dữ liệu</td>
               </tr>
               <tr v-for="payment in paymentList" :key="payment.id">
-                <td class="text-center">{{ payment.id }}</td>
+                <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+                  <VueTooltip>
+                    <template #trigger>
+                      <IconBug width="1.2em" height="1.2em" />
+                    </template>
+                    <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                      <pre>{{ JSON.stringify(payment, null, 4) }}</pre>
+                    </div>
+                  </VueTooltip>
+                </td>
                 <td class="text-center">
                   {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
                 </td>
                 <td>{{ payment.customer?.fullName }}</td>
                 <td>{{ PaymentActionTypeText[payment.paymentActionType] }}</td>
-                <td>{{ formatMoney(payment.paidTotal) }}</td>
+                <td>{{ payment.wallet?.name }}</td>
+                <td class="text-right">{{ formatMoney(payment.paidTotal) }}</td>
+                <td>
+                  <div class="flex justify-center items-center">
+                    <VueSwitch :modelValue="payment.hasPaymentItem" disabled />
+                  </div>
+                </td>
                 <td class="text-center">
                   <a @click="selectPaymentDemo(payment)">Chọn</a>
                 </td>

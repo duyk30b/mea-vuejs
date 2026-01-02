@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { IconBug } from '@/common/icon-antd'
+import { VueTooltip } from '@/common/popover'
 import type { VueSelectOption } from '@/common/vue-form/VueSelect.vue'
 import { CONFIG } from '@/config'
+import { MeService } from '@/modules/_me/me.service'
 import { PrintHtmlSetting, PrintHtmlSettingService } from '@/modules/print-html-setting'
 import { ESArray, ESTypescript } from '@/utils'
 import { onBeforeMount, ref } from 'vue'
@@ -13,7 +16,6 @@ import {
   PrintHtmlType,
   PrintHtmlTypeText,
 } from '../../../modules/print-html'
-import { MeService } from '@/modules/_me/me.service'
 
 const { organization } = MeService
 
@@ -88,24 +90,24 @@ const handleSaveSetting = async () => {
       <table>
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'">ID-PrintHtmlId</th>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>Loại</th>
             <th style="min-width: 300px">Mẫu In</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(item, index) in settingList" :key="index">
-            <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
-              {{ item.printHtmlSetting.id }} - {{ item.printHtmlSetting.printHtmlId }}
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(item, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
             </td>
-            <td>
-              <div class="flex gap-2">
-                <span v-if="CONFIG.MODE === 'development'" style="color: violet">
-                  {{ item.type }} -
-                </span>
-                <span>{{ PrintHtmlTypeText[item.type] }}</span>
-              </div>
-            </td>
+            <td>{{ PrintHtmlTypeText[item.type] }}</td>
             <td>
               <VueSelect
                 v-model:value="item.printHtmlSetting.printHtmlId"

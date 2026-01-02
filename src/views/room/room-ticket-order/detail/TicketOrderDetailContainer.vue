@@ -14,15 +14,20 @@ import {
   IconSetting,
 } from '@/common/icon-antd'
 import { IconDelete } from '@/common/icon-google'
+import { VueTooltip } from '@/common/popover'
 import VueDropdown from '@/common/popover/VueDropdown.vue'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus, DeliveryStatusText, PaymentViewType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
+import { PrintHtmlAction, PrintHtmlType } from '@/modules/print-html'
 import { Ticket, TicketActionApi, TicketService, TicketStatus } from '@/modules/ticket'
+import { TicketProcedureService } from '@/modules/ticket-procedure'
 import { TicketProduct, TicketProductService } from '@/modules/ticket-product'
+import { TicketOrderApi } from '@/modules/ticket/api/ticket-order.api'
 import { timeToText } from '@/utils'
 import { Breadcrumb } from '@/views/component'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
@@ -33,20 +38,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { ETicketOrderUpsertMode } from '../upsert/ticket-order-upsert.ref'
 import ModalTicketOrderDetailSetting from './ModalTicketOrderDetailSetting.vue'
 import ModalTicketOrderPayment from './ModalTicketOrderPayment.vue'
-import TicketOrderDetailTable from './TicketOrderDetailTable.vue'
-import ModalTicketOrderPreview from './preview/ModalTicketOrderPreview.vue'
-import { ticketOrderHtmlContent } from './preview/ticket-order-html-content'
-import { ticketOrderDetailRef } from './ticket-order-detail.ref'
-import { TicketOrderApi } from '@/modules/ticket/api/ticket-order.api'
-import { TicketProcedureService } from '@/modules/ticket-procedure'
 import ModalTicketOrderTerminal from './ModalTicketOrderTerminal.vue'
-import { VueTooltip } from '@/common/popover'
-import { CONFIG } from '@/config'
+import TicketOrderDetailTable from './TicketOrderDetailTable.vue'
+import { ticketOrderDetailRef } from './ticket-order-detail.ref'
 
 const modalTicketOrderDetailSetting = ref<InstanceType<typeof ModalTicketOrderDetailSetting>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
-const modalTicketOrderPreview = ref<InstanceType<typeof ModalTicketOrderPreview>>()
 const modalTicketOrderPayment = ref<InstanceType<typeof ModalTicketOrderPayment>>()
 const modalTicketOrderTerminal = ref<InstanceType<typeof ModalTicketOrderTerminal>>()
 
@@ -78,7 +76,7 @@ const startFetchData = async (ticketId: string) => {
       TicketProcedureService.refreshRelation(ticketOrderDetailRef.value.ticketProcedureList),
     ])
   } catch (error) {
-    console.log('🚀 ~ TicketOrderDetailContainer.vue:80 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ TicketOrderDetailContainer.vue:81 ~ startFetchData ~ error:', error)
   }
 }
 
@@ -122,7 +120,7 @@ const sendProduct = async () => {
       response.ticketProductModifiedAll,
     )
   } catch (error) {
-    console.log('🚀 ~ startShipAndPayment ~ error:', error)
+    console.log('🚀 ~ TicketOrderDetailContainer.vue:125 ~ sendProduct ~ error:', error)
   } finally {
     loadingProcess.value = false
   }
@@ -140,7 +138,7 @@ const close = async () => {
       ticketOrderDetailRef.value.paymentList.push(response.paymentCreated)
     }
   } catch (error) {
-    console.log('🚀 ~ startShipAndPayment ~ error:', error)
+    console.log('🚀 ~ TicketOrderDetailContainer.vue:143 ~ close ~ error:', error)
   } finally {
     loadingProcess.value = false
   }
@@ -182,7 +180,7 @@ const clickDestroy = () => {
         AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
         router.push({ name: 'TicketOrderList' })
       } catch (error) {
-        console.log('🚀 ~ TicketOrderDetail.vue:239 ~ onOk ~ error:', error)
+        console.log('🚀 ~ TicketOrderDetailContainer.vue:185 ~ clickDestroy ~ error:', error)
       } finally {
         loadingProcess.value = false
       }
@@ -190,19 +188,26 @@ const clickDestroy = () => {
   })
 }
 
-const startPrint = () => {
-  const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
-  const pri = iframePrint.contentWindow as Window
-  pri.document.open()
-  const content = ticketOrderHtmlContent(ticketOrderDetailRef.value)
-  pri.document.write(content)
-  pri.document.close()
-  pri.focus()
-  pri.print()
+const startPrint = async () => {
+  await PrintHtmlAction.startPrintTicketOrderDetail({
+    ticket: ticketOrderDetailRef.value,
+    customer: ticketOrderDetailRef.value.customer!,
+  })
 }
 
-const openModalTicketOrderPreview = () => {
-  modalTicketOrderPreview.value?.openModal(ticketOrderDetailRef.value)
+const openModalTicketOrderPreview = async () => {
+  const htmlText = await PrintHtmlAction.startWriteTicketOrderPreview({
+    data: { ticket: ticketOrderDetailRef.value, customer: ticketOrderDetailRef.value.customer! },
+    printHtmlType: PrintHtmlType.TicketOrderDetail,
+  })
+  if (!htmlText) return
+
+  ModalStore.htmlContent({
+    style: '',
+    modalMaskStyle: 'background-color: rgb(89 92 135)',
+    title: 'PHIẾU BÁN HÀNG',
+    htmlText: htmlText || '',
+  })
 }
 </script>
 
@@ -213,7 +218,6 @@ const openModalTicketOrderPreview = () => {
     ref="modalTicketReturnProduct"
     @success="() => startFetchData(ticketOrderDetailRef.id)"
   />
-  <ModalTicketOrderPreview ref="modalTicketOrderPreview" />
   <ModalTicketOrderPayment ref="modalTicketOrderPayment" />
   <ModalTicketOrderDetailSetting ref="modalTicketOrderDetailSetting" />
 
@@ -328,7 +332,7 @@ const openModalTicketOrderPreview = () => {
 
   <div class="page-main">
     <div class="px-4 pt-4 flex items-center justify-between flex-wrap gap-2">
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2">
         <VueButton @click="openModalTicketOrderPreview">
           <IconEye />
           Xem

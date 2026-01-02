@@ -86,8 +86,8 @@ export class UserApi {
     return data
   }
 
-  static async deviceLogout(userId: number, refreshExp: number) {
-    const response = await AxiosInstance.post(`/user/device-logout/${userId}`, { refreshExp })
+  static async deviceLogout(userId: number, clientId: string) {
+    const response = await AxiosInstance.post(`/user/device-logout/${userId}`, { clientId })
     const { data } = response.data as BaseResponse
     return data
   }

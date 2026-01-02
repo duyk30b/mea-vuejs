@@ -67,8 +67,8 @@ const handleModalAccountUpsertSuccess = async (
   await startFetchData({ refetch: true })
 }
 
-const deviceLogout = async (userId: number, refreshExp: number) => {
-  const result = await UserApi.deviceLogout(userId, refreshExp)
+const deviceLogout = async (userId: number, clientId: string) => {
+  const result = await UserApi.deviceLogout(userId, clientId)
   await startFetchData()
 }
 </script>

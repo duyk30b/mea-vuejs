@@ -1,9 +1,16 @@
 <script setup lang="ts">
-import { IconBug } from '@/common/icon-antd'
+import { IconBug, IconPrint } from '@/common/icon-antd'
 import { VueTooltip } from '@/common/popover'
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { PaymentActionTypeText } from '@/modules/payment'
+import type { Customer } from '@/modules/customer'
+import {
+  Payment,
+  PaymentActionType,
+  PaymentActionTypeText,
+  PaymentPersonType,
+} from '@/modules/payment'
+import { PrintHtmlAction } from '@/modules/print-html'
 import { Ticket } from '@/modules/ticket'
 import { WalletService } from '@/modules/wallet'
 import { timeToText } from '@/utils'
@@ -24,6 +31,24 @@ onMounted(async () => {
     console.log('🚀 ~ TicketPaymentList.vue:22 ~ error:', error)
   }
 })
+
+const startPrintCustomerPayment = async (options: { customer: Customer; payment: Payment }) => {
+  let payment = options.payment
+  const paymentPrint = await Payment.refreshData(payment)
+  await PrintHtmlAction.startPrintCustomerPayment({
+    customer: props.ticket.customer!,
+    payment: paymentPrint,
+  })
+}
+
+const startPrintCustomerRefund = async (options: { customer: Customer; payment: Payment }) => {
+  const payment = options.payment
+  const paymentPrint = await Payment.refreshData(payment)
+  await PrintHtmlAction.startPrintCustomerRefund({
+    customer: props.ticket.customer!,
+    payment: paymentPrint,
+  })
+}
 </script>
 
 <template>
@@ -48,6 +73,7 @@ onMounted(async () => {
             <th>Note</th>
             <th>Tiền</th>
             <th v-if="CONFIG.MODE === 'development'">Ghi nợ</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -89,6 +115,28 @@ onMounted(async () => {
                 {{ formatMoney(payment.personCloseDebt) }}
               </div>
             </td>
+            <td class="text-center">
+              <IconPrint
+                v-if="
+                  payment.personType === PaymentPersonType.Customer &&
+                  payment.paidTotal !== 0 &&
+                  [PaymentActionType.PaymentMoney, PaymentActionType.PayDebt].includes(
+                    payment.paymentActionType,
+                  )
+                "
+                style="font-size: 18px; color: var(--text-blue); cursor: pointer"
+                @click="startPrintCustomerPayment({ payment, customer: payment.customer })"
+              />
+              <IconPrint
+                v-if="
+                  payment.personType === PaymentPersonType.Customer &&
+                  payment.paidTotal !== 0 &&
+                  [PaymentActionType.RefundMoney].includes(payment.paymentActionType)
+                "
+                style="font-size: 18px; color: var(--text-green); cursor: pointer"
+                @click="startPrintCustomerRefund({ payment, customer: payment.customer })"
+              />
+            </td>
           </tr>
 
           <tr>
@@ -96,12 +144,14 @@ onMounted(async () => {
             <td colspan="4" class="text-right">Đã thanh toán :</td>
             <td class="text-right font-bold">{{ formatMoney(ticket.paidTotal) }}</td>
             <td v-if="CONFIG.MODE === 'development'"></td>
+            <td></td>
           </tr>
           <tr v-if="ticket.debtTotal" style="color: var(--text-red)">
             <td v-if="CONFIG.MODE === 'development'"></td>
             <td colspan="4" class="text-right">Đang nợ :</td>
             <td class="text-right font-bold">{{ formatMoney(ticket.debtTotal) }}</td>
             <td v-if="CONFIG.MODE === 'development'"></td>
+            <td></td>
           </tr>
           <tr v-if="ticket.paidTotal > ticket.totalMoney" style="color: var(--text-green)">
             <td v-if="CONFIG.MODE === 'development'"></td>
@@ -110,6 +160,7 @@ onMounted(async () => {
               {{ formatMoney(ticket.paidTotal - ticket.totalMoney) }}
             </td>
             <td v-if="CONFIG.MODE === 'development'"></td>
+            <td></td>
           </tr>
           <tr v-else-if="ticket.debtTotal !== ticket.totalMoney - ticket.paidTotal">
             <td v-if="CONFIG.MODE === 'development'"></td>
@@ -118,6 +169,7 @@ onMounted(async () => {
               {{ formatMoney(ticket.totalMoney - ticket.paidTotal) }}
             </td>
             <td v-if="CONFIG.MODE === 'development'"></td>
+            <td></td>
           </tr>
         </tbody>
       </table>

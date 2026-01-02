@@ -1,8 +1,10 @@
-import { reactive } from 'vue'
+import { reactive, type StyleValue } from 'vue'
 import { randomId } from '../../utils'
 
 export interface IModalData {
-  type: 'confirm' | 'alert'
+  style: StyleValue
+  modalMaskStyle?: StyleValue
+  type: 'confirm' | 'alert' | ''
   title: string
   content: string | string[]
   contentType: 'text' | 'html'
@@ -28,10 +30,11 @@ const add = (
   },
 ) => {
   const key = randomId()
-  const funcEmpty = async () => {}
+  const funcEmpty = async () => { }
 
   data[key] = {
     type,
+    style: 'width: 520px; margin-top: 50px',
     title: options.title,
     content: options.content,
     contentType: options.contentType || 'text',
@@ -75,4 +78,30 @@ const remove = (key: string) => {
   }, 0)
 }
 
-export const ModalStore = { data, confirm, alert, remove }
+const htmlContent = (options: {
+  htmlText: string
+  title: string
+  style?: StyleValue
+  modalMaskStyle?: StyleValue
+}) => {
+  const key = randomId()
+  const funcEmpty = async () => { }
+  data[key] = {
+    type: '',
+    style: options.style,
+    modalMaskStyle: options.modalMaskStyle,
+    title: options.title,
+    content: options.htmlText,
+    contentType: 'html',
+    show: false,
+    onOk: funcEmpty,
+    onCancel: funcEmpty,
+    okText: '',
+    cancelText: 'Đóng lại',
+  }
+  setTimeout(() => {
+    data[key].show = true
+  }, 0)
+}
+
+export const ModalStore = { data, confirm, alert, remove, htmlContent }

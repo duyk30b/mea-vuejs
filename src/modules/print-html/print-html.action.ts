@@ -54,6 +54,58 @@ export class PrintHtmlAction {
     return printHtml ? PrintHtml.from(printHtml) : PrintHtml.blank()
   }
 
+  static async startWriteTicketOrderPreview(options: {
+    data: Record<string, any>
+    printHtmlType: PrintHtmlType
+  }) {
+    const { data, printHtmlType } = options
+    const { organization, user } = MeService
+    const printHtmlHeaderPreview = await PrintHtmlAction.getPrintHtmlByType({
+      oid: organization.value.id,
+      type: PrintHtmlType._HEADER_PREVIEW,
+    })
+    const printHtmlFooterPreview = await PrintHtmlAction.getPrintHtmlByType({
+      oid: organization.value.id,
+      type: PrintHtmlType._FOOTER_PREVIEW,
+    })
+    const printHtmlWrapper = await PrintHtmlAction.getPrintHtmlByType({
+      oid: organization.value.id,
+      type: printHtmlType,
+    })
+
+    if (!printHtmlHeaderPreview || !printHtmlWrapper || !printHtmlWrapper.html) {
+      return AlertStore.addError('Cài đặt in thất bại')
+    }
+
+    const printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
+      data: {
+        organization: organization.value,
+        me: user.value!,
+        ...data,
+      },
+      template: {
+        _header: printHtmlHeaderPreview.html,
+        _footer: printHtmlFooterPreview.html,
+        _wrapper: printHtmlWrapper.html,
+        _content: '',
+      },
+      variablesString: [printHtmlHeaderPreview.initVariable, printHtmlWrapper.initVariable],
+    })
+
+    if (!printHtmlCompiled?.htmlString) {
+      return AlertStore.addError('Mẫu in không hợp lệ')
+    }
+
+    const htmlText = `
+        <style>${printHtmlHeaderPreview.css}</style>
+        <style>${printHtmlFooterPreview.css}</style>
+        <style>${printHtmlWrapper.css}</style>
+        ${printHtmlCompiled?.htmlString || ''}
+      `
+
+    return htmlText
+  }
+
   static async startPrintCommon(options: {
     data: Record<string, any>
     printHtmlType: PrintHtmlType
@@ -103,7 +155,7 @@ export class PrintHtmlAction {
         cssList: [printHtmlHeader.css, printHtmlFooter.css, printHtmlWrapper.css],
       })
     } catch (error) {
-      console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
+      console.log('🚀 ~ print-html.action.ts:158 ~ startPrintCommon ~ error:', error)
     }
   }
 
@@ -111,6 +163,13 @@ export class PrintHtmlAction {
     await PrintHtmlAction.startPrintCommon({
       data,
       printHtmlType: PrintHtmlType.PurchaseOrderDetail,
+    })
+  }
+
+  static async startPrintTicketOrderDetail(data: { ticket: Ticket; customer: Customer }) {
+    await PrintHtmlAction.startPrintCommon({
+      data,
+      printHtmlType: PrintHtmlType.TicketOrderDetail,
     })
   }
 
@@ -187,7 +246,7 @@ export class PrintHtmlAction {
         cssList: [printHtmlHeader.css, printHtmlWrapper.css, printHtmlFooter.css],
       })
     } catch (error) {
-      console.log('🚀 ~ file: TicketClinicLaboratory.vue:137 ~ startPrint ~ error:', error)
+      console.log('🚀 ~ print-html.action.ts:247 ~ startPrintResultTicketLaboratory:', error)
     }
   }
 
@@ -310,7 +369,7 @@ export class PrintHtmlAction {
         cssList: [printHtmlHeader.css, printHtmlFooter.css, printHtmlWrapper.css],
       })
     } catch (error) {
-      console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
+      console.log('🚀 ~ print-html.action.ts:366 ~ startPrintRequestOptometry ~ error:', error)
     }
   }
 

@@ -52,7 +52,7 @@ const startResetPassword = async () => {
       </VueDivider>
       <form @submit.prevent="startResetPassword">
         <div class="mt-4">
-          <div>ID cơ cở</div>
+          <div>ID cơ sở</div>
           <div>
             <InputText
               v-model:value="formState.organizationCode"

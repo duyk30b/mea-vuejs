@@ -35,7 +35,8 @@ const handleCancel = async (func: () => Promise<void>, key: string) => {
   <template v-for="(modal, key) in ModalStore.data" :key="key">
     <VueModal
       v-model:show="modal.show"
-      style="width: 520px; margin-top: 50px"
+      :style="modal.style"
+      :modalMaskStyle="modal.modalMaskStyle"
       @update:show="(v) => handleUpdateShowModal(v, key)"
     >
       <div class="bg-white">
@@ -76,6 +77,7 @@ const handleCancel = async (func: () => Promise<void>, key: string) => {
         <div class="p-4">
           <div class="flex gap-4">
             <VueButton
+              v-if="modal.cancelText"
               style="margin-left: auto"
               type="reset"
               @click="handleCancel(modal.onCancel, key)"
@@ -83,7 +85,7 @@ const handleCancel = async (func: () => Promise<void>, key: string) => {
               {{ modal.cancelText }}
             </VueButton>
             <VueButton
-              v-if="modal.type === 'confirm'"
+              v-if="modal.okText && modal.type === 'confirm'"
               color="blue"
               :loading="saveLoading"
               @click="handleOk(modal.onOk, key)"

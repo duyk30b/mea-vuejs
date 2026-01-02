@@ -105,8 +105,8 @@ export class AuthApi {
     return data
   }
 
-  static async logout(refreshToken: string) {
-    const response = await axios.post(`${CONFIG.API_URL}/auth/logout`, { refreshToken })
+  static async logout(body: { oid: number; uid: number; clientId: string }) {
+    const response = await axios.post(`${CONFIG.API_URL}/auth/logout`, body)
     const { data } = response.data as BaseResponse<boolean>
     return data
   }

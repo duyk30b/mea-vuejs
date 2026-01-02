@@ -1,12 +1,13 @@
 export default class Device {
   oid: number
-  id: number
+  clientId: string
   refreshExp: number
   ip: string
   os: string
   browser: string
   mobile: 1 | 0
-  online: boolean | number
+  lastOnline: number
+  online: boolean
 
   static basic(source: Device) {
     const target = new Device()

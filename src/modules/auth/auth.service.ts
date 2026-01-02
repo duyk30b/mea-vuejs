@@ -1,3 +1,4 @@
+import { CONFIG } from '@/config'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { MeaDatabase } from '../../core/indexed-db/database'
 import { LocalStorageService } from '../../core/local-storage.service'
@@ -69,15 +70,16 @@ export class AuthService {
 
   static logout = (() => {
     const start = async () => {
-      const refreshToken = LocalStorageService.getRefreshToken() // khai báo trước removeToken
+      const oid = MeService.organization.value.id
+      const uid = MeService.user.value?.id
       LocalStorageService.removeToken()
       MeService.user.value = null // khai báo trước Router push Login
       Router.push({ name: 'Login' })
       AlertStore.addError('Phiên đăng nhập đã kết thúc !', 2000)
       try {
         await MeaDatabase.destroy()
-        if (refreshToken) {
-          await AuthApi.logout(refreshToken)
+        if (oid && uid) {
+          await AuthApi.logout({ oid, uid, clientId: CONFIG.CLIENT_ID })
         }
       } catch (error: any) {
         const message =
