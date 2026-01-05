@@ -63,7 +63,7 @@ export class DistributorApi {
   }
 
   static async updateOne(id: number, distributor: Distributor) {
-    const response = await AxiosInstance.patch(`/distributor/update/${id}`, {
+    const response = await AxiosInstance.post(`/distributor/update/${id}`, {
       fullName: distributor.fullName,
       phone: distributor.phone,
       addressProvince: distributor.addressProvince,
@@ -77,7 +77,7 @@ export class DistributorApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/distributor/destroy/${id}`)
+    const response = await AxiosInstance.post(`/distributor/destroy/${id}`)
     const { data } = response.data as BaseResponse<{
       distributorId: number
       purchaseOrderList: PurchaseOrder[]

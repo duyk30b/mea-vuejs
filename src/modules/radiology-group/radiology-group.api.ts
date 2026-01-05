@@ -51,7 +51,7 @@ export class RadiologyGroupApi {
   }
 
   static async updateOne(id: number, radiologyGroup: RadiologyGroup) {
-    const response = await AxiosInstance.patch(`/radiology-group/update/${id}`, {
+    const response = await AxiosInstance.post(`/radiology-group/update/${id}`, {
       name: radiologyGroup.name,
       roomId: radiologyGroup.roomId,
     })
@@ -60,13 +60,13 @@ export class RadiologyGroupApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/radiology-group/destroy/${id}`)
+    const response = await AxiosInstance.post(`/radiology-group/destroy/${id}`)
     const { data, meta } = response.data as BaseResponse<boolean>
     return data
   }
 
   static async replaceAll(body: RadiologyGroup[]) {
-    const response = await AxiosInstance.put('/radiology-group/replace-all', {
+    const response = await AxiosInstance.post('/radiology-group/replace-all', {
       radiologyGroupReplaceAll: body.map((i) => {
         return {
           id: i.id || 0,

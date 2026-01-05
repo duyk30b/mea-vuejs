@@ -5,13 +5,14 @@ import { DeliveryStatus, DiscountType, PaymentMoneyStatus, PickupStrategy } from
 import { Product } from '../product'
 import { TicketBatch } from '../ticket-batch'
 import type { Ticket } from '../ticket/ticket.model'
+import { BaseModel } from '../_base/base.model'
 
 export enum TicketProductType {
   Prescription = 1,
   Consumable = 2,
   Procedure = 3,
 }
-export class TicketProduct {
+export class TicketProduct extends BaseModel {
   id: string
   priority: number
   ticketId: string
@@ -95,6 +96,7 @@ export class TicketProduct {
 
   static init(): TicketProduct {
     const ins = new TicketProduct()
+    ins._localId = Math.random().toString(36).substring(2)
     ins.id = ''
     ins.priority = 0
     ins.ticketId = ''
@@ -140,6 +142,9 @@ export class TicketProduct {
       if (value === undefined) delete target[key as keyof typeof target]
     })
     Object.assign(target, source)
+    target._localId = String(
+      source.id || source._localId || Math.random().toString(36).substring(2),
+    )
     return target
   }
 

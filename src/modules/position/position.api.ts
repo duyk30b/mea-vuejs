@@ -51,7 +51,7 @@ export class PositionApi {
   }
 
   static async updateOne(id: number, position: Position) {
-    const response = await AxiosInstance.patch(`/position/update/${id}`, {
+    const response = await AxiosInstance.post(`/position/update/${id}`, {
       priority: position.priority,
       commissionCalculatorType: position.commissionCalculatorType,
       commissionValue: position.commissionValue,
@@ -61,7 +61,7 @@ export class PositionApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/position/destroy/${id}`)
+    const response = await AxiosInstance.post(`/position/destroy/${id}`)
     const result = response.data as BaseResponse<boolean>
     return result
   }
@@ -70,7 +70,7 @@ export class PositionApi {
     filter: PositionGetQuery['filter']
     positionData: Position[]
   }) {
-    const response = await AxiosInstance.put(`/position/replace-list`, {
+    const response = await AxiosInstance.post(`/position/replace-list`, {
       filter: options.filter,
       positionData: options.positionData.map((i) => {
         return {

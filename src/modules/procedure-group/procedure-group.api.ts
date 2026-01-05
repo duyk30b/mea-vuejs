@@ -42,7 +42,7 @@ export class ProcedureGroupApi {
   }
 
   static async replaceAll(body: ProcedureGroup[]) {
-    const response = await AxiosInstance.put('/procedure-group/replace-all', {
+    const response = await AxiosInstance.post('/procedure-group/replace-all', {
       procedureGroupReplaceAll: body.map((i) => {
         return {
           id: i.id || 0,
@@ -63,7 +63,7 @@ export class ProcedureGroupApi {
   }
 
   static async updateOne(id: number, procedureGroup: ProcedureGroup) {
-    const response = await AxiosInstance.patch(`/procedure-group/update/${id}`, {
+    const response = await AxiosInstance.post(`/procedure-group/update/${id}`, {
       name: procedureGroup.name,
     })
     const { data } = response.data as BaseResponse
@@ -71,7 +71,7 @@ export class ProcedureGroupApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/procedure-group/destroy/${id}`)
+    const response = await AxiosInstance.post(`/procedure-group/destroy/${id}`)
     const { data, meta } = response.data as BaseResponse
     return ProcedureGroup.from(data)
   }

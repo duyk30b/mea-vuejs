@@ -84,6 +84,17 @@ const createTicketProcedure = async (procedureData?: Procedure) => {
   ticketProcedure.value = temp
 }
 
+const handleChangeExpectedPrice = (data: number) => {
+  const expectedPrice = data
+  const actualPrice = ticketProcedure.value.actualPrice
+  const discountMoney = expectedPrice - actualPrice
+  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+  ticketProcedure.value.discountPercent = discountPercent
+  ticketProcedure.value.discountMoney = discountMoney
+  ticketProcedure.value.discountType = DiscountType.VND
+  ticketProcedure.value.expectedPrice = expectedPrice
+}
+
 const handleChangeUnitDiscountMoney = (data: number) => {
   const discountMoney = data
   const expectedPrice = ticketProcedure.value.expectedPrice || 0
@@ -101,7 +112,7 @@ const handleChangeDiscountPercent = (data: number) => {
   ticketProcedure.value.actualPrice = expectedPrice - discountMoney
 }
 
-const handleChangeUnitActualPrice = (data: number) => {
+const handleChangeActualPrice = (data: number) => {
   const actualPrice = data
   const expectedPrice = ticketProcedure.value.expectedPrice
   const discountMoney = expectedPrice - actualPrice
@@ -194,7 +205,10 @@ defineExpose({ focus })
     >
       <div>Giá niêm yết</div>
       <div class="flex">
-        <InputMoney :value="ticketProcedure.expectedPrice" disabled />
+        <InputMoney
+          :value="ticketProcedure.expectedPrice"
+          @update:value="handleChangeExpectedPrice"
+        />
       </div>
     </div>
 
@@ -257,10 +271,7 @@ defineExpose({ focus })
     >
       <div>Đơn giá</div>
       <div style="width: 100%">
-        <InputMoney
-          :value="ticketProcedure.actualPrice"
-          @update:value="handleChangeUnitActualPrice"
-        />
+        <InputMoney :value="ticketProcedure.actualPrice" @update:value="handleChangeActualPrice" />
       </div>
     </div>
 

@@ -90,7 +90,7 @@ export class TicketOrderApi {
   static async depositedUpdate(options: { ticketId: string; ticket: Ticket }) {
     const { ticketId, ticket } = options
     const ticketOrderBasicBody = TicketOrderApi.generateTicketOrderBasic(ticket)
-    const response = await AxiosInstance.patch(`/ticket/order/${ticketId}/deposited-update`, {
+    const response = await AxiosInstance.post(`/ticket/order/${ticketId}/deposited-update`, {
       ...ticketOrderBasicBody,
     })
     const { data } = response.data as BaseResponse<{ ticketModified: any }>
@@ -113,7 +113,7 @@ export class TicketOrderApi {
   static async debtSuccessUpdate(options: { ticketId: string; ticket: Ticket; walletId: string }) {
     const { ticket, ticketId, walletId } = options
     const ticketOrderBasicBody = TicketOrderApi.generateTicketOrderBasic(ticket)
-    const response = await AxiosInstance.patch(`/ticket/order/${ticketId}/debt-success-update`, {
+    const response = await AxiosInstance.post(`/ticket/order/${ticketId}/debt-success-update`, {
       ...ticketOrderBasicBody,
       walletId,
       paidTotal: ticket.paidTotal,
@@ -124,7 +124,7 @@ export class TicketOrderApi {
 
   // ================= ACTION ================= //
   static async destroy(ticketId: string) {
-    const response = await AxiosInstance.delete(`/ticket/order/${ticketId}/destroy`)
+    const response = await AxiosInstance.post(`/ticket/order/${ticketId}/destroy`)
     const { data } = response.data as BaseResponse<{ ticketId: string }>
     return data
   }

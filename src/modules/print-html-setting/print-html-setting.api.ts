@@ -21,7 +21,7 @@ export class PrintHtmlSettingApi {
   static async replaceAll(body: {
     replaceAll: { id: number; printHtmlType: PrintHtmlType; printHtmlId: number }[]
   }) {
-    const response = await AxiosInstance.put('/print-html-setting/replace-all', body)
+    const response = await AxiosInstance.post('/print-html-setting/replace-all', body)
     const { data } = response.data as BaseResponse
     return
   }

@@ -1,77 +1,64 @@
 import { AxiosInstance } from '../../../core/axios.instance'
 import type { BaseResponse } from '../../_base/base-dto'
 import { Distributor } from '../../distributor'
-import { Payment } from '../../payment'
+import { Payment, PaymentActionType } from '../../payment'
 import { PurchaseOrder } from '../purchase-order.model'
 
 export class PurchaseOrderMoneyApi {
-  static async payment(object: {
+  static async paymentMoney(object: {
     purchaseOrderId: string
     body: {
       walletId: string
-      paidAmount: number
+      paidTotal: number
+      debtTotal: number
+      paymentActionType: PaymentActionType
       note: string
     }
   }) {
     const { purchaseOrderId, body } = object
-    const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/payment`, body)
+    const response = await AxiosInstance.post(
+      `/purchase-order/${purchaseOrderId}/payment-money`,
+      body,
+    )
     const { data } = response.data as BaseResponse<{
-      distributor: any
-      paymentCreated: any
       purchaseOrderModified: any
+      distributorModified?: any
+      paymentCreated?: any
     }>
 
-    const distributor = Distributor.from(data.distributor)
-    const purchaseOrderModified = PurchaseOrder.from(data.purchaseOrderModified)
-    const paymentCreated = Payment.from(data.paymentCreated)
-
-    return { distributor, purchaseOrderModified, paymentCreated }
+    return {
+      distributorModified: data.distributorModified
+        ? Distributor.from(data.distributorModified)
+        : undefined,
+      purchaseOrderModified: PurchaseOrder.from(data.purchaseOrderModified),
+      paymentCreated: data.paymentCreated ? Payment.from(data.paymentCreated) : undefined,
+    }
   }
 
   static async payDebt(body: {
     distributorId: number
     walletId: string
-    paidAmount: number
+    totalMoney: number
     note: string
-    dataList: { purchaseOrderId: string; paidAmount: number }[]
+    dataList: { purchaseOrderId: string; debtTotalMinus: number }[]
   }) {
     const response = await AxiosInstance.post('/purchase-order/pay-debt', body)
-    const { data } = response.data as BaseResponse<{
-      distributorModified: any
-      paymentCreatedList: any[]
-      purchaseOrderModifiedList: any[]
-    }>
+    const { data } = response.data as BaseResponse<
+      {
+        purchaseOrderModified: PurchaseOrder
+        distributorModified: Distributor
+        paymentCreated: Payment
+      }[]
+    >
 
-    const distributorModified = Distributor.from(data.distributorModified)
-    const purchaseOrderModifiedList = PurchaseOrder.fromList(data.purchaseOrderModifiedList)
-    const paymentCreatedList = Payment.fromList(data.paymentCreatedList)
-
-    return { distributorModified, purchaseOrderModifiedList, paymentCreatedList }
-  }
-
-  static async refundMoney(object: {
-    purchaseOrderId: string
-    body: {
-      walletId: string
-      refundAmount: number
-      note: string
-    }
-  }) {
-    const { body, purchaseOrderId } = object
-    const response = await AxiosInstance.post(
-      `/purchase-order/${purchaseOrderId}/refund-money`,
-      body,
-    )
-    const { data } = response.data as BaseResponse<{
-      distributor: any
-      paymentCreated: any
-      purchaseOrderModified: any
-    }>
-
-    const distributor = Distributor.from(data.distributor)
-    const purchaseOrderModified = PurchaseOrder.from(data.purchaseOrderModified)
-    const paymentCreated = Payment.from(data.paymentCreated)
-
-    return { distributor, purchaseOrderModified, paymentCreated }
+    return data.map((i) => {
+      return {
+        distributorModified: i.distributorModified
+          ? Distributor.from(i.distributorModified)
+          : undefined,
+        purchaseOrderModified: PurchaseOrder.from(i.purchaseOrderModified),
+        paymentCreated: i.paymentCreated ? Payment.from(i.paymentCreated) : undefined,
+      }
+    })
   }
 }

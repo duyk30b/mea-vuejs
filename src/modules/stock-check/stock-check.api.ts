@@ -59,7 +59,7 @@ export class StockCheckApi {
   }
 
   static async draftDestroy(stockCheckId: string) {
-    const response = await AxiosInstance.delete(`/stock-check/draft-destroy/${stockCheckId}`)
+    const response = await AxiosInstance.post(`/stock-check/draft-destroy/${stockCheckId}`)
 
     const { data } = response.data as BaseResponse<{ stockCheckId: string }>
     return data
@@ -94,7 +94,7 @@ export class StockCheckApi {
   }
 
   static async cancelledDestroy(stockCheckId: string) {
-    const response = await AxiosInstance.delete(`/stock-check/cancelled-destroy/${stockCheckId}`)
+    const response = await AxiosInstance.post(`/stock-check/cancelled-destroy/${stockCheckId}`)
 
     const { data } = response.data as BaseResponse<{ stockCheckId: string }>
     return data

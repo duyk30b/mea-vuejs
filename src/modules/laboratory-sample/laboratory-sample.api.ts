@@ -52,7 +52,7 @@ export class LaboratorySampleApi {
   }
 
   static async updateOne(id: number, laboratorySample: LaboratorySample) {
-    const response = await AxiosInstance.patch(`/laboratory-sample/update/${id}`, {
+    const response = await AxiosInstance.post(`/laboratory-sample/update/${id}`, {
       priority: laboratorySample.priority,
       name: laboratorySample.name,
       laboratoryIds: laboratorySample.laboratoryIds,
@@ -62,7 +62,7 @@ export class LaboratorySampleApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/laboratory-sample/destroy/${id}`)
+    const response = await AxiosInstance.post(`/laboratory-sample/destroy/${id}`)
     const { data, meta } = response.data as BaseResponse<boolean>
     return data
   }

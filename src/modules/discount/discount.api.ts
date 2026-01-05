@@ -37,7 +37,7 @@ export class DiscountApi {
   }
 
   static async updateOne(id: number, discount: Discount) {
-    const response = await AxiosInstance.patch(`/discount/update/${id}`, {
+    const response = await AxiosInstance.post(`/discount/update/${id}`, {
       priority: discount.priority,
       isActive: discount.isActive,
       // discountInteractType: discount.discountInteractType,
@@ -54,7 +54,7 @@ export class DiscountApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/discount/destroy/${id}`)
+    const response = await AxiosInstance.post(`/discount/destroy/${id}`)
     const result = response.data as BaseResponse<boolean>
     return result
   }

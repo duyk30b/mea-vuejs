@@ -1,17 +1,21 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import VuePagination from '@/common/VuePagination.vue'
+import VueTag from '@/common/VueTag.vue'
+import { IconApartment, IconBug, IconDollar, IconForm } from '@/common/icon-antd'
+import { InputSelect } from '@/common/vue-form'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { OrganizationStatus, type Organization } from '@/modules/organization'
+import { RootOrganizationApi } from '@/modules/root-organization/root-organization.api'
+import { ESString, timeToText } from '@/utils'
 import { onBeforeMount, ref } from 'vue'
-import VueButton from '../../common/VueButton.vue'
-import VueTag from '../../common/VueTag.vue'
-import { IconApartment, IconForm } from '../../common/icon-antd'
-import { useSettingStore } from '../../modules/_me/setting.store'
-import { OrganizationStatus, type Organization } from '../../modules/organization'
-import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
-import { timeToText } from '../../utils'
 import ModalRootOrganizationUpsert from './ModalRootOrganizationUpsert.vue'
-import VuePagination from '../../common/VuePagination.vue'
-import { InputSelect } from '../../common/vue-form'
+import { CONFIG } from '@/config'
+import { VueTooltip } from '@/common/popover'
+import ModalOrganizationPayment from './ModalOrganizationPayment.vue'
 
 const modalRootOrganizationUpsert = ref<InstanceType<typeof ModalRootOrganizationUpsert>>()
+const modalOrganizationPayment = ref<InstanceType<typeof ModalOrganizationPayment>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -25,14 +29,17 @@ const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await RootOrganizationApi.pagination({
+    const paginationResult = await RootOrganizationApi.pagination({
       page: page.value,
       limit: limit.value,
-      // relation: { users: true },
+      relation: {
+        organizationPaymentList: true,
+        userList: false,
+      },
       sort: { id: 'DESC' },
     })
-    organizationList.value = data
-    total.value = meta.total
+    organizationList.value = paginationResult.organizationList
+    total.value = paginationResult.total
   } catch (error) {
     console.log('🚀 ~ file: ProcedureList.vue:61 ~ error:', error)
   }
@@ -59,12 +66,19 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 const handleModalRootOrganizationUpsertSuccess = async () => {
   await startFetchData()
 }
+const handleModalOrganizationPaymentSuccess = async () => {
+  await startFetchData()
+}
 </script>
 
 <template>
   <ModalRootOrganizationUpsert
     ref="modalRootOrganizationUpsert"
     @success="handleModalRootOrganizationUpsertSuccess"
+  />
+  <ModalOrganizationPayment
+    ref="modalOrganizationPayment"
+    @success="handleModalOrganizationPaymentSuccess"
   />
   <div class="page-header">
     <div class="flex items-center gap-4">
@@ -83,12 +97,13 @@ const handleModalRootOrganizationUpsertSuccess = async () => {
       <table>
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>ID</th>
             <th>OrganizationCode</th>
             <th>Phone</th>
-            <th>Facebook</th>
             <th>Name</th>
             <th>ExpiryDate</th>
+            <th>T.Toán</th>
             <th>Note</th>
             <th>Trạng thái</th>
             <th>Sửa</th>
@@ -99,12 +114,37 @@ const handleModalRootOrganizationUpsertSuccess = async () => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="organization in organizationList" :key="organization.id">
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip>
+                <template #trigger>
+                  <IconBug width="1.2em" height="1.2em" />
+                </template>
+                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                  <pre>{{ JSON.stringify(organization, null, 4) }}</pre>
+                </div>
+              </VueTooltip>
+            </td>
             <td class="text-center">{{ organization.id }}</td>
             <td class="text-center">{{ organization.organizationCode }}</td>
             <td class="text-center">{{ organization.phone }}</td>
-            <td>{{ organization.facebook }}</td>
             <td>{{ organization.name }}</td>
             <td class="text-center">{{ timeToText(organization.expiryDate) }}</td>
+            <td class="text-center">
+              <div class="flex gap-2 justify-end items-center">
+                <span style="font-weight: 500">
+                  {{
+                    ESString.formatMoney(
+                      (organization.organizationPaymentList || []).reduce((acc, item) => {
+                        return acc + item.money
+                      }, 0),
+                    )
+                  }}
+                </span>
+                <a class="text-xl" @click="modalOrganizationPayment?.openModal(organization)">
+                  <IconDollar />
+                </a>
+              </div>
+            </td>
             <td>{{ organization.note }}</td>
             <td class="text-center">
               <VueTag

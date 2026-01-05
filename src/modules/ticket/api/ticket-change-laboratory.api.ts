@@ -1,7 +1,6 @@
 import { TicketLaboratoryGroup } from '@/modules/ticket-laboratory'
 import { AxiosInstance } from '../../../core/axios.instance'
 import type { BaseResponse } from '../../_base/base-dto'
-import type { PaymentMoneyStatus } from '../../enum'
 import type { TicketLaboratory, TicketLaboratoryResult } from '../../ticket-laboratory'
 import type { TicketUser } from '../../ticket-user'
 
@@ -80,7 +79,7 @@ export class TicketChangeLaboratoryApi {
 
   static async destroyTicketLaboratory(body: { ticketId: string; ticketLaboratoryId: string }) {
     const { ticketId, ticketLaboratoryId } = body
-    const response = await AxiosInstance.delete(
+    const response = await AxiosInstance.post(
       `/ticket/${ticketId}/laboratory/destroy-ticket-laboratory/${ticketLaboratoryId}`,
     )
     const { data } = response.data as BaseResponse<boolean>
@@ -91,7 +90,7 @@ export class TicketChangeLaboratoryApi {
     ticketLaboratoryGroupId: string
   }) {
     const { ticketId, ticketLaboratoryGroupId } = body
-    const response = await AxiosInstance.delete(
+    const response = await AxiosInstance.post(
       `/ticket/${ticketId}/laboratory/destroy-ticket-laboratory-group/${ticketLaboratoryGroupId}`,
     )
     const { data } = response.data as BaseResponse<boolean>

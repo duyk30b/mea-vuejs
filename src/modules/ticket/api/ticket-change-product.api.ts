@@ -73,7 +73,7 @@ export class TicketChangeProductApi {
 
   static async destroyTicketProductConsumable(body: { ticketId: string; ticketProductId: string }) {
     const { ticketId, ticketProductId } = body
-    const response = await AxiosInstance.delete(
+    const response = await AxiosInstance.post(
       `/ticket/${ticketId}/consumable/destroy-ticket-product-consumable/${ticketProductId}`,
     )
     const { data } = response.data as BaseResponse<boolean>
@@ -84,7 +84,7 @@ export class TicketChangeProductApi {
     ticketProductId: string
   }) {
     const { ticketId, ticketProductId } = body
-    const response = await AxiosInstance.delete(
+    const response = await AxiosInstance.post(
       `/ticket/${ticketId}/prescription/destroy-ticket-product-prescription/${ticketProductId}`,
     )
     const { data } = response.data as BaseResponse<boolean>

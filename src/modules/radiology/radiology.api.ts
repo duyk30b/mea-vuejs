@@ -1,6 +1,8 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import { debounceAsync } from '../../utils/helpers'
 import type { BaseResponse } from '../_base/base-dto'
+import type { Discount } from '../discount'
+import type { Position } from '../position'
 import { TicketRadiology } from '../ticket-radiology'
 import {
   RadiologyDetailQuery,
@@ -9,8 +11,6 @@ import {
   type RadiologyPaginationQuery,
 } from './radiology.dto'
 import { Radiology } from './radiology.model'
-import type { Discount } from '../discount'
-import type { Position } from '../position'
 
 export class RadiologyApi {
   static async pagination(options: RadiologyPaginationQuery) {
@@ -123,7 +123,7 @@ export class RadiologyApi {
     },
   ) {
     const { radiology, discountList, positionRequestList, positionResultList } = body
-    const response = await AxiosInstance.patch(`/radiology/update/${id}`, {
+    const response = await AxiosInstance.post(`/radiology/update/${id}`, {
       radiology: {
         radiologyCode: radiology.radiologyCode,
         name: radiology.name,
@@ -177,7 +177,7 @@ export class RadiologyApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/radiology/destroy/${id}`)
+    const response = await AxiosInstance.post(`/radiology/destroy/${id}`)
     const { data } = response.data as BaseResponse<{
       success: boolean
       radiologyId: number

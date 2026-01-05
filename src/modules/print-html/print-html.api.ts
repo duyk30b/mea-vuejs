@@ -7,7 +7,7 @@ import {
   type PrintHtmlGetOneQuery,
   type PrintHtmlPaginationQuery,
 } from './print-html.dto'
-import { PrintHtml, PrintHtmlType } from './print-html.model'
+import { PrintHtml } from './print-html.model'
 
 export class PrintHtmlApi {
   static async pagination(options: PrintHtmlPaginationQuery) {
@@ -63,7 +63,7 @@ export class PrintHtmlApi {
   }
 
   static async updateOne(id: number, printHtml: PrintHtml) {
-    const response = await AxiosInstance.patch(`/print-html/update/${id}`, {
+    const response = await AxiosInstance.post(`/print-html/update/${id}`, {
       priority: printHtml.priority || 0,
       printHtmlType: printHtml.printHtmlType || 0,
       name: printHtml.name || '',
@@ -77,7 +77,7 @@ export class PrintHtmlApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/print-html/destroy/${id}`)
+    const response = await AxiosInstance.post(`/print-html/destroy/${id}`)
     const { data, meta } = response.data as BaseResponse<boolean>
     return data
   }

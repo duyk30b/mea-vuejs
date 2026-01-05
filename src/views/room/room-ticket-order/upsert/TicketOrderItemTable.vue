@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IconFileSearch } from '@/common/icon-antd'
+import { IconBug, IconDelete, IconFileSearch } from '@/common/icon-antd'
 import { IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import { IconEditSquare } from '@/common/icon-google'
 import { InputNumber } from '@/common/vue-form'
@@ -13,6 +13,8 @@ import { ref } from 'vue'
 import ModalTicketOrderUpdateProcedure from './ModalTicketOrderUpdateProcedure.vue'
 import ModalTicketOrderUpdateProduct from './ModalTicketOrderUpdateProduct.vue'
 import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
+import { CONFIG } from '@/config'
+import { VueTooltip } from '@/common/popover'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
@@ -42,6 +44,20 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
   ticketOrderUpsertRef.value.ticketProcedureList![index] =
     ticketOrderUpsertRef.value.ticketProcedureList![index + count]
   ticketOrderUpsertRef.value.ticketProcedureList![index + count] = temp
+}
+
+const startRemoveTicketProduct = (_localId: string) => {
+  const index = ticketOrderUpsertRef.value.ticketProductList!.findIndex((i) => {
+    return i._localId === _localId
+  })
+  ticketOrderUpsertRef.value.ticketProductList!.splice(index, 1)
+}
+
+const startRemoveTicketProcedure = (_localId: string) => {
+  const index = ticketOrderUpsertRef.value.ticketProcedureList!.findIndex((i) => {
+    return i._localId === _localId
+  })
+  ticketOrderUpsertRef.value.ticketProcedureList!.splice(index, 1)
 }
 </script>
 
@@ -313,6 +329,7 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
       <table>
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>#</th>
             <th>Tên</th>
             <th v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit">Đ.Vị</th>
@@ -320,7 +337,7 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
             <th v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount">C.Khấu</th>
             <th>Đơn giá</th>
             <th>Tổng tiền</th>
-            <th>Action</th>
+            <th colspan="2">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -330,8 +347,18 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
             </tr>
             <tr
               v-for="(ticketProcedure, index) in ticketOrderUpsertRef.ticketProcedureList"
-              :key="index"
+              :key="ticketProcedure._localId"
             >
+              <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+                <VueTooltip>
+                  <template #trigger>
+                    <IconBug width="1.2em" height="1.2em" />
+                  </template>
+                  <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                    <pre>{{ JSON.stringify(ticketProcedure, null, 4) }}</pre>
+                  </div>
+                </VueTooltip>
+              </td>
               <td>
                 <div class="flex flex-col items-center">
                   <button
@@ -417,6 +444,14 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
                   <IconEditSquare />
                 </a>
               </td>
+              <td class="text-center" style="width: 24px; font-size: 20px">
+                <a
+                  style="color: var(--text-red)"
+                  @click="startRemoveTicketProcedure(ticketProcedure._localId)"
+                >
+                  <IconDelete />
+                </a>
+              </td>
             </tr>
           </template>
           <template v-if="ticketOrderUpsertRef.ticketProductList!.length">
@@ -425,8 +460,18 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
             </tr>
             <tr
               v-for="(ticketProduct, index) in ticketOrderUpsertRef.ticketProductList || []"
-              :key="index"
+              :key="ticketProduct._localId"
             >
+              <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+                <VueTooltip>
+                  <template #trigger>
+                    <IconBug width="1.2em" height="1.2em" />
+                  </template>
+                  <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                    <pre>{{ JSON.stringify(ticketProduct, null, 4) }}</pre>
+                  </div>
+                </VueTooltip>
+              </td>
               <td>
                 <div class="flex flex-col items-center">
                   <button
@@ -524,6 +569,14 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
               <td class="text-center" style="width: 24px; font-size: 20px">
                 <a class="text-orange-500" @click="modalTicketOrderUpdateProduct?.openModal(index)">
                   <IconEditSquare />
+                </a>
+              </td>
+              <td class="text-center" style="width: 24px; font-size: 20px">
+                <a
+                  style="color: var(--text-red)"
+                  @click="startRemoveTicketProduct(ticketProduct._localId)"
+                >
+                  <IconDelete />
                 </a>
               </td>
             </tr>

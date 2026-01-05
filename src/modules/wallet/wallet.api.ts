@@ -43,7 +43,7 @@ export class WalletApi {
   }
 
   static async updateOne(id: string, wallet: Partial<Wallet>) {
-    const response = await AxiosInstance.patch(`/wallet/update/${id}`, {
+    const response = await AxiosInstance.post(`/wallet/update/${id}`, {
       code: wallet.code,
       name: wallet.name,
       walletType: wallet.walletType,
@@ -55,7 +55,7 @@ export class WalletApi {
   }
 
   static async destroyOne(id: string) {
-    const response = await AxiosInstance.delete(`/wallet/destroy/${id}`)
+    const response = await AxiosInstance.post(`/wallet/destroy/${id}`)
     const result = response.data as BaseResponse<{ walletId: number }>
     return result
   }

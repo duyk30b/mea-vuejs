@@ -47,7 +47,7 @@ export class WarehouseApi {
   }
 
   static async updateOne(id: number, warehouse: Warehouse) {
-    const response = await AxiosInstance.patch(`/warehouse/update/${id}`, {
+    const response = await AxiosInstance.post(`/warehouse/update/${id}`, {
       name: warehouse.name,
     })
     const { data } = response.data as BaseResponse<{ warehouse: any }>
@@ -55,7 +55,7 @@ export class WarehouseApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/warehouse/destroy/${id}`)
+    const response = await AxiosInstance.post(`/warehouse/destroy/${id}`)
     const result = response.data as BaseResponse<{
       warehouseId: number
       countBatch: number

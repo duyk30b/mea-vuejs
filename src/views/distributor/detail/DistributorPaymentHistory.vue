@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { IconBug } from '@/common/icon-antd'
+import { VueTooltip } from '@/common/popover'
 import VuePagination from '@/common/VuePagination.vue'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
@@ -107,7 +109,7 @@ defineExpose({ startFetchData })
     <table v-if="!isMobile">
       <thead>
         <tr>
-          <th v-if="CONFIG.MODE === 'development'">ID</th>
+          <th v-if="CONFIG.MODE === 'development'"></th>
           <th>Phiếu nhập</th>
           <th>Ví Thanh Toán</th>
           <th>Note</th>
@@ -121,8 +123,15 @@ defineExpose({ startFetchData })
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
         <tr v-for="payment in paymentList" :key="payment.id">
-          <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
-            {{ payment.id }}
+          <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+            <VueTooltip>
+              <template #trigger>
+                <IconBug width="1.2em" height="1.2em" />
+              </template>
+              <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+                <pre>{{ JSON.stringify(payment, null, 4) }}</pre>
+              </div>
+            </VueTooltip>
           </td>
           <td>
             <LinkAndStatusPurchaseOrder
@@ -148,7 +157,7 @@ defineExpose({ startFetchData })
             </div>
           </td>
           <td style="white-space: nowrap; text-align: right">
-            {{ formatMoney(payment.paidTotal) }}
+            {{ formatMoney(-payment.paidTotal) }}
           </td>
           <td style="white-space: nowrap; text-align: right">
             {{ formatMoney(payment.debtTotal) }}

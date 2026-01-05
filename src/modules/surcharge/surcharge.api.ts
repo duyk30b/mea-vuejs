@@ -42,7 +42,7 @@ export class SurchargeApi {
   }
 
   static async updateOne(id: number, surcharge: Partial<Surcharge>) {
-    const response = await AxiosInstance.patch(`/surcharge/update/${id}`, {
+    const response = await AxiosInstance.post(`/surcharge/update/${id}`, {
       code: surcharge.code,
       name: surcharge.name,
       isActive: surcharge.isActive,
@@ -52,7 +52,7 @@ export class SurchargeApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/surcharge/destroy/${id}`)
+    const response = await AxiosInstance.post(`/surcharge/destroy/${id}`)
     const result = response.data as BaseResponse<{ surchargeId: number }>
     return result
   }

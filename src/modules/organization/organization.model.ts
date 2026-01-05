@@ -1,5 +1,6 @@
 import { Image } from '../image/image.model'
 import { User } from '../user'
+import { OrganizationPayment } from './organization-payment.model'
 
 export enum OrganizationStatus {
   Inactive = 0,
@@ -13,14 +14,16 @@ export class Organization {
   phone: string
   email: string
   emailVerify: 0 | 1
-  facebook: string // Facebook
   level: number
+
+  permissionIds: string
+  status: OrganizationStatus
+
+  facebook: string // Facebook
   name: string
   addressProvince: string
   addressWard: string
   addressStreet: string
-  permissionIds: string
-  status: OrganizationStatus
 
   note: string // Ghi chú
   expiryDate: number
@@ -33,6 +36,7 @@ export class Organization {
   deletedAt: number
 
   logoImage?: Image
+  organizationPaymentList?: OrganizationPayment[]
   userList?: User[]
 
   static init(): Organization {
@@ -47,6 +51,7 @@ export class Organization {
 
   static blank() {
     const ins = Organization.init()
+    ins.organizationPaymentList = []
     return ins
   }
 
@@ -72,6 +77,9 @@ export class Organization {
     if (target.userList) {
       target.userList = User.basicList(target.userList)
     }
+    if (target.organizationPaymentList) {
+      target.organizationPaymentList = OrganizationPayment.basicList(target.organizationPaymentList)
+    }
     return target
   }
 
@@ -81,20 +89,24 @@ export class Organization {
 
   static equal(a: Organization, b: Organization) {
     if (a.id != b.id) return false
+    if (a.organizationCode != b.organizationCode) return false
     if (a.phone != b.phone) return false
     if (a.email != b.email) return false
     if (a.emailVerify != b.emailVerify) return false
-    if (a.facebook != b.facebook) return false
     if (a.level != b.level) return false
+
+    if (a.permissionIds != b.permissionIds) return false
+    if (a.status != b.status) return false
+
+    if (a.facebook != b.facebook) return false
     if (a.name != b.name) return false
     if (a.addressProvince != b.addressProvince) return false
     if (a.addressWard != b.addressWard) return false
     if (a.addressStreet != b.addressStreet) return false
-    if (a.permissionIds != b.permissionIds) return false
-    if (a.status != b.status) return false
 
     if (a.note != b.note) return false
     if (a.expiryDate != b.expiryDate) return false
+    
     if (a.dataVersion != b.dataVersion) return false
     if (a.createdAt != b.createdAt) return false
     if (a.updatedAt != b.updatedAt) return false

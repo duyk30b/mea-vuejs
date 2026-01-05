@@ -1,12 +1,12 @@
 import { AxiosInstance } from '../../../core/axios.instance'
 import type { BaseResponse } from '../../_base/base-dto'
 import { Distributor } from '../../distributor'
-import { Payment } from '../../payment'
+import { Payment, PaymentActionType } from '../../payment'
 import { PurchaseOrder } from '../purchase-order.model'
 
 export class PurchaseOrderActionApi {
   static async destroy(purchaseOrderId: string) {
-    const response = await AxiosInstance.delete(`/purchase-order/${purchaseOrderId}/destroy`)
+    const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/destroy`)
     const { data } = response.data as BaseResponse<{ purchaseOrderId: string }>
     return data
   }
@@ -15,13 +15,20 @@ export class PurchaseOrderActionApi {
     purchaseOrderId: string,
     body: {
       walletId: string
-      paidAmount: number
+      paidTotal: number
+      debtTotal: number
       note: string
     },
   ) {
     const response = await AxiosInstance.post(
       `/purchase-order/${purchaseOrderId}/send-product-and-payment-and-close`,
-      body,
+      {
+        walletId: body.walletId,
+        paidTotal: body.paidTotal,
+        debtTotal: body.debtTotal, // để ghi nợ ở hành động close cũng được
+        paymentActionType: PaymentActionType.PaymentMoney,
+        note: body.note,
+      },
     )
     const { data } = response.data as BaseResponse<{
       purchaseOrderModified: any

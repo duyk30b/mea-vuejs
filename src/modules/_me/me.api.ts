@@ -26,7 +26,7 @@ export class MeApi {
   }
 
   static async changePassword(oldPassword: string, newPassword: string) {
-    const response = await AxiosInstance.patch('/me/change-password', {
+    const response = await AxiosInstance.post('/me/change-password', {
       oldPassword,
       newPassword,
     })

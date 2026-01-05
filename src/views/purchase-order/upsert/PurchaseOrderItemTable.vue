@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { IconFileSearch } from '@/common/icon-antd'
 import { IconMinus, IconPlus, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
-import { IconEditSquare } from '@/common/icon-google'
+import { IconDelete, IconEditSquare } from '@/common/icon-google'
 import { InputNumber } from '@/common/vue-form'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import type { Warehouse } from '@/modules/warehouse'
@@ -31,6 +31,13 @@ const changeItemPosition = (index: number, count: number) => {
 
 const handleChangePurchaseOrderItemUnitQuantity = (unitQuantity: number, index: number) => {
   purchaseOrder.value.purchaseOrderItemList![index].unitQuantity = unitQuantity
+}
+
+const startRemovePurchaseOrderItem = (_localId: string) => {
+  const index = purchaseOrder.value.purchaseOrderItemList!.findIndex((i) => {
+    return i._localId === _localId
+  })
+  purchaseOrder.value.purchaseOrderItemList!.splice(index, 1)
 }
 </script>
 
@@ -128,49 +135,12 @@ const handleChangePurchaseOrderItemUnitQuantity = (unitQuantity: number, index: 
               {{ warehouseMap[purchaseOrderItem.warehouseId]?.name }}
             </div>
           </td>
-          <td class="text-center whitespace-nowrap">
-            <div>
-              <button
-                style="border: none; font-size: 1.2rem; line-height: 0.5; background: none"
-                class="disabled:opacity-[30%] disabled:cursor-not-allowed"
-                @click="
-                  (e) =>
-                    handleChangePurchaseOrderItemUnitQuantity(
-                      purchaseOrderItem.unitQuantity + 1,
-                      index,
-                    )
-                "
-              >
-                <IconSortUp style="opacity: 0.6" />
-              </button>
-              <div
-                style="font-size: 1.1rem"
-                contenteditable="true"
-                @input="
-                  (e) =>
-                    handleChangePurchaseOrderItemUnitQuantity(
-                      Number((e.target as HTMLElement)?.innerText) || 0,
-                      index,
-                    )
-                "
-              >
-                {{ purchaseOrderItem.unitQuantity }}
-              </div>
-              <button
-                style="border: none; font-size: 1.2rem; line-height: 0.5; background: none"
-                class="disabled:opacity-[30%] disabled:cursor-not-allowed"
-                :disabled="purchaseOrderItem.unitQuantity == 0"
-                @click="
-                  (e) =>
-                    handleChangePurchaseOrderItemUnitQuantity(
-                      purchaseOrderItem.unitQuantity - 1,
-                      index,
-                    )
-                "
-              >
-                <IconSortDown style="opacity: 0.6" />
-              </button>
-            </div>
+          <td style="width: 100px">
+            <InputNumber
+              v-model:value="purchaseOrderItem.unitQuantity"
+              controlVertical
+              :controlMinusDisable="purchaseOrderItem.unitQuantity === 0"
+            />
           </td>
           <td class="text-right whitespace-nowrap">
             {{ formatMoney(purchaseOrderItem.unitCostPrice) }}
@@ -207,7 +177,7 @@ const handleChangePurchaseOrderItemUnitQuantity = (unitQuantity: number, index: 
           </th>
           <th>G.Nhập</th>
           <th>T.Tiền</th>
-          <th>Action</th>
+          <th colspan="2">Action</th>
         </tr>
       </thead>
       <tbody>
@@ -288,43 +258,13 @@ const handleChangePurchaseOrderItemUnitQuantity = (unitQuantity: number, index: 
           <td v-if="settingStore.SCREEN_PURCHASE_ORDER_UPSERT.purchaseOrderItemsTable.warehouse">
             {{ warehouseMap[purchaseOrderItem.warehouseId]?.name }}
           </td>
-          <td>
-            <div class="flex items-center justify-between">
-              <button
-                style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                :disabled="purchaseOrderItem.quantity === 0"
-                @click="
-                  (e) =>
-                    handleChangePurchaseOrderItemUnitQuantity(
-                      purchaseOrderItem.unitQuantity - 1,
-                      index,
-                    )
-                "
-              >
-                <IconMinus />
-              </button>
-              <div style="width: calc(100% - 60px); min-width: 50px">
-                <InputNumber
-                  :value="purchaseOrderItem.unitQuantity"
-                  textAlign="right"
-                  @update:value="(v) => handleChangePurchaseOrderItemUnitQuantity(v, index)"
-                />
-              </div>
-              <button
-                style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                @click="
-                  (e) =>
-                    handleChangePurchaseOrderItemUnitQuantity(
-                      purchaseOrderItem.unitQuantity + 1,
-                      index,
-                    )
-                "
-              >
-                <IconPlus />
-              </button>
-            </div>
+          <td style="width: 150px">
+            <InputNumber
+              v-model:value="purchaseOrderItem.unitQuantity"
+              textAlign="right"
+              controlHorizontal
+              :controlMinusDisable="purchaseOrderItem.quantity === 0"
+            />
           </td>
           <td
             v-if="settingStore.SCREEN_PURCHASE_ORDER_UPSERT.purchaseOrderItemsTable.unit"
@@ -341,10 +281,18 @@ const handleChangePurchaseOrderItemUnitQuantity = (unitQuantity: number, index: 
           <td class="text-center">
             <a
               class="text-orange-500"
-              style="font-size: 22px"
+              style="font-size: 20px"
               @click="modalPurchaseOrderItemUpdate?.openModal(index)"
             >
               <IconEditSquare />
+            </a>
+          </td>
+          <td class="text-center">
+            <a
+              style="font-size: 22px; color: var(--text-red)"
+              @click="startRemovePurchaseOrderItem(purchaseOrderItem._localId)"
+            >
+              <IconDelete />
             </a>
           </td>
         </tr>

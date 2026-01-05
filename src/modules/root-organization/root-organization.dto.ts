@@ -4,7 +4,8 @@ export class RootOrganizationGetQuery {
   page?: number
   limit?: number
   relation?: {
-    users?: boolean
+    organizationPaymentList?: boolean
+    userList?: boolean
   }
 
   filter?: { id: number }

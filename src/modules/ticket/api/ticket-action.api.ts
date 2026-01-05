@@ -3,9 +3,9 @@ import { Customer } from '@/modules/customer'
 import type { DiscountType } from '@/modules/enum'
 import { Payment } from '@/modules/payment'
 import { TicketProduct } from '@/modules/ticket-product'
+import type { TicketSurcharge } from '@/modules/ticket-surcharge/ticket-surcharge.model'
 import type { BaseResponse } from '../../_base/base-dto'
 import { Ticket } from '../ticket.model'
-import type { TicketSurcharge } from '@/modules/ticket-surcharge/ticket-surcharge.model'
 
 export type TicketItemChangeMoney = {
   id: string
@@ -164,7 +164,7 @@ export class TicketActionApi {
   }
 
   static async destroy(ticketId: string) {
-    const response = await AxiosInstance.delete(`/ticket/${ticketId}/destroy`)
+    const response = await AxiosInstance.post(`/ticket/${ticketId}/destroy`)
     const { data } = response.data as BaseResponse<{ ticketId: any }>
     return data
   }

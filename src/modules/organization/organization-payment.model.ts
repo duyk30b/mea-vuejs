@@ -1,15 +1,15 @@
-
 export class OrganizationPayment {
   id: number
   oid: string
-  payment: number // tổng tiền thanh toán
-  createdAt: string
+  money: number // tổng tiền thanh toán
+  createdAt: number
+  expiryAt: number
   note: string // Ghi chú
 
   static init(): OrganizationPayment {
     const ins = new OrganizationPayment()
     ins.id = 0
-    ins.payment = 0
+    ins.money = 0
     return ins
   }
 
@@ -44,7 +44,7 @@ export class OrganizationPayment {
   static equal(a: OrganizationPayment, b: OrganizationPayment) {
     if (a.id != b.id) return false
     if (a.oid != b.oid) return false
-    if (a.payment != b.payment) return false
+    if (a.money != b.money) return false
     if (a.createdAt != b.createdAt) return false
     if (a.note != b.note) return false
     return true

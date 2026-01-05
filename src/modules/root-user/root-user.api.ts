@@ -34,7 +34,7 @@ export class RootUserApi {
   }
 
   static async updateOne(id: number, user: User) {
-    const response = await AxiosInstance.patch(`/root/user/update/${id}`, {
+    const response = await AxiosInstance.post(`/root/user/update/${id}`, {
       phone: user.phone,
       username: user.username,
       password: user.password,

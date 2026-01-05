@@ -39,7 +39,7 @@ export class ProductGroupApi {
   }
 
   static async replaceAll(body: ProductGroup[]) {
-    const response = await AxiosInstance.put('/product-group/replace-all', {
+    const response = await AxiosInstance.post('/product-group/replace-all', {
       productGroupReplaceAll: body.map((i) => {
         return {
           id: i.id || 0,
@@ -60,7 +60,7 @@ export class ProductGroupApi {
   }
 
   static async updateOne(id: number, productGroup: ProductGroup) {
-    const response = await AxiosInstance.patch(`/product-group/update/${id}`, {
+    const response = await AxiosInstance.post(`/product-group/update/${id}`, {
       name: productGroup.name,
     })
     const { data } = response.data as BaseResponse
@@ -68,7 +68,7 @@ export class ProductGroupApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/product-group/destroy/${id}`)
+    const response = await AxiosInstance.post(`/product-group/destroy/${id}`)
     const { data, meta } = response.data as BaseResponse
     return ProductGroup.from(data)
   }

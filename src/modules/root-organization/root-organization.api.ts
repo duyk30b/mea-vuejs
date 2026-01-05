@@ -13,8 +13,10 @@ export class RootOrganizationApi {
     const response = await AxiosInstance.get('/root/organization/pagination', { params })
     const { data, meta } = response.data as BaseResponse
     return {
-      meta,
-      data: Organization.fromList(data),
+      page: data.page,
+      limit: data.limit,
+      total: data.total,
+      organizationList: Organization.fromList(data.organizationList),
     }
   }
 
@@ -36,13 +38,13 @@ export class RootOrganizationApi {
       note: organization.note || '',
       expiryDate: organization.expiryDate,
     })
-    const { data } = response.data as BaseResponse<{ organization: any }>
+    const { data } = response.data as BaseResponse<{ organizationCreated: any }>
 
-    return Organization.from(data.organization)
+    return Organization.from(data.organizationCreated)
   }
 
   static async updateOne(id: number, organization: Organization) {
-    const response = await AxiosInstance.patch(`/root/organization/update/${id}`, {
+    const response = await AxiosInstance.post(`/root/organization/update/${id}`, {
       organizationCode: organization.organizationCode,
       phone: organization.phone,
       facebook: organization.facebook,
@@ -59,16 +61,26 @@ export class RootOrganizationApi {
       note: organization.note,
       expiryDate: organization.expiryDate,
     })
-    const { data } = response.data as BaseResponse<{ organization: any }>
+    const { data } = response.data as BaseResponse<{ organizationModified: any }>
 
-    return Organization.from(data.organization)
+    return Organization.from(data.organizationModified)
+  }
+
+  static async paymentMoney(
+    oid: number,
+    body: { createdAt: number; expiryAt: number; money: number; note: string },
+  ) {
+    const response = await AxiosInstance.post(`/root/organization/payment-money/${oid}`, body)
+    const { data } = response.data as BaseResponse
+
+    return data
   }
 
   static async clearOne(
     oid: number,
     body: { tableNameDeleteList: string[]; tableNameClearList: string[] },
   ) {
-    const response = await AxiosInstance.put(`/root/organization/clear/${oid}`, body)
+    const response = await AxiosInstance.post(`/root/organization/clear/${oid}`, body)
     const { data } = response.data as BaseResponse
 
     return data

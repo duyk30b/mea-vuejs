@@ -126,7 +126,7 @@ export class LaboratoryApi {
   ) {
     const { laboratory, laboratoryChildren, discountList, positionRequestList } = body
 
-    const response = await AxiosInstance.patch(`/laboratory/update/${id}`, {
+    const response = await AxiosInstance.post(`/laboratory/update/${id}`, {
       laboratory: {
         laboratoryCode: laboratory.laboratoryCode,
         priority: laboratory.priority,
@@ -183,7 +183,7 @@ export class LaboratoryApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/laboratory/destroy/${id}`)
+    const response = await AxiosInstance.post(`/laboratory/destroy/${id}`)
     const { data } = response.data as BaseResponse<{
       success: boolean
       laboratoryId: number

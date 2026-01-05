@@ -38,7 +38,7 @@ export class OrganizationApi {
       formData.append('imagesChange', imagesChangeStr)
     }
 
-    const response = await AxiosInstance.patch('/organization/update-info', formData, {
+    const response = await AxiosInstance.post('/organization/update-info', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -56,7 +56,7 @@ export class OrganizationApi {
   }
 
   static async changeEmail(email: string) {
-    const response = await AxiosInstance.patch('/organization/change-email', {
+    const response = await AxiosInstance.post('/organization/change-email', {
       email,
     })
     const { data } = response.data as BaseResponse<{ organization: any }>

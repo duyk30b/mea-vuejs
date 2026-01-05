@@ -46,7 +46,7 @@ export class RoleApi {
   }
 
   static async updateOne(id: number, role: Role, userIdList: number[]) {
-    const response = await AxiosInstance.patch(`/role/update/${id}`, {
+    const response = await AxiosInstance.post(`/role/update/${id}`, {
       name: role.name,
       roleCode: role.roleCode || '',
       permissionIds: role.permissionIds,
@@ -60,7 +60,7 @@ export class RoleApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/role/destroy/${id}`)
+    const response = await AxiosInstance.post(`/role/destroy/${id}`)
     const result = response.data as BaseResponse<{ roleId: number }>
 
     return result

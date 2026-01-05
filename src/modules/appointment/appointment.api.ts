@@ -76,7 +76,7 @@ export class AppointmentApi {
   }
 
   static async updateOne(appointmentId: string, body: { appointment: Appointment }) {
-    const response = await AxiosInstance.patch(`/appointment/update/${appointmentId}`, {
+    const response = await AxiosInstance.post(`/appointment/update/${appointmentId}`, {
       registeredAt: body.appointment.registeredAt,
       reason: body.appointment.reason,
       customerSourceId: body.appointment.customerSourceId,
@@ -88,7 +88,7 @@ export class AppointmentApi {
   }
 
   static async delete(appointmentId: string) {
-    const response = await AxiosInstance.delete(`/appointment/delete/${appointmentId}`)
+    const response = await AxiosInstance.post(`/appointment/delete/${appointmentId}`)
     const { data } = response.data as BaseResponse<{ appointmentId: any }>
     return data
   }

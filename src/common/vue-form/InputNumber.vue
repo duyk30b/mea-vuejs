@@ -15,6 +15,8 @@ const props = withDefaults(
     required?: boolean
     controlHorizontal?: boolean
     controlVertical?: boolean
+    controlPlusDisable?: boolean
+    controlMinusDisable?: boolean
     step?: number
     validate?: {
       'gt'?: number
@@ -42,6 +44,8 @@ const props = withDefaults(
     validate: () => ({}),
     controlHorizontal: false,
     controlVertical: false,
+    controlPlusDisable: false,
+    controlMinusDisable: false,
     step: 1,
   },
 )
@@ -159,6 +163,7 @@ defineExpose({ focus })
     <button
       type="button"
       v-if="controlHorizontal"
+      :disabled="controlMinusDisable"
       class="button-control-horizontal button-minus"
       @click.prevent="clickDown"
     >
@@ -169,8 +174,9 @@ defineExpose({ focus })
     <button
       type="button"
       v-if="controlVertical"
+      :disabled="controlPlusDisable"
       class="button-control-vertical button-up"
-      @click.prevent="clickDown"
+      @click.prevent="clickUp"
     >
       <IconSortUp style="opacity: 0.6" />
     </button>
@@ -189,6 +195,7 @@ defineExpose({ focus })
     <button
       type="button"
       v-if="controlHorizontal"
+      :disabled="controlPlusDisable"
       class="button-control-horizontal button-plus"
       @click.prevent="clickUp"
     >
@@ -199,6 +206,7 @@ defineExpose({ focus })
     <button
       type="button"
       v-if="controlVertical"
+      :disabled="controlMinusDisable"
       class="button-control-vertical button-down"
       @click.prevent="clickDown"
     >
@@ -239,6 +247,10 @@ defineExpose({ focus })
         height: 1.8em;
       }
     }
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
   }
   input {
     text-align: center !important;
@@ -264,6 +276,10 @@ input {
       width: 1.4em;
       height: 1.4em;
     }
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 }
 

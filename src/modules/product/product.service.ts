@@ -136,9 +136,10 @@ export class ProductService {
     const limit = query.limit || 10
     const productAll = await ProductDB.findAll()
 
-    const dataFilter = await ProductService.executeFilter(productAll, query.filter)
-    const dataRelation = await ProductService.executeRelation(dataFilter, query.relation)
-    const dataSort = await ProductService.executeSort(dataRelation, query.sort)
+    // dataRelation chạy trước, vì dataFilter có sử dụng lọc trong relation
+    const dataRelation = await ProductService.executeRelation(productAll, query.relation)
+    const dataFilter = await ProductService.executeFilter(dataRelation, query.filter)
+    const dataSort = await ProductService.executeSort(dataFilter, query.sort)
 
     const data = dataSort.slice((page - 1) * limit, page * limit)
 

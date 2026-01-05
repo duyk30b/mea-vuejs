@@ -1,11 +1,11 @@
-import { AxiosInstance } from '../../../core/axios.instance';
-import type { BaseResponse } from '../../_base/base-dto';
-import { TicketUser } from '../../ticket-user';
+import { AxiosInstance } from '../../../core/axios.instance'
+import type { BaseResponse } from '../../_base/base-dto'
+import { TicketUser } from '../../ticket-user'
 
 export class TicketChangeUserApi {
   static async destroyTicketUser(body: { ticketId: string; ticketUserId: string }) {
     const { ticketId, ticketUserId } = body
-    const response = await AxiosInstance.delete(
+    const response = await AxiosInstance.post(
       `/ticket/${ticketId}/user/destroy-ticket-user/${ticketUserId}`,
     )
     const { data } = response.data as BaseResponse<{ ticketUserDestroyedList: any[] }>

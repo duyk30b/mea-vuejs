@@ -56,7 +56,7 @@ export class TicketChangeRadiologyApi {
 
   static async destroyTicketRadiology(body: { ticketId: string; ticketRadiologyId: string }) {
     const { ticketId, ticketRadiologyId } = body
-    const response = await AxiosInstance.delete(
+    const response = await AxiosInstance.post(
       `/ticket/${ticketId}/radiology/destroy-ticket-radiology/${ticketRadiologyId}`,
     )
     const { data } = response.data as BaseResponse<boolean>

@@ -1,13 +1,13 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputCheckbox } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { Organization } from '@/modules/organization'
+import { RootOrganizationApi } from '@/modules/root-organization/root-organization.api'
 import { ref } from 'vue'
-import VueButton from '../../common/VueButton.vue'
-import { IconClose } from '../../common/icon-antd'
-import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { InputCheckbox } from '../../common/vue-form'
-import VueModal from '../../common/vue-modal/VueModal.vue'
-import { ModalStore } from '../../common/vue-modal/vue-modal.store'
-import { Organization } from '../../modules/organization'
-import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -29,6 +29,7 @@ const tableNameClearMapDefault = {
 const tableNameDeleteMapDefault = {
   Organization: 0,
   User: 0,
+  OrganizationPayment: 0,
   Appointment: 1,
   Batch: 0,
   Customer: 0,
@@ -71,6 +72,7 @@ const tableNameDeleteMapDefault = {
   TicketLaboratory: 1,
   TicketLaboratoryGroup: 1,
   TicketLaboratoryResult: 1,
+  TicketPaymentDetail: 1,
   TicketProcedure: 1,
   TicketProduct: 1,
   TicketRadiology: 1,

@@ -10,7 +10,7 @@ export class AddressApi {
   }
 
   static async replaceList(options: { addressAll: Address[] }) {
-    const response = await AxiosInstance.put(`/address/replace-all`, {
+    const response = await AxiosInstance.post(`/address/replace-all`, {
       addressAll: options.addressAll.map((i) => {
         return {
           province: i.province,

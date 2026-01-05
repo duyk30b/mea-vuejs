@@ -67,7 +67,7 @@ export class RoomApi {
 
   static async updateOne(id: number, body: { room: Room; userIdList?: number[] }) {
     const { room, userIdList } = body
-    const response = await AxiosInstance.patch(`/room/update/${id}`, {
+    const response = await AxiosInstance.post(`/room/update/${id}`, {
       room: {
         code: room.code,
         name: room.name,
@@ -82,7 +82,7 @@ export class RoomApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/room/destroy/${id}`)
+    const response = await AxiosInstance.post(`/room/destroy/${id}`)
     const { data } = response.data as BaseResponse<{
       roomId: number
       ticketList: Ticket[]

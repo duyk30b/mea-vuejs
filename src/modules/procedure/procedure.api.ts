@@ -117,7 +117,7 @@ export class ProcedureApi {
     },
   ) {
     const { procedure, discountList, positionRequestList, positionResultList } = body
-    const response = await AxiosInstance.patch(`/procedure/update/${id}`, {
+    const response = await AxiosInstance.post(`/procedure/update/${id}`, {
       procedure: {
         code: procedure.code,
         name: procedure.name,
@@ -166,7 +166,7 @@ export class ProcedureApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/procedure/destroy/${id}`)
+    const response = await AxiosInstance.post(`/procedure/destroy/${id}`)
     const { data } = response.data as BaseResponse<{
       procedureId: number
       ticketProcedureList: TicketProcedure[]

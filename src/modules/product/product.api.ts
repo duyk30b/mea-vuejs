@@ -122,7 +122,7 @@ export class ProductApi {
     },
   ) {
     const { product, discountList, positionRequestList } = body
-    const response = await AxiosInstance.patch(`/product/update/${id}`, {
+    const response = await AxiosInstance.post(`/product/update/${id}`, {
       product: {
         productCode: product.productCode,
         brandName: product.brandName,
@@ -181,7 +181,7 @@ export class ProductApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/product/destroy/${id}`)
+    const response = await AxiosInstance.post(`/product/destroy/${id}`)
     const { data } = response.data as BaseResponse<{
       success: boolean
       productId: number
@@ -194,7 +194,7 @@ export class ProductApi {
   }
 
   static async mergeProduct(options: { productIdSourceList: number[]; productIdTarget: number }) {
-    const response = await AxiosInstance.patch(`/product/merge-product`, {
+    const response = await AxiosInstance.post(`/product/merge-product`, {
       productIdSourceList: options.productIdSourceList,
       productIdTarget: options.productIdTarget,
     })

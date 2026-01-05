@@ -42,7 +42,7 @@ export class ExpenseApi {
   }
 
   static async updateOne(id: number, expense: Partial<Expense>) {
-    const response = await AxiosInstance.patch(`/expense/update/${id}`, {
+    const response = await AxiosInstance.post(`/expense/update/${id}`, {
       code: expense.code,
       name: expense.name,
       isActive: expense.isActive,
@@ -52,7 +52,7 @@ export class ExpenseApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/expense/destroy/${id}`)
+    const response = await AxiosInstance.post(`/expense/destroy/${id}`)
     const result = response.data as BaseResponse<{ expenseId: number }>
     return result
   }

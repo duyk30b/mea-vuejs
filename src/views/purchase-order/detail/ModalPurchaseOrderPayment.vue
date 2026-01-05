@@ -8,7 +8,7 @@ import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { PaymentViewType } from '@/modules/enum'
-import { PaymentActionTypeText, PaymentApi } from '@/modules/payment'
+import { PaymentActionType, PaymentActionTypeText, PaymentApi } from '@/modules/payment'
 import { Wallet, WalletService } from '@/modules/wallet'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { ESArray, timeToText } from '@/utils'
@@ -60,8 +60,9 @@ const handlePayment = async () => {
       const result = await PurchaseOrderActionApi.sendProductAndPaymentAndClose(
         purchaseOrder.value.id,
         {
-          paidAmount: money.value,
           walletId: walletId.value,
+          paidTotal: money.value,
+          debtTotal: 0, // ghi nợ khi close, chưa cần ghi nợ ngay
           note: '',
         },
       )
@@ -72,16 +73,20 @@ const handlePayment = async () => {
       if (money.value <= 0) {
         return AlertStore.addError('Số tiền không hợp lệ')
       }
-      const result = await PurchaseOrderMoneyApi.payment({
+      const result = await PurchaseOrderMoneyApi.paymentMoney({
         purchaseOrderId: purchaseOrder.value.id,
         body: {
           walletId: walletId.value,
-          paidAmount: money.value,
+          paidTotal: money.value,
+          debtTotal: 0,
+          paymentActionType: PaymentActionType.PaymentMoney,
           note: '',
         },
       })
       Object.assign(purchaseOrder.value, result.purchaseOrderModified)
-      purchaseOrder.value.paymentList!.push(result.paymentCreated)
+      if (result.paymentCreated) {
+        purchaseOrder.value.paymentList!.push(result.paymentCreated)
+      }
     }
     if (paymentView.value === PaymentViewType.PayDebt) {
       if (
@@ -91,15 +96,17 @@ const handlePayment = async () => {
         inputMoneyPayment.value?.focus()
         return AlertStore.addError('Số tiền thanh toán không hợp lệ')
       }
-      const result = await PurchaseOrderMoneyApi.payDebt({
+      const [result] = await PurchaseOrderMoneyApi.payDebt({
         distributorId: purchaseOrder.value.distributorId,
         walletId: walletId.value,
-        paidAmount: money.value,
-        dataList: [{ paidAmount: money.value, purchaseOrderId: purchaseOrder.value.id }],
+        totalMoney: money.value,
+        dataList: [{ debtTotalMinus: money.value, purchaseOrderId: purchaseOrder.value.id }],
         note: '',
       })
-      Object.assign(purchaseOrder.value, result.purchaseOrderModifiedList[0])
-      purchaseOrder.value.paymentList!.push(...result.paymentCreatedList)
+      Object.assign(purchaseOrder.value, result.purchaseOrderModified)
+      if (result.paymentCreated) {
+        purchaseOrder.value.paymentList!.push(result.paymentCreated)
+      }
     }
     if (paymentView.value === PaymentViewType.RefundOverpaid) {
       if (
@@ -109,16 +116,20 @@ const handlePayment = async () => {
         inputMoneyPayment.value?.focus()
         return AlertStore.addError('Số tiền thanh toán không hợp lệ')
       }
-      const result = await PurchaseOrderMoneyApi.refundMoney({
+      const result = await PurchaseOrderMoneyApi.paymentMoney({
         purchaseOrderId: purchaseOrder.value.id,
         body: {
           walletId: walletId.value,
-          refundAmount: money.value,
+          paidTotal: -money.value,
+          debtTotal: 0,
+          paymentActionType: PaymentActionType.RefundMoney,
           note: '',
         },
       })
       Object.assign(purchaseOrder.value, result.purchaseOrderModified)
-      purchaseOrder.value.paymentList!.push(result.paymentCreated)
+      if (result.paymentCreated) {
+        purchaseOrder.value.paymentList!.push(result.paymentCreated)
+      }
     }
 
     emit('success')

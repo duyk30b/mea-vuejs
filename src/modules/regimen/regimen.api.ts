@@ -123,7 +123,7 @@ export class RegimenApi {
     },
   ) {
     const { regimen, regimenItemList, discountList, positionRequestList, positionResultList } = body
-    const response = await AxiosInstance.patch(`/regimen/update/${id}`, {
+    const response = await AxiosInstance.post(`/regimen/update/${id}`, {
       regimen: {
         code: regimen.code,
         name: regimen.name,
@@ -176,7 +176,7 @@ export class RegimenApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/regimen/destroy/${id}`)
+    const response = await AxiosInstance.post(`/regimen/destroy/${id}`)
     const { data } = response.data as BaseResponse<{
       regimenId: number
       ticketRegimenList: TicketRegimen[]

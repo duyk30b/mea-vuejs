@@ -80,15 +80,18 @@ const closeModal = () => {
   indexUpdate = -1
 }
 
-const clickDestroy = async () => {
-  ticketOrderUpsertRef.value.ticketProcedureList?.splice(indexUpdate, 1)
-  closeModal()
-}
-
 const updateTicketProcedure = async () => {
   ticketOrderUpsertRef.value.ticketProcedureList![indexUpdate] = TicketProcedure.from(
     ticketProcedure.value,
   )
+  closeModal()
+}
+
+const startRemoveTicketProcedure = (_localId: string) => {
+  const index = ticketOrderUpsertRef.value.ticketProcedureList!.findIndex((i) => {
+    return i._localId === _localId
+  })
+  ticketOrderUpsertRef.value.ticketProcedureList!.splice(index, 1)
   closeModal()
 }
 
@@ -171,7 +174,13 @@ defineExpose({ openModal })
         </div>
 
         <div style="flex-grow: 1; flex-basis: 80%" class="mt-6 flex gap-4">
-          <VueButton color="red" icon="trash" @click="clickDestroy">Xóa</VueButton>
+          <VueButton
+            color="red"
+            icon="trash"
+            @click="startRemoveTicketProcedure(ticketProcedure._localId)"
+          >
+            Xóa
+          </VueButton>
           <VueButton style="margin-left: auto" type="reset" icon="close" @click="closeModal">
             Đóng lại
           </VueButton>

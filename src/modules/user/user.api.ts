@@ -64,7 +64,7 @@ export class UserApi {
     },
   ) {
     const { user, account, roleIdList, roomIdList } = body
-    const response = await AxiosInstance.patch(`/user/update/${id}`, {
+    const response = await AxiosInstance.post(`/user/update/${id}`, {
       user: {
         phone: user.phone,
         fullName: user.fullName,
@@ -81,7 +81,7 @@ export class UserApi {
   }
 
   static async deleteOne(id: number) {
-    const response = await AxiosInstance.delete(`/user/delete/${id}`)
+    const response = await AxiosInstance.post(`/user/delete/${id}`)
     const { data } = response.data as BaseResponse<{ userId: number }>
     return data
   }

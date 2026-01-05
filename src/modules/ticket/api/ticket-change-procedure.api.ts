@@ -95,7 +95,7 @@ export class TicketChangeProcedureApi {
 
   static async destroyTicketProcedure(body: { ticketId: string; ticketProcedureId: string }) {
     const { ticketId, ticketProcedureId } = body
-    const response = await AxiosInstance.delete(
+    const response = await AxiosInstance.post(
       `/ticket/${ticketId}/procedure/destroy-ticket-procedure/${ticketProcedureId}`,
     )
     const { data } = response.data as BaseResponse<{ ticketId: any; ticketProcedureId: string }>
@@ -103,7 +103,7 @@ export class TicketChangeProcedureApi {
 
   static async destroyTicketRegimen(body: { ticketId: string; ticketRegimenId: string }) {
     const { ticketId, ticketRegimenId } = body
-    const response = await AxiosInstance.delete(
+    const response = await AxiosInstance.post(
       `/ticket/${ticketId}/procedure/destroy-ticket-regimen/${ticketRegimenId}`,
     )
     const { data } = response.data as BaseResponse<{ ticketId: any; ticketRegimenId: string }>

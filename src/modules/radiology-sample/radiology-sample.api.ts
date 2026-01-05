@@ -73,7 +73,7 @@ export class RadiologySampleApi {
 
   static async updateOne(id: number, body: { radiologySample: RadiologySample }) {
     const { radiologySample } = body
-    const response = await AxiosInstance.patch(`/radiology-sample/update/${id}`, {
+    const response = await AxiosInstance.post(`/radiology-sample/update/${id}`, {
       name: radiologySample.name || '',
       priority: radiologySample.priority || 0,
       userId: radiologySample.userId || 0,
@@ -89,7 +89,7 @@ export class RadiologySampleApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/radiology-sample/destroy/${id}`)
+    const response = await AxiosInstance.post(`/radiology-sample/destroy/${id}`)
     const result = response.data as BaseResponse<any>
 
     return result

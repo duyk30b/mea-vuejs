@@ -89,17 +89,17 @@ const handleSave = async () => {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
 
-    const data = await PurchaseOrderMoneyApi.payDebt({
+    const result = await PurchaseOrderMoneyApi.payDebt({
       distributorId: distributor.value.id,
       walletId: walletId.value,
-      paidAmount: money.value,
+      totalMoney: money.value,
       note: '',
       dataList: purchaseOrderPaymentList.value
-        .map((i) => ({ purchaseOrderId: i.purchaseOrder.id, paidAmount: i.money }))
-        .filter((i) => i.paidAmount > 0),
+        .map((i) => ({ purchaseOrderId: i.purchaseOrder.id, debtTotalMinus: i.money }))
+        .filter((i) => i.debtTotalMinus > 0),
     })
     AlertStore.addSuccess(`Trả nợ cho NCC ${distributor.value.fullName} thành công`)
-    emit('success', { distributor: data.distributorModified })
+    emit('success', { distributor: result[result.length].distributorModified! })
     closeModal()
   } catch (error) {
     console.log('🚀 ~ ModalDistributorPayDebt.vue:104 ~ handleSave ~ error:', error)

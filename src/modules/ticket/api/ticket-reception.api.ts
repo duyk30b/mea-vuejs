@@ -110,7 +110,7 @@ export class TicketChangeReceptionApi {
 
   static async destroyTicketReception(obj: { ticketId: string; ticketReceptionId: string }) {
     const { ticketId, ticketReceptionId } = obj
-    const response = await AxiosInstance.delete(
+    const response = await AxiosInstance.post(
       `/ticket/${ticketId}/reception-destroy/${ticketReceptionId}`,
     )
     const { data } = response.data as BaseResponse

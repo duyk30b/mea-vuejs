@@ -135,7 +135,7 @@ const Router = createRouter({
                 {
                   path: 'list',
                   name: 'RootOrganizationList',
-                  component: () => import('../views/root/RootOrganizationList.vue'),
+                  component: () => import('../views/root/root-organization/RootOrganizationList.vue'),
                   meta: { title: 'Organization' },
                 },
               ],

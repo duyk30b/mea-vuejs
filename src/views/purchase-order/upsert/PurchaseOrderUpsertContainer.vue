@@ -194,21 +194,21 @@ const savePurchaseOrder = async (type: EPurchaseOrderSave) => {
     saveLoading.value = true
     switch (type) {
       case EPurchaseOrderSave.CREATE_DRAFT: {
-        const response = await PurchaseOrderReceptionApi.createDraft(purchaseOrder.value)
+        const response = await PurchaseOrderReceptionApi.draftInsert(purchaseOrder.value)
         await router.push({
           name: 'PurchaseOrderDetailContainer',
-          params: { id: response!.purchaseOrderId },
+          params: { id: response!.purchaseOrderCreated.id },
         })
         break
       }
       case EPurchaseOrderSave.UPDATE_DRAFT: {
-        const response = await PurchaseOrderReceptionApi.updateDraft(
+        const response = await PurchaseOrderReceptionApi.draftUpdate(
           purchaseOrder.value.id,
           purchaseOrder.value,
         )
         await router.push({
           name: 'PurchaseOrderDetailContainer',
-          params: { id: response!.purchaseOrderId },
+          params: { id: purchaseOrder.value.id },
         })
         break
       }
@@ -219,7 +219,7 @@ const savePurchaseOrder = async (type: EPurchaseOrderSave) => {
         )
         await router.push({
           name: 'PurchaseOrderDetailContainer',
-          params: { id: response!.purchaseOrderId },
+          params: { id: purchaseOrder.value.id },
         })
         break
       }

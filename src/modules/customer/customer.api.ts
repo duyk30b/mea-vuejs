@@ -67,7 +67,7 @@ export class CustomerApi {
   }
 
   static async updateOne(id: number, customer: Partial<Customer>) {
-    const response = await AxiosInstance.patch(`/customer/update/${id}`, {
+    const response = await AxiosInstance.post(`/customer/update/${id}`, {
       customerCode: customer.customerCode,
       fullName: customer.fullName !== undefined ? customer.fullName : undefined,
       citizenIdCard: customer.citizenIdCard !== undefined ? customer.citizenIdCard : undefined,
@@ -93,7 +93,7 @@ export class CustomerApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/customer/destroy/${id}`)
+    const response = await AxiosInstance.post(`/customer/destroy/${id}`)
     const { data } = response.data as BaseResponse<{
       customerId: number
       ticketList: Ticket[]

@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { Address, AddressService } from '@/modules/address'
-import { nextTick, ref } from 'vue'
-import VueButton from '../../common/VueButton.vue'
-import { IconClose } from '../../common/icon-antd'
-import { AlertStore } from '../../common/vue-alert/vue-alert.store'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import {
   InputCheckboxList,
   InputDate,
@@ -12,13 +10,15 @@ import {
   InputText,
   VueSelect,
   VueSwitch,
-} from '../../common/vue-form'
-import type { CheckboxOptionType } from '../../common/vue-form/InputCheckboxList.vue'
-import VueModal from '../../common/vue-modal/VueModal.vue'
-import { useSettingStore } from '../../modules/_me/setting.store'
-import { Organization, OrganizationStatus } from '../../modules/organization'
-import { PermissionApi } from '../../modules/permission/permission.api'
-import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
+} from '@/common/vue-form'
+import type { CheckboxOptionType } from '@/common/vue-form/InputCheckboxList.vue'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Address, AddressService } from '@/modules/address'
+import { Organization, OrganizationStatus } from '@/modules/organization'
+import { PermissionApi } from '@/modules/permission/permission.api'
+import { RootOrganizationApi } from '@/modules/root-organization/root-organization.api'
+import { ref } from 'vue'
 import ModalRootOrganizationClear from './ModalRootOrganizationClear.vue'
 
 const modalRootOrganizationClear = ref<InstanceType<typeof ModalRootOrganizationClear>>()
@@ -48,7 +48,7 @@ const openModal = async (instance?: Organization) => {
       const permissionList = await PermissionApi.list({ filter: { level: { EQUAL: 1 } } })
       checkboxPermissionIdOptions.value = permissionList.map((i) => ({ key: i.id, label: i.name }))
     } catch (error) {
-      console.log('🚀 ~ ModalRootOrganizationUpsert.vue:63 ~ openModal ~ error:', error)
+      console.log('🚀 ~ ModalRootOrganizationUpsert.vue:51 ~ openModal ~ error:', error)
     }
     await AddressService.fetchAll()
     firstLoad = false
@@ -100,7 +100,7 @@ const handleSave = async () => {
     emit('success')
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:94 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ ModalRootOrganizationUpsert.vue:103 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
   }

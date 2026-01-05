@@ -52,15 +52,18 @@ const closeModal = () => {
   indexUpdate = 0
 }
 
-const clickDestroy = async () => {
-  purchaseOrder.value.purchaseOrderItemList?.splice(indexUpdate, 1)
-  closeModal()
-}
-
 const changePurchaseOrderItem = async () => {
   purchaseOrder.value.purchaseOrderItemList![indexUpdate] = PurchaseOrderItem.from(
     purchaseOrderItem.value,
   )
+  closeModal()
+}
+
+const startRemovePurchaseOrderItem = (_localId: string) => {
+  const index = purchaseOrder.value.purchaseOrderItemList!.findIndex((i) => {
+    return i._localId === _localId
+  })
+  purchaseOrder.value.purchaseOrderItemList!.splice(index, 1)
   closeModal()
 }
 
@@ -167,7 +170,13 @@ defineExpose({ openModal })
         </div>
 
         <div class="mt-6 flex gap-4" style="flex-grow: 1; flex-basis: 80%">
-          <VueButton color="red" icon="trash" @click="clickDestroy">Xóa</VueButton>
+          <VueButton
+            color="red"
+            icon="trash"
+            @click="startRemovePurchaseOrderItem(purchaseOrderItem._localId)"
+          >
+            Xóa
+          </VueButton>
           <VueButton icon="close" style="margin-left: auto" type="reset" @click="closeModal">
             Đóng lại
           </VueButton>

@@ -53,7 +53,7 @@ export class PrescriptionSampleApi {
   }
 
   static async updateOne(id: number, ins: Partial<PrescriptionSample>) {
-    const response = await AxiosInstance.patch(`/prescription-sample/update/${id}`, {
+    const response = await AxiosInstance.post(`/prescription-sample/update/${id}`, {
       priority: ins.priority,
       userId: ins.userId,
       name: ins.name,
@@ -64,7 +64,7 @@ export class PrescriptionSampleApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/prescription-sample/destroy/${id}`)
+    const response = await AxiosInstance.post(`/prescription-sample/destroy/${id}`)
     const { data, meta } = response.data as BaseResponse<boolean>
     return data
   }

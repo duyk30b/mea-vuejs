@@ -52,7 +52,7 @@ export class LaboratoryGroupApi {
   }
 
   static async updateOne(id: number, laboratoryGroup: LaboratoryGroup) {
-    const response = await AxiosInstance.patch(`/laboratory-group/update/${id}`, {
+    const response = await AxiosInstance.post(`/laboratory-group/update/${id}`, {
       name: laboratoryGroup.name,
       printHtmlId: laboratoryGroup.printHtmlId,
       roomId: laboratoryGroup.roomId,
@@ -62,13 +62,13 @@ export class LaboratoryGroupApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/laboratory-group/destroy/${id}`)
+    const response = await AxiosInstance.post(`/laboratory-group/destroy/${id}`)
     const { data, meta } = response.data as BaseResponse<boolean>
     return data
   }
 
   static async replaceAll(body: LaboratoryGroup[]) {
-    const response = await AxiosInstance.put('/laboratory-group/replace-all', {
+    const response = await AxiosInstance.post('/laboratory-group/replace-all', {
       laboratoryGroupReplaceAll: body.map((i) => {
         return {
           id: i.id || 0,

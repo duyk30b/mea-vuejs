@@ -41,7 +41,7 @@ export class BatchApi {
   }
 
   static async updateInfo(id: number, batch: Batch) {
-    const response = await AxiosInstance.patch(`/batch/update-info/${id}`, {
+    const response = await AxiosInstance.post(`/batch/update-info/${id}`, {
       lotNumber: batch.lotNumber,
       expiryDate: batch.expiryDate != null ? batch.expiryDate : null,
       warehouseId: batch.warehouseId,
@@ -51,7 +51,7 @@ export class BatchApi {
   }
 
   static async updateInfoAndQuantityAndCostPrice(id: number, batch: Batch) {
-    const response = await AxiosInstance.patch(
+    const response = await AxiosInstance.post(
       `/batch/update-info-and-quantity-and-cost-price/${id}`,
       {
         lotNumber: batch.lotNumber,
@@ -76,7 +76,7 @@ export class BatchApi {
     batchIdSourceList: number[]
     batchIdTarget: number
   }) {
-    const response = await AxiosInstance.patch(`/batch/merge-batch`, {
+    const response = await AxiosInstance.post(`/batch/merge-batch`, {
       productId: options.productId,
       batchIdSourceList: options.batchIdSourceList,
       batchIdTarget: options.batchIdTarget,
@@ -86,7 +86,7 @@ export class BatchApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/batch/destroy/${id}`)
+    const response = await AxiosInstance.post(`/batch/destroy/${id}`)
     const { data } = response.data as BaseResponse<{
       success: boolean
       batchId: number

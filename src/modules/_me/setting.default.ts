@@ -183,21 +183,6 @@ export const SETTING_DEFAULT = {
       forceEdit: false,
     },
   },
-  SCREEN_INVOICE_PREVIEW: {
-    invoiceItemsTable: {
-      substance: true,
-      unit: true,
-      expectedPrice: true,
-      hintUsage: true,
-    },
-    paymentInfo: {
-      itemsActualMoney: true,
-      surcharge: true,
-      discount: true,
-      paid: false,
-      debt: false,
-    },
-  },
   SCREEN_INVOICE_UPSERT: {
     pickupStrategy: PickupStrategy.Inherit,
     invoiceItemInput: {

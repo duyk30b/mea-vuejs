@@ -253,6 +253,17 @@ const handleChangeInvoiceProductSellType = (
   ticketProduct.value.expectedPrice = expectedPrice
 }
 
+const handleChangeUnitExpectedPrice = (data: number) => {
+  const expectedPrice = data / ticketProduct.value.unitRate
+  const actualPrice = ticketProduct.value.actualPrice
+  const discountMoney = expectedPrice - actualPrice
+  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+  ticketProduct.value.discountPercent = discountPercent
+  ticketProduct.value.discountMoney = discountMoney
+  ticketProduct.value.discountType = DiscountType.VND
+  ticketProduct.value.expectedPrice = expectedPrice
+}
+
 const handleChangeUnitDiscountMoney = (data: number) => {
   const discountMoney = data / ticketProduct.value.unitRate
   const expectedPrice = ticketProduct.value.expectedPrice || 0
@@ -503,7 +514,10 @@ defineExpose({ focus })
           ></InputSelect>
         </div>
         <div class="flex-1">
-          <InputMoney :value="ticketProduct.unitExpectedPrice" disabled />
+          <InputMoney
+            :value="ticketProduct.unitExpectedPrice"
+            @update:value="handleChangeUnitExpectedPrice"
+          />
         </div>
       </div>
     </div>

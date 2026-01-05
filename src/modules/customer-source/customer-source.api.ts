@@ -47,7 +47,7 @@ export class CustomerSourceApi {
   }
 
   static async updateOne(id: number, customerSource: CustomerSource) {
-    const response = await AxiosInstance.patch(`/customer-source/update/${id}`, {
+    const response = await AxiosInstance.post(`/customer-source/update/${id}`, {
       name: customerSource.name,
     })
     const { data } = response.data as BaseResponse
@@ -55,7 +55,7 @@ export class CustomerSourceApi {
   }
 
   static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/customer-source/destroy/${id}`)
+    const response = await AxiosInstance.post(`/customer-source/destroy/${id}`)
     const { data, meta } = response.data as BaseResponse
     return CustomerSource.from(data)
   }
