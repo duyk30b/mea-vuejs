@@ -1,5 +1,5 @@
-import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import { AxiosInstance } from '../../../core/axios.instance'
+import type { BaseResponse } from '../../_base/base-dto'
 
 export class RootDataApi {
   static async migration(body: { key: string }) {

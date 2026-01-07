@@ -1,4 +1,4 @@
-import { OmitClass, PickClass } from '../../utils'
+import { OmitClass, PickClass } from '../../../utils'
 
 export class RootOrganizationGetQuery {
   page?: number

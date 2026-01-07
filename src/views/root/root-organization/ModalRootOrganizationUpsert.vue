@@ -17,7 +17,7 @@ import { useSettingStore } from '@/modules/_me/setting.store'
 import { Address, AddressService } from '@/modules/address'
 import { Organization, OrganizationStatus } from '@/modules/organization'
 import { PermissionApi } from '@/modules/permission/permission.api'
-import { RootOrganizationApi } from '@/modules/root-organization/root-organization.api'
+import { RootOrganizationApi } from '@/modules/root/root-organization/root-organization.api'
 import { ref } from 'vue'
 import ModalRootOrganizationClear from './ModalRootOrganizationClear.vue'
 

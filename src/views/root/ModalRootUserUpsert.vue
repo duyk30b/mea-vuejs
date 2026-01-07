@@ -7,7 +7,7 @@ import { InputDate, InputNumber, InputRadio, InputText, VueSwitch } from '../../
 import VueModal from '../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../modules/_me/setting.store'
-import { RootUserApi } from '../../modules/root-user/root-user.api'
+import { RootUserApi } from '../../modules/root/root-user/root-user.api'
 import { User } from '../../modules/user'
 
 const emit = defineEmits<{

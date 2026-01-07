@@ -1,6 +1,6 @@
-import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
-import { Organization } from '../organization'
+import { AxiosInstance } from '../../../core/axios.instance'
+import type { BaseResponse } from '../../_base/base-dto'
+import { Organization } from '../../organization'
 import {
   RootOrganizationGetQuery,
   type RootOrganizationPaginationQuery,

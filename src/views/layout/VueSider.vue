@@ -293,6 +293,9 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item key="RootData">
         <router-link :to="{ name: 'RootData' }">Data</router-link>
       </a-menu-item>
+      <a-menu-item key="SystemLog">
+        <router-link :to="{ name: 'SystemLog' }">System Log</router-link>
+      </a-menu-item>
     </a-sub-menu>
   </a-menu>
 </template>

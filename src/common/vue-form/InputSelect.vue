@@ -176,7 +176,7 @@ onBeforeUnmount(() => {
   font-size: 16px;
   position: relative;
   .input-select-display {
-    padding: 5px 12px 5px 12px;
+    padding: 4px 12px 4px 12px;
     border: 1px solid #d9d9d9;
     border-radius: 2px;
     background: white;

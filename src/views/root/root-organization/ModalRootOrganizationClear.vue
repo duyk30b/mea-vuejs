@@ -6,7 +6,7 @@ import { InputCheckbox } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { Organization } from '@/modules/organization'
-import { RootOrganizationApi } from '@/modules/root-organization/root-organization.api'
+import { RootOrganizationApi } from '@/modules/root/root-organization/root-organization.api'
 import { ref } from 'vue'
 
 const emit = defineEmits<{ (e: 'success'): void }>()

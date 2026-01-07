@@ -6,7 +6,7 @@ import { IconApartment, IconBug, IconDollar, IconForm } from '@/common/icon-antd
 import { InputSelect } from '@/common/vue-form'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { OrganizationStatus, type Organization } from '@/modules/organization'
-import { RootOrganizationApi } from '@/modules/root-organization/root-organization.api'
+import { RootOrganizationApi } from '@/modules/root/root-organization/root-organization.api'
 import { ESString, timeToText } from '@/utils'
 import { onBeforeMount, ref } from 'vue'
 import ModalRootOrganizationUpsert from './ModalRootOrganizationUpsert.vue'

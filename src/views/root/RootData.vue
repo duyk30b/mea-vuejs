@@ -7,7 +7,7 @@ import { InputText } from '../../common/vue-form'
 import VueButton from '../../common/VueButton.vue'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { PermissionApi } from '../../modules/permission/permission.api'
-import { RootDataApi } from '../../modules/root-data/root-data.api'
+import { RootDataApi } from '../../modules/root/root-data/root-data.api'
 import { SettingApi } from '../../modules/setting/setting.api'
 import ModalUploadICD from './ModalUploadICD.vue'
 

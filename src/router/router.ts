@@ -159,6 +159,12 @@ const Router = createRouter({
               component: () => import('../views/root/RootData.vue'),
               meta: { title: 'Data' },
             },
+            {
+              path: 'system-log',
+              name: 'SystemLog',
+              component: () => import('../views/root/system-log/SystemLogList.vue'),
+              meta: { title: 'Data' },
+            },
           ],
         },
       ],

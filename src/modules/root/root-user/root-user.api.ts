@@ -1,6 +1,6 @@
-import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
-import { User } from '../user'
+import { AxiosInstance } from '../../../core/axios.instance'
+import type { BaseResponse } from '../../_base/base-dto'
+import { User } from '../../user'
 import { RootUserGetQuery, RootUserPaginationQuery } from './root-user.dto'
 
 export class RootUserApi {

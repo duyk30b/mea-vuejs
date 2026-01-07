@@ -31,6 +31,7 @@ import { TicketPaymentDetail } from '@/modules/ticket/ticket-payment-detail.mode
 export class SocketTicketService {
   static async listenSocketRoomTicketPaginationChange(data: { roomId: number }) {
     const { roomId } = data
+    roomTicketMapRoomId.value[roomId] ||= { paginationData: [], paginationTime: '' }
     roomTicketMapRoomId.value[roomId].paginationTime = new Date().toISOString()
   }
 
