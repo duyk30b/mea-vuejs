@@ -1,4 +1,4 @@
-import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { CollectionQuery } from '@/core/indexed-db/common/collection.query'
 import { ref } from 'vue'
 import { ESArray } from '../../utils'
 import { DiscountInteractType, DiscountService, type Discount } from '../discount'
@@ -14,7 +14,7 @@ import type {
 } from './radiology.dto'
 import { Radiology } from './radiology.model'
 
-const RadiologyDBQuery = new IndexedDBQuery<Radiology>()
+const RadiologyDBQuery = new CollectionQuery<Radiology>()
 
 export class RadiologyService {
   static loadedAll: boolean = false

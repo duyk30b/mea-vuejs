@@ -59,7 +59,9 @@ watch(
   async (newValue) => {
     if (newValue != product.value.id) {
       const productData = await ProductService.getOne(newValue)
-      setProductFromParent(productData)
+      if (productData) {
+        setProductFromParent(productData)
+      }
     }
   },
   { immediate: true },

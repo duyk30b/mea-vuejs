@@ -1,5 +1,7 @@
+import { CollectionQuery } from '@/core/indexed-db/common/collection.query'
 import { ref } from 'vue'
 import { ESArray, ESString } from '../../utils'
+import { MeService } from '../_me/me.service'
 import { Product, ProductService } from '../product'
 import { User, UserService } from '../user'
 import { PrescriptionSampleApi } from './prescription-sample.api'
@@ -9,10 +11,8 @@ import type {
   PrescriptionSamplePaginationQuery,
 } from './prescription-sample.dto'
 import { PrescriptionSample } from './prescription-sample.model'
-import { MeService } from '../_me/me.service'
-import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
 
-const PrescriptionSampleDBQuery = new IndexedDBQuery<PrescriptionSample>()
+const PrescriptionSampleDBQuery = new CollectionQuery<PrescriptionSample>()
 
 export class PrescriptionSampleService {
   static loadedAll: boolean = false

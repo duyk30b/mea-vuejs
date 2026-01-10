@@ -1,4 +1,4 @@
-import { CustomerDB } from '../../core/indexed-db/repository/customer.repository'
+import { CustomerDB } from '../../core/indexed-db'
 import { Customer } from '../customer'
 import { TicketProductService } from '../ticket-product'
 import { TicketQueryApi } from './api/ticket-query.api'

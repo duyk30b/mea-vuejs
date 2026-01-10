@@ -1,4 +1,4 @@
-import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { CollectionQuery } from '@/core/indexed-db/common/collection.query'
 import type { PrintHtmlType } from '../print-html/print-html.model'
 import { PrintHtmlSettingApi } from './print-html-setting.api'
 import type {
@@ -8,7 +8,7 @@ import type {
 } from './print-html-setting.dto'
 import { PrintHtmlSetting } from './print-html-setting.model'
 
-const PrintHtmlSettingDBQuery = new IndexedDBQuery<PrintHtmlSetting>()
+const PrintHtmlSettingDBQuery = new CollectionQuery<PrintHtmlSetting>()
 
 export class PrintHtmlSettingService {
   static loadedAll: boolean = false

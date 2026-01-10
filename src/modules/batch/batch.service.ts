@@ -1,22 +1,19 @@
 import { CONFIG } from '@/config'
 import { AlertStore } from '../../common/vue-alert'
-import { IndexedDBQuery } from '../../core/indexed-db/_base/indexed-db.query'
-import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
-import { ProductDB } from '../../core/indexed-db/repository/product.repository'
-import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
-import { ESArray, ESObject } from '../../utils'
+import { BatchDB, CollectionQuery, ProductDB, RefreshTimeDB } from '../../core/indexed-db'
+import { ESArray } from '../../utils'
 import { MeService } from '../_me/me.service'
 import { AuthService } from '../auth/auth.service'
 import { BatchApi } from './batch.api'
 import type { BatchGetQuery, BatchListQuery, BatchPaginationQuery } from './batch.dto'
 import { Batch } from './batch.model'
 
-const BatchDBQuery = new IndexedDBQuery<Batch>()
+const BatchDBQuery = new CollectionQuery<Batch>()
 
 export class BatchService {
   static async refreshDB() {
     try {
-      let refreshTime = await RefreshTimeDB.findOneByCode('BATCH')
+      let refreshTime = await RefreshTimeDB.findOneBy({ code: 'BATCH' })
       if (!refreshTime) {
         refreshTime = { code: 'BATCH', dataVersion: 0, time: new Date(0).toISOString() }
       }
@@ -82,7 +79,7 @@ export class BatchService {
     }
     const page = query.page || 1
     const limit = query.limit || 10
-    const batchAll = await BatchDB.findAll()
+    const batchAll = await BatchDB.findManyBy({})
     const dataTotal = await BatchService.executeQuery(batchAll, query)
     const data = dataTotal.slice((page - 1) * limit, page * limit)
     const batchList = Batch.fromList(data)
@@ -102,7 +99,7 @@ export class BatchService {
     const { filter } = query
     const batchList = await BatchDB.findMany({
       limit: query.limit,
-      condition: {
+      filter: {
         id: filter?.id,
         productId: filter?.productId,
         quantity: filter?.quantity,
@@ -121,10 +118,10 @@ export class BatchService {
   static async updateInfoAndQuantityAndCostPrice(id: number, instance: Batch) {
     const response = await BatchApi.updateInfoAndQuantityAndCostPrice(id, instance)
     if (response.product) {
-      await ProductDB.replaceOne(response.product.id, response.product)
+      await ProductDB.upsertOne(response.product)
     }
     if (response.batch) {
-      await BatchDB.replaceOne(response.batch.id, response.batch)
+      await BatchDB.upsertOne(response.batch)
     }
     return response
   }
@@ -132,7 +129,7 @@ export class BatchService {
   static async destroyOne(id: number) {
     const response = await BatchApi.destroyOne(id)
     if (response.success) {
-      await BatchDB.deleteOneByKey(id)
+      await BatchDB.deleteOne(id)
     }
     return response
   }

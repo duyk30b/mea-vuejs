@@ -9,6 +9,7 @@
     "check": "vue-tsc --build",
     "build": "npm run write-config & run-p check \"build-only {@}\" --",
     "firebase": "firebase",
+    "deploy": "firebase deploy --only hosting --force",
     "write-config": "node ./scripts/write-config.js",
     "preview": "vite preview",
     "build-only": "vite build",

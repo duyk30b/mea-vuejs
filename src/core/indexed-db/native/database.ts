@@ -1,4 +1,4 @@
-import { BaseIndexedDB } from './_base/_base.indexed-db'
+import { BaseIndexedDB } from './_base.indexed-db'
 
 export const MeaDatabase = new BaseIndexedDB({
   databaseName: 'MeaDatabase',

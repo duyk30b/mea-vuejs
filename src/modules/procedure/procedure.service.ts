@@ -1,4 +1,4 @@
-import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { CollectionQuery } from '@/core/indexed-db/common/collection.query'
 import { ref } from 'vue'
 import { ESArray } from '../../utils'
 import { Discount, DiscountInteractType, DiscountService } from '../discount'
@@ -12,7 +12,7 @@ import type {
 } from './procedure.dto'
 import { Procedure } from './procedure.model'
 
-const ProcedureDBQuery = new IndexedDBQuery<Procedure>()
+const ProcedureDBQuery = new CollectionQuery<Procedure>()
 
 export class ProcedureService {
   static loadedAll: boolean = false

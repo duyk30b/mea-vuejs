@@ -1,4 +1,4 @@
-import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { CollectionQuery } from '@/core/indexed-db/common/collection.query'
 import { ref } from 'vue'
 import { ESArray } from '../../utils'
 import { PrintHtml, PrintHtmlService } from '../print-html'
@@ -14,7 +14,7 @@ import type {
 } from './radiology-sample.dto'
 import { RadiologySample } from './radiology-sample.model'
 
-const RadiologySampleDBQuery = new IndexedDBQuery<RadiologySample>()
+const RadiologySampleDBQuery = new CollectionQuery<RadiologySample>()
 
 export class RadiologySampleService {
   static loadedAll: boolean = false

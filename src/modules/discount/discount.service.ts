@@ -1,4 +1,3 @@
-import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
 import { ref } from 'vue'
 import { ESArray } from '../../utils'
 import { Laboratory, LaboratoryService } from '../laboratory'
@@ -14,8 +13,9 @@ import type {
   DiscountPaginationQuery,
 } from './discount.dto'
 import { Discount, DiscountInteractType } from './discount.model'
+import { CollectionQuery } from '@/core/indexed-db'
 
-const DiscountDBQuery = new IndexedDBQuery<Discount>()
+const DiscountDBQuery = new CollectionQuery<Discount>()
 
 export class DiscountService {
   static loadedAll: boolean = false

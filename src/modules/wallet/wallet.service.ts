@@ -1,11 +1,11 @@
-import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { CollectionQuery } from '@/core/indexed-db/common/collection.query'
 import { ref } from 'vue'
 import { ESArray, ESString } from '../../utils'
 import { WalletApi } from './wallet.api'
 import type { WalletDetailQuery, WalletListQuery, WalletPaginationQuery } from './wallet.dto'
 import { Wallet } from './wallet.model'
 
-const WalletDBQuery = new IndexedDBQuery<Wallet>()
+const WalletDBQuery = new CollectionQuery<Wallet>()
 
 export class WalletService {
   static loadedAll: boolean = false

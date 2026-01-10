@@ -1,13 +1,13 @@
-import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { CollectionQuery } from '@/core/indexed-db/common/collection.query'
 import { ESArray } from '@/utils'
 import { ref } from 'vue'
+import { User, UserService } from '../user'
 import { UserRole, UserRoleService } from '../user-role'
 import { RoleApi } from './role.api'
 import type { RoleDetailQuery, RoleGetQuery, RoleListQuery, RolePaginationQuery } from './role.dto'
 import { Role } from './role.model'
-import { User, UserService } from '../user'
 
-const RoleDBQuery = new IndexedDBQuery<Role>()
+const RoleDBQuery = new CollectionQuery<Role>()
 
 export class RoleService {
   static loadedAll: boolean = false

@@ -1,13 +1,13 @@
 import type { NoExtra } from '../../../utils'
+import { CollectionQuery, type BaseCondition } from '../common/collection.query'
 import type { BaseIndexedDB } from './_base.indexed-db'
-import { IndexedDBQuery, type BaseCondition } from './indexed-db.query'
 
 export class BaseRepository<
   _ENTITY,
   _SORT = {
     [P in keyof _ENTITY]?: 'ASC' | 'DESC' | ((a: string, b: string) => 1 | -1)
   },
-> extends IndexedDBQuery<_ENTITY> {
+> extends CollectionQuery<_ENTITY> {
   public storeName: string
   public baseDB: BaseIndexedDB
 

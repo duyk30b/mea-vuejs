@@ -1,4 +1,4 @@
-import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { CollectionQuery } from '@/core/indexed-db/common/collection.query'
 import { ref } from 'vue'
 import { ESArray } from '../../utils'
 import { Laboratory, LaboratoryService } from '../laboratory'
@@ -6,6 +6,8 @@ import { LaboratoryGroup, LaboratoryGroupService } from '../laboratory-group'
 import { Procedure, ProcedureService } from '../procedure'
 import { Product, ProductService } from '../product'
 import { Radiology, RadiologyService } from '../radiology'
+import { Regimen, RegimenService } from '../regimen'
+import { Role, RoleService } from '../role'
 import { PositionApi } from './position.api'
 import type {
   PositionDetailQuery,
@@ -14,10 +16,8 @@ import type {
   PositionPaginationQuery,
 } from './position.dto'
 import { Position, PositionType } from './position.model'
-import { Role, RoleService } from '../role'
-import { Regimen, RegimenService } from '../regimen'
 
-const PositionDBQuery = new IndexedDBQuery<Position>()
+const PositionDBQuery = new CollectionQuery<Position>()
 
 export class PositionService {
   static loadedAll: boolean = false

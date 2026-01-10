@@ -1,4 +1,4 @@
-import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { CollectionQuery } from '@/core/indexed-db/common/collection.query'
 import { ref } from 'vue'
 import { ESArray } from '../../utils'
 import { PrintHtmlApi } from './print-html.api'
@@ -8,9 +8,9 @@ import type {
   PrintHtmlGetQuery,
   PrintHtmlPaginationQuery,
 } from './print-html.dto'
-import { PrintHtml, PrintHtmlType } from './print-html.model'
+import { PrintHtml } from './print-html.model'
 
-const PrintHtmlDBQuery = new IndexedDBQuery<PrintHtml>()
+const PrintHtmlDBQuery = new CollectionQuery<PrintHtml>()
 
 export class PrintHtmlService {
   static loadedAll: boolean = false

@@ -1,6 +1,6 @@
 import { CONFIG } from '@/config'
+import { IndexedDBConnection } from '@/core/indexed-db'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { MeaDatabase } from '../../core/indexed-db/database'
 import { LocalStorageService } from '../../core/local-storage.service'
 import { reconnectSocket } from '../../core/socket/socket.base'
 import { Router } from '../../router/router'
@@ -77,7 +77,7 @@ export class AuthService {
       Router.push({ name: 'Login' })
       AlertStore.addError('Phiên đăng nhập đã kết thúc !', 2000)
       try {
-        await MeaDatabase.destroy()
+        await IndexedDBConnection.clear()
         if (oid && uid) {
           await AuthApi.logout({ oid, uid, clientId: CONFIG.CLIENT_ID })
         }

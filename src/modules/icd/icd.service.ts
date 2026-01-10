@@ -1,7 +1,7 @@
-import { ICDDB } from '@/core/indexed-db/repository/icd.repository'
+import { ICDDB } from '@/core/indexed-db'
 import { ESFunction, ESString } from '@/utils'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
+import { RefreshTimeDB } from '../../core/indexed-db'
 import { MeService } from '../_me/me.service'
 import { AuthService } from '../auth/auth.service'
 import { ICDApi } from './icd.api'
@@ -14,7 +14,7 @@ export class ICDService {
 
   static async refreshDB() {
     try {
-      let refreshTime = await RefreshTimeDB.findOneByCode('ICD')
+      let refreshTime = await RefreshTimeDB.findOneBy({ code: 'ICD' })
       if (!refreshTime) {
         refreshTime = { code: 'ICD', dataVersion: 2, time: new Date(0).toISOString() }
       }
@@ -44,7 +44,7 @@ export class ICDService {
     const start = async () => {
       try {
         await ICDService.refreshDB()
-        ICDService.icdAll = await ICDDB.findAll()
+        ICDService.icdAll = await ICDDB.findManyBy({})
       } catch (error: any) {
         console.log('🚀 ~ file: commission.service.ts:20 ~ fetchAll ~ error:', error)
       }

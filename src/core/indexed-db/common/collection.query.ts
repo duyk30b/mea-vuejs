@@ -2,40 +2,38 @@ import { customFilter, ESObject } from '../../../utils'
 
 export type BaseCondition<T> = {
   [P in keyof T]?:
-    | T[P]
-    | ((value: any) => boolean)
-    | ({
-        [Q in
-          | '>'
-          | 'GT'
-          | '>='
-          | 'GTE'
-          | '<'
-          | 'LT'
-          | '<='
-          | 'LTE'
-          | '=='
-          | 'EQUAL'
-          | '!='
-          | 'NOT']?: T[P]
-      } & {
-        [Q in 'IS_NULL' | 'NOT_NULL']?: boolean
-      } & {
-        LIKE?: string
-        IN?: T[P][]
-        NOT_IN?: T[P][]
-        BETWEEN?: [T[P], T[P]]
-        RAW_QUERY?: string
-      })
+  | T[P]
+  | ((value: any) => boolean)
+  | ({
+    [Q in
+    | '>'
+    | 'GT'
+    | '>='
+    | 'GTE'
+    | '<'
+    | 'LT'
+    | '<='
+    | 'LTE'
+    | '=='
+    | 'EQUAL'
+    | '!='
+    | 'NOT']?: T[P]
+  } & {
+    [Q in 'IS_NULL' | 'NOT_NULL']?: boolean
+  } & {
+    LIKE?: string
+    IN?: T[P][]
+    NOT_IN?: T[P][]
+    BETWEEN?: [T[P], T[P]]
+    RAW_QUERY?: string
+  })
 } & { $OR?: BaseCondition<T>[] } & { $AND?: BaseCondition<T>[] }
 
 export type BaseSort<T> = {
   [P in keyof T]?: 'ASC' | 'DESC' | ((value: any) => 1 | -1)
 }
 
-let index = 0
-
-export class IndexedDBQuery<T> {
+export class CollectionQuery<T> {
   executeFilter(record: any, condition: BaseCondition<T>): boolean {
     return Object.entries(condition).every(([column, target]: [string, any]) => {
       if (target === undefined) return true

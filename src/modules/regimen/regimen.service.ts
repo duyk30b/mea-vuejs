@@ -1,8 +1,10 @@
-import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { CollectionQuery } from '@/core/indexed-db/common/collection.query'
 import { ref } from 'vue'
 import { ESArray } from '../../utils'
 import { Discount, DiscountInteractType, DiscountService } from '../discount'
 import { Position } from '../position'
+import { ProcedureService } from '../procedure'
+import type { RegimenItem } from './regimen-item.model'
 import { RegimenApi } from './regimen.api'
 import type {
   RegimenDetailQuery,
@@ -11,10 +13,8 @@ import type {
   RegimenPaginationQuery,
 } from './regimen.dto'
 import { Regimen } from './regimen.model'
-import type { RegimenItem } from './regimen-item.model'
-import { ProcedureService } from '../procedure'
 
-const RegimenDBQuery = new IndexedDBQuery<Regimen>()
+const RegimenDBQuery = new CollectionQuery<Regimen>()
 
 export class RegimenService {
   static loadedAll: boolean = false

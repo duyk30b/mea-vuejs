@@ -1,4 +1,4 @@
-import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { CollectionQuery } from '@/core/indexed-db/common/collection.query'
 import { ref } from 'vue'
 import { ESArray } from '../../utils'
 import { User, UserService } from '../user'
@@ -7,7 +7,7 @@ import { RoomApi } from './room.api'
 import type { RoomDetailQuery, RoomGetQuery, RoomListQuery, RoomPaginationQuery } from './room.dto'
 import { Room } from './room.model'
 
-const RoomDBQuery = new IndexedDBQuery<Room>()
+const RoomDBQuery = new CollectionQuery<Room>()
 
 export class RoomService {
   static loadedAll: boolean = false

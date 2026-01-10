@@ -1,12 +1,12 @@
-import { AddressDB } from '@/core/indexed-db/repository/address.repository'
+import { CONFIG } from '@/config'
+import { AddressDB } from '@/core/indexed-db/'
 import { ESFunction, ESString } from '@/utils'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
+import { RefreshTimeDB } from '../../core/indexed-db/'
 import { MeService } from '../_me/me.service'
 import { AuthService } from '../auth/auth.service'
 import { AddressApi } from './address.api'
 import { Address } from './address.model'
-import { CONFIG } from '@/config'
 
 export class AddressService {
   static loadedAll: boolean = false
@@ -14,7 +14,7 @@ export class AddressService {
 
   static async refreshDB() {
     try {
-      let refreshTime = await RefreshTimeDB.findOneByCode('ADDRESS')
+      let refreshTime = await RefreshTimeDB.findOneBy({ code: 'ADDRESS' })
       if (!refreshTime) {
         refreshTime = { code: 'ADDRESS', dataVersion: 2, time: new Date(0).toISOString() }
       }
@@ -44,7 +44,7 @@ export class AddressService {
     const start = async () => {
       try {
         await AddressService.refreshDB()
-        AddressService.addressAll = await AddressDB.findAll()
+        AddressService.addressAll = await AddressDB.findManyBy({})
       } catch (error: any) {
         console.log('🚀 ~ file: commission.service.ts:20 ~ fetchAll ~ error:', error)
       }

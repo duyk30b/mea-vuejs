@@ -1,15 +1,14 @@
-import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { CollectionQuery } from '@/core/indexed-db/common/collection.query'
 import { ref } from 'vue'
 import { ESArray, ESString } from '../../utils'
 import { SurchargeApi } from './surcharge.api'
 import type {
-  SurchargeDetailQuery,
   SurchargeListQuery,
-  SurchargePaginationQuery,
+  SurchargePaginationQuery
 } from './surcharge.dto'
 import { Surcharge } from './surcharge.model'
 
-const SurchargeDBQuery = new IndexedDBQuery<Surcharge>()
+const SurchargeDBQuery = new CollectionQuery<Surcharge>()
 
 export class SurchargeService {
   static loadedAll: boolean = false

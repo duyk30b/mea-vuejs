@@ -1,9 +1,7 @@
 import { CONFIG } from '@/config'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { IndexedDBQuery } from '../../core/indexed-db/_base/indexed-db.query'
-import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
-import { ProductDB } from '../../core/indexed-db/repository/product.repository'
-import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
+import { BatchDB, ProductDB, RefreshTimeDB } from '../../core/indexed-db'
+import { CollectionQuery } from '../../core/indexed-db/common/collection.query'
 import { ESArray, throttleAsync } from '../../utils'
 import { MeService } from '../_me/me.service'
 import { AuthService } from '../auth/auth.service'
@@ -20,13 +18,13 @@ import type {
 } from './product.dto'
 import { Product } from './product.model'
 
-const ProductDBQuery = new IndexedDBQuery<Product>()
+const ProductDBQuery = new CollectionQuery<Product>()
 
 export class ProductService {
   static refreshDB: () => Promise<{ numberChange: number }> = throttleAsync(
     async (params) => {
       try {
-        let refreshTime = await RefreshTimeDB.findOneByCode('PRODUCT')
+        let refreshTime = await RefreshTimeDB.findOneBy({ code: 'PRODUCT' })
         if (!refreshTime) {
           refreshTime = { code: 'PRODUCT', dataVersion: 0, time: new Date(0).toISOString() }
         }
@@ -87,9 +85,9 @@ export class ProductService {
         relation?.positionList ? PositionService.getAll() : <Position[]>[],
         relation?.batchList
           ? BatchDB.findMany({
-            condition: { quantity: { NOT: 0 }, productId: { IN: productIdList } },
-            sort: { id: 'ASC' },
-          })
+              filter: { quantity: { NOT: 0 }, productId: { IN: productIdList } },
+              sort: { id: 'ASC' },
+            })
           : <Batch[]>[],
       ])
 
@@ -134,7 +132,7 @@ export class ProductService {
   static async pagination(query: ProductPaginationQuery) {
     const page = query.page || 1
     const limit = query.limit || 10
-    const productAll = await ProductDB.findAll()
+    const productAll = await ProductDB.findManyBy({})
 
     // dataRelation chạy trước, vì dataFilter có sử dụng lọc trong relation
     const dataRelation = await ProductService.executeRelation(productAll, query.relation)
@@ -162,7 +160,7 @@ export class ProductService {
     const { filter, limit, sort, relation } = params
     const objects = await ProductDB.findMany({
       limit,
-      condition: {
+      filter: {
         id: filter?.id,
         isActive: filter?.isActive,
         productGroupId: filter?.productGroupId,
@@ -197,7 +195,7 @@ export class ProductService {
   }
 
   static async getOne(id: number) {
-    const product = await ProductDB.findOneByKey(id)
+    const product = await ProductDB.findOneBy({ id })
     return product
   }
 
@@ -211,7 +209,7 @@ export class ProductService {
       product = await ProductApi.detail(id, query)
       await ProductDB.upsertOne(product)
     } else {
-      const productPlain = await ProductDB.findOneByKey(id)
+      const productPlain = await ProductDB.findOneBy({ id })
       product = productPlain ? Product.from(productPlain) : Product.blank()
     }
     return product
@@ -238,7 +236,7 @@ export class ProductService {
   ) {
     const response = await ProductApi.updateOne(id, body)
     if (response.success) {
-      await ProductDB.replaceOne(id, response.data.product)
+      await ProductDB.upsertOne(response.data.product)
       PositionService.loadedAll = false
     }
     return response
@@ -247,7 +245,7 @@ export class ProductService {
   static async destroyOne(id: number) {
     const response = await ProductApi.destroyOne(id)
     if (response.success) {
-      await ProductDB.deleteOneByKey(id)
+      await ProductDB.deleteOne(id)
       PositionService.loadedAll = false
     }
     return response

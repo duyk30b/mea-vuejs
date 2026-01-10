@@ -1,4 +1,4 @@
-import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { CollectionQuery } from '@/core/indexed-db/common/collection.query'
 import { ref } from 'vue'
 import { ESArray } from '../../utils'
 import { DiscountInteractType, DiscountService, type Discount } from '../discount'
@@ -13,7 +13,7 @@ import type {
 } from './laboratory.dto'
 import { Laboratory } from './laboratory.model'
 
-const LaboratoryDBQuery = new IndexedDBQuery<Laboratory>()
+const LaboratoryDBQuery = new CollectionQuery<Laboratory>()
 
 export class LaboratoryService {
   static loadedAll: boolean = false

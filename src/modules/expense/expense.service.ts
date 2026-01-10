@@ -1,11 +1,11 @@
-import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { CollectionQuery } from '@/core/indexed-db/common/collection.query'
 import { ref } from 'vue'
 import { ESArray, ESString } from '../../utils'
 import { ExpenseApi } from './expense.api'
 import type { ExpenseDetailQuery, ExpenseListQuery, ExpensePaginationQuery } from './expense.dto'
 import { Expense } from './expense.model'
 
-const ExpenseDBQuery = new IndexedDBQuery<Expense>()
+const ExpenseDBQuery = new CollectionQuery<Expense>()
 
 export class ExpenseService {
   static loadedAll: boolean = false

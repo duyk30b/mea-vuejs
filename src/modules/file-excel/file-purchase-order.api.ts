@@ -1,4 +1,4 @@
-import { ProductDB } from '@/core/indexed-db/repository/product.repository'
+import { ProductDB } from '@/core/indexed-db'
 import { AxiosInstance } from '../../core/axios.instance'
 import { ESDom } from '../../utils'
 import type { BaseResponse } from '../_base/base-dto'

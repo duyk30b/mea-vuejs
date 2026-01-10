@@ -1,7 +1,7 @@
 import { CONFIG } from '@/config'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { CustomerDB } from '../../core/indexed-db/repository/customer.repository'
-import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
+import { CustomerDB } from '../../core/indexed-db'
+import { RefreshTimeDB } from '../../core/indexed-db'
 import { throttleAsync } from '../../utils'
 import { MeService } from '../_me/me.service'
 import { useSettingStore } from '../_me/setting.store'
@@ -16,7 +16,7 @@ export class CustomerService {
   static refreshDB: () => Promise<{ numberChange: number }> = throttleAsync(
     async (params) => {
       try {
-        let refreshTime = await RefreshTimeDB.findOneByCode('CUSTOMER')
+        let refreshTime = await RefreshTimeDB.findOneBy({ code: 'CUSTOMER' })
         if (!refreshTime) {
           refreshTime = { code: 'CUSTOMER', dataVersion: 0, time: new Date(0).toISOString() }
         }
@@ -63,7 +63,7 @@ export class CustomerService {
     const result = await CustomerDB.pagination({
       page: page || 1,
       limit: limit || 10,
-      condition: {
+      filter: {
         isActive: filter?.isActive,
         debt: filter?.debt,
         $OR: filter?.searchText
@@ -87,7 +87,7 @@ export class CustomerService {
     const { filter, limit, sort } = params
     const objects = await CustomerDB.findMany({
       limit,
-      condition: {
+      filter: {
         isActive: filter?.isActive,
         debt: filter?.debt,
         $OR: filter?.searchText
@@ -123,14 +123,14 @@ export class CustomerService {
 
   static async updateOne(id: number, instance: Partial<Customer>) {
     const response = await CustomerApi.updateOne(id, instance)
-    await CustomerDB.replaceOne(id, response)
+    await CustomerDB.upsertOne(response)
     return response
   }
 
   static async destroyOne(id: number) {
     const response = await CustomerApi.destroyOne(id)
     if (response.success) {
-      await CustomerDB.deleteOneByKey(id)
+      await CustomerDB.deleteOne(id)
     }
     return response
   }
@@ -140,7 +140,7 @@ export class CustomerService {
     if (idDefault) {
       if (!CustomerService.customerDefault.id) {
         try {
-          const customer = await CustomerDB.findOneByKey(idDefault)
+          const customer = await CustomerDB.findOneBy({ id: idDefault })
           if (customer) {
             this.customerDefault = customer
           } else {
