@@ -23,8 +23,8 @@ export class PurchaseOrderReceptionApi {
         expiryDate: i.expiryDate,
         unitRate: i.unitRate,
         quantity: i.quantity,
-        costPrice: i.costPrice,
-        listPrice: i.listPrice,
+        costPrice: Math.round(i.costPrice),
+        listPrice: Math.round(i.listPrice),
       })),
     }
   }

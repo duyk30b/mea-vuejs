@@ -1,35 +1,36 @@
 <script setup lang="ts">
+import { VueTag } from '@/common'
+import VueButton from '@/common/VueButton.vue'
+import VuePagination from '@/common/VuePagination.vue'
+import { IconBug, IconDownload, IconFileSearch, IconSetting, IconUpload } from '@/common/icon-antd'
+import { IconSortChange } from '@/common/icon-font-awesome'
+import { IconEditSquare } from '@/common/icon-google'
+import { VueTooltip } from '@/common/popover'
+import VueDropdown from '@/common/popover/VueDropdown.vue'
+import { InputSelect, InputText, VueSelect } from '@/common/vue-form'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { CONFIG } from '@/config'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { BatchService } from '@/modules/batch'
+import { Distributor, DistributorService } from '@/modules/distributor'
+import { FileProductApi } from '@/modules/file-excel/file-product.api'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { ProductService, Product } from '@/modules/product'
+import { ProductGroup, ProductGroupService } from '@/modules/product-group'
+import { Warehouse } from '@/modules/warehouse'
+import { WarehouseService } from '@/modules/warehouse/warehouse.service'
 import { computed, onBeforeMount, onMounted, ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import VuePagination from '../../../common/VuePagination.vue'
-import { IconDownload, IconFileSearch, IconSetting, IconUpload } from '../../../common/icon-antd'
-import { IconSortChange } from '../../../common/icon-font-awesome'
-import { IconEditSquare } from '../../../common/icon-google'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
-import { InputSelect, InputText, VueSelect } from '../../../common/vue-form'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { MeService } from '../../../modules/_me/me.service'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { BatchService } from '../../../modules/batch'
-import { Distributor, DistributorService } from '../../../modules/distributor'
-import { PickupStrategy } from '../../../modules/enum'
-import { FileProductApi } from '../../../modules/file-excel/file-product.api'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { ProductService, type Product } from '../../../modules/product'
-import { ProductGroup, ProductGroupService } from '../../../modules/product-group'
-import { Warehouse } from '../../../modules/warehouse'
-import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { ESTimer, arrayToKeyValue } from '../../../utils'
 import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalProductDetail from '../detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../upsert/ModalProductUpsert.vue'
 import ModalDataProduct from './ModalDataProduct.vue'
+import ModalProductGroupManager from './ModalProductGroupManager.vue'
 import ModalProductListSettingScreen from './ModalProductListSettingScreen.vue'
 import ModalProductMerge from './ModalProductMerge.vue'
 import ModalUploadProduct from './ModalUploadProduct.vue'
-import { VueTag } from '@/common'
-import ModalProductGroupManager from './ModalProductGroupManager.vue'
-import { CONFIG } from '@/config'
+import { BugDevelopment } from '@/views/component'
 
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const modalProductMerge = ref<InstanceType<typeof ModalProductMerge>>()
@@ -657,8 +658,8 @@ const handleModalUploadProductSuccess = async () => {
           <template v-for="(product, productIndex) in productList" :key="productIndex">
             <template v-if="!product.batchList || product.batchList.length === 0">
               <tr :style="product.isActive ? '' : 'background-color: #eeeeee; opacity: 0.4'">
-                <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
-                  {{ product.id }}
+                <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+                  <BugDevelopment :data="product" />
                 </td>
                 <td class="text-center">{{ product.productCode }}</td>
                 <td>
@@ -741,10 +742,10 @@ const handleModalUploadProductSuccess = async () => {
               >
                 <td
                   v-if="CONFIG.MODE === 'development' && batchIndex === 0"
-                  style="color: violet; text-align: center"
                   :rowspan="product.batchList.length"
+                  style="color: violet; text-align: center"
                 >
-                  {{ product.id }}
+                  <BugDevelopment :data="product" />
                 </td>
                 <td v-if="batchIndex === 0" class="text-center" :rowspan="product.batchList.length">
                   {{ product.productCode }}

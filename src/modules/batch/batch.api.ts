@@ -90,14 +90,7 @@ export class BatchApi {
     const { data } = response.data as BaseResponse<{
       success: boolean
       batchId: number
-      product?: Product
-      purchaseOrderItemList: PurchaseOrderItem[]
-      ticketBatchList: TicketBatch[]
-      ticketProductList: TicketProduct[]
     }>
-    data.purchaseOrderItemList = PurchaseOrderItem.fromList(data.purchaseOrderItemList)
-    data.ticketBatchList = TicketBatch.fromList(data.ticketBatchList)
-    data.ticketProductList = TicketProduct.fromList(data.ticketProductList)
     return data
   }
 }

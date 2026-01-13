@@ -85,9 +85,9 @@ export class ProductService {
         relation?.positionList ? PositionService.getAll() : <Position[]>[],
         relation?.batchList
           ? BatchDB.findMany({
-              filter: { quantity: { NOT: 0 }, productId: { IN: productIdList } },
-              sort: { id: 'ASC' },
-            })
+            filter: { quantity: { NOT: 0 }, productId: { IN: productIdList } },
+            sort: { id: 'ASC' },
+          })
           : <Batch[]>[],
       ])
 
@@ -142,11 +142,11 @@ export class ProductService {
     const data = dataSort.slice((page - 1) * limit, page * limit)
 
     const productList = Product.fromList(data)
-    productList.forEach((product) => {
-      product.batchList?.forEach((batch) => {
-        batch.product = Product.basic(product)
-      })
-    })
+    // productList.forEach((product) => {
+    //   product.batchList?.forEach((batch) => {
+    //     batch.product = Product.basic(product)
+    //   })
+    // })
 
     return {
       page,

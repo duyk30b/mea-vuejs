@@ -738,14 +738,15 @@ const clickReturnProduct = () => {
           </a>
         </div>
       </VueDropdown>
-      <VueTooltip v-if="CONFIG.MODE === 'development'" style="color: violet">
-        <template #trigger>
-          <IconBug width="1.4em" height="1.4em" />
-        </template>
-        <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
+      <div v-if="CONFIG.MODE === 'development'">
+        <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
+          <template #trigger>
+            <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
+          </template>
           <pre>{{ JSON.stringify(ticketRoomRef, null, 4) }}</pre>
-        </div>
-      </VueTooltip>
+        </VueTooltip>
+      </div>
+
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.4rem; cursor: pointer">

@@ -250,13 +250,11 @@ const openModalTicketOrderPreview = async () => {
     </div>
     <div class="mr-2 flex items-center gap-4 flex-wrap">
       <div v-if="CONFIG.MODE === 'development'">
-        <VueTooltip style="color: violet">
+        <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
           <template #trigger>
-            <IconBug width="1.4em" height="1.4em" />
+            <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
           </template>
-          <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
-            <pre>{{ JSON.stringify(ticketOrderDetailRef, null, 4) }}</pre>
-          </div>
+          <pre>{{ JSON.stringify(ticketOrderDetailRef, null, 4) }}</pre>
         </VueTooltip>
       </div>
       <VueDropdown>

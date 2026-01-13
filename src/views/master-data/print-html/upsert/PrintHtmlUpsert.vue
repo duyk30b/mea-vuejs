@@ -411,25 +411,21 @@ const handleSave = async () => {
             "
             class="flex gap-2 items-baseline"
           >
-            <VueTooltip>
+            <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
               <template #trigger>
-                <IconBug width="1em" height="1em" style="color: violet" />
+                <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
               </template>
-              <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
-                <pre>{{ JSON.stringify(paymentDemo, null, 4) }}</pre>
-              </div>
+              <pre>{{ JSON.stringify(paymentDemo, null, 4) }}</pre>
             </VueTooltip>
             <a @click="modalSelectPaymentExample?.openModal()">Chọn mẫu thanh toán thử</a>
           </div>
           <div v-else class="flex gap-2 items-baseline">
             <a @click="modalSelectTicketExample?.openModal()">Chọn mẫu thử</a>
-            <VueTooltip>
+            <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
               <template #trigger>
-                <IconBug width="1em" height="1em" style="color: violet" />
+                <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
               </template>
-              <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
-                <pre>{{ JSON.stringify(ticketDemo, null, 4) }}</pre>
-              </div>
+              <pre>{{ JSON.stringify(ticketDemo, null, 4) }}</pre>
             </VueTooltip>
           </div>
           <a @click="startTestPrint">In thử</a>

@@ -62,9 +62,13 @@ const props = defineProps({
 const positionFix = reactive<{
   vertical: 'top' | 'bottom' | 'middle'
   horizontal: 'start' | 'end' | 'center'
+  maxHeightFix: boolean
+  maxHeightValue: number
 }>({
   vertical: props.position.vertical,
   horizontal: props.position.horizontal,
+  maxHeightFix: false,
+  maxHeightValue: 0,
 })
 
 const isOpen = ref(false)
@@ -79,19 +83,39 @@ const calculatePosition = () => {
   const viewportHeight = window.innerHeight
   const viewportWidth = window.innerWidth
 
-  const spaceBelow = viewportHeight - triggerRect.bottom
-  const spaceAbove = triggerRect.top
+  const spaceBelow = viewportHeight - triggerRect.bottom - 20
+  const spaceAbove = triggerRect.top - 20
   const spaceRight = viewportWidth - triggerRect.left
   const spaceLeft = triggerRect.left
 
   const spaceDropdownRectHeight =
     props.position.vertical === 'middle' ? dropdownRect.height / 2 : dropdownRect.height
-  if (props.position.vertical !== 'top' && spaceBelow < spaceDropdownRectHeight) {
+  if (
+    props.position.vertical !== 'top' &&
+    spaceBelow < spaceDropdownRectHeight &&
+    spaceBelow <= spaceAbove
+  ) {
     positionFix.vertical = 'top'
-  } else if (props.position.vertical !== 'bottom' && spaceAbove < spaceDropdownRectHeight) {
+  } else if (
+    props.position.vertical !== 'bottom' &&
+    spaceAbove < spaceDropdownRectHeight &&
+    spaceAbove <= spaceBelow
+  ) {
     positionFix.vertical = 'bottom'
   } else {
     positionFix.vertical = props.position.vertical
+  }
+
+  if (positionFix.vertical === 'top') {
+    if (spaceAbove < spaceDropdownRectHeight) {
+      positionFix.maxHeightFix = true
+      positionFix.maxHeightValue = Math.floor(spaceAbove)
+    }
+  } else if (positionFix.vertical === 'bottom') {
+    if (spaceBelow < spaceDropdownRectHeight) {
+      positionFix.maxHeightFix = true
+      positionFix.maxHeightValue = Math.floor(spaceBelow)
+    }
   }
 
   const spaceDropdownRectWidth =
@@ -106,12 +130,9 @@ const calculatePosition = () => {
 
   // Start edit CSS
   if (positionFix.vertical === 'top') {
-    dropdownContentRef.value.style.top =
-      triggerRect.top -
-      dropdownRect.height +
-      window.scrollY -
-      (props.customStyle?.offset || 0) +
-      'px'
+    const topCalculator =
+      triggerRect.top - dropdownRect.height + window.scrollY - (props.customStyle?.offset || 0)
+    dropdownContentRef.value.style.top = Math.max(topCalculator, 10) + 'px'
     dropdownContentRef.value.style.transformOrigin = 'bottom'
   } else if (positionFix.vertical === 'bottom') {
     dropdownContentRef.value.style.top =
@@ -147,6 +168,12 @@ const calculatePosition = () => {
       dropdownArrowRef.value.style.left = '50%'
       dropdownArrowRef.value.style.transform = 'translateX(-50%)'
     }
+  }
+
+  if (positionFix.maxHeightFix) {
+    dropdownContentRef.value.style.maxHeight = positionFix.maxHeightValue + 'px'
+    dropdownContentRef.value.style.height =
+      Math.min(positionFix.maxHeightValue, dropdownRect.height) + 'px'
   }
 }
 
@@ -230,6 +257,7 @@ onBeforeUnmount(() => {
   color: #333;
   top: 0; // quan trọng, nếu không set top, mặc định nó sẽ rơi xuống dưới, khi đó thanh scroll xuất hiện đẩy lệch mọi thứ đi
   left: 0;
+  overflow: auto;
   &.dropdown-content-clicked {
     border: 1px solid #cdcdcd;
   }

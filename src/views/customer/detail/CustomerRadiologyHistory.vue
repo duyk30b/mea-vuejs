@@ -137,13 +137,11 @@ watch(
           </tr>
           <tr v-for="(ticketRadiology, index) in ticketRadiologyList" :key="index">
             <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-              <VueTooltip>
+              <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
                 <template #trigger>
-                  <IconBug width="1.2em" height="1.2em" />
+                  <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
                 </template>
-                <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
-                  <pre>{{ JSON.stringify(ticketRadiology, null, 4) }}</pre>
-                </div>
+                <pre>{{ JSON.stringify(ticketRadiology, null, 4) }}</pre>
               </VueTooltip>
             </td>
             <td>

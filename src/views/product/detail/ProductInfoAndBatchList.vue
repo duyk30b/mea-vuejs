@@ -127,13 +127,11 @@ const closeExpiryDate = computed(() => {
         >
           <div>{{ product.productCode }}</div>
           <div v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-            <VueTooltip>
+            <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
               <template #trigger>
-                <IconBug width="1em" height="1em" />
+                <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
               </template>
-              <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
-                <pre>{{ JSON.stringify(product, null, 4) }}</pre>
-              </div>
+              <pre>{{ JSON.stringify(product, null, 4) }}</pre>
             </VueTooltip>
           </div>
         </div>
@@ -300,6 +298,7 @@ const closeExpiryDate = computed(() => {
       <table>
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th style="width: 50px">ID</th>
             <th>Thông tin</th>
             <th>SL</th>
@@ -314,6 +313,14 @@ const closeExpiryDate = computed(() => {
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="(batch, index) in batchList || []" :key="index">
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
+                <template #trigger>
+                  <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
+                </template>
+                <pre>{{ JSON.stringify(batch, null, 4) }}</pre>
+              </VueTooltip>
+            </td>
             <td class="text-center">{{ batch.id }}</td>
             <td class="">
               <div class="flex flex-wrap justify-between items-center">

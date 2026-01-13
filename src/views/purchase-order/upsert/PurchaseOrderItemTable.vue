@@ -11,6 +11,8 @@ import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import { onMounted, ref } from 'vue'
 import ModalPurchaseOrderItemUpdate from './ModalPurchaseOrderItemUpdate.vue'
 import { purchaseOrder } from './purchase-order-upsert.store'
+import { CONFIG } from '@/config'
+import { BugDevelopment } from '@/views/component'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalPurchaseOrderItemUpdate = ref<InstanceType<typeof ModalPurchaseOrderItemUpdate>>()
@@ -165,6 +167,7 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
     <table>
       <thead>
         <tr>
+          <th v-if="CONFIG.MODE === 'development'"></th>
           <th>#</th>
           <th>Mã SP</th>
           <th>Tên Sản phẩm</th>
@@ -185,6 +188,9 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
           <td colspan="20" class="text-center">Chưa có dữ liệu</td>
         </tr>
         <tr v-for="(purchaseOrderItem, index) in purchaseOrder.purchaseOrderItemList" :key="index">
+          <td v-if="CONFIG.MODE === 'development'">
+            <BugDevelopment :data="purchaseOrder" />
+          </td>
           <td>
             <div class="flex flex-col items-center">
               <button

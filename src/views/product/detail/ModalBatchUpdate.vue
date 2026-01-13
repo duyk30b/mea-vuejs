@@ -122,11 +122,7 @@ const clickDelete = () => {
         } else {
           ModalStore.alert({
             title: 'Không thể xóa lô hàng khi đã tồn tại trong phiếu nhập hàng hoặc phiếu bán hàng',
-            content: [
-              `Phiếu nhập hàng đang có: ` + response.purchaseOrderItemList.map((i) => i.purchaseOrderId),
-              `Phiếu ban hàng đang có: ` + response.ticketBatchList.map((i) => i.ticketId),
-              'Nếu bắt buộc phải xóa, bạn có thể dùng tính năng "GỘP LÔ" thay thế',
-            ],
+            content: ['Nếu bắt buộc phải xóa, bạn có thể dùng tính năng "GỘP LÔ" thay thế'],
           })
         }
       } catch (error) {

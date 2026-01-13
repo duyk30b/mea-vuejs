@@ -5,7 +5,12 @@
       arrow: true,
       offset: 10,
       dropdownArrow: { backgroundColor: 'rgba(0, 0, 0, 0.7)' },
-      dropdownContent: { backgroundColor: 'rgba(0, 0, 0, 0.7)', color: 'white' },
+      dropdownContent: {
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        color: 'white',
+        maxHeight: maxHeight,
+        maxWidth: maxWidth,
+      },
     }"
     :position="{ horizontal: 'center', vertical: 'top' }"
     :delayHide="0"
@@ -23,6 +28,14 @@
 
 <script lang="ts" setup>
 import Popover from './Popover.vue'
+
+const props = withDefaults(
+  defineProps<{
+    maxHeight?: number | string
+    maxWidth?: number | string
+  }>(),
+  {},
+)
 </script>
 
 <style lang="scss" scoped>

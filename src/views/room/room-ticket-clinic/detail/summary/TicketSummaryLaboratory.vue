@@ -61,13 +61,11 @@ const laboratoryDiscount = computed(() => {
       <template v-for="tlg in ticketRoomRef.ticketLaboratoryGroupList || []" :key="tlg.id">
         <tr>
           <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-            <VueTooltip>
+            <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
               <template #trigger>
-                <IconBug width="1.2em" height="1.2em" />
+                <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
               </template>
-              <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
-                <pre>{{ JSON.stringify(tlg, null, 4) }}</pre>
-              </div>
+              <pre>{{ JSON.stringify(tlg, null, 4) }}</pre>
             </VueTooltip>
           </td>
           <td colspan="100" class="font-bold">
@@ -76,13 +74,11 @@ const laboratoryDiscount = computed(() => {
         </tr>
         <tr v-for="(tl, index) in tlg.ticketLaboratoryList" :key="tl.id">
           <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-            <VueTooltip>
+            <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
               <template #trigger>
-                <IconBug width="1.2em" height="1.2em" />
+                <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
               </template>
-              <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
-                <pre>{{ JSON.stringify(tl, null, 4) }}</pre>
-              </div>
+              <pre>{{ JSON.stringify(tl, null, 4) }}</pre>
             </VueTooltip>
           </td>
           <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">

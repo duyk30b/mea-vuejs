@@ -57,7 +57,6 @@ const prescriptionMoney = computed(() => {
     return acc + item.actualPrice * item.quantity
   }, 0)
 })
-
 </script>
 
 <template>
@@ -88,13 +87,11 @@ const prescriptionMoney = computed(() => {
         :key="tpConsumable.id + '_' + tpConsumableIndex"
       >
         <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-          <VueTooltip>
+          <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
             <template #trigger>
-              <IconBug width="1.2em" height="1.2em" />
+              <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
             </template>
-            <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
-              <pre>{{ JSON.stringify(tpConsumable, null, 4) }}</pre>
-            </div>
+            <pre>{{ JSON.stringify(tpConsumable, null, 4) }}</pre>
           </VueTooltip>
         </td>
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
@@ -210,13 +207,11 @@ const prescriptionMoney = computed(() => {
         :key="tpPrescription.id + '_' + tpPrescriptionIndex"
       >
         <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-          <VueTooltip>
+          <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
             <template #trigger>
-              <IconBug width="1.2em" height="1.2em" />
+              <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
             </template>
-            <div style="max-height: 600px; max-width: 800px; overflow-y: scroll">
-              <pre>{{ JSON.stringify(tpPrescription, null, 4) }}</pre>
-            </div>
+            <pre>{{ JSON.stringify(tpPrescription, null, 4) }}</pre>
           </VueTooltip>
         </td>
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
