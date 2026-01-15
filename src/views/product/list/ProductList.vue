@@ -694,7 +694,7 @@ const handleModalUploadProductSuccess = async () => {
                 </td>
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.distributor"></td>
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.expiryDate"></td>
-                <td class="text-center" :class="(product.quantity || 0) <= 0 ? 'text-red-500' : ''">
+                <td class="text-center" :class="(product.unitQuantity || 0) <= 0 ? 'text-red-500' : ''">
                   {{ product.warehouseIds !== '[]' ? product.unitQuantity || 0 : '' }}
                 </td>
                 <td

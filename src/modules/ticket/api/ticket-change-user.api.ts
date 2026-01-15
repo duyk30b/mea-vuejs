@@ -1,6 +1,6 @@
-import { AxiosInstance } from '../../../core/axios.instance'
-import type { BaseResponse } from '../../_base/base-dto'
-import { TicketUser } from '../../ticket-user'
+import { AxiosInstance } from '../../../core/axios.instance';
+import type { FullResponse } from '../../_base/base-dto';
+import { TicketUser } from '../../ticket-user';
 
 export class TicketChangeUserApi {
   static async destroyTicketUser(body: { ticketId: string; ticketUserId: string }) {
@@ -8,7 +8,7 @@ export class TicketChangeUserApi {
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/user/destroy-ticket-user/${ticketUserId}`,
     )
-    const { data } = response.data as BaseResponse<{ ticketUserDestroyedList: any[] }>
+    const { data } = response.data as FullResponse<{ ticketUserDestroyedList: any[] }>
     return TicketUser.fromList(data.ticketUserDestroyedList)
   }
 
@@ -27,7 +27,7 @@ export class TicketChangeUserApi {
         commissionPercentExpected: ticketUser.commissionPercentExpected,
       },
     )
-    const { data } = response.data as BaseResponse<{ ticketUserModified: any }>
+    const { data } = response.data as FullResponse<{ ticketUserModified: any }>
     return TicketUser.from(data.ticketUserModified)
   }
 
@@ -54,6 +54,6 @@ export class TicketChangeUserApi {
         })),
       },
     )
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
   }
 }

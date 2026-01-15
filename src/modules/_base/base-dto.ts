@@ -1,7 +1,8 @@
-export type BaseResponse<T = any> = {
-  data: T
-  meta: Record<string, any>
-  message: string
+export type FullResponse<T = any> = {
   success: boolean
   time: string
+  meta: { oid: number; uid: number; clientId: string }
+  data: T
+  message: string
+  args?: Record<string, any>
 }

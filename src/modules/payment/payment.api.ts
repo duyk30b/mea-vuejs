@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { PaymentGetParams, PaymentListQuery, PaymentPaginationQuery } from './payment.dto'
 import { MoneyDirection, Payment } from './payment.model'
 
@@ -8,7 +8,7 @@ export class PaymentApi {
     const params = PaymentGetParams.toQuery(options)
 
     const response = await AxiosInstance.get('/payment/pagination', { params })
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       paymentList: any[]
       page: number
       limit: number
@@ -22,7 +22,7 @@ export class PaymentApi {
     const params = PaymentGetParams.toQuery(options)
 
     const response = await AxiosInstance.get('/payment/list', { params })
-    const { data } = response.data as BaseResponse<{ paymentList: any[] }>
+    const { data } = response.data as FullResponse<{ paymentList: any[] }>
     return Payment.fromList(data.paymentList)
   }
 
@@ -36,7 +36,7 @@ export class PaymentApi {
   }) {
     const { paymentId, body } = options
     const response = await AxiosInstance.post(`/payment/update-info/${paymentId}`, body)
-    const { data } = response.data as BaseResponse<{ payment: any }>
+    const { data } = response.data as FullResponse<{ payment: any }>
     return Payment.from(data.payment)
   }
 
@@ -44,7 +44,7 @@ export class PaymentApi {
     const params = PaymentGetParams.toQuery(options)
 
     const response = await AxiosInstance.get('/payment/sum-money', { params })
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       aggregate: {
         moneyDirection: MoneyDirection
         sumPaidTotal: number
@@ -57,19 +57,19 @@ export class PaymentApi {
 
   static async otherCreateMoneyOut(body: { walletId: string; paidAmount: number; note: string }) {
     const response = await AxiosInstance.post('/payment/other/create-money-out', body)
-    const { data } = response.data as BaseResponse<{ payment: any }>
+    const { data } = response.data as FullResponse<{ payment: any }>
     return Payment.from(data.payment)
   }
 
   static async otherCreateMoneyIn(body: { walletId: string; paidAmount: number; note: string }) {
     const response = await AxiosInstance.post('/payment/other/create-money-in', body)
-    const { data } = response.data as BaseResponse<{ payment: any }>
+    const { data } = response.data as FullResponse<{ payment: any }>
     return Payment.from(data.payment)
   }
 
   static async destroy(options: { paymentId: string }) {
     const { paymentId } = options
     const response = await AxiosInstance.post(`/payment/destroy/${paymentId}`)
-    const { data } = response.data as BaseResponse<{ payment: any }>
+    const { data } = response.data as FullResponse<{ payment: any }>
   }
 }

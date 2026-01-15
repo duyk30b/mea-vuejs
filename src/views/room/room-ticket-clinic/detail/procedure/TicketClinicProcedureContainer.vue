@@ -316,7 +316,7 @@ const totalMoney = computed(() => {
                   class="flex flex-wrap items-center gap-1"
                   style="font-size: 0.9em; color: #555"
                 >
-                  <span>{{ tpp.product?.brandName }} x {{ tpp.quantity }}</span>
+                  <span>{{ tpp.product?.brandName }} x {{ tpp.unitQuantity }}</span>
                   <a style="line-height: 0" @click="modalProductDetail?.openModal(tpp.product!)">
                     <IconFileSearch />
                   </a>
@@ -532,7 +532,11 @@ const totalMoney = computed(() => {
                 <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
                   <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
                     <template #trigger>
-                      <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
+                      <IconBug
+                        style="color: violet; cursor: pointer"
+                        width="1.2em"
+                        height="1.2em"
+                      />
                     </template>
                     <pre>{{ JSON.stringify(tp, null, 4) }}</pre>
                   </VueTooltip>
@@ -625,7 +629,9 @@ const totalMoney = computed(() => {
                     class="flex flex-wrap items-center gap-1"
                     style="font-size: 0.9em; color: #555"
                   >
-                    <span>{{ tpp.product?.brandName }} x {{ tpp.quantity }}</span>
+                    <span>
+                      {{ tpp.product?.brandName }} x {{ tpp.unitQuantity }} {{ tpp.unitName }}
+                    </span>
                     <a style="line-height: 0" @click="modalProductDetail?.openModal(tpp.product!)">
                       <IconFileSearch />
                     </a>

@@ -4,8 +4,10 @@ import { ESArray, ESString } from '../../utils'
 import { MeService } from '../_me/me.service'
 import { Product, ProductService } from '../product'
 import { User, UserService } from '../user'
+import type { PrescriptionSampleItem } from './prescription-sample-item.model'
 import { PrescriptionSampleApi } from './prescription-sample.api'
 import type {
+  PrescriptionSampleDetailQuery,
   PrescriptionSampleGetQuery,
   PrescriptionSampleListQuery,
   PrescriptionSamplePaginationQuery,
@@ -18,21 +20,23 @@ export class PrescriptionSampleService {
   static loadedAll: boolean = false
 
   static prescriptionSampleAll = ref<PrescriptionSample[]>([])
+  static prescriptionSampleMap = ref<Record<string, PrescriptionSample>>({})
 
   private static fetchAll = (() => {
     const start = async () => {
       try {
         const userId = MeService.user?.value?.id || 0
-        const response = await PrescriptionSampleApi.list({
-          // relation: { medicineList: true },
+        const prescriptionSampleAll = await PrescriptionSampleApi.list({
+          relation: { prescriptionSampleItemList: { product: false } },
           // filter: { userId: { IN: [0, userId] } },
-          sort: { id: 'ASC' },
+          sort: { priority: 'ASC' },
         })
-        const all = response.data
-        await PrescriptionSampleService.executeRelation(all, { medicineList: { product: true } })
-        PrescriptionSampleService.prescriptionSampleAll.value = all
+        await PrescriptionSampleService.executeRelation(prescriptionSampleAll, {
+          prescriptionSampleItemList: { product: false },
+        })
+        PrescriptionSampleService.prescriptionSampleAll.value = prescriptionSampleAll
       } catch (error: any) {
-        console.log('🚀 ~ prescription-sample.service.ts:31 ~ start ~ error:', error)
+        console.log('🚀 ~ prescription-sample.service.ts:39 ~ start ~ error:', error)
       }
     }
     let fetchPromise: Promise<void> | null = null
@@ -66,21 +70,14 @@ export class PrescriptionSampleService {
     try {
       const prescriptionSampleIdList = prescriptionSampleList.map((i) => i.id)
 
-      prescriptionSampleList.forEach((i) => {
-        try {
-          i.medicineList = JSON.parse(i.medicines || '[]')
-        } catch (error) {
-          i.medicineList = []
-        }
-      })
       const productIdList = prescriptionSampleList
-        .map((i) => i.medicineList)
+        .map((i) => i.prescriptionSampleItemList)
         .flat()
         .map((i) => i.productId)
 
       const [userMap, productList] = await Promise.all([
         relation?.user ? UserService.getMap() : <Record<string, User>>{},
-        relation?.medicineList?.product
+        relation?.prescriptionSampleItemList?.product
           ? ProductService.list({ filter: { id: { IN: productIdList } } })
           : <Product[]>[],
       ])
@@ -91,14 +88,14 @@ export class PrescriptionSampleService {
         if (relation?.user) {
           prescriptionSample.user = userMap[prescriptionSample.userId]
         }
-        if (relation?.medicineList?.product) {
-          prescriptionSample.medicineList.forEach((m) => {
-            m.product = productMap[m.productId]
+        if (relation?.prescriptionSampleItemList?.product) {
+          prescriptionSample.prescriptionSampleItemList.forEach((psi) => {
+            psi.product = productMap[psi.productId]
           })
         }
       })
     } catch (error) {
-      console.log('🚀 ~ radiology-sample.service.ts:91 ~ PrescriptionSampleService ~ error:', error)
+      console.log('🚀 ~ prescription-sample.service.ts:95 ~ executeRelation ~ error:', error)
     }
   }
 
@@ -123,8 +120,8 @@ export class PrescriptionSampleService {
       await PrescriptionSampleService.executeRelation(data, query.relation)
     }
     return {
-      data,
-      meta: { total: dataQuery.length },
+      prescriptionSampleList: data,
+      total: dataQuery.length,
     }
   }
 
@@ -140,6 +137,30 @@ export class PrescriptionSampleService {
     return PrescriptionSample.fromList(data)
   }
 
+  static async detail(
+    id: string,
+    query: PrescriptionSampleDetailQuery = {},
+    options?: { refetch?: boolean; query?: boolean },
+  ) {
+    let prescriptionSample: PrescriptionSample | undefined
+    if (options?.query) {
+      prescriptionSample = await PrescriptionSampleApi.detail(id, query)
+      Object.assign(
+        PrescriptionSampleService.prescriptionSampleMap.value[id] || {},
+        prescriptionSample,
+      )
+    } else {
+      await PrescriptionSampleService.fetchAll({ refetch: !!options?.refetch })
+      prescriptionSample = PrescriptionSampleService.prescriptionSampleMap.value[id]
+    }
+    if (query.relation && prescriptionSample) {
+      await PrescriptionSampleService.executeRelation([prescriptionSample], query.relation)
+    }
+    return prescriptionSample
+      ? PrescriptionSample.from(prescriptionSample)
+      : PrescriptionSample.blank()
+  }
+
   static async search(text: string) {
     await PrescriptionSampleService.fetchAll()
     if (!text) text = ''
@@ -152,56 +173,28 @@ export class PrescriptionSampleService {
     return PrescriptionSample.fromList(data)
   }
 
-  static async createOne(
-    prescriptionSample: PrescriptionSample,
-    options?: { clearCache?: boolean },
-  ) {
-    const result = await PrescriptionSampleApi.createOne(prescriptionSample)
+  static async createOne(body: {
+    prescriptionSampleBody: PrescriptionSample
+    prescriptionSampleItemBodyList: PrescriptionSampleItem[]
+  }) {
+    const result = await PrescriptionSampleApi.createOne(body)
     PrescriptionSampleService.loadedAll = false
-    // if (options?.clearCache) {
-    // } else {
-    //   const ins = PrescriptionSample.from(result)
-    //   await PrescriptionSampleService.refreshMedicineList([ins])
-    //   PrescriptionSampleService.prescriptionSampleAll.value.push(ins)
-    // }
-    // return result
   }
 
   static async updateOne(
-    id: number,
-    prescriptionSample: Partial<PrescriptionSample>,
-    options?: { clearCache?: boolean },
+    id: string,
+    body: {
+      prescriptionSampleBody?: PrescriptionSample
+      prescriptionSampleItemBodyList?: PrescriptionSampleItem[]
+    },
   ) {
-    const result = await PrescriptionSampleApi.updateOne(id, prescriptionSample)
+    const result = await PrescriptionSampleApi.updateOne(id, body)
     PrescriptionSampleService.loadedAll = false
-    // if (options?.clearCache) {
-    // } else {
-    //   const ins = PrescriptionSample.from(result)
-    //   await PrescriptionSampleService.refreshMedicineList([ins])
-    //   const findIndex = PrescriptionSampleService.prescriptionSampleAll.value.findIndex(
-    //     (i) => i.id === ins.id,
-    //   )
-    //   if (findIndex !== -1) {
-    //     PrescriptionSampleService.prescriptionSampleAll.value[findIndex] = ins
-    //   } else {
-    //     PrescriptionSampleService.prescriptionSampleAll.value.push(ins)
-    //   }
-    // }
     return result
   }
 
-  static async destroyOne(id: number, options?: { clearCache?: boolean }) {
-    const result = await PrescriptionSampleApi.destroyOne(id)
+  static async destroyOne(id: string) {
+    await PrescriptionSampleApi.destroyOne(id)
     PrescriptionSampleService.loadedAll = false
-    // if (options?.clearCache) {
-    // } else {
-    //   const findIndex = PrescriptionSampleService.prescriptionSampleAll.value.findIndex(
-    //     (i) => i.id === id,
-    //   )
-    //   if (findIndex !== -1) {
-    //     PrescriptionSampleService.prescriptionSampleAll.value.splice(findIndex, 1)
-    //   }
-    // }
-    return result
   }
 }

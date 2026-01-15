@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { UserDetailQuery, UserGetQuery, UserListQuery, UserPaginationQuery } from './user.dto'
 import { User } from './user.model'
 
@@ -8,10 +8,13 @@ export class UserApi {
     const params = UserGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/user/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
+
     return {
-      meta,
-      data: User.fromList(data),
+      userList: User.fromList(data.userList),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
     }
   }
 
@@ -19,7 +22,7 @@ export class UserApi {
     const params = UserGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/user/list', { params })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return User.fromList(data)
   }
 
@@ -27,7 +30,7 @@ export class UserApi {
     const params = UserGetQuery.toQuery(options || {})
 
     const response = await AxiosInstance.get(`/user/detail/${id}`, { params })
-    const { data } = response.data as BaseResponse<{ user: any }>
+    const { data } = response.data as FullResponse<{ user: any }>
     return User.from(data.user)
   }
 
@@ -50,7 +53,7 @@ export class UserApi {
       roomIdList,
       roleIdList,
     })
-    const { data } = response.data as BaseResponse<{ user: any }>
+    const { data } = response.data as FullResponse<{ user: any }>
     return User.from(data.user)
   }
 
@@ -76,19 +79,19 @@ export class UserApi {
       roomIdList,
       roleIdList,
     })
-    const { data } = response.data as BaseResponse<{ user: any }>
+    const { data } = response.data as FullResponse<{ user: any }>
     return User.from(data.user)
   }
 
   static async deleteOne(id: number) {
     const response = await AxiosInstance.post(`/user/delete/${id}`)
-    const { data } = response.data as BaseResponse<{ userId: number }>
+    const { data } = response.data as FullResponse<{ userId: number }>
     return data
   }
 
   static async deviceLogout(userId: number, clientId: string) {
     const response = await AxiosInstance.post(`/user/device-logout/${userId}`, { clientId })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return data
   }
 }

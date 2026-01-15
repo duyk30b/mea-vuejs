@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../../core/axios.instance'
-import type { BaseResponse } from '../../_base/base-dto'
+import type { FullResponse } from '../../_base/base-dto'
 import { Distributor } from '../../distributor'
 import { Payment, PaymentActionType } from '../../payment'
 import { PurchaseOrder } from '../purchase-order.model'
@@ -7,7 +7,7 @@ import { PurchaseOrder } from '../purchase-order.model'
 export class PurchaseOrderActionApi {
   static async destroy(purchaseOrderId: string) {
     const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/destroy`)
-    const { data } = response.data as BaseResponse<{ purchaseOrderId: string }>
+    const { data } = response.data as FullResponse<{ purchaseOrderId: string }>
     return data
   }
 
@@ -30,7 +30,7 @@ export class PurchaseOrderActionApi {
         note: body.note,
       },
     )
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       purchaseOrderModified: any
       distributorModified: any
       paymentCreatedList: any[]
@@ -47,7 +47,7 @@ export class PurchaseOrderActionApi {
   static async sendProduct(options: { purchaseOrderId: string }) {
     const { purchaseOrderId } = options
     const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/send-product`)
-    const { data } = response.data as BaseResponse<{ purchaseOrderModified: any }>
+    const { data } = response.data as FullResponse<{ purchaseOrderModified: any }>
     return {
       purchaseOrderModified: PurchaseOrder.from(data.purchaseOrderModified || {}),
     }
@@ -56,7 +56,7 @@ export class PurchaseOrderActionApi {
   static async close(options: { purchaseOrderId: string }) {
     const { purchaseOrderId } = options
     const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/close`)
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       purchaseOrderModified: any
       paymentCreated: any
       distributorModified: any
@@ -76,7 +76,7 @@ export class PurchaseOrderActionApi {
       walletId,
       note,
     })
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       purchaseOrderModified: any
       paymentCreated: any
       distributorModified: any

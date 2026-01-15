@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
   LaboratoryGroupDetailQuery,
   LaboratoryGroupGetQuery,
@@ -13,10 +13,12 @@ export class LaboratoryGroupApi {
     const params = LaboratoryGroupGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/laboratory-group/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
-      meta,
-      data: LaboratoryGroup.fromList(data),
+      laboratoryGroupList: LaboratoryGroup.fromList(data.laboratoryGroupList),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
     }
   }
 
@@ -24,7 +26,7 @@ export class LaboratoryGroupApi {
     const params = LaboratoryGroupGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/laboratory-group/list', { params })
-    const { data, time } = response.data as BaseResponse
+    const { data, time } = response.data as FullResponse
     return {
       time: new Date(time),
       data: LaboratoryGroup.fromList(data),
@@ -37,7 +39,7 @@ export class LaboratoryGroupApi {
   ): Promise<LaboratoryGroup> {
     const params = LaboratoryGroupGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/laboratory-group/detail/${id}`, { params })
-    const { data, meta } = response.data as BaseResponse<{ laboratoryGroup: any }>
+    const { data, meta } = response.data as FullResponse<{ laboratoryGroup: any }>
     return LaboratoryGroup.from(data.laboratoryGroup)
   }
 
@@ -47,7 +49,7 @@ export class LaboratoryGroupApi {
       printHtmlId: laboratoryGroup.printHtmlId,
       roomId: laboratoryGroup.roomId,
     })
-    const { data } = response.data as BaseResponse<{ laboratoryGroup: any }>
+    const { data } = response.data as FullResponse<{ laboratoryGroup: any }>
     return LaboratoryGroup.from(data.laboratoryGroup)
   }
 
@@ -57,13 +59,13 @@ export class LaboratoryGroupApi {
       printHtmlId: laboratoryGroup.printHtmlId,
       roomId: laboratoryGroup.roomId,
     })
-    const { data } = response.data as BaseResponse<{ laboratoryGroup: any }>
+    const { data } = response.data as FullResponse<{ laboratoryGroup: any }>
     return LaboratoryGroup.from(data.laboratoryGroup)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/laboratory-group/destroy/${id}`)
-    const { data, meta } = response.data as BaseResponse<boolean>
+    const { data, meta } = response.data as FullResponse<boolean>
     return data
   }
 
@@ -78,13 +80,13 @@ export class LaboratoryGroupApi {
         }
       }),
     })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return data
   }
 
   static async systemList() {
     const response = await AxiosInstance.get('/laboratory-group/system-list')
-    const { data, time } = response.data as BaseResponse
+    const { data, time } = response.data as FullResponse
     return LaboratoryGroup.fromList(data)
   }
 }

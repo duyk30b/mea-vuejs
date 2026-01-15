@@ -1,9 +1,9 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
-  TicketProductGetQuery,
-  TicketProductListQuery,
-  type TicketProductPaginationQuery
+    TicketProductGetQuery,
+    TicketProductListQuery,
+    type TicketProductPaginationQuery
 } from './ticket-product.dto'
 import { TicketProduct } from './ticket-product.model'
 
@@ -12,7 +12,7 @@ export class TicketProductApi {
     const params = TicketProductGetQuery.toQuery(query)
 
     const response = await AxiosInstance.get('/ticket-product/pagination', { params })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return {
       page: data.page as number,
       limit: data.limit as number,
@@ -25,7 +25,7 @@ export class TicketProductApi {
     const params = TicketProductGetQuery.toQuery(query)
 
     const response = await AxiosInstance.get('/ticket-product/list', { params })
-    const { data } = response.data as BaseResponse<{ ticketProductList: any[] }>
+    const { data } = response.data as FullResponse<{ ticketProductList: any[] }>
     return TicketProduct.fromList(data.ticketProductList)
   }
 }

@@ -4,18 +4,19 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { IconSearch } from '../icon-antd'
 
 export type ItemOption<T> = { value: number; text: string; data?: T }
+export type ItemSearchOption<T> = { value: number; text: string; data?: T }
 
 const props = withDefaults(
   defineProps<{
     value: number
-    options: ItemOption<any>[]
+    options: ItemSearchOption<any>[]
     disabled?: boolean
     placeholder?: string
     maxHeight?: number
     prepend?: string
     required?: boolean
     limit?: number
-    logicFilter?: (item: ItemOption<any>, text: string) => boolean
+    logicFilter?: (item: ItemSearchOption<any>, text: string) => boolean
     clearTextIfNoSelect?: boolean
     messageNoResult?: string
   }>(),
@@ -38,7 +39,7 @@ const emit = defineEmits<{
   (e: 'searching', value: string): void
   (e: 'update:text', value: string): void
   (e: 'update:value', value: string | number | boolean | null): void
-  (e: 'selectItem', value: ItemOption<any> | undefined): void
+  (e: 'selectItem', value: ItemSearchOption<any> | undefined): void
 }>()
 
 const inputRef = ref<HTMLInputElement>()

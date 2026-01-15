@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../../core/axios.instance'
-import type { BaseResponse } from '../../_base/base-dto'
+import type { FullResponse } from '../../_base/base-dto'
 import { TicketRadiology } from '../../ticket-radiology'
 import type { TicketUser } from '../../ticket-user'
 
@@ -50,7 +50,7 @@ export class TicketChangeRadiologyApi {
         }),
       },
     )
-    const { data } = response.data as BaseResponse<{ ticketRadiologyCreatedList: any[] }>
+    const { data } = response.data as FullResponse<{ ticketRadiologyCreatedList: any[] }>
     return TicketRadiology.fromList(data.ticketRadiologyCreatedList)
   }
 
@@ -59,7 +59,7 @@ export class TicketChangeRadiologyApi {
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/radiology/destroy-ticket-radiology/${ticketRadiologyId}`,
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 
   static async updateRequestTicketRadiology(body: {
@@ -91,7 +91,7 @@ export class TicketChangeRadiologyApi {
           : undefined,
       },
     )
-    const { data } = response.data as BaseResponse<{ ticketRadiologyModified: any }>
+    const { data } = response.data as FullResponse<{ ticketRadiologyModified: any }>
     return TicketRadiology.from(data.ticketRadiologyModified)
   }
 
@@ -109,7 +109,7 @@ export class TicketChangeRadiologyApi {
         })),
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 
   static async updateResult(options: {
@@ -164,7 +164,7 @@ export class TicketChangeRadiologyApi {
       formData,
       { headers: { 'Content-Type': 'multipart/form-data' } },
     )
-    const { data } = response.data as BaseResponse<{ ticketRadiologyModified: any }>
+    const { data } = response.data as FullResponse<{ ticketRadiologyModified: any }>
     return TicketRadiology.from(data.ticketRadiologyModified)
   }
 
@@ -184,7 +184,7 @@ export class TicketChangeRadiologyApi {
       `/ticket/${ticketId}/radiology/cancel-result/${ticketRadiologyId}`,
       body,
     )
-    const { data } = response.data as BaseResponse<{ ticketRadiologyModified: any }>
+    const { data } = response.data as FullResponse<{ ticketRadiologyModified: any }>
     return TicketRadiology.from(data.ticketRadiologyModified)
   }
 }

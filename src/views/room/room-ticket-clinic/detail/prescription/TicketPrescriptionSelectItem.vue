@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import VueButton from '@/common/VueButton.vue'
 import { IconFileSearch } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { InputHint, InputNumber, InputOptions, VueSelect } from '@/common/vue-form'
+import { InputHint, InputNumber, InputOptions, InputSelect, VueSelect } from '@/common/vue-form'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Batch, BatchService } from '@/modules/batch'
@@ -31,8 +31,6 @@ const productOptions = ref<{ value: number; text: string; data: Product }[]>([])
 const batchList = ref<Batch[]>([])
 
 const ticketProductPrescription = ref<TicketProduct>(TicketProduct.blank())
-
-const pickupStrategy = ref(MeService.getPickupStrategy().prescription)
 
 onMounted(async () => {})
 
@@ -106,7 +104,7 @@ const selectProduct = async (productSelect: Product) => {
 
   const temp = TicketProduct.blank()
   temp.priority = priorityMax + 1
-  temp.pickupStrategy = pickupStrategy.value
+  temp.pickupStrategy = MeService.getPickupStrategy(productSelect).prescription
   temp.customerId = ticketRoomRef.value.customerId
   temp.product = Product.from(productSelect)
   temp.productId = productSelect.id
@@ -116,11 +114,11 @@ const selectProduct = async (productSelect: Product) => {
   temp.deliveryStatus = DeliveryStatus.Pending
   temp.unitRate = productSelect.unitDefaultRate
 
-  temp.expectedPrice = productSelect.retailPrice
+  temp.unitExpectedPrice = productSelect.retailPrice * productSelect.unitDefaultRate
   temp.discountType = DiscountType.Percent
   temp.discountPercent = 0
-  temp.discountMoney = 0
-  temp.actualPrice = productSelect.retailPrice
+  temp.unitDiscountMoney = 0
+  temp.unitActualPrice = productSelect.retailPrice * productSelect.unitDefaultRate
 
   temp.createdAt = Date.now()
   temp.hintUsage = productSelect.hintUsage
@@ -132,7 +130,7 @@ const selectProduct = async (productSelect: Product) => {
   const discountApply = productSelect?.discountApply
   if (discountApply) {
     let { discountType, discountPercent, discountMoney } = discountApply
-    const expectedPrice = temp.expectedPrice || 0
+    const expectedPrice = (temp.unitExpectedPrice || 0) / temp.unitRate
     if (discountType === DiscountType.Percent) {
       discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
     }
@@ -141,8 +139,8 @@ const selectProduct = async (productSelect: Product) => {
     }
     temp.discountType = discountType
     temp.discountPercent = discountPercent
-    temp.discountMoney = discountMoney
-    temp.actualPrice = expectedPrice - discountMoney
+    temp.unitDiscountMoney = discountMoney * temp.unitRate
+    temp.unitActualPrice = temp.unitExpectedPrice - temp.unitDiscountMoney
   }
 
   ticketProductPrescription.value = temp
@@ -212,7 +210,10 @@ const addPrescriptionItem = () => {
     return inputOptionsProduct.value?.focus()
   }
 
-  if (product?.warehouseIds !== '[]' && pickupStrategy.value !== PickupStrategy.NoImpact) {
+  if (
+    product?.warehouseIds !== '[]' &&
+    ticketProductPrescription.value.pickupStrategy !== PickupStrategy.NoImpact
+  ) {
     if (ticketProductPrescription.value.quantity > product!.quantity) {
       AlertStore.addWarning(
         `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${product!.quantity} lấy ${
@@ -232,7 +233,8 @@ const addPrescriptionItem = () => {
   }
 
   // gán số lượng trong đơn
-  ticketProductPrescription.value.quantityPrescription = ticketProductPrescription.value.quantity
+  ticketProductPrescription.value.unitQuantityPrescription =
+    ticketProductPrescription.value.unitQuantity
 
   emit('success', [ticketProductPrescription.value])
   clear()
@@ -269,7 +271,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
             <span
               v-if="
                 ticketProductPrescription.product?.warehouseIds !== '[]' &&
-                pickupStrategy !== PickupStrategy.NoImpact
+                ticketProductPrescription.pickupStrategy !== PickupStrategy.NoImpact
               "
               :class="
                 ticketProductPrescription.quantity > ticketProductPrescription.product!.quantity
@@ -318,7 +320,10 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
                 -
                 <b>{{ data.brandName }}</b>
                 <span
-                  v-if="data?.warehouseIds !== '[]' && pickupStrategy !== PickupStrategy.NoImpact"
+                  v-if="
+                    data?.warehouseIds !== '[]' &&
+                    ticketProductPrescription.pickupStrategy !== PickupStrategy.NoImpact
+                  "
                   :class="data.unitQuantity <= 0 ? 'text-red-500' : ''"
                   style="font-weight: 700"
                 >
@@ -407,18 +412,19 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
         </div>
         <div class="flex">
           <div style="width: 100px">
-            <VueSelect
-              v-model:value="ticketProductPrescription.unitRate"
+            <InputSelect
+              :value="ticketProductPrescription.unitRate"
               :disabled="ticketProductPrescription.product!.unitObject.length <= 1"
               :options="
                 ticketProductPrescription.product!.unitObject.map((i) => ({
                   value: i.rate,
-                  text: i.name,
+                  label: i.name,
                   data: i,
                 }))
               "
+              @update:value="(v: any) => ticketProductPrescription.changeUnitRate(v)"
               required
-            ></VueSelect>
+            />
           </div>
           <div class="flex-1">
             <InputNumber

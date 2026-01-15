@@ -2,7 +2,7 @@ import { AxiosInstance } from '@/core/axios.instance'
 import { Customer } from '@/modules/customer'
 import { Payment, PaymentActionType } from '@/modules/payment'
 import type { PaymentTicketItem } from '@/modules/payment-ticket-item'
-import type { BaseResponse } from '../../_base/base-dto'
+import type { FullResponse } from '../../_base/base-dto'
 import { Ticket } from '../ticket.model'
 
 export type PaymentTicketItemBody = Pick<
@@ -16,6 +16,7 @@ export type PaymentTicketItemBody = Pick<
   | 'discountType'
   | 'actualPrice'
   | 'quantity'
+  | 'unitRate'
   | 'sessionIndex'
   | 'paidMoney'
   | 'debtMoney'
@@ -49,7 +50,7 @@ export class TicketMoneyApi {
   }) {
     const { ticketId, body } = object
     const response = await AxiosInstance.post(`/ticket/${ticketId}/payment-money`, body)
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       customerModified: any
       paymentCreated: any
       ticketModified: any
@@ -74,7 +75,7 @@ export class TicketMoneyApi {
     }[]
   }) {
     const response = await AxiosInstance.post('/ticket/pay-debt', body)
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       customerModified: any
       ticketModifiedList: any[]
     }>

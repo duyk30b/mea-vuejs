@@ -1,9 +1,9 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
-  TicketProcedureDetailQuery,
-  TicketProcedureGetQuery,
-  type TicketProcedurePaginationQuery,
+    TicketProcedureDetailQuery,
+    TicketProcedureGetQuery,
+    type TicketProcedurePaginationQuery,
 } from './ticket-procedure.dto'
 import { TicketProcedure } from './ticket-procedure.model'
 
@@ -12,7 +12,7 @@ export class TicketProcedureApi {
     const params = TicketProcedureGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/ticket-procedure/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
       page: data.page,
       limit: data.limit,
@@ -27,7 +27,7 @@ export class TicketProcedureApi {
     const response = await AxiosInstance.get(`/ticket-procedure/detail/${ticketProcedureId}`, {
       params,
     })
-    const { data } = response.data as BaseResponse<{ ticketProcedure: any }>
+    const { data } = response.data as FullResponse<{ ticketProcedure: any }>
     return TicketProcedure.from(data.ticketProcedure)
   }
 }

@@ -1,14 +1,14 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import type { Discount } from '../discount'
 import type { Position } from '../position'
 import { TicketRegimen } from '../ticket-regimen'
 import type { RegimenItem } from './regimen-item.model'
 import {
-  RegimenDetailQuery,
-  RegimenGetQuery,
-  RegimenListQuery,
-  type RegimenPaginationQuery,
+    RegimenDetailQuery,
+    RegimenGetQuery,
+    RegimenListQuery,
+    type RegimenPaginationQuery,
 } from './regimen.dto'
 import { Regimen } from './regimen.model'
 
@@ -17,7 +17,7 @@ export class RegimenApi {
     const params = RegimenGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/regimen/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
       page: data.page,
       limit: data.limit,
@@ -30,14 +30,14 @@ export class RegimenApi {
     const params = RegimenGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/regimen/list', { params })
-    const { data, time } = response.data as BaseResponse<{ regimenList: any[] }>
+    const { data, time } = response.data as FullResponse<{ regimenList: any[] }>
     return Regimen.fromList(data.regimenList)
   }
 
   // static search: (params: RegimenListQuery) => Promise<Regimen[]> = debounceAsync(
   //   async (params: RegimenListQuery): Promise<Regimen[]> => {
   //     const response = await AxiosInstance.get('/regimen/list', { params })
-  //     const { data } = response.data as BaseResponse
+  //     const { data } = response.data as FullResponse
   //     return Regimen.fromList(data)
   //   },
   //   200,
@@ -47,7 +47,7 @@ export class RegimenApi {
     const params = RegimenGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get(`/regimen/detail/${id}`, { params })
-    const { data } = response.data as BaseResponse<{ regimen: any }>
+    const { data } = response.data as FullResponse<{ regimen: any }>
     return Regimen.from(data.regimen)
   }
 
@@ -108,7 +108,7 @@ export class RegimenApi {
         }
       }),
     })
-    const { data } = response.data as BaseResponse<{ regimen: any }>
+    const { data } = response.data as FullResponse<{ regimen: any }>
     return Regimen.from(data.regimen)
   }
 
@@ -171,13 +171,13 @@ export class RegimenApi {
         }
       }),
     })
-    const { data } = response.data as BaseResponse<{ regimen: any }>
+    const { data } = response.data as FullResponse<{ regimen: any }>
     return Regimen.from(data.regimen)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/regimen/destroy/${id}`)
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       regimenId: number
       ticketRegimenList: TicketRegimen[]
       success: boolean

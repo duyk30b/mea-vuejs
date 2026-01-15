@@ -40,7 +40,6 @@ const batchList = ref<Batch[]>([])
 
 const ticketProduct = ref<TicketProduct>(TicketProduct.blank())
 const productOutSellType = ref<'retailPrice' | 'wholesalePrice' | 'costPrice'>('retailPrice')
-const pickupStrategy = ref(MeService.getPickupStrategy().order)
 
 const warehouseMap = ref<Record<string, Warehouse>>({})
 
@@ -117,17 +116,18 @@ const selectProduct = async (productProp?: Product) => {
   const tpItem = TicketProduct.blank()
   tpItem.productId = productProp.id
   tpItem.product = Product.from(productProp)
-  tpItem.pickupStrategy = MeService.getPickupStrategy().order
+
+  tpItem.pickupStrategy = MeService.getPickupStrategy(productProp).order
 
   tpItem.deliveryStatus = DeliveryStatus.Pending
   tpItem.unitRate = productProp.unitDefaultRate
-  tpItem.quantity = 0
+  tpItem.unitQuantity = 0
 
-  tpItem.expectedPrice = productProp.retailPrice
+  tpItem.unitExpectedPrice = productProp.retailPrice * productProp.unitDefaultRate
   tpItem.discountType = DiscountType.Percent
   tpItem.discountPercent = 0
-  tpItem.discountMoney = 0
-  tpItem.actualPrice = productProp.retailPrice
+  tpItem.unitDiscountMoney = 0
+  tpItem.unitActualPrice = productProp.retailPrice * productProp.unitDefaultRate
 
   tpItem.createdAt = Date.now()
 
@@ -135,7 +135,7 @@ const selectProduct = async (productProp?: Product) => {
   const discountApply = productProp?.discountApply
   if (discountApply) {
     let { discountType, discountPercent, discountMoney } = discountApply
-    const expectedPrice = tpItem.expectedPrice || 0
+    const expectedPrice = Math.floor((tpItem.unitExpectedPrice || 0) / tpItem.unitRate)
     if (discountType === DiscountType.Percent) {
       discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
     }
@@ -144,8 +144,8 @@ const selectProduct = async (productProp?: Product) => {
     }
     tpItem.discountType = discountType
     tpItem.discountPercent = discountPercent
-    tpItem.discountMoney = discountMoney
-    tpItem.actualPrice = expectedPrice - discountMoney
+    tpItem.unitDiscountMoney = discountMoney * tpItem.unitRate
+    tpItem.unitActualPrice = tpItem.unitExpectedPrice - tpItem.unitDiscountMoney
   }
 
   if (settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.hintUsage) {
@@ -226,70 +226,33 @@ const selectBatch = (batchSelected: Batch) => {
 const handleChangeInvoiceProductSellType = (
   type: 'costPrice' | 'wholesalePrice' | 'retailPrice',
 ) => {
-  let expectedPrice = 0
+  let unitExpectedPrice = 0
   if (type === 'costPrice') {
-    expectedPrice = ticketProduct.value.product?.costPrice || 0
+    unitExpectedPrice = (ticketProduct.value.product?.costPrice || 0) * ticketProduct.value.unitRate
   }
   if (type === 'wholesalePrice') {
-    expectedPrice = ticketProduct.value.product?.wholesalePrice || 0
+    unitExpectedPrice =
+      (ticketProduct.value.product?.wholesalePrice || 0) * ticketProduct.value.unitRate
   }
   if (type === 'retailPrice') {
-    expectedPrice = ticketProduct.value.product?.retailPrice || 0
+    unitExpectedPrice =
+      (ticketProduct.value.product?.retailPrice || 0) * ticketProduct.value.unitRate
   }
 
   if (ticketProduct.value.discountType === '%') {
     const discountPercent = ticketProduct.value.discountPercent || 0
-    const discountMoney = Math.round((expectedPrice * discountPercent) / 100)
-    ticketProduct.value.discountMoney = discountMoney
-    ticketProduct.value.actualPrice = expectedPrice - discountMoney
+    const unitDiscountMoney = Math.round((unitExpectedPrice * discountPercent) / 100)
+    ticketProduct.value.unitDiscountMoney = unitDiscountMoney
+    ticketProduct.value.unitActualPrice = unitExpectedPrice - unitDiscountMoney
   }
   if (ticketProduct.value.discountType === 'VNĐ') {
-    const discountMoney = ticketProduct.value.discountMoney || 0
+    const unitDiscountMoney = ticketProduct.value.unitDiscountMoney || 0
     const discountPercent =
-      expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+      unitExpectedPrice == 0 ? 0 : Math.round((unitDiscountMoney * 100) / unitExpectedPrice)
     ticketProduct.value.discountPercent = discountPercent
-    ticketProduct.value.actualPrice = expectedPrice - discountMoney
+    ticketProduct.value.unitActualPrice = unitExpectedPrice - unitDiscountMoney
   }
-  ticketProduct.value.expectedPrice = expectedPrice
-}
-
-const handleChangeUnitExpectedPrice = (data: number) => {
-  const expectedPrice = data / ticketProduct.value.unitRate
-  const actualPrice = ticketProduct.value.actualPrice
-  const discountMoney = expectedPrice - actualPrice
-  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
-  ticketProduct.value.discountPercent = discountPercent
-  ticketProduct.value.discountMoney = discountMoney
-  ticketProduct.value.discountType = DiscountType.VND
-  ticketProduct.value.expectedPrice = expectedPrice
-}
-
-const handleChangeUnitDiscountMoney = (data: number) => {
-  const discountMoney = data / ticketProduct.value.unitRate
-  const expectedPrice = ticketProduct.value.expectedPrice || 0
-  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
-  ticketProduct.value.discountPercent = discountPercent
-  ticketProduct.value.discountMoney = discountMoney
-  ticketProduct.value.actualPrice = expectedPrice - discountMoney
-}
-
-const handleChangeDiscountPercent = (data: number) => {
-  const expectedPrice = ticketProduct.value.expectedPrice || 0
-  const discountMoney = Math.round((expectedPrice * (data || 0)) / 100)
-  ticketProduct.value.discountPercent = data
-  ticketProduct.value.discountMoney = discountMoney
-  ticketProduct.value.actualPrice = expectedPrice - discountMoney
-}
-
-const handleChangeUnitActualPrice = (data: number) => {
-  const actualPrice = data / ticketProduct.value.unitRate
-  const expectedPrice = ticketProduct.value.expectedPrice
-  const discountMoney = expectedPrice - actualPrice
-  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
-  ticketProduct.value.discountPercent = discountPercent
-  ticketProduct.value.discountMoney = discountMoney
-  ticketProduct.value.discountType = DiscountType.VND
-  ticketProduct.value.actualPrice = actualPrice
+  ticketProduct.value.unitExpectedPrice = unitExpectedPrice
 }
 
 const clear = () => {
@@ -309,19 +272,28 @@ const addTicketProduct = () => {
     AlertStore.addError('Lỗi: Sản phẩm không phù hợp')
     return inputOptionsProduct.value?.focus()
   }
+  if (!Number.isInteger(ticketProduct.value.unitQuantity)) {
+    return AlertStore.addWarning('Lỗi: Số lượng phải là 1 số nguyên dương')
+  }
 
-  if (product?.warehouseIds !== '[]' && pickupStrategy.value !== PickupStrategy.NoImpact) {
-    if (ticketProduct.value.quantity > product!.quantity) {
+  if (
+    product?.warehouseIds !== '[]' &&
+    ticketProduct.value.pickupStrategy !== PickupStrategy.NoImpact
+  ) {
+    if (ticketProduct.value.unitQuantity * ticketProduct.value.unitRate > product!.quantity) {
       AlertStore.addWarning(
         `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${product!.quantity} lấy ${
-          ticketProduct.value.quantity
+          ticketProduct.value.unitQuantity * ticketProduct.value.unitRate
         }`,
       )
     }
-    if (ticketProduct.value.batchId && ticketProduct.value.quantity > batch!.quantity) {
+    if (
+      ticketProduct.value.batchId &&
+      ticketProduct.value.unitQuantity * ticketProduct.value.unitRate > batch!.quantity
+    ) {
       AlertStore.addWarning(
         `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${batch!.quantity} lấy ${
-          ticketProduct.value.quantity
+          ticketProduct.value.unitQuantity * ticketProduct.value.unitRate
         }`,
       )
     }
@@ -334,7 +306,12 @@ const addTicketProduct = () => {
       return i.productId === product!.id
     })
     if (exist) {
-      exist.quantity += ticketProduct.value.quantity
+      exist.unitQuantity += Number(
+        (
+          (ticketProduct.value.unitQuantity * ticketProduct.value.unitRate) /
+          exist.unitRate
+        ).toFixed(3),
+      )
     } else {
       ticketOrderUpsertRef.value.ticketProductList?.push(ticketProduct.value)
     }
@@ -366,7 +343,9 @@ defineExpose({ focus })
         <span
           v-if="ticketProduct.productId && ticketProduct.product?.warehouseIds !== '[]'"
           :class="
-            ticketProduct.quantity > ticketProduct.product!.quantity ? 'text-red-500 font-bold' : ''
+            ticketProduct.unitQuantity * ticketProduct.unitRate > ticketProduct.product!.quantity
+              ? 'text-red-500 font-bold'
+              : ''
           "
         >
           ( tồn:
@@ -401,7 +380,10 @@ defineExpose({ focus })
               <span class="mx-1">-</span>
               <b>{{ data.brandName }}</b>
               <span
-                v-if="data?.warehouseIds !== '[]' && pickupStrategy !== PickupStrategy.NoImpact"
+                v-if="
+                  data?.warehouseIds !== '[]' &&
+                  ticketProduct.pickupStrategy !== PickupStrategy.NoImpact
+                "
               >
                 - Tồn
                 <span
@@ -455,7 +437,13 @@ defineExpose({ focus })
             <div v-if="!data?.id">Chưa chọn lô</div>
             <div v-if="data?.id">
               Lô {{ data.lotNumber }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }}
-              <span :class="ticketProduct.quantity > data.quantity ? 'text-red-500 font-bold' : ''">
+              <span
+                :class="
+                  ticketProduct.unitQuantity * ticketProduct.unitRate > data.quantity
+                    ? 'text-red-500 font-bold'
+                    : ''
+                "
+              >
                 - Tồn
                 <b>{{ data.unitQuantity }}</b>
                 {{ ticketProduct.product!.unitDefaultName }}
@@ -491,8 +479,10 @@ defineExpose({ focus })
         Giá niêm yết
         <span v-if="ticketProduct.unitRate !== 1">
           (
-          <b>{{ formatMoney(ticketProduct.expectedPrice) }} /</b>
-          {{ ticketProduct?.product?.unitBasicName }})
+          <b>{{ formatMoney(ticketProduct.expectedPrice) }}</b>
+          <span v-if="ticketProduct?.product?.unitBasicName">
+            / {{ ticketProduct?.product?.unitBasicName }})
+          </span>
         </span>
       </div>
       <div class="flex">
@@ -516,7 +506,7 @@ defineExpose({ focus })
         <div class="flex-1">
           <InputMoney
             :value="ticketProduct.unitExpectedPrice"
-            @update:value="handleChangeUnitExpectedPrice"
+            @update:value="(v) => ticketProduct.changeUnitExpectedPrice(v)"
           />
         </div>
       </div>
@@ -526,8 +516,8 @@ defineExpose({ focus })
       v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.quantity"
       class="grow basis-[90%] lg:basis-[45%]"
     >
-      <div class="flex flex-wrap gap-2">
-        Số lượng
+      <div class="flex flex-wrap gap-1">
+        <span>Số lượng</span>
         <span v-if="ticketProduct.unitRate !== 1">
           (
           <b>{{ ticketProduct.quantity }}</b>
@@ -537,7 +527,7 @@ defineExpose({ focus })
       <div class="flex">
         <div style="width: 120px">
           <InputSelect
-            v-model:value="ticketProduct.unitRate"
+            :value="ticketProduct.unitRate"
             :disabled="(ticketProduct.product?.unitObject.length || 0) <= 1"
             :options="
               (ticketProduct.product?.unitObject || []).map((i) => ({
@@ -546,6 +536,7 @@ defineExpose({ focus })
                 data: i,
               }))
             "
+            @update:value="(value: any) => ticketProduct.changeUnitRate(value)"
             :tabindex="-1"
             required
           />
@@ -561,7 +552,7 @@ defineExpose({ focus })
       class="grow basis-[90%] lg:basis-[45%]"
     >
       <div>
-        Chiết khấu
+        <span>Chiết khấu</span>
         <span
           v-if="
             (ticketProduct.discountType === DiscountType.Percent &&
@@ -592,13 +583,13 @@ defineExpose({ focus })
             v-if="ticketProduct.discountType === DiscountType.VND"
             :validate="{ gte: 0 }"
             :value="ticketProduct.unitDiscountMoney"
-            @update:value="handleChangeUnitDiscountMoney"
+            @update:value="(v) => ticketProduct.changeUnitDiscountMoney(v)"
           />
           <InputNumber
             v-else
             :validate="{ gte: 0, lte: 100 }"
             :value="ticketProduct.discountPercent"
-            @update:value="handleChangeDiscountPercent"
+            @update:value="(v) => ticketProduct.changeDiscountPercent(v)"
           />
         </div>
       </div>
@@ -612,7 +603,9 @@ defineExpose({ focus })
         Đơn giá
         <span v-if="ticketProduct.unitRate !== 1">
           (
-          <b>{{ formatMoney(ticketProduct.actualPrice) }} /</b>
+          <b>
+            {{ formatMoney(Math.floor(ticketProduct.unitActualPrice / ticketProduct.unitRate)) }} /
+          </b>
           {{ ticketProduct.product?.unitBasicName }})
         </span>
       </div>
@@ -620,7 +613,7 @@ defineExpose({ focus })
         <InputMoney
           :prepend="ticketProduct.unitRate !== 1 ? ticketProduct.unitName : ''"
           :value="ticketProduct.unitActualPrice"
-          @update:value="handleChangeUnitActualPrice"
+          @update:value="(v) => ticketProduct.changeUnitActualPrice(v)"
         />
       </div>
     </div>

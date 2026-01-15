@@ -1,5 +1,5 @@
 import { AxiosInstance } from '@/core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 
 export class StatisticService {
   static async statisticPurchaseOrder(params: {
@@ -8,7 +8,7 @@ export class StatisticService {
     timeType: 'date' | 'month'
   }) {
     const response = await AxiosInstance.get('/statistic/statistic-purchase-order', { params })
-    const { data } = response.data as BaseResponse<
+    const { data } = response.data as FullResponse<
       Record<
         string,
         {

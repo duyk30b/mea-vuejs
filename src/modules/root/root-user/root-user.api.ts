@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../../core/axios.instance'
-import type { BaseResponse } from '../../_base/base-dto'
+import type { FullResponse } from '../../_base/base-dto'
 import { User } from '../../user'
 import { RootUserGetQuery, RootUserPaginationQuery } from './root-user.dto'
 
@@ -8,10 +8,12 @@ export class RootUserApi {
     const params = RootUserGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/root/user/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
-      meta,
-      data: User.fromList(data),
+      userList: User.fromList(data.userList),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
     }
   }
 
@@ -28,7 +30,7 @@ export class RootUserApi {
       isAdmin: user.isAdmin,
       isActive: user.isActive,
     })
-    const { data } = response.data as BaseResponse<{ user: any }>
+    const { data } = response.data as FullResponse<{ user: any }>
 
     return User.from(data.user)
   }
@@ -44,14 +46,14 @@ export class RootUserApi {
       isAdmin: user.isAdmin,
       isActive: user.isActive,
     })
-    const { data } = response.data as BaseResponse<{ user: any }>
+    const { data } = response.data as FullResponse<{ user: any }>
 
     return User.from(data.user)
   }
 
   static async delete(userId: number) {
     const response = await AxiosInstance.get(`/root/user/delete/${userId}`)
-    const { data } = response.data as BaseResponse<{ userId: number }>
+    const { data } = response.data as FullResponse<{ userId: number }>
 
     return data
   }
@@ -62,13 +64,13 @@ export class RootUserApi {
       clientId,
       oid,
     })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return data
   }
 
   static async logoutAll() {
     const response = await AxiosInstance.post(`/root/user/logout-all`)
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return data
   }
 }

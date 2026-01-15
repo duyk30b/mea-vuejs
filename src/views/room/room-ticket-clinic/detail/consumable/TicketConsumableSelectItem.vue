@@ -38,8 +38,6 @@ const batchList = ref<Batch[]>([])
 
 const ticketProductConsumable = ref<TicketProduct>(TicketProduct.blank())
 
-const pickupStrategy = ref(MeService.getPickupStrategy().consumable)
-
 const handleFocusFirstSearchProduct = async () => {
   await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
 }
@@ -112,7 +110,7 @@ const selectProduct = async (productSelect?: Product) => {
 
     const temp = TicketProduct.blank()
     temp.priority = priorityMax + 1
-    temp.pickupStrategy = pickupStrategy.value
+    temp.pickupStrategy = MeService.getPickupStrategy(productSelect).consumable
     temp.customerId = ticketRoomRef.value.customerId
     temp.product = Product.from(productSelect)
     temp.productId = productSelect.id
@@ -122,11 +120,11 @@ const selectProduct = async (productSelect?: Product) => {
     temp.deliveryStatus = DeliveryStatus.Pending
     temp.unitRate = productSelect.unitDefaultRate
 
-    temp.expectedPrice = productSelect.retailPrice
+    temp.unitExpectedPrice = productSelect.retailPrice * productSelect.unitDefaultRate
     temp.discountType = DiscountType.Percent
     temp.discountPercent = 0
-    temp.discountMoney = 0
-    temp.actualPrice = productSelect.retailPrice
+    temp.unitDiscountMoney = 0
+    temp.unitActualPrice = productSelect.retailPrice * productSelect.unitDefaultRate
     temp.warehouseIds = JSON.stringify(settingStore.TICKET_CLINIC_DETAIL.consumable.warehouseIdList) // set tạm trước thôi, tí nữa tính toán lại
 
     temp.createdAt = Date.now()
@@ -135,7 +133,7 @@ const selectProduct = async (productSelect?: Product) => {
     const discountApply = productSelect?.discountApply
     if (discountApply) {
       let { discountType, discountPercent, discountMoney } = discountApply
-      const expectedPrice = temp.expectedPrice || 0
+      const expectedPrice = (temp.unitExpectedPrice || 0) / temp.unitRate
       if (discountType === DiscountType.Percent) {
         discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
       }
@@ -144,8 +142,8 @@ const selectProduct = async (productSelect?: Product) => {
       }
       temp.discountType = discountType
       temp.discountPercent = discountPercent
-      temp.discountMoney = discountMoney
-      temp.actualPrice = expectedPrice - discountMoney
+      temp.unitDiscountMoney = discountMoney * temp.unitRate
+      temp.unitActualPrice = temp.unitExpectedPrice - temp.unitDiscountMoney
     }
 
     ticketProductConsumable.value = temp
@@ -221,7 +219,10 @@ const addConsumableItem = async () => {
     return inputOptionsProduct.value?.focus()
   }
 
-  if (product?.warehouseIds !== '[]' && pickupStrategy.value !== PickupStrategy.NoImpact) {
+  if (
+    product?.warehouseIds !== '[]' &&
+    ticketProductConsumable.value.pickupStrategy !== PickupStrategy.NoImpact
+  ) {
     if (ticketProductConsumable.value.quantity > product!.quantity) {
       AlertStore.addWarning(
         `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${product!.quantity} lấy ${
@@ -248,6 +249,8 @@ const addConsumableItem = async () => {
 const handleUpdateUnitActualPrice = (price: number) => {
   ticketProductConsumable.value.unitActualPrice = price
   ticketProductConsumable.value.unitExpectedPrice = price
+  ticketProductConsumable.value.unitDiscountMoney = 0
+  ticketProductConsumable.value.discountPercent = 0
 }
 
 const handleModalProductUpsertSuccess = (instance?: Product) => {
@@ -277,7 +280,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
           <span
             v-if="
               ticketProductConsumable.product?.warehouseIds !== '[]' &&
-              pickupStrategy !== PickupStrategy.NoImpact
+              ticketProductConsumable.pickupStrategy !== PickupStrategy.NoImpact
             "
             :class="
               ticketProductConsumable.quantity > ticketProductConsumable.product!.quantity
@@ -324,7 +327,10 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
               -
               <b>{{ data.brandName }}</b>
               <span
-                v-if="data?.warehouseIds !== '[]' && pickupStrategy !== PickupStrategy.NoImpact"
+                v-if="
+                  data?.warehouseIds !== '[]' &&
+                  ticketProductConsumable.pickupStrategy !== PickupStrategy.NoImpact
+                "
                 :class="data.unitQuantity <= 0 ? 'text-red-500' : ''"
                 style="font-weight: 700"
               >
@@ -410,7 +416,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
       <div class="flex">
         <div style="width: 100px">
           <VueSelect
-            v-model:value="ticketProductConsumable.unitRate"
+            :value="ticketProductConsumable.unitRate"
             :disabled="ticketProductConsumable.product!.unitObject.length <= 1"
             :options="
               ticketProductConsumable.product!.unitObject.map((i) => ({
@@ -419,6 +425,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
                 data: i,
               }))
             "
+            @update:value="(v) => ticketProductConsumable.changeUnitRate(v)"
             required
           ></VueSelect>
         </div>
@@ -437,8 +444,11 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
         <span>Giá tiền</span>
         <span v-if="ticketProductConsumable.unitRate !== 1">
           (Quy đổi:
-          <b>{{ ticketProductConsumable.quantity }}</b>
-          {{ ticketProductConsumable.product?.unitBasicName }})
+          <b>{{ ticketProductConsumable.actualPrice }}</b>
+          <span v-if="ticketProductConsumable.product?.unitBasicName">
+            / {{ ticketProductConsumable.product?.unitBasicName }}
+          </span>
+          )
         </span>
       </div>
       <div class="flex">

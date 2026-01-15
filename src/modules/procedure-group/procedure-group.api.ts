@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
   ProcedureGroupDetailQuery,
   ProcedureGroupGetQuery,
@@ -13,10 +13,12 @@ export class ProcedureGroupApi {
     const params = ProcedureGroupGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/procedure-group/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
-      meta,
-      data: ProcedureGroup.fromList(data),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
+      procedureGroupList: ProcedureGroup.fromList(data.procedureGroupList),
     }
   }
 
@@ -24,7 +26,7 @@ export class ProcedureGroupApi {
     const params = ProcedureGroupGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/procedure-group/list', { params })
-    const { data, time } = response.data as BaseResponse
+    const { data, time } = response.data as FullResponse
     return {
       time: new Date(time),
       data: ProcedureGroup.fromList(data),
@@ -33,11 +35,11 @@ export class ProcedureGroupApi {
 
   static async detail(
     id: number,
-    options: ProcedureGroupDetailQuery = {}
+    options: ProcedureGroupDetailQuery = {},
   ): Promise<ProcedureGroup> {
     const params = ProcedureGroupGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/procedure-group/detail/${id}`, { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return ProcedureGroup.from(data)
   }
 
@@ -50,7 +52,7 @@ export class ProcedureGroupApi {
         }
       }),
     })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return data
   }
 
@@ -58,7 +60,7 @@ export class ProcedureGroupApi {
     const response = await AxiosInstance.post('/procedure-group/create', {
       name: procedureGroup.name,
     })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return ProcedureGroup.from(data)
   }
 
@@ -66,13 +68,13 @@ export class ProcedureGroupApi {
     const response = await AxiosInstance.post(`/procedure-group/update/${id}`, {
       name: procedureGroup.name,
     })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return ProcedureGroup.from(data)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/procedure-group/destroy/${id}`)
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return ProcedureGroup.from(data)
   }
 }

@@ -14,10 +14,10 @@ export class PurchaseOrderItem extends BaseModel {
   lotNumber: string // Lô sản phẩm
   expiryDate?: number
 
-  quantity: number = 0
+  unitQuantity: number
   unitRate: number
-  costPrice: number
-  listPrice: number // Giá niêm yết
+  unitCostPrice: number
+  unitListPrice: number // Giá niêm yết
 
   purchaseOrder?: PurchaseOrder
   batch?: Batch
@@ -27,32 +27,24 @@ export class PurchaseOrderItem extends BaseModel {
     return this.product!.getUnitNameByRate(this.unitRate)
   }
 
-  get unitQuantity() {
-    return Number((this.quantity / this.unitRate).toFixed(3))
+  get quantity() {
+    return this.unitQuantity * this.unitRate
   }
 
-  get unitCostPrice() {
-    return this.costPrice * this.unitRate
+  get costPrice() {
+    return Math.round(this.unitCostPrice / this.unitRate)
   }
 
-  get unitListPrice() {
-    return this.listPrice * this.unitRate
+  get listPrice() {
+    return Math.round(this.unitListPrice / this.unitRate)
   }
 
-  set unitQuantity(data: number) {
-    this.quantity = data * this.unitRate
-  }
-
-  get amount() {
-    return this.costPrice * this.quantity
-  }
-
-  set unitCostPrice(data: number) {
-    this.costPrice = data / this.unitRate
-  }
-
-  set unitListPrice(data: number) {
-    this.listPrice = data / this.unitRate
+  public changeUnitRate(unitRate: number) {
+    const oldUnitRate = this.unitRate
+    this.unitCostPrice = Math.round((this.unitCostPrice * unitRate) / oldUnitRate)
+    this.unitListPrice = Math.round((this.unitListPrice * unitRate) / oldUnitRate)
+    this.unitQuantity = Math.round((this.unitQuantity * oldUnitRate) / unitRate)
+    this.unitRate = unitRate
   }
 
   static init() {
@@ -65,9 +57,9 @@ export class PurchaseOrderItem extends BaseModel {
     ins.distributorId = 0
     ins.warehouseId = 0
 
-    ins.quantity = 0
-    ins.costPrice = 0
-    ins.listPrice = 0
+    ins.unitQuantity = 0
+    ins.unitCostPrice = 0
+    ins.unitListPrice = 0
     ins.unitRate = 1
     return ins
   }

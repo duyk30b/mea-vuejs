@@ -8,7 +8,7 @@ export const warehouseId = ref<number>(0)
 
 watchEffect(() => {
   const itemsActualMoney = purchaseOrder.value.purchaseOrderItemList!.reduce((acc, item) => {
-    return acc + item.costPrice * item.quantity
+    return acc + item.unitCostPrice * item.unitQuantity
   }, 0)
 
   let discountMoney = 0

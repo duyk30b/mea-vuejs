@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
   CustomerSourceDetailQuery,
   CustomerSourceGetQuery,
@@ -13,10 +13,13 @@ export class CustomerSourceApi {
     const params = CustomerSourceGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/customer-source/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
+
     return {
-      meta,
-      data: CustomerSource.fromList(data),
+      customerSourceList: CustomerSource.fromList(data.customerSourceList),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
     }
   }
 
@@ -24,17 +27,17 @@ export class CustomerSourceApi {
     const params = CustomerSourceGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/customer-source/list', { params })
-    const { data, time } = response.data as BaseResponse
+    const { data, time } = response.data as FullResponse
     return CustomerSource.fromList(data)
   }
 
   static async detail(
     id: number,
-    options: CustomerSourceDetailQuery = {}
+    options: CustomerSourceDetailQuery = {},
   ): Promise<CustomerSource> {
     const params = CustomerSourceGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/customer-source/detail/${id}`, { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return CustomerSource.from(data)
   }
 
@@ -42,7 +45,7 @@ export class CustomerSourceApi {
     const response = await AxiosInstance.post('/customer-source/create', {
       name: customerSource.name,
     })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return CustomerSource.from(data)
   }
 
@@ -50,13 +53,13 @@ export class CustomerSourceApi {
     const response = await AxiosInstance.post(`/customer-source/update/${id}`, {
       name: customerSource.name,
     })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return CustomerSource.from(data)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/customer-source/destroy/${id}`)
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return CustomerSource.from(data)
   }
 }

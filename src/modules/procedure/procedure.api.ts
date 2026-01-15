@@ -1,14 +1,14 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import { debounceAsync } from '../../utils/helpers'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import type { Discount } from '../discount'
 import type { Position } from '../position'
 import { TicketProcedure } from '../ticket-procedure'
 import {
-  ProcedureDetailQuery,
-  ProcedureGetQuery,
-  ProcedureListQuery,
-  type ProcedurePaginationQuery,
+    ProcedureDetailQuery,
+    ProcedureGetQuery,
+    ProcedureListQuery,
+    type ProcedurePaginationQuery,
 } from './procedure.dto'
 import { Procedure } from './procedure.model'
 
@@ -17,7 +17,7 @@ export class ProcedureApi {
     const params = ProcedureGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/procedure/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
       page: data.page,
       limit: data.limit,
@@ -30,14 +30,14 @@ export class ProcedureApi {
     const params = ProcedureGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/procedure/list', { params })
-    const { data, time } = response.data as BaseResponse<{ procedureList: any[] }>
+    const { data, time } = response.data as FullResponse<{ procedureList: any[] }>
     return Procedure.fromList(data.procedureList)
   }
 
   static search: (params: ProcedureListQuery) => Promise<Procedure[]> = debounceAsync(
     async (params: ProcedureListQuery): Promise<Procedure[]> => {
       const response = await AxiosInstance.get('/procedure/list', { params })
-      const { data } = response.data as BaseResponse
+      const { data } = response.data as FullResponse
       return Procedure.fromList(data)
     },
     200,
@@ -47,7 +47,7 @@ export class ProcedureApi {
     const params = ProcedureGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get(`/procedure/detail/${id}`, { params })
-    const { data } = response.data as BaseResponse<{ procedure: any }>
+    const { data } = response.data as FullResponse<{ procedure: any }>
     return Procedure.from(data.procedure)
   }
 
@@ -103,7 +103,7 @@ export class ProcedureApi {
         }
       }),
     })
-    const { data } = response.data as BaseResponse<{ procedure: any }>
+    const { data } = response.data as FullResponse<{ procedure: any }>
     return Procedure.from(data.procedure)
   }
 
@@ -161,13 +161,13 @@ export class ProcedureApi {
         }
       }),
     })
-    const { data } = response.data as BaseResponse<{ procedure: any }>
+    const { data } = response.data as FullResponse<{ procedure: any }>
     return Procedure.from(data.procedure)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/procedure/destroy/${id}`)
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       procedureId: number
       ticketProcedureList: TicketProcedure[]
       success: boolean

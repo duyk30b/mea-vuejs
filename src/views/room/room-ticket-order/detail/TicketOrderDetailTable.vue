@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import VueTag from '@/common/VueTag.vue'
 import { IconBug, IconExclamationCircle, IconFileSearch } from '@/common/icon-antd'
+import { VueTooltip } from '@/common/popover'
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus, PaymentViewType } from '@/modules/enum'
 import { ExpenseService } from '@/modules/expense'
 import { SurchargeService } from '@/modules/surcharge'
-import { TicketStatus } from '@/modules/ticket'
 import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import TicketDeliveryStatusTooltip from '@/views/room/room-ticket-base/TicketDeliveryStatusTooltip.vue'
 import { computed, onMounted, ref } from 'vue'
 import { ticketOrderDetailRef } from './ticket-order-detail.ref'
-import { VueTooltip } from '@/common/popover'
+import { BugDevelopment } from '@/views/component'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
@@ -155,13 +155,13 @@ const colspan = computed(() => {
               <div class="" style="font-size: 0.8rem">
                 <div
                   v-if="
-                    ticketProduct.discountMoney &&
+                    ticketProduct.unitDiscountMoney &&
                     settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice
                   "
                 >
                   - NY:
                   <span class="font-medium">
-                    {{ formatMoney(ticketProduct.expectedPrice * ticketProduct.unitRate) }}
+                    {{ formatMoney(ticketProduct.unitExpectedPrice) }}
                   </span>
                   <span
                     v-if="
@@ -174,13 +174,13 @@ const colspan = computed(() => {
                 </div>
                 <div
                   v-if="
-                    ticketProduct.discountMoney &&
+                    ticketProduct.unitDiscountMoney &&
                     settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount
                   "
                 >
                   - CK:
                   <VueTag v-if="ticketProduct.discountType === 'VNĐ'" color="green">
-                    {{ formatMoney(ticketProduct.discountMoney) }}
+                    {{ formatMoney(ticketProduct.unitDiscountMoney) }}
                   </VueTag>
                   <VueTag v-if="ticketProduct.discountType === '%'" color="green">
                     {{ ticketProduct.discountPercent || 0 }}%
@@ -189,7 +189,7 @@ const colspan = computed(() => {
                 <div>
                   - ĐG:
                   <span class="font-medium">
-                    {{ formatMoney(ticketProduct.actualPrice * ticketProduct.unitRate) }}
+                    {{ formatMoney(ticketProduct.unitActualPrice) }}
                   </span>
                   <span
                     v-if="
@@ -203,10 +203,10 @@ const colspan = computed(() => {
               </div>
             </td>
             <td class="text-center whitespace-nowrap">
-              {{ ticketProduct.quantity / ticketProduct.unitRate }}
+              {{ ticketProduct.unitQuantity }}
             </td>
             <td class="text-right whitespace-nowrap">
-              {{ formatMoney(ticketProduct.actualPrice * ticketProduct.quantity) }}
+              {{ formatMoney(ticketProduct.unitActualPrice) }}
             </td>
           </tr>
         </tbody>
@@ -214,7 +214,7 @@ const colspan = computed(() => {
       <template v-if="!isMobile">
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'"></th>
+            <th style="width: 40px" v-if="CONFIG.MODE === 'development'"></th>
             <th style="width: 40px">#</th>
             <th style="width: 40px"></th>
             <th>Tên</th>
@@ -231,13 +231,8 @@ const colspan = computed(() => {
             v-for="(ticketProcedure, index) in ticketOrderDetailRef.ticketProcedureList"
             :key="index"
           >
-            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-              <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-                <template #trigger>
-                  <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-                </template>
-                <pre>{{ JSON.stringify(ticketProcedure, null, 4) }}</pre>
-              </VueTooltip>
+            <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+              <BugDevelopment :data="ticketProcedure" />
             </td>
             <td class="text-center">{{ index + 1 }}</td>
             <td class="text-center"></td>
@@ -284,13 +279,8 @@ const colspan = computed(() => {
             </td>
           </tr>
           <tr v-for="(ticketProduct, index) in ticketOrderDetailRef.ticketProductList" :key="index">
-            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-              <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-                <template #trigger>
-                  <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-                </template>
-                <pre>{{ JSON.stringify(ticketProduct, null, 4) }}</pre>
-              </VueTooltip>
+            <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+              <BugDevelopment :data="ticketProduct" />
             </td>
             <td class="text-center">{{ index + 1 }}</td>
             <td class="text-center">
@@ -320,9 +310,6 @@ const colspan = computed(() => {
               >
                 {{ ticketProduct.hintUsage }}
               </div>
-              <div v-if="CONFIG.MODE === 'development'">
-                PickupStrategy - {{ ticketProduct.pickupStrategy }}
-              </div>
             </td>
             <td
               v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit"
@@ -338,7 +325,7 @@ const colspan = computed(() => {
               class="text-center"
             >
               <VueTag v-if="ticketProduct.discountType === 'VNĐ'" color="green">
-                {{ formatMoney(ticketProduct.discountMoney * ticketProduct.unitRate) }}
+                {{ formatMoney(ticketProduct.unitDiscountMoney) }}
               </VueTag>
               <VueTag v-if="ticketProduct.discountType === '%'" color="green">
                 {{ ticketProduct.discountPercent || 0 }}%
@@ -348,28 +335,34 @@ const colspan = computed(() => {
               <div
                 v-if="
                   settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice &&
-                  ticketProduct.discountMoney
+                  ticketProduct.unitDiscountMoney
                 "
                 class="text-xs italic line-through"
                 style="color: var(--text-red)"
               >
-                {{ formatMoney(ticketProduct.expectedPrice * ticketProduct.unitRate) }}
+                {{ formatMoney(ticketProduct.unitExpectedPrice) }}
               </div>
-              <div>{{ formatMoney(ticketProduct.actualPrice * ticketProduct.unitRate) }}</div>
+              <div>{{ formatMoney(ticketProduct.unitActualPrice) }}</div>
             </td>
             <td
               v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsCostAmount"
               class="text-right"
             >
               <span v-if="ticketOrderDetailRef.deliveryStatus === DeliveryStatus.Pending">
-                {{ formatMoney(ticketProduct.quantity * ticketProduct.product!.costPrice) }}
+                {{
+                  formatMoney(
+                    ticketProduct.unitQuantity *
+                      ticketProduct.unitRate *
+                      ticketProduct.product!.costPrice,
+                  )
+                }}
               </span>
               <span v-else>
                 {{ formatMoney(ticketProduct.costAmount) }}
               </span>
             </td>
             <td class="text-right">
-              {{ formatMoney(ticketProduct.actualPrice * ticketProduct.quantity) }}
+              {{ formatMoney(ticketProduct.unitActualPrice * ticketProduct.unitQuantity) }}
             </td>
           </tr>
         </tbody>

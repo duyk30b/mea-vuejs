@@ -1,17 +1,17 @@
 <script setup lang="ts">
+import { VueTooltip } from '@/common/popover'
+import { CONFIG } from '@/config'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
+import VuePagination from '../../common/VuePagination.vue'
 import VueTag from '../../common/VueTag.vue'
 import { IconApartment, IconBug } from '../../common/icon-antd'
 import { IconComputer, IconEditSquare, IconHistory, IconSmartphone } from '../../common/icon-google'
+import { InputSelect } from '../../common/vue-form'
 import { RootUserApi } from '../../modules/root/root-user/root-user.api'
 import type { User } from '../../modules/user'
 import { ESTimer } from '../../utils'
 import ModalRootUserUpsert from './ModalRootUserUpsert.vue'
-import VuePagination from '../../common/VuePagination.vue'
-import { InputSelect } from '../../common/vue-form'
-import { CONFIG } from '@/config'
-import { VueTooltip } from '@/common/popover'
 
 const modalRootUserUpsert = ref<InstanceType<typeof ModalRootUserUpsert>>()
 
@@ -24,14 +24,14 @@ const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await RootUserApi.pagination({
+    const paginationResponse = await RootUserApi.pagination({
       page: page.value,
       limit: limit.value,
       relation: { organization: true },
       sort: { oid: 'DESC' },
     })
-    userList.value = data
-    total.value = meta.total
+    userList.value = paginationResponse.userList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ startFetchData ~ error:', error)
   }

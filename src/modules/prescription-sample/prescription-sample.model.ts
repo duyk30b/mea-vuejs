@@ -1,31 +1,23 @@
-import { Product } from '../product'
 import { User } from '../user'
-
-export type MedicineType = {
-  productId: number
-  quantity: number
-  hintUsage: string
-  product?: Product
-}
+import { PrescriptionSampleItem } from './prescription-sample-item.model'
 
 export class PrescriptionSample {
-  id: number
+  id: string
   userId: number
   priority: number
 
   name: string
-  medicines: string
 
-  medicineList: MedicineType[] // chỉ có ở front-end
+  prescriptionSampleItemList: PrescriptionSampleItem[] // chỉ có ở front-end
   user: User
 
   static init(): PrescriptionSample {
     const ins = new PrescriptionSample()
-    ins.id = 0
+    ins.id = ''
     ins.userId = 0
     ins.priority = 1
-    ins.medicines = JSON.stringify([])
-    ins.medicineList = []
+    ins.name = ''
+    ins.prescriptionSampleItemList = []
     return ins
   }
 
@@ -51,13 +43,8 @@ export class PrescriptionSample {
   static from(source: PrescriptionSample) {
     const target = PrescriptionSample.basic(source)
 
-    if (target.medicineList) {
-      target.medicineList = source.medicineList.map((i) => {
-        return {
-          ...i,
-          product: i.product ? Product.basic(i.product) : i.product,
-        }
-      })
+    if (target.prescriptionSampleItemList) {
+      target.prescriptionSampleItemList = PrescriptionSampleItem.basicList(target.prescriptionSampleItemList)
     }
     if (Object.prototype.hasOwnProperty.call(source, 'user')) {
       target.user = target.user ? User.basic(target.user) : target.user
@@ -74,7 +61,6 @@ export class PrescriptionSample {
     if (a.userId != b.userId) return false
     if (a.priority != b.priority) return false
     if (a.name != b.name) return false
-    if (a.medicines != b.medicines) return false
     return true
   }
 }

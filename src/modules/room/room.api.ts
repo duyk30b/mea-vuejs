@@ -1,6 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import { debounceAsync } from '../../utils/helpers'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { Ticket } from '../ticket'
 import { RoomDetailQuery, RoomGetQuery, RoomListQuery, type RoomPaginationQuery } from './room.dto'
 import { Room } from './room.model'
@@ -10,7 +10,7 @@ export class RoomApi {
     const params = RoomGetQuery.toQuery(query)
 
     const response = await AxiosInstance.get('/room/pagination', { params })
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       total: number
       page: number
       limit: number
@@ -28,14 +28,14 @@ export class RoomApi {
     const params = RoomGetQuery.toQuery(query)
 
     const response = await AxiosInstance.get('/room/list', { params })
-    const { data } = response.data as BaseResponse<{ roomList: any[] }>
+    const { data } = response.data as FullResponse<{ roomList: any[] }>
     return Room.fromList(data.roomList)
   }
 
   static search: (params: RoomListQuery) => Promise<Room[]> = debounceAsync(
     async (params: RoomListQuery): Promise<Room[]> => {
       const response = await AxiosInstance.get('/room/list', { params })
-      const { data } = response.data as BaseResponse<{ roomList: any }>
+      const { data } = response.data as FullResponse<{ roomList: any }>
       return Room.fromList(data.roomList)
     },
     200,
@@ -45,7 +45,7 @@ export class RoomApi {
     const params = RoomGetQuery.toQuery(query)
 
     const response = await AxiosInstance.get(`/room/detail/${id}`, { params })
-    const { data } = response.data as BaseResponse<{ room: any }>
+    const { data } = response.data as FullResponse<{ room: any }>
     return Room.from(data.room)
   }
 
@@ -61,7 +61,7 @@ export class RoomApi {
       },
       userIdList,
     })
-    const { data } = response.data as BaseResponse<{ room: any }>
+    const { data } = response.data as FullResponse<{ room: any }>
     return Room.from(data.room)
   }
 
@@ -77,13 +77,13 @@ export class RoomApi {
       },
       userIdList: userIdList ? userIdList : undefined, // không gửi lên nếu không cập nhật
     })
-    const { data } = response.data as BaseResponse<{ room: any }>
+    const { data } = response.data as FullResponse<{ room: any }>
     return Room.from(data.room)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/room/destroy/${id}`)
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       roomId: number
       ticketList: Ticket[]
       success: boolean
@@ -97,7 +97,7 @@ export class RoomApi {
       roomIdSourceList: options.roomIdSourceList,
       roomIdTarget: options.roomIdTarget,
     })
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
     return data
   }
 }

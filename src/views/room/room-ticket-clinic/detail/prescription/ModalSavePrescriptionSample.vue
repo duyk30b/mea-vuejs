@@ -7,13 +7,12 @@ import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import VueButton from '@/common/VueButton.vue'
 import VuePagination from '@/common/VuePagination.vue'
-import {
-  PrescriptionSample,
-  PrescriptionSampleService,
-} from '@/modules/prescription-sample'
+import { PrescriptionSample, PrescriptionSampleService } from '@/modules/prescription-sample'
 import { MeService } from '@/modules/_me/me.service'
+import { CONFIG } from '@/config'
+import { BugDevelopment } from '@/views/component'
 
-const psList = ref<PrescriptionSample[]>([])
+const prescriptionSampleList = ref<PrescriptionSample[]>([])
 
 const showModal = ref(false)
 const psInsert = ref(PrescriptionSample.blank())
@@ -25,14 +24,14 @@ const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await PrescriptionSampleService.pagination({
+    const paginationResponse = await PrescriptionSampleService.pagination({
       filter: { userId: { IN: [0, MeService.user.value?.id || 0] } },
       page: page.value,
       limit: limit.value,
       sort: { priority: 'ASC' },
     })
-    psList.value = data
-    total.value = meta.total
+    prescriptionSampleList.value = paginationResponse.prescriptionSampleList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ ModalSelectPrescriptionSample.vue:36 ~ startFetchData ~ error:', error)
   }
@@ -63,7 +62,7 @@ const closeModal = () => {
   clear()
 }
 
-const clickDestroyPrescriptionSample = async (prescriptionSampleId: number) => {
+const clickDestroyPrescriptionSample = async (prescriptionSampleId: string) => {
   ModalStore.confirm({
     title: 'Xác nhận xóa đơn mẫu ?',
     content: [
@@ -72,11 +71,11 @@ const clickDestroyPrescriptionSample = async (prescriptionSampleId: number) => {
     ],
     onOk: async () => {
       try {
-        const indexDestroy = psList.value.findIndex((i) => {
+        const indexDestroy = prescriptionSampleList.value.findIndex((i) => {
           return i.id === prescriptionSampleId
         })
         if (indexDestroy !== -1) {
-          psList.value.splice(indexDestroy, 1)
+          prescriptionSampleList.value.splice(indexDestroy, 1)
         }
         await PrescriptionSampleService.destroyOne(prescriptionSampleId)
         await startFetchData()
@@ -93,23 +92,10 @@ const clickEditPrescriptionSample = (psProp: PrescriptionSample) => {
 
 const startCreatePrescriptionSample = async () => {
   try {
-    await PrescriptionSampleService.createOne(psInsert.value)
-    closeModal()
-    await PrescriptionSampleService.getAll()
-  } catch (error) {
-    console.log('🚀 TicketClinicPrescription.vue:90 ~ error:', error)
-  }
-}
-
-const startReplaceMedicines = async (psId: number) => {
-  try {
-    const result = await PrescriptionSampleService.updateOne(psId, {
-      medicines: psInsert.value.medicines,
+    await PrescriptionSampleService.createOne({
+      prescriptionSampleBody: psInsert.value,
+      prescriptionSampleItemBodyList: psInsert.value.prescriptionSampleItemList,
     })
-    const findIndex = psList.value.findIndex((i) => i.id === psId)
-    if (findIndex !== -1) {
-      psList.value[findIndex] = result
-    }
     closeModal()
     await PrescriptionSampleService.getAll()
   } catch (error) {
@@ -117,15 +103,29 @@ const startReplaceMedicines = async (psId: number) => {
   }
 }
 
-const startUpdatePrescriptionSample = async () => {
+const startReplaceMedicines = async (psId: string) => {
   try {
-    const result = await PrescriptionSampleService.updateOne(psUpdate.value.id, psUpdate.value)
-    const findIndex = psList.value.findIndex((i) => i.id === psUpdate.value.id)
+    await PrescriptionSampleService.updateOne(psId, {
+      prescriptionSampleItemBodyList: psInsert.value.prescriptionSampleItemList,
+    })
+
+    closeModal()
+    await PrescriptionSampleService.getAll()
+  } catch (error) {
+    console.log('🚀 ~ ModalSavePrescriptionSample.vue:116 ~ startReplaceMedicines ~ error:', error)
+  }
+}
+
+const startUpdateInformationPrescriptionSample = async () => {
+  try {
+    const result = await PrescriptionSampleService.updateOne(psUpdate.value.id, {
+      prescriptionSampleBody: psUpdate.value,
+    })
+    const findIndex = prescriptionSampleList.value.findIndex((i) => i.id === psUpdate.value.id)
     if (findIndex !== -1) {
-      psList.value[findIndex] = result
+      Object.assign(prescriptionSampleList.value[findIndex], result.prescriptionSampleModified)
     }
     psUpdate.value = PrescriptionSample.blank()
-    await PrescriptionSampleService.getAll()
   } catch (error) {
     console.log('🚀 TicketClinicPrescription.vue:90 ~ error:', error)
   }
@@ -150,7 +150,8 @@ defineExpose({ openModal })
           <table>
             <thead>
               <tr>
-                <th style="width: 60px">#</th>
+                <th v-if="CONFIG.MODE === 'development'" style="width: 60px"></th>
+                <th style="width: 10px"></th>
                 <th style="width: 30px">STT</th>
                 <th>Tên</th>
                 <th style="width: 40px"></th>
@@ -160,26 +161,29 @@ defineExpose({ openModal })
             </thead>
             <tbody>
               <tr v-for="index in limit" :key="index">
-                <template v-if="psList[index - 1]">
-                  <template v-if="psList[index - 1].id !== psUpdate.id">
-                    <td>
-                      <div v-if="!psUpdate.id">
+                <template v-if="prescriptionSampleList[index - 1]">
+                  <template v-if="prescriptionSampleList[index - 1].id !== psUpdate.id">
+                    <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+                      <BugDevelopment :data="prescriptionSampleList[index - 1]" />
+                    </td>
+                    <td style="text-align: center">
+                      <div v-if="!psUpdate.id" class="flex justify-center">
                         <VueButton
                           size="small"
-                          @click="startReplaceMedicines(psList[index - 1].id)"
+                          @click="startReplaceMedicines(prescriptionSampleList[index - 1].id)"
                         >
                           Ghi đè
                         </VueButton>
                       </div>
                     </td>
-                    <td class="text-center">{{ psList[index - 1].priority }}</td>
+                    <td class="text-center">{{ prescriptionSampleList[index - 1].priority }}</td>
                     <td colspan="2" class="text-left">
-                      {{ psList[index - 1].name }}
+                      {{ prescriptionSampleList[index - 1].name }}
                     </td>
                     <td class="text-center">
                       <a
-                        class="text-orange-600"
-                        @click="clickEditPrescriptionSample(psList[index - 1])"
+                        style="color: var(--text-blue)"
+                        @click="clickEditPrescriptionSample(prescriptionSampleList[index - 1])"
                       >
                         <IconEditSquare width="20" height="20" />
                       </a>
@@ -187,14 +191,17 @@ defineExpose({ openModal })
                     <td class="text-center">
                       <a
                         v-if="!psUpdate.id"
-                        class="text-red-500"
-                        @click="clickDestroyPrescriptionSample(psList[index - 1].id)"
+                        style="color: var(--text-red)"
+                        @click="
+                          clickDestroyPrescriptionSample(prescriptionSampleList[index - 1].id)
+                        "
                       >
                         <IconDelete width="20" height="20" />
                       </a>
                     </td>
                   </template>
                   <template v-else>
+                    <td v-if="CONFIG.MODE === 'development'"></td>
                     <td></td>
                     <td>
                       <input v-model="psUpdate.priority" type="number" style="width: 60px" />
@@ -213,7 +220,11 @@ defineExpose({ openModal })
                     </td>
                     <td colspan="2">
                       <div>
-                        <VueButton size="small" color="blue" @click="startUpdatePrescriptionSample">
+                        <VueButton
+                          size="small"
+                          color="blue"
+                          @click="startUpdateInformationPrescriptionSample"
+                        >
                           Lưu lại
                         </VueButton>
                       </div>
@@ -221,6 +232,7 @@ defineExpose({ openModal })
                   </template>
                 </template>
                 <template v-else>
+                  <td v-if="CONFIG.MODE === 'development'"></td>
                   <td>&nbsp;</td>
                   <td>&nbsp;</td>
                   <td colspan="2">&nbsp;</td>

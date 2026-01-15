@@ -1,7 +1,6 @@
 export class SystemLog {
   oid: number
   uid: number
-  username: string
   clientId: string
   ip: string
   browser: string
@@ -10,12 +9,15 @@ export class SystemLog {
   apiMethod: string
   prefixController: string
   url: string
-  errorMessage: string
+  statusCode: number
 
   timeMs: number
   request: string
 
+  errorName: string
+  errorMessage: string
   errorObject: object
+
   query: object
   body: object
   controller: {
@@ -28,7 +30,6 @@ export class SystemLog {
   }
 
   createdAt: string
-  updatedAt: string
 
   static init(): SystemLog {
     const ins = new SystemLog()

@@ -1,14 +1,14 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import { debounceAsync } from '../../utils/helpers'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import type { Discount } from '../discount'
 import type { Position } from '../position'
 import { TicketRadiology } from '../ticket-radiology'
 import {
-  RadiologyDetailQuery,
-  RadiologyGetQuery,
-  RadiologyListQuery,
-  type RadiologyPaginationQuery,
+    RadiologyDetailQuery,
+    RadiologyGetQuery,
+    RadiologyListQuery,
+    type RadiologyPaginationQuery,
 } from './radiology.dto'
 import { Radiology } from './radiology.model'
 
@@ -17,7 +17,7 @@ export class RadiologyApi {
     const params = RadiologyGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/radiology/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
       meta,
       page: data.page,
@@ -31,14 +31,14 @@ export class RadiologyApi {
     const params = RadiologyGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/radiology/list', { params })
-    const { data, time } = response.data as BaseResponse<{ radiologyList: any[] }>
+    const { data, time } = response.data as FullResponse<{ radiologyList: any[] }>
     return Radiology.fromList(data.radiologyList)
   }
 
   static search: (params: RadiologyListQuery) => Promise<Radiology[]> = debounceAsync(
     async (params: RadiologyListQuery): Promise<Radiology[]> => {
       const response = await AxiosInstance.get('/radiology/list', { params })
-      const { data } = response.data as BaseResponse<{ radiologyList: any[] }>
+      const { data } = response.data as FullResponse<{ radiologyList: any[] }>
       return Radiology.fromList(data.radiologyList)
     },
     200,
@@ -48,7 +48,7 @@ export class RadiologyApi {
     const params = RadiologyGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get(`/radiology/detail/${id}`, { params })
-    const { data } = response.data as BaseResponse<{ radiology: any }>
+    const { data } = response.data as FullResponse<{ radiology: any }>
     return Radiology.from(data.radiology)
   }
 
@@ -109,7 +109,7 @@ export class RadiologyApi {
         }
       }),
     })
-    const { data } = response.data as BaseResponse<{ radiology: any }>
+    const { data } = response.data as FullResponse<{ radiology: any }>
     return Radiology.from(data.radiology)
   }
 
@@ -172,13 +172,13 @@ export class RadiologyApi {
         }
       }),
     })
-    const { data } = response.data as BaseResponse<{ radiology: any }>
+    const { data } = response.data as FullResponse<{ radiology: any }>
     return Radiology.from(data.radiology)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/radiology/destroy/${id}`)
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       success: boolean
       radiologyId: number
       ticketRadiologyList: TicketRadiology[]
@@ -189,7 +189,7 @@ export class RadiologyApi {
 
   static async systemList() {
     const response = await AxiosInstance.get('/radiology/system-list')
-    const { data, time } = response.data as BaseResponse<{ radiologySystemList: any[] }>
+    const { data, time } = response.data as FullResponse<{ radiologySystemList: any[] }>
     return Radiology.fromList(data.radiologySystemList)
   }
 
@@ -197,7 +197,7 @@ export class RadiologyApi {
     const response = await AxiosInstance.post('/radiology/system-copy', {
       radiologyIdList: body.radiologyIdList,
     })
-    const { data, time } = response.data as BaseResponse<{ success: boolean }>
+    const { data, time } = response.data as FullResponse<{ success: boolean }>
     return data
   }
 }

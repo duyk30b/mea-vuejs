@@ -1,6 +1,6 @@
 import { TicketLaboratoryGroup } from '@/modules/ticket-laboratory'
 import { AxiosInstance } from '../../../core/axios.instance'
-import type { BaseResponse } from '../../_base/base-dto'
+import type { FullResponse } from '../../_base/base-dto'
 import type { TicketLaboratory, TicketLaboratoryResult } from '../../ticket-laboratory'
 import type { TicketUser } from '../../ticket-user'
 
@@ -37,7 +37,7 @@ export class TicketChangeLaboratoryApi {
         })),
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 
   static async updateTicketLaboratoryGroup(body: {
@@ -74,7 +74,7 @@ export class TicketChangeLaboratoryApi {
         },
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 
   static async destroyTicketLaboratory(body: { ticketId: string; ticketLaboratoryId: string }) {
@@ -82,7 +82,7 @@ export class TicketChangeLaboratoryApi {
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/laboratory/destroy-ticket-laboratory/${ticketLaboratoryId}`,
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 
   static async destroyTicketLaboratoryGroup(body: {
@@ -93,7 +93,7 @@ export class TicketChangeLaboratoryApi {
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/laboratory/destroy-ticket-laboratory-group/${ticketLaboratoryGroupId}`,
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 
   static async updateRequestTicketLaboratory(body: {
@@ -125,7 +125,7 @@ export class TicketChangeLaboratoryApi {
           : undefined,
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 
   static async updateResult(options: {
@@ -161,7 +161,7 @@ export class TicketChangeLaboratoryApi {
       },
       { params: { response: JSON.stringify(options.response) } },
     )
-    const { data } = response.data as BaseResponse<{ ticketLaboratoryGroup: any }>
+    const { data } = response.data as FullResponse<{ ticketLaboratoryGroup: any }>
     return TicketLaboratoryGroup.from(data.ticketLaboratoryGroup)
   }
 
@@ -170,7 +170,7 @@ export class TicketChangeLaboratoryApi {
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/laboratory/cancel-result/${ticketLaboratoryGroupId}`,
     )
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return data
   }
 }

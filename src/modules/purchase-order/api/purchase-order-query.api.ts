@@ -1,10 +1,10 @@
 import { AxiosInstance } from '../../../core/axios.instance'
-import type { BaseResponse } from '../../_base/base-dto'
+import type { FullResponse } from '../../_base/base-dto'
 import {
-  PurchaseOrderDetailQuery,
-  PurchaseOrderGetQuery,
-  PurchaseOrderListQuery,
-  PurchaseOrderPaginationQuery,
+    PurchaseOrderDetailQuery,
+    PurchaseOrderGetQuery,
+    PurchaseOrderListQuery,
+    PurchaseOrderPaginationQuery,
 } from '../purchase-order.dto'
 import { PurchaseOrder } from '../purchase-order.model'
 
@@ -13,7 +13,7 @@ export class PurchaseOrderQueryApi {
     const params = PurchaseOrderGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/purchase-order/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
       page: data.page,
       total: data.total,
@@ -26,7 +26,7 @@ export class PurchaseOrderQueryApi {
     const params = PurchaseOrderGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/purchase-order/list', { params })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return PurchaseOrder.fromList(data.purchaseOrderList)
   }
 
@@ -39,7 +39,7 @@ export class PurchaseOrderQueryApi {
     const response = await AxiosInstance.get(`/purchase-order/${purchaseOrderId}/detail`, {
       params,
     })
-    const { data } = response.data as BaseResponse<{ purchaseOrder: any }>
+    const { data } = response.data as FullResponse<{ purchaseOrder: any }>
     return PurchaseOrder.from(data.purchaseOrder)
   }
 }

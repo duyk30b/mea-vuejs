@@ -1,3 +1,4 @@
+import { ESString } from '@/utils'
 import { BaseModel } from '../_base/base.model'
 import { DiscountType } from '../enum'
 import { Laboratory } from '../laboratory'
@@ -82,7 +83,7 @@ export class Discount extends BaseModel {
     if (this.discountType === DiscountType.Percent) {
       return this.discountPercent + '%'
     } else {
-      return this.discountMoney
+      return ESString.formatMoney(this.discountMoney)
     }
   }
 
@@ -179,7 +180,9 @@ export class Discount extends BaseModel {
       target.procedure = source.procedure ? Procedure.basic(source.procedure) : source.procedure
     }
     if (Object.prototype.hasOwnProperty.call(source, 'laboratory')) {
-      target.laboratory = source.laboratory ? Laboratory.basic(source.laboratory) : source.laboratory
+      target.laboratory = source.laboratory
+        ? Laboratory.basic(source.laboratory)
+        : source.laboratory
     }
     if (Object.prototype.hasOwnProperty.call(source, 'radiology')) {
       target.radiology = source.radiology ? Radiology.basic(source.radiology) : source.radiology

@@ -25,7 +25,7 @@ import type { TicketProcedure } from '@/modules/ticket-procedure'
 import type { TicketProduct } from '@/modules/ticket-product'
 import type { TicketRadiology } from '@/modules/ticket-radiology'
 import type { TicketRegimen } from '@/modules/ticket-regimen'
-import { WalletService } from '@/modules/wallet'
+import { BugDevelopment } from '@/views/component'
 import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import { computed, ref } from 'vue'
@@ -201,10 +201,16 @@ const refreshData = async () => {
 
   const ticketRegimenPayment = (ticket.value.ticketRegimenList || [])
     .filter((i) => {
-      return true // Tạm thời cho hiện hết các liệu trình
-      if (paymentActionType.value === PaymentActionType.PaymentMoney) {
+      if (paymentActionType.value === PaymentActionType.RefundMoney) {
+        return i.paidItem || i.paid || i.debtItem || i.debt
+      }
+      if (
+        paymentActionType.value === PaymentActionType.PaymentMoney ||
+        paymentActionType.value === PaymentActionType.Debit
+      ) {
         return i.paidItem !== i.actualPrice
       }
+      return true // Tạm thời cho hiện hết các liệu trình
     })
     .forEach((tr) => {
       ticketRegimenAction.value[tr.id] = {
@@ -269,24 +275,24 @@ const refreshData = async () => {
   const ticketConsumablePayment = (ticket.value.ticketProductConsumableList || [])
     .filter((i) => {
       if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-        return i.paid < i.actualPrice * i.quantity
+        return i.paid < i.unitActualPrice * i.unitQuantity
       } else if (paymentActionType.value === PaymentActionType.RefundMoney) {
         return !!i.paid
       } else if (paymentActionType.value === PaymentActionType.Debit) {
-        return i.paid < i.actualPrice * i.quantity - i.debt
+        return i.paid < i.unitActualPrice * i.unitQuantity - i.debt
       }
     })
     .forEach((i) => {
       let paidMoney = 0
       let debtMoney = 0
       if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-        paidMoney = i.actualPrice * i.quantity - i.paid
+        paidMoney = i.unitActualPrice * i.unitQuantity - i.paid
         debtMoney = Math.min(paidMoney, i.debt)
       } else if (paymentActionType.value === PaymentActionType.RefundMoney) {
         paidMoney = -i.paid
         debtMoney = -i.debt
       } else if (paymentActionType.value === PaymentActionType.Debit) {
-        debtMoney = i.actualPrice * i.quantity - i.paid - i.debt
+        debtMoney = i.unitActualPrice * i.unitQuantity - i.paid - i.debt
       }
       ticketConsumableAction.value[i.id] = { checked: false, data: i, paidMoney, debtMoney }
     })
@@ -294,24 +300,24 @@ const refreshData = async () => {
   const ticketPrescriptionPayment = (ticket.value.ticketProductPrescriptionList || [])
     .filter((i) => {
       if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-        return i.paid < i.actualPrice * i.quantity
+        return i.paid < i.unitActualPrice * i.unitQuantity
       } else if (paymentActionType.value === PaymentActionType.RefundMoney) {
         return !!i.paid
       } else if (paymentActionType.value === PaymentActionType.Debit) {
-        return i.paid < i.actualPrice * i.quantity - i.debt
+        return i.paid < i.unitActualPrice * i.unitQuantity - i.debt
       }
     })
     .forEach((i) => {
       let paidMoney = 0
       let debtMoney = 0
       if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-        paidMoney = i.actualPrice * i.quantity - i.paid
+        paidMoney = i.unitActualPrice * i.unitQuantity - i.paid
         debtMoney = Math.min(paidMoney, i.debt)
       } else if (paymentActionType.value === PaymentActionType.RefundMoney) {
         paidMoney = -i.paid
         debtMoney = -i.debt
       } else if (paymentActionType.value === PaymentActionType.Debit) {
-        debtMoney = i.actualPrice * i.quantity - i.paid - i.debt
+        debtMoney = i.unitActualPrice * i.unitQuantity - i.paid - i.debt
       }
       ticketPrescriptionAction.value[i.id] = { checked: false, data: i, paidMoney, debtMoney }
     })
@@ -527,6 +533,7 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
                     discountType: tp.discountType,
                     actualPrice: tp.actualPrice,
                     quantity: tp.quantity,
+                    unitRate: 1,
                     sessionIndex: tp.indexSession,
                     paidMoney: tpContainer.paidMoney,
                     debtMoney: tpContainer.debtMoney,
@@ -559,6 +566,7 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
                       discountType: tp.discountType,
                       actualPrice: tp.actualPrice,
                       quantity: tp.quantity,
+                      unitRate: 1,
                       sessionIndex: tp.indexSession,
                       paidMoney: tpContainer.paidMoney,
                       debtMoney: tpContainer.debtMoney,
@@ -586,6 +594,7 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
                   discountType: tp!.discountType,
                   actualPrice: tp!.actualPrice,
                   quantity: tp!.quantity,
+                  unitRate: 1,
                   sessionIndex: tp!.indexSession,
                   paidMoney: tpContainer.paidMoney,
                   debtMoney: tpContainer.debtMoney,
@@ -601,12 +610,13 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
                 ticketItemId: tp!.id,
                 interactId: tp!.productId,
                 ticketItemType: TicketItemType.TicketProductConsumable,
-                expectedPrice: tp!.expectedPrice,
-                discountMoney: tp!.discountMoney,
+                expectedPrice: Math.floor(tp!.unitExpectedPrice / tp.unitRate),
+                discountMoney: Math.floor(tp!.unitDiscountMoney / tp.unitRate),
                 discountPercent: tp!.discountPercent,
                 discountType: tp!.discountType,
-                actualPrice: tp!.actualPrice,
-                quantity: tp!.quantity,
+                actualPrice: Math.floor(tp!.unitActualPrice / tp.unitRate),
+                quantity: tp!.unitRate * tp.unitQuantity,
+                unitRate: tp.unitRate,
                 sessionIndex: 0,
                 paidMoney: tpContainer.paidMoney,
                 debtMoney: tpContainer.debtMoney,
@@ -621,12 +631,13 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
                 ticketItemId: tp!.id,
                 interactId: tp!.productId,
                 ticketItemType: TicketItemType.TicketProductPrescription,
-                expectedPrice: tp!.expectedPrice,
-                discountMoney: tp!.discountMoney,
+                expectedPrice: Math.floor(tp!.unitExpectedPrice / tp.unitRate),
+                discountMoney: Math.floor(tp!.unitDiscountMoney / tp.unitRate),
                 discountPercent: tp!.discountPercent,
                 discountType: tp!.discountType,
-                actualPrice: tp!.actualPrice,
-                quantity: tp!.quantity,
+                actualPrice: Math.floor(tp!.unitActualPrice / tp.unitRate),
+                quantity: tp!.unitRate * tp.unitQuantity,
+                unitRate: tp.unitRate,
                 sessionIndex: 0,
                 paidMoney: tpContainer.paidMoney,
                 debtMoney: tpContainer.debtMoney,
@@ -647,6 +658,7 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
                 discountType: tl!.discountType,
                 actualPrice: tl!.actualPrice,
                 quantity: 1,
+                unitRate: 1,
                 sessionIndex: 0,
                 paidMoney: tlContainer.paidMoney,
                 debtMoney: tlContainer.debtMoney,
@@ -667,6 +679,7 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
                 discountType: tr!.discountType,
                 actualPrice: tr!.actualPrice,
                 quantity: 1,
+                unitRate: 1,
                 sessionIndex: 0,
                 paidMoney: trContainer.paidMoney,
                 debtMoney: trContainer.debtMoney,
@@ -804,10 +817,11 @@ const startPrint = async () => {
         paymentTicketItem.ticketItemId = tp!.id
         paymentTicketItem.interactId = tp!.productId
 
-        paymentTicketItem.expectedPrice = tp!.expectedPrice
-        paymentTicketItem.actualPrice = tp!.actualPrice
-        paymentTicketItem.quantity = tp!.quantity
-        paymentTicketItem.discountMoney = tp!.discountMoney
+        paymentTicketItem.quantity = tp!.unitQuantity * tp!.unitRate
+        paymentTicketItem.unitRate = tp!.unitRate
+        paymentTicketItem.expectedPrice = Math.floor(tp!.unitExpectedPrice / tp!.unitRate)
+        paymentTicketItem.actualPrice = Math.floor(tp!.unitActualPrice / tp!.unitRate)
+        paymentTicketItem.discountMoney = Math.floor(tp!.unitDiscountMoney / tp!.unitRate)
         paymentTicketItem.discountPercent = tp!.discountPercent
         paymentTicketItem.discountType = tp!.discountType
         paymentTicketItem.sessionIndex = 0
@@ -829,12 +843,13 @@ const startPrint = async () => {
         paymentTicketItem.ticketItemId = tp!.id
         paymentTicketItem.interactId = tp!.productId
 
-        paymentTicketItem.expectedPrice = tp!.expectedPrice
-        paymentTicketItem.discountMoney = tp!.discountMoney
+        paymentTicketItem.quantity = tp!.unitQuantity * tp!.unitRate
+        paymentTicketItem.unitRate = tp!.unitRate
+        paymentTicketItem.expectedPrice = Math.floor(tp!.unitExpectedPrice / tp!.unitRate)
+        paymentTicketItem.actualPrice = Math.floor(tp!.unitActualPrice / tp!.unitRate)
+        paymentTicketItem.discountMoney = Math.floor(tp!.unitDiscountMoney / tp!.unitRate)
         paymentTicketItem.discountPercent = tp!.discountPercent
         paymentTicketItem.discountType = tp!.discountType
-        paymentTicketItem.actualPrice = tp!.actualPrice
-        paymentTicketItem.quantity = tp!.quantity
         paymentTicketItem.sessionIndex = 0
 
         paymentTicketItem.paidMoney = tpContainer.paidMoney
@@ -1117,16 +1132,8 @@ defineExpose({ openModal, openModalByTicket })
                 <template v-for="(trContainer, trId, index) in ticketRegimenAction" :key="trId">
                   <template v-if="Object.values(trContainer.trpCheckbox).length">
                     <tr>
-                      <td
-                        v-if="CONFIG.MODE === 'development'"
-                        style="color: violet; text-align: center"
-                      >
-                        <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-                          <template #trigger>
-                            <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-                          </template>
-                          <pre>{{ JSON.stringify(trContainer, null, 4) }}</pre>
-                        </VueTooltip>
+                      <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+                        <BugDevelopment :data="trContainer" />
                       </td>
                       <td>
                         <div class="flex justify-center">
@@ -1155,7 +1162,11 @@ defineExpose({ openModal, openModalByTicket })
                         >
                           <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
                             <template #trigger>
-                              <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
+                              <IconBug
+                                style="color: violet; cursor: pointer"
+                                width="1.2em"
+                                height="1.2em"
+                              />
                             </template>
                             <pre>{{ JSON.stringify(trpContainer, null, 4) }}</pre>
                           </VueTooltip>
@@ -1248,16 +1259,8 @@ defineExpose({ openModal, openModalByTicket })
               </thead>
               <tbody>
                 <tr v-for="(tpContainer, tpId, index) in ticketProcedureNormalAction" :key="tpId">
-                  <td
-                    v-if="CONFIG.MODE === 'development'"
-                    style="color: violet; text-align: center"
-                  >
-                    <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-                      <template #trigger>
-                        <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-                      </template>
-                      <pre>{{ JSON.stringify(tpContainer, null, 4) }}</pre>
-                    </VueTooltip>
+                  <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+                    <BugDevelopment :data="tpContainer" />
                   </td>
                   <td>
                     <div class="flex justify-center">
@@ -1319,16 +1322,8 @@ defineExpose({ openModal, openModalByTicket })
               </thead>
               <tbody>
                 <tr v-for="(tpContainer, tpId, index) in ticketConsumableAction" :key="tpId">
-                  <td
-                    v-if="CONFIG.MODE === 'development'"
-                    style="color: violet; text-align: center"
-                  >
-                    <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-                      <template #trigger>
-                        <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-                      </template>
-                      <pre>{{ JSON.stringify(tpContainer, null, 4) }}</pre>
-                    </VueTooltip>
+                  <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+                    <BugDevelopment :data="tpContainer" />
                   </td>
                   <td>
                     <div class="flex justify-center">
@@ -1342,12 +1337,15 @@ defineExpose({ openModal, openModalByTicket })
                     />
                   </td>
                   <td>{{ tpContainer.data.product?.brandName }}</td>
-                  <td class="text-center">{{ tpContainer.data.quantity }}</td>
+                  <td class="text-center">{{ tpContainer.data.unitQuantity }}</td>
                   <td class="text-right whitespace-nowrap">
-                    <div v-if="tpContainer.data.discountMoney" class="text-xs italic text-red-500">
-                      <del>{{ formatMoney(tpContainer.data.expectedPrice) }}</del>
+                    <div
+                      v-if="tpContainer.data.unitDiscountMoney"
+                      class="text-xs italic text-red-500"
+                    >
+                      <del>{{ formatMoney(tpContainer.data.unitExpectedPrice) }}</del>
                     </div>
-                    <div>{{ formatMoney(tpContainer.data.actualPrice) }}</div>
+                    <div>{{ formatMoney(tpContainer.data.unitActualPrice) }}</div>
                   </td>
                   <td
                     v-if="paymentActionType === PaymentActionType.PaymentMoney"
@@ -1390,16 +1388,8 @@ defineExpose({ openModal, openModalByTicket })
               </thead>
               <tbody>
                 <tr v-for="(tpContainer, tpId, index) in ticketPrescriptionAction" :key="tpId">
-                  <td
-                    v-if="CONFIG.MODE === 'development'"
-                    style="color: violet; text-align: center"
-                  >
-                    <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-                      <template #trigger>
-                        <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-                      </template>
-                      <pre>{{ JSON.stringify(tpContainer, null, 4) }}</pre>
-                    </VueTooltip>
+                  <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+                    <BugDevelopment :data="tpContainer" />
                   </td>
                   <td>
                     <div class="flex justify-center">
@@ -1413,12 +1403,15 @@ defineExpose({ openModal, openModalByTicket })
                     />
                   </td>
                   <td>{{ tpContainer.data.product?.brandName }}</td>
-                  <td class="text-center">{{ tpContainer.data.quantity }}</td>
+                  <td class="text-center">{{ tpContainer.data.unitQuantity }}</td>
                   <td class="text-right whitespace-nowrap">
-                    <div v-if="tpContainer.data.discountMoney" class="text-xs italic text-red-500">
-                      <del>{{ formatMoney(tpContainer.data.expectedPrice) }}</del>
+                    <div
+                      v-if="tpContainer.data.unitDiscountMoney"
+                      class="text-xs italic text-red-500"
+                    >
+                      <del>{{ formatMoney(tpContainer.data.unitExpectedPrice) }}</del>
                     </div>
-                    <div>{{ formatMoney(tpContainer.data.actualPrice) }}</div>
+                    <div>{{ formatMoney(tpContainer.data.unitActualPrice) }}</div>
                   </td>
                   <td
                     v-if="paymentActionType === PaymentActionType.PaymentMoney"
@@ -1461,16 +1454,8 @@ defineExpose({ openModal, openModalByTicket })
               </thead>
               <tbody>
                 <tr v-for="(tlContainer, tlId, index) in ticketLaboratoryAction" :key="tlId">
-                  <td
-                    v-if="CONFIG.MODE === 'development'"
-                    style="color: violet; text-align: center"
-                  >
-                    <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-                      <template #trigger>
-                        <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-                      </template>
-                      <pre>{{ JSON.stringify(tlContainer, null, 4) }}</pre>
-                    </VueTooltip>
+                  <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+                    <BugDevelopment :data="tlContainer" />
                   </td>
                   <td>
                     <div class="flex justify-center">
@@ -1525,16 +1510,8 @@ defineExpose({ openModal, openModalByTicket })
               </thead>
               <tbody>
                 <tr v-for="(trContainer, trId, index) in ticketRadiologyAction" :key="trId">
-                  <td
-                    v-if="CONFIG.MODE === 'development'"
-                    style="color: violet; text-align: center"
-                  >
-                    <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-                      <template #trigger>
-                        <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-                      </template>
-                      <pre>{{ JSON.stringify(trContainer, null, 4) }}</pre>
-                    </VueTooltip>
+                  <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+                    <BugDevelopment :data="trContainer" />
                   </td>
                   <td>
                     <div class="flex justify-center">

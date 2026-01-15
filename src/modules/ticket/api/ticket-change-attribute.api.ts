@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../../core/axios.instance'
-import type { BaseResponse } from '../../_base/base-dto'
+import type { FullResponse } from '../../_base/base-dto'
 
 export class TicketChangeAttributeApi {
   static async updateDiagnosis(options: {
@@ -45,7 +45,7 @@ export class TicketChangeAttributeApi {
         },
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 
   static async updateTicketAttributeList(body: {
@@ -64,6 +64,6 @@ export class TicketChangeAttributeApi {
         }),
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 }

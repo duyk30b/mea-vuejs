@@ -1,9 +1,9 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
-  TicketReceptionDetailQuery,
-  TicketReceptionGetQuery,
-  type TicketReceptionPaginationQuery,
+    TicketReceptionDetailQuery,
+    TicketReceptionGetQuery,
+    type TicketReceptionPaginationQuery,
 } from './ticket-reception.dto'
 import { TicketReception } from './ticket-reception.model'
 
@@ -12,7 +12,7 @@ export class TicketReceptionApi {
     const params = TicketReceptionGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/ticket-reception/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
       page: data.page,
       total: data.total,
@@ -25,7 +25,7 @@ export class TicketReceptionApi {
     const params = TicketReceptionGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get(`/ticket-reception/detail/${id}`, { params })
-    const { data } = response.data as BaseResponse<{ ticketReception: any }>
+    const { data } = response.data as FullResponse<{ ticketReception: any }>
     return TicketReception.from(data.ticketReception)
   }
 }

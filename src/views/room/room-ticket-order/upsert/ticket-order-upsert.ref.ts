@@ -10,8 +10,8 @@ watchEffect(() => {
   let itemsDiscount = 0
 
   ticketOrderUpsertRef.value.ticketProductList?.forEach((item) => {
-    productMoney += item.actualPrice * item.quantity
-    itemsDiscount += item.discountMoney * item.quantity
+    productMoney += item.unitActualPrice * item.unitQuantity
+    itemsDiscount += item.unitDiscountMoney * item.unitQuantity
   })
   ticketOrderUpsertRef.value.ticketProcedureList?.forEach((item) => {
     procedureMoney += item.actualPrice * item.quantity

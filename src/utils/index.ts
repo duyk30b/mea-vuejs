@@ -1,3 +1,4 @@
+export * from './helpers/array.helper'
 export * from './helpers/dom.helper'
 export * from './helpers/function.helper'
 export * from './helpers/image.helper'
@@ -6,3 +7,4 @@ export * from './helpers/object.helper'
 export * from './helpers/string.helper'
 export * from './helpers/time.helper'
 export * from './helpers/typescript.helper'
+

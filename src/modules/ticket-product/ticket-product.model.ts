@@ -1,11 +1,11 @@
 import { ESArray } from '@/utils'
+import { BaseModel } from '../_base/base.model'
 import { Batch } from '../batch'
 import type { Customer } from '../customer'
 import { DeliveryStatus, DiscountType, PaymentMoneyStatus, PickupStrategy } from '../enum'
 import { Product } from '../product'
 import { TicketBatch } from '../ticket-batch'
 import type { Ticket } from '../ticket/ticket.model'
-import { BaseModel } from '../_base/base.model'
 
 export enum TicketProductType {
   Prescription = 1,
@@ -29,16 +29,16 @@ export class TicketProduct extends BaseModel {
   paid: number
   debt: number
 
-  quantity: number
-  quantityPrescription: number
+  unitQuantity: number
+  unitQuantityPrescription: number
   printPrescription: number
   unitRate: number
   costAmount: number // không thể có costPrice, vì có thể bao gồm nhiều lô với vốn khác nhau
-  expectedPrice: number
-  discountMoney: number
+  unitExpectedPrice: number
+  unitDiscountMoney: number
   discountPercent: number
   discountType: DiscountType
-  actualPrice: number
+  unitActualPrice: number
 
   createdAt: number
   hintUsage: string | null
@@ -54,44 +54,75 @@ export class TicketProduct extends BaseModel {
     return this.product?.getUnitNameByRate(this.unitRate) || ''
   }
 
-  get unitQuantity() {
-    return Number((this.quantity / this.unitRate).toFixed(3))
+  get quantity() {
+    return this.unitQuantity * this.unitRate
   }
 
-  get unitQuantityPrescription() {
-    return Number((this.quantityPrescription / this.unitRate).toFixed(3))
+  get quantityPrescription() {
+    return this.unitQuantityPrescription * this.unitRate
   }
 
-  get unitExpectedPrice() {
-    return this.expectedPrice * this.unitRate
+  get expectedPrice() {
+    return Math.round(this.unitExpectedPrice / this.unitRate)
   }
 
-  get unitDiscountMoney() {
-    return this.discountMoney * this.unitRate
+  get actualPrice() {
+    return Math.round(this.unitActualPrice / this.unitRate)
   }
 
-  get unitActualPrice() {
-    return this.actualPrice * this.unitRate
+  get discountMoney() {
+    return Math.round(this.unitDiscountMoney / this.unitRate)
   }
 
-  set unitQuantity(data: number) {
-    this.quantity = data * this.unitRate
+  public changeUnitRate(unitRate: number) {
+    const oldUnitRate = this.unitRate
+    this.unitExpectedPrice = Math.round((this.unitExpectedPrice * unitRate) / oldUnitRate)
+    this.unitDiscountMoney = Math.round((this.unitDiscountMoney * unitRate) / oldUnitRate)
+    this.unitActualPrice = Math.round((this.unitActualPrice * unitRate) / oldUnitRate)
+    this.unitQuantity = Math.round((this.unitQuantity * oldUnitRate) / unitRate)
+    this.unitQuantityPrescription = Math.round(
+      (this.unitQuantityPrescription * oldUnitRate) / unitRate,
+    )
+    this.unitRate = unitRate
   }
 
-  set unitQuantityPrescription(data: number) {
-    this.quantityPrescription = data * this.unitRate
+  public changeUnitExpectedPrice(unitExpectedPrice: number) {
+    const unitActualPrice = this.unitActualPrice
+    const unitDiscountMoney = unitExpectedPrice - unitActualPrice
+    const discountPercent =
+      unitExpectedPrice == 0 ? 0 : Math.round((unitDiscountMoney * 100) / unitExpectedPrice)
+    this.discountPercent = discountPercent
+    this.unitDiscountMoney = unitDiscountMoney
+    this.discountType = DiscountType.VND
+    this.unitExpectedPrice = unitExpectedPrice
   }
 
-  set unitExpectedPrice(data: number) {
-    this.expectedPrice = data / this.unitRate
+  public changeUnitDiscountMoney(unitDiscountMoney: number) {
+    const unitExpectedPrice = this.unitExpectedPrice || 0
+    const discountPercent =
+      unitExpectedPrice == 0 ? 0 : Math.round((unitDiscountMoney * 100) / unitExpectedPrice)
+    this.discountPercent = discountPercent
+    this.unitDiscountMoney = unitDiscountMoney
+    this.unitActualPrice = unitExpectedPrice - unitDiscountMoney
   }
 
-  set unitDiscountMoney(data: number) {
-    this.discountMoney = data / this.unitRate
+  public changeDiscountPercent(discountPercent: number) {
+    const unitExpectedPrice = this.unitExpectedPrice || 0
+    const unitDiscountMoney = Math.round((unitExpectedPrice * (discountPercent || 0)) / 100)
+    this.discountPercent = discountPercent
+    this.unitDiscountMoney = unitDiscountMoney
+    this.unitActualPrice = unitExpectedPrice - unitDiscountMoney
   }
 
-  set unitActualPrice(data: number) {
-    this.actualPrice = data / this.unitRate
+  public changeUnitActualPrice(unitActualPrice: number) {
+    const unitExpectedPrice = this.unitExpectedPrice
+    const unitDiscountMoney = unitExpectedPrice - unitActualPrice
+    const discountPercent =
+      unitExpectedPrice == 0 ? 0 : Math.round((unitDiscountMoney * 100) / unitExpectedPrice)
+    this.discountPercent = discountPercent
+    this.unitDiscountMoney = unitDiscountMoney
+    this.discountType = DiscountType.VND
+    this.unitActualPrice = unitActualPrice
   }
 
   static init(): TicketProduct {
@@ -113,16 +144,16 @@ export class TicketProduct extends BaseModel {
     ins.paid = 0
     ins.debt = 0
 
-    ins.quantity = 0
-    ins.quantityPrescription = 0
+    ins.unitQuantity = 0
+    ins.unitQuantityPrescription = 0
     ins.printPrescription = 1
     ins.unitRate = 1
     ins.costAmount = 0
-    ins.expectedPrice = 0
-    ins.discountMoney = 0
+    ins.unitExpectedPrice = 0
+    ins.unitDiscountMoney = 0
     ins.discountPercent = 0
     ins.discountType = DiscountType.Percent
-    ins.actualPrice = 0
+    ins.unitActualPrice = 0
     ins.hintUsage = ''
     return ins
   }
@@ -205,16 +236,16 @@ export class TicketProduct extends BaseModel {
     if (a.paid != b.paid) return false
     if (a.debt != b.debt) return false
 
-    if (a.quantity != b.quantity) return false
-    if (a.quantityPrescription != b.quantityPrescription) return false
+    if (a.unitQuantity != b.unitQuantity) return false
+    if (a.unitQuantityPrescription != b.unitQuantityPrescription) return false
     if (a.printPrescription != b.printPrescription) return false
     if (a.unitRate != b.unitRate) return false
     if (a.costAmount != b.costAmount) return false
-    if (a.expectedPrice != b.expectedPrice) return false
-    if (a.discountMoney != b.discountMoney) return false
+    if (a.unitExpectedPrice != b.unitExpectedPrice) return false
+    if (a.unitDiscountMoney != b.unitDiscountMoney) return false
     if (a.discountPercent != b.discountPercent) return false
     // if (a.discountType != b.discountType) return false
-    if (a.actualPrice != b.actualPrice) return false
+    if (a.unitActualPrice != b.unitActualPrice) return false
     if (a.hintUsage != b.hintUsage) return false
     return true
   }

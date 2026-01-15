@@ -21,12 +21,14 @@ const props = withDefaults(
     positionId?: number
     disabled?: boolean
     required?: boolean
+    label?: string
   }>(),
   {
     userId: 0,
     positionId: 0,
     disabled: false,
     required: false,
+    label: 'Nhân viên',
   },
 )
 
@@ -78,7 +80,7 @@ const logicFilter = (item: ItemOption<User>, text: string) => {
 </script>
 <template>
   <div class="flex gap-1 flex-wrap">
-    <div>{{ position.role?.name || 'Nhân viên' }}</div>
+    <div>{{ position.role?.name || label }}</div>
     <div v-if="CONFIG.MODE === 'development'" style="color: violet">
       (P{{ positionId }} - R{{ position.roleId }} - U{{ userId }})
     </div>

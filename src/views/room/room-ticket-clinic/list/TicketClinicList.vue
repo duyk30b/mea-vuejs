@@ -37,6 +37,7 @@ import { PaymentService } from '@/modules/payment'
 import { RegimenService } from '@/modules/regimen'
 import { TicketRegimen, TicketRegimenService } from '@/modules/ticket-regimen'
 import { VueTooltip } from '@/common/popover'
+import { BugDevelopment } from '@/views/component'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalReceptionCreate = ref<InstanceType<typeof ModalReceptionCreate>>()
@@ -418,23 +419,14 @@ const clickCloseTicket = (ticket: Ticket) => {
             v-for="(ticket, index) in roomTicketMapRoomId[currentRoom.id]?.paginationData || []"
             :key="index"
           >
-            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-              <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-                <template #trigger>
-                  <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-                </template>
-                <pre>{{ JSON.stringify(ticket, null, 4) }}</pre>
-              </VueTooltip>
+            <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+              <BugDevelopment :data="ticket" />
+            </td>
+            <td style="text-align: center">
+              <TicketLink :ticket="ticket" :ticketId="ticket.id" />
             </td>
             <td>
-              <div class="flex gap-4 justify-between items-center">
-                <TicketLink :ticket="ticket" :ticketId="ticket.id" />
-              </div>
-            </td>
-            <td>
-              <div>
-                <TicketStatusTag :ticket="ticket" />
-              </div>
+              <TicketStatusTag :ticket="ticket" />
             </td>
             <td style="width: 160px">
               <template v-if="ticket.ticketReceptionList?.length">
@@ -487,12 +479,14 @@ const clickCloseTicket = (ticket: Ticket) => {
                 </a>
               </div>
               <div class="text-xs italic">
-                {{
-                  ESTimer.timeToText(ticket.customer?.birthday, 'DD/MM/YYYY') ||
-                  ticket.customer?.yearOfBirth ||
-                  ''
-                }}
-                - {{ ticket.customer?.getAge ? ticket.customer?.getAge + ' Tuổi' : '' }}
+                <span>
+                  {{
+                    ESTimer.timeToText(ticket.customer?.birthday, 'DD/MM/YYYY') ||
+                    ticket.customer?.yearOfBirth ||
+                    ''
+                  }}
+                </span>
+                <span v-if="ticket.customer?.getAge">- {{ ticket.customer?.getAge }} Tuổi</span>
               </div>
               <div v-if="ticket.customer?.note" class="text-xs italic">
                 {{ ticket.customer?.note }}

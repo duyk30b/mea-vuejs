@@ -14,7 +14,8 @@ const ticket = ref<Ticket>(Ticket.blank())
 const tbReturnList = ref<
   {
     ticketBatchId: string
-    quantityReturn: number
+    unitQuantityReturn: number
+    unitRate: number
     tbRoot: TicketBatch
   }[]
 >([])
@@ -42,7 +43,8 @@ const openModal = async (ticketProp: Ticket) => {
     tbReturnList.value = ticketBatchOriginList.map((i) => {
       return {
         ticketBatchId: i.id,
-        quantityReturn: 0,
+        unitQuantityReturn: 0,
+        unitRate: i.unitRate,
         tbRoot: i,
       }
     })
@@ -55,13 +57,8 @@ const openModal = async (ticketProp: Ticket) => {
 
 const setReturnAllQuantity = () => {
   tbReturnList.value.forEach((i) => {
-    i.quantityReturn = i.tbRoot.quantity
+    i.unitQuantityReturn = i.tbRoot.unitQuantity
   })
-}
-
-const handleChangeInputQuantityReturn = (e: Event, index: number) => {
-  const quantityReturn = Number((e.target as HTMLInputElement).value || 0)
-  tbReturnList.value[index].quantityReturn = quantityReturn
 }
 
 const closeModal = () => {
@@ -75,7 +72,7 @@ const validateQuantity = () => {
     const tbReturn = tbReturnList.value[i]
     const { product } = tbReturn.tbRoot
 
-    if (tbReturn.quantityReturn > tbReturn.tbRoot.quantity) {
+    if (tbReturn.unitQuantityReturn > tbReturn.tbRoot.unitQuantity) {
       AlertStore.addError(`Lỗi: Sản phẩm ${product?.brandName} hoàn trả bị quá số lượng đã mua`)
       return false
     }
@@ -86,17 +83,18 @@ const validateQuantity = () => {
 const startReturnProduct = async () => {
   returnLoading.value = true
   if (!validateQuantity()) return
-  if (!tbReturnList.value.filter((i) => i.quantityReturn > 0).length) {
+  if (!tbReturnList.value.filter((i) => i.unitQuantityReturn > 0).length) {
     returnLoading.value = false
     return AlertStore.addError('Chưa chọn số lượng hoàn trả')
   }
   try {
     const tbReturnListConvert = tbReturnList.value
-      .filter((i) => i.quantityReturn > 0)
+      .filter((i) => i.unitQuantityReturn > 0)
       .map((i) => {
         return {
           ticketBatchId: i.ticketBatchId,
-          quantityReturn: i.quantityReturn,
+          unitQuantityReturn: i.unitQuantityReturn,
+          unitRate: i.unitRate,
         }
       })
 
@@ -186,20 +184,19 @@ defineExpose({ openModal })
                 <td class="text-center">
                   <div>{{ tbReturn.tbRoot.unitQuantity }}</div>
                 </td>
-                <td class="text-center">{{ tbReturn.tbRoot.unitName }}</td>
+                <td class="text-center">{{ tbReturn.tbRoot.product?.unitBasicName }}</td>
                 <td class="text-right">{{ formatMoney(tbReturn.tbRoot.unitActualPrice) }}</td>
                 <td class="text-right">
                   <input
                     type="number"
                     style="width: 120px"
-                    :value="tbReturn.quantityReturn / tbReturn.tbRoot.unitRate"
+                    v-model="tbReturn.unitQuantityReturn"
                     min="0"
-                    :max="tbReturn.tbRoot.quantity / tbReturn.tbRoot.unitRate"
-                    @input="(e) => handleChangeInputQuantityReturn(e, index)"
+                    :max="tbReturn.tbRoot.unitQuantity"
                   />
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(tbReturn.quantityReturn * tbReturn.tbRoot.actualPrice) }}
+                  {{ formatMoney(tbReturn.unitQuantityReturn * tbReturn.tbRoot.unitActualPrice) }}
                 </td>
               </tr>
               <tr>
@@ -208,7 +205,7 @@ defineExpose({ openModal })
                   {{
                     formatMoney(
                       tbReturnList.reduce((acc, item) => {
-                        return acc + item.quantityReturn * item.tbRoot.actualPrice
+                        return acc + item.unitQuantityReturn * item.tbRoot.unitActualPrice
                       }, 0),
                     )
                   }}

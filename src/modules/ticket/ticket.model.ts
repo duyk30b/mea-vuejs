@@ -128,7 +128,7 @@ export class Ticket {
   get itemsCostAmountExpected() {
     let itemsCostAmount = 0
     this.ticketProductList?.forEach((item) => {
-      itemsCostAmount += (item.product?.costPrice || 0) * item.quantity
+      itemsCostAmount += (item.product?.costPrice || 0) * item.unitQuantity * item.unitRate
     })
     return itemsCostAmount
   }

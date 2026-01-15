@@ -1,9 +1,9 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
-  TicketLaboratoryGroupDetailQuery,
-  TicketLaboratoryGroupGetQuery,
-  type TicketLaboratoryGroupPaginationQuery,
+    TicketLaboratoryGroupDetailQuery,
+    TicketLaboratoryGroupGetQuery,
+    type TicketLaboratoryGroupPaginationQuery,
 } from './ticket-laboratory-group.dto'
 import { TicketLaboratoryGroup } from './ticket-laboratory-group.model'
 
@@ -12,7 +12,7 @@ export class TicketLaboratoryGroupApi {
     const params = TicketLaboratoryGroupGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/ticket-laboratory-group/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
       page: data.page,
       limit: data.limit,
@@ -28,7 +28,7 @@ export class TicketLaboratoryGroupApi {
       `/ticket-laboratory-group/detail/${ticketLaboratoryGroupId}`,
       { params },
     )
-    const { data } = response.data as BaseResponse<{ ticketLaboratoryGroup: any }>
+    const { data } = response.data as FullResponse<{ ticketLaboratoryGroup: any }>
     return TicketLaboratoryGroup.from(data.ticketLaboratoryGroup)
   }
 }

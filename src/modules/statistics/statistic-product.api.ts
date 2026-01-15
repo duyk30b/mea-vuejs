@@ -1,6 +1,6 @@
 import { AxiosInstance } from '@/core/axios.instance'
 import { OmitClass } from '@/utils'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { Product } from '../product'
 import { TicketProductGetQuery } from '../ticket-product'
 
@@ -31,7 +31,7 @@ export class StatisticTicketProductQuery extends OmitClass(TicketProductGetQuery
 export class StatisticProductApi {
   static async sumWarehouse() {
     const response = await AxiosInstance.get('/statistic/product/sum-warehouse')
-    const { data } = response.data as BaseResponse<
+    const { data } = response.data as FullResponse<
       {
         warehouseId: number
         sumCostAmount: number
@@ -48,7 +48,7 @@ export class StatisticProductApi {
     const response = await AxiosInstance.get('/statistic/product/top-product-high-money', {
       params,
     })
-    const { data } = response.data as BaseResponse<any[]>
+    const { data } = response.data as FullResponse<any[]>
 
     data.forEach((i: Product & { retailAmount: number; costAmount: number }) => {
       i.quantity = Number(i.quantity)
@@ -68,7 +68,7 @@ export class StatisticProductApi {
     const response = await AxiosInstance.get('/statistic/product/statistic-ticket-product', {
       params,
     })
-    const { data } = response.data as BaseResponse<{ dataStatistic: any[]; total: number }>
+    const { data } = response.data as FullResponse<{ dataStatistic: any[]; total: number }>
     return {
       dataStatistic: data.dataStatistic.map((i) => {
         const item: StatisticTicketProductResponseType = {

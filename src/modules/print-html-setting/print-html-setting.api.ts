@@ -1,9 +1,9 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import type { PrintHtmlType } from '../print-html/print-html.model'
 import {
-  PrintHtmlSettingGetQuery,
-  type PrintHtmlSettingGetListQuery,
+    PrintHtmlSettingGetQuery,
+    type PrintHtmlSettingGetListQuery,
 } from './print-html-setting.dto'
 import { PrintHtmlSetting } from './print-html-setting.model'
 
@@ -12,7 +12,7 @@ export class PrintHtmlSettingApi {
     const params = PrintHtmlSettingGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/print-html-setting/list', { params })
-    const { data, time } = response.data as BaseResponse<{ printHtmlSettingList: any[] }>
+    const { data, time } = response.data as FullResponse<{ printHtmlSettingList: any[] }>
     return {
       printHtmlSettingList: PrintHtmlSetting.fromList(data.printHtmlSettingList),
     }
@@ -22,7 +22,7 @@ export class PrintHtmlSettingApi {
     replaceAll: { id: number; printHtmlType: PrintHtmlType; printHtmlId: number }[]
   }) {
     const response = await AxiosInstance.post('/print-html-setting/replace-all', body)
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return
   }
 }

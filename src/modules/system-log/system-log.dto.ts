@@ -8,7 +8,10 @@ export class SystemLogGetFilter {
   apiMethod?: string
   prefixController?: string
   url?: string | ConditionString
+  statusCode?: number | ConditionNumber
   errorMessage?: string | ConditionString
+  errorName?: string | ConditionString
+  createdAt?: string | number | ConditionDate
   $OR?: SystemLogGetFilter[]
   $AND?: SystemLogGetFilter[]
 }

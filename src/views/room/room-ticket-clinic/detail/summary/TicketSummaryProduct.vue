@@ -36,25 +36,25 @@ onMounted(async () => {
 
 const consumableDiscount = computed(() => {
   return ticketRoomRef.value.ticketProductConsumableList?.reduce((acc, item) => {
-    return acc + item.discountMoney * item.quantity
+    return acc + item.unitDiscountMoney * item.unitQuantity
   }, 0)
 })
 
 const consumableMoney = computed(() => {
   return ticketRoomRef.value.ticketProductConsumableList?.reduce((acc, item) => {
-    return acc + item.actualPrice * item.quantity
+    return acc + item.unitActualPrice * item.unitQuantity
   }, 0)
 })
 
 const prescriptionDiscount = computed(() => {
   return ticketRoomRef.value.ticketProductPrescriptionList?.reduce((acc, item) => {
-    return acc + item.discountMoney * item.quantity
+    return acc + item.unitDiscountMoney * item.unitQuantity
   }, 0)
 })
 
 const prescriptionMoney = computed(() => {
   return ticketRoomRef.value.ticketProductPrescriptionList?.reduce((acc, item) => {
-    return acc + item.actualPrice * item.quantity
+    return acc + item.unitActualPrice * item.unitQuantity
   }, 0)
 })
 </script>
@@ -127,15 +127,15 @@ const prescriptionMoney = computed(() => {
         <td class="text-center">{{ tpConsumable.unitQuantity }}</td>
 
         <td class="text-right whitespace-nowrap">
-          <div v-if="tpConsumable.discountMoney" class="text-xs italic text-red-500">
+          <div v-if="tpConsumable.unitDiscountMoney" class="text-xs italic text-red-500">
             <del>{{ formatMoney(tpConsumable.unitExpectedPrice) }}</del>
           </div>
           <div>{{ formatMoney(tpConsumable.unitActualPrice) }}</div>
         </td>
         <td class="text-center" style="width: 40px">
-          <div v-if="tpConsumable.discountMoney">
+          <div v-if="tpConsumable.unitDiscountMoney">
             <VueTag v-if="tpConsumable.discountType === 'VNĐ'" color="green">
-              {{ formatMoney(tpConsumable.discountMoney * tpConsumable.unitRate) }}
+              {{ formatMoney(tpConsumable.unitDiscountMoney) }}
             </VueTag>
             <VueTag v-if="tpConsumable.discountType === '%'" color="green">
               {{ tpConsumable.discountPercent || 0 }}%
@@ -143,12 +143,12 @@ const prescriptionMoney = computed(() => {
           </div>
         </td>
         <td class="text-right whitespace-nowrap">
-          <div v-if="tpConsumable.discountMoney" class="text-xs italic text-red-500">
+          <div v-if="tpConsumable.unitDiscountMoney" class="text-xs italic text-red-500">
             <del>
-              {{ formatMoney(tpConsumable.unitExpectedPrice * tpConsumable.quantity) }}
+              {{ formatMoney(tpConsumable.unitExpectedPrice * tpConsumable.unitQuantity) }}
             </del>
           </div>
-          {{ formatMoney(tpConsumable.actualPrice * tpConsumable.quantity) }}
+          {{ formatMoney(tpConsumable.unitActualPrice * tpConsumable.unitQuantity) }}
         </td>
         <td class="text-center">
           <a
@@ -251,15 +251,15 @@ const prescriptionMoney = computed(() => {
         <td class="text-center">{{ tpPrescription.unitQuantityPrescription }}</td>
         <td class="text-center">{{ tpPrescription.unitQuantity }}</td>
         <td class="text-right whitespace-nowrap">
-          <div v-if="tpPrescription.discountMoney" class="text-xs italic text-red-500">
+          <div v-if="tpPrescription.unitDiscountMoney" class="text-xs italic text-red-500">
             <del>{{ formatMoney(tpPrescription.unitExpectedPrice) }}</del>
           </div>
           <div>{{ formatMoney(tpPrescription.unitActualPrice) }}</div>
         </td>
         <td class="text-center" style="width: 40px">
-          <div v-if="tpPrescription.discountMoney">
+          <div v-if="tpPrescription.unitDiscountMoney">
             <VueTag v-if="tpPrescription.discountType === 'VNĐ'" color="green">
-              {{ formatMoney(tpPrescription.discountMoney * tpPrescription.unitRate) }}
+              {{ formatMoney(tpPrescription.unitDiscountMoney) }}
             </VueTag>
             <VueTag v-if="tpPrescription.discountType === '%'" color="green">
               {{ tpPrescription.discountPercent || 0 }}%
@@ -267,12 +267,12 @@ const prescriptionMoney = computed(() => {
           </div>
         </td>
         <td class="text-right whitespace-nowrap">
-          <div v-if="tpPrescription.discountMoney" class="text-xs italic text-red-500">
+          <div v-if="tpPrescription.unitDiscountMoney" class="text-xs italic text-red-500">
             <del>
-              {{ formatMoney(tpPrescription.unitExpectedPrice * tpPrescription.quantity) }}
+              {{ formatMoney(tpPrescription.unitExpectedPrice * tpPrescription.unitQuantity) }}
             </del>
           </div>
-          {{ formatMoney(tpPrescription.actualPrice * tpPrescription.quantity) }}
+          {{ formatMoney(tpPrescription.unitActualPrice * tpPrescription.unitQuantity) }}
         </td>
         <td class="text-center">
           <a

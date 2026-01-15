@@ -142,11 +142,12 @@ export class ProductService {
     const data = dataSort.slice((page - 1) * limit, page * limit)
 
     const productList = Product.fromList(data)
-    // productList.forEach((product) => {
-    //   product.batchList?.forEach((batch) => {
-    //     batch.product = Product.basic(product)
-    //   })
-    // })
+    productList.forEach((product) => {
+      product.batchList?.forEach((batch) => {
+        batch.product = Product.basic(product) // mục đích là để có unitRate cho batch tính lại giá và số lượng
+        batch.product.batchList = undefined
+      })
+    })
 
     return {
       page,

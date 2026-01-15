@@ -4,7 +4,7 @@ import type { DiscountType } from '@/modules/enum'
 import { Payment } from '@/modules/payment'
 import { TicketProduct } from '@/modules/ticket-product'
 import type { TicketSurcharge } from '@/modules/ticket-surcharge/ticket-surcharge.model'
-import type { BaseResponse } from '../../_base/base-dto'
+import type { FullResponse } from '../../_base/base-dto'
 import { Ticket } from '../ticket.model'
 
 export type TicketItemChangeMoney = {
@@ -16,11 +16,20 @@ export type TicketItemChangeMoney = {
   actualPrice: number
 }
 
+export type TicketProductChangeMoney = {
+  id: string
+  unitQuantity: number
+  discountPercent: number
+  unitDiscountMoney: number
+  discountType: DiscountType
+  unitActualPrice: number
+}
+
 export class TicketActionApi {
   static async startExecuting(params: { ticketId: string }) {
     const { ticketId } = params
     const response = await AxiosInstance.post(`/ticket/${ticketId}/start-executing`)
-    const { data } = response.data as BaseResponse<{ ticketModified: any }>
+    const { data } = response.data as FullResponse<{ ticketModified: any }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
     }
@@ -39,7 +48,7 @@ export class TicketActionApi {
       discountMoney: body.discountMoney,
       discountPercent: body.discountPercent,
     })
-    const { data } = response.data as BaseResponse<{ ticketModified: any }>
+    const { data } = response.data as FullResponse<{ ticketModified: any }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
     }
@@ -59,7 +68,7 @@ export class TicketActionApi {
         }
       }),
     })
-    const { data } = response.data as BaseResponse<{ ticketModified: any }>
+    const { data } = response.data as FullResponse<{ ticketModified: any }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
     }
@@ -69,13 +78,13 @@ export class TicketActionApi {
     ticketId: string,
     body: {
       ticketProcedureList: TicketItemChangeMoney[]
-      ticketProductList: TicketItemChangeMoney[]
+      ticketProductList: TicketProductChangeMoney[]
       ticketLaboratoryList: TicketItemChangeMoney[]
       ticketRadiologyList: TicketItemChangeMoney[]
     },
   ) {
     const response = await AxiosInstance.post(`/ticket/${ticketId}/change-all-money`, body)
-    const { data } = response.data as BaseResponse<{ ticketModified: any }>
+    const { data } = response.data as FullResponse<{ ticketModified: any }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
     }
@@ -86,7 +95,7 @@ export class TicketActionApi {
     const response = await AxiosInstance.post(`/ticket/${ticketId}/send-product`, {
       ticketProductIdList,
     })
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       ticketModified: any
       ticketProductModifiedAll?: any[]
     }>
@@ -102,14 +111,15 @@ export class TicketActionApi {
     ticketId: string
     returnList: {
       ticketBatchId: string
-      quantityReturn: number
+      unitQuantityReturn: number
+      unitRate: number
     }[]
   }) {
     const { ticketId, returnList } = body
     const response = await AxiosInstance.post(`/ticket/${ticketId}/return-product`, {
       returnList,
     })
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       ticketModified: any
       ticketProductModifiedAll?: any[]
     }>
@@ -119,7 +129,7 @@ export class TicketActionApi {
   static async close(options: { ticketId: string }) {
     const { ticketId } = options
     const response = await AxiosInstance.post(`/ticket/${ticketId}/close`)
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       ticketModified: any
       customerModified?: any
       paymentCreated: any
@@ -133,7 +143,7 @@ export class TicketActionApi {
   static async reopen(options: { ticketId: string }) {
     const { ticketId } = options
     const response = await AxiosInstance.post(`/ticket/${ticketId}/reopen`)
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       ticketModified: any
     }>
     return {
@@ -147,7 +157,7 @@ export class TicketActionApi {
       walletId: options.walletId,
       note: options.note,
     })
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       ticketModified: any
       customerModified?: any
       paymentCreated: any
@@ -165,7 +175,7 @@ export class TicketActionApi {
 
   static async destroy(ticketId: string) {
     const response = await AxiosInstance.post(`/ticket/${ticketId}/destroy`)
-    const { data } = response.data as BaseResponse<{ ticketId: any }>
+    const { data } = response.data as FullResponse<{ ticketId: any }>
     return data
   }
 }

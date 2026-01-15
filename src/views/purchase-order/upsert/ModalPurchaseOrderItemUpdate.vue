@@ -124,16 +124,17 @@ defineExpose({ openModal })
           </div>
           <div class="flex">
             <div style="width: 120px">
-              <VueSelect
-                v-model:value="purchaseOrderItem.unitRate"
+              <InputSelect
+                :value="purchaseOrderItem.unitRate"
                 :disabled="(purchaseOrderItem.product?.unitObject.length || 0) <= 1"
                 :options="
                   purchaseOrderItem.product?.unitObject.map((i) => ({
                     value: i.rate,
-                    text: i.name,
+                    label: i.name,
                     data: i,
                   })) || []
                 "
+                @update:value="(v: any) => purchaseOrderItem.changeUnitRate(v)"
                 required
               />
             </div>

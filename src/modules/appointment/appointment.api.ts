@@ -1,11 +1,11 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import type { Customer } from '../customer'
 import {
-  AppointmentDetailQuery,
-  AppointmentGetQuery,
-  AppointmentListQuery,
-  type AppointmentPaginationQuery,
+    AppointmentDetailQuery,
+    AppointmentGetQuery,
+    AppointmentListQuery,
+    type AppointmentPaginationQuery,
 } from './appointment.dto'
 import { Appointment } from './appointment.model'
 
@@ -14,7 +14,7 @@ export class AppointmentApi {
     const params = AppointmentGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/appointment/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
       total: data.total,
       page: data.page,
@@ -27,7 +27,7 @@ export class AppointmentApi {
     const params = AppointmentGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/appointment/list', { params })
-    const { data } = response.data as BaseResponse<{ appointmentList: any[] }>
+    const { data } = response.data as FullResponse<{ appointmentList: any[] }>
     return Appointment.fromList(data.appointmentList)
   }
 
@@ -35,7 +35,7 @@ export class AppointmentApi {
     const params = AppointmentGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get(`/appointment/detail/${id}`, { params })
-    const { data } = response.data as BaseResponse<{ appointment: any }>
+    const { data } = response.data as FullResponse<{ appointment: any }>
     return Appointment.from(data.appointment)
   }
 
@@ -71,7 +71,7 @@ export class AppointmentApi {
       reason: appointment.reason,
       customerSourceId: appointment.customerSourceId,
     })
-    const { data } = response.data as BaseResponse<{ appointment: any }>
+    const { data } = response.data as FullResponse<{ appointment: any }>
     return Appointment.from(data.appointment)
   }
 
@@ -83,13 +83,13 @@ export class AppointmentApi {
       cancelReason: body.appointment.cancelReason,
       status: body.appointment.status,
     })
-    const { data } = response.data as BaseResponse<{ appointment: any }>
+    const { data } = response.data as FullResponse<{ appointment: any }>
     return Appointment.from(data.appointment)
   }
 
   static async delete(appointmentId: string) {
     const response = await AxiosInstance.post(`/appointment/delete/${appointmentId}`)
-    const { data } = response.data as BaseResponse<{ appointmentId: any }>
+    const { data } = response.data as FullResponse<{ appointmentId: any }>
     return data
   }
 
@@ -101,7 +101,7 @@ export class AppointmentApi {
       `/appointment/${appointmentId}/register-ticket-clinic`,
       body,
     )
-    const { data } = response.data as BaseResponse<{ appointmentId: any }>
+    const { data } = response.data as FullResponse<{ appointmentId: any }>
     return data
   }
 }
