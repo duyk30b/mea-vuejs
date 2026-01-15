@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { RoleDetailQuery, RoleGetQuery, RoleListQuery, RolePaginationQuery } from './role.dto'
 import { Role } from './role.model'
 
@@ -8,10 +8,12 @@ export class RoleApi {
     const params = RoleGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/role/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
-      meta,
-      data: Role.fromList(data),
+      roleList: Role.fromList(data.roleList),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
     }
   }
 
@@ -19,14 +21,14 @@ export class RoleApi {
     const params = RoleGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/role/list', { params })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return Role.fromList(data)
   }
 
   static async detail(id: number, options: RoleDetailQuery): Promise<Role> {
     const params = RoleGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/role/detail/${id}`, { params })
-    const { data } = response.data as BaseResponse<{ role: any }>
+    const { data } = response.data as FullResponse<{ role: any }>
 
     return Role.from(data.role)
   }
@@ -40,7 +42,7 @@ export class RoleApi {
 
       userIdList,
     })
-    const { data } = response.data as BaseResponse<{ role: any }>
+    const { data } = response.data as FullResponse<{ role: any }>
 
     return Role.from(data.role)
   }
@@ -54,14 +56,14 @@ export class RoleApi {
 
       userIdList,
     })
-    const { data } = response.data as BaseResponse<{ role: any }>
+    const { data } = response.data as FullResponse<{ role: any }>
 
     return Role.from(data.role)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/role/destroy/${id}`)
-    const result = response.data as BaseResponse<{ roleId: number }>
+    const result = response.data as FullResponse<{ roleId: number }>
 
     return result
   }

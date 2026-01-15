@@ -228,6 +228,7 @@ export class SocketTicketService {
             }
           })
         }
+        ticketAction.ticketProductList.sort((a, b) => (a.priority < b.priority ? -1 : 1))
         await TicketProductService.refreshRelation(ticketAction.ticketProductList)
         ticketAction.refreshTicketProduct()
       }

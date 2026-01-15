@@ -1,11 +1,11 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { Wallet } from './'
 import {
-  WalletDetailQuery,
-  WalletGetQuery,
-  type WalletListQuery,
-  type WalletPaginationQuery,
+    WalletDetailQuery,
+    WalletGetQuery,
+    type WalletListQuery,
+    type WalletPaginationQuery,
 } from './wallet.dto'
 
 export class WalletApi {
@@ -13,21 +13,21 @@ export class WalletApi {
     const params = WalletGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/wallet/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
   }
 
   static async list(options: WalletListQuery) {
     const params = WalletGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/wallet/list', { params })
-    const { data, time } = response.data as BaseResponse<{ walletList: any[] }>
+    const { data, time } = response.data as FullResponse<{ walletList: any[] }>
     return Wallet.fromList(data.walletList)
   }
 
   static async detail(id: string, options: WalletDetailQuery = {}): Promise<Wallet> {
     const params = WalletGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/wallet/detail/${id}`, { params })
-    const { data, meta } = response.data as BaseResponse<{ wallet: any }>
+    const { data, meta } = response.data as FullResponse<{ wallet: any }>
     return Wallet.from(data.wallet)
   }
 
@@ -38,7 +38,7 @@ export class WalletApi {
       walletType: wallet.walletType,
       isActive: wallet.isActive,
     })
-    const { data } = response.data as BaseResponse<{ wallet: any }>
+    const { data } = response.data as FullResponse<{ wallet: any }>
     return Wallet.from(data.wallet)
   }
 
@@ -50,13 +50,13 @@ export class WalletApi {
       isActive: wallet.isActive,
       money: wallet.money,
     })
-    const { data } = response.data as BaseResponse<{ wallet: any }>
+    const { data } = response.data as FullResponse<{ wallet: any }>
     return Wallet.from(data.wallet)
   }
 
   static async destroyOne(id: string) {
     const response = await AxiosInstance.post(`/wallet/destroy/${id}`)
-    const result = response.data as BaseResponse<{ walletId: number }>
+    const result = response.data as FullResponse<{ walletId: number }>
     return result
   }
 }

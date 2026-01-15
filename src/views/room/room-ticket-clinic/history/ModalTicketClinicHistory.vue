@@ -642,15 +642,15 @@ defineExpose({ openModal })
                         <TicketDeliveryStatusTooltip :deliveryStatus="tp.deliveryStatus" />
                       </td>
                       <td>{{ tp.product?.brandName }}</td>
-                      <td class="text-center">{{ tp.quantity }}</td>
+                      <td class="text-center">{{ tp.unitQuantity }}</td>
                       <td class="text-right">
-                        <div v-if="tp.discountMoney" class="text-xs italic text-red-500">
+                        <div v-if="tp.unitDiscountMoney" class="text-xs italic text-red-500">
                           <del>{{ formatMoney(tp.unitExpectedPrice) }}</del>
                         </div>
                         <div>{{ formatMoney(tp.unitActualPrice) }}</div>
                       </td>
                       <td class="text-right">
-                        {{ formatMoney(tp.actualPrice * tp.quantity) }}
+                        {{ formatMoney(tp.unitActualPrice * tp.unitQuantity) }}
                       </td>
                     </tr>
                     <tr>
@@ -661,7 +661,7 @@ defineExpose({ openModal })
                         {{
                           formatMoney(
                             ticket.ticketProductConsumableList.reduce((acc, item) => {
-                              return acc + item.quantity * item.actualPrice
+                              return acc + item.unitQuantity * item.unitActualPrice
                             }, 0),
                           )
                         }}
@@ -708,13 +708,13 @@ defineExpose({ openModal })
                       <td class="text-center">{{ tp.unitQuantityPrescription }}</td>
                       <td class="text-center">{{ tp.unitQuantity }}</td>
                       <td class="text-right">
-                        <div v-if="tp.discountMoney" class="text-xs italic text-red-500">
+                        <div v-if="tp.unitDiscountMoney" class="text-xs italic text-red-500">
                           <del>{{ formatMoney(tp.unitExpectedPrice) }}</del>
                         </div>
                         <div>{{ formatMoney(tp.unitActualPrice) }}</div>
                       </td>
                       <td class="text-right">
-                        {{ formatMoney(tp.actualPrice * tp.quantity) }}
+                        {{ formatMoney(tp.unitActualPrice * tp.unitQuantity) }}
                       </td>
                     </tr>
                     <tr>
@@ -725,7 +725,7 @@ defineExpose({ openModal })
                         {{
                           formatMoney(
                             ticket.ticketProductPrescriptionList.reduce((acc, item) => {
-                              return acc + item.quantity * item.actualPrice
+                              return acc + item.unitQuantity * item.unitActualPrice
                             }, 0),
                           )
                         }}

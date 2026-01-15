@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { IconFileSearch } from '@/common/icon-antd'
 import { InputOptionsValue, InputSearch } from '@/common/vue-form'
+import type { ItemSearchOption } from '@/common/vue-form/InputSearch.vue'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { PermissionId } from '@/modules/permission/permission.enum'
@@ -112,7 +113,8 @@ const searchingProduct = async (text: string) => {
   productOptions.value = productList.map((i) => ({ value: i.id, text: i.brandName, data: i }))
 }
 
-const setProductFromChild = async (item: any) => {
+const setProductFromChild = async (item?: ItemSearchOption<any>) => {
+  if (!item) return
   const productData = item.data
   product.value = Product.from(productData)
   emit('update:productId', productData.id)

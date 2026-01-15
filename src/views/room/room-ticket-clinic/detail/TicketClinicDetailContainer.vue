@@ -60,6 +60,7 @@ import TicketClinicProcedureContainer from './procedure/TicketClinicProcedureCon
 import TicketClinicRadiologyContainer from './radiology/TicketClinicRadiologyContainer.vue'
 import TicketClinicSummaryContainer from './summary/TicketClinicSummaryContainer.vue'
 import TicketClinicUserContainer from './user/TicketClinicUserContainer.vue'
+import { BugDevelopment } from '@/views/component'
 
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
@@ -300,20 +301,23 @@ const validateQuantity = () => {
       continue
     }
 
-    if (ticketProductUnsent.quantity > (product?.quantity || 0)) {
+    if (
+      ticketProductUnsent.unitQuantity * ticketProductUnsent.unitRate >
+      (product?.quantity || 0)
+    ) {
       AlertStore.addError(
         `Sản phẩm ${product?.brandName} không đủ ` +
-          `(tồn ${product?.quantity || 0} - lấy ${ticketProductUnsent.quantity})`,
+          `(tồn ${product?.quantity || 0} - lấy ${ticketProductUnsent.unitQuantity * ticketProductUnsent.unitRate})`,
       )
       return false
     } else if (
       batch &&
       ticketProductUnsent.batchId &&
-      ticketProductUnsent.quantity > batch!.quantity
+      ticketProductUnsent.unitQuantity * ticketProductUnsent.unitRate > batch!.quantity
     ) {
       AlertStore.addError(
         `Lô hàng: ${product!.brandName} không đủ, còn ${batch!.quantity} lấy ${
-          ticketProductUnsent.quantity
+          ticketProductUnsent.unitQuantity * ticketProductUnsent.unitRate
         }`,
       )
       return false
@@ -739,12 +743,7 @@ const clickReturnProduct = () => {
         </div>
       </VueDropdown>
       <div v-if="CONFIG.MODE === 'development'">
-        <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-          <template #trigger>
-            <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-          </template>
-          <pre>{{ JSON.stringify(ticketRoomRef, null, 4) }}</pre>
-        </VueTooltip>
+        <BugDevelopment :data="ticketRoomRef" />
       </div>
 
       <VueDropdown>

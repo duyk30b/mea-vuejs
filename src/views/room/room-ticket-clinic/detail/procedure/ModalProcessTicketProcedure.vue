@@ -5,20 +5,19 @@ import ImageUploadCloudinary from '@/common/image-upload/ImageUploadCloudinary.v
 import { AlertStore } from '@/common/vue-alert'
 import { InputDate, InputNumber, InputText } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
+import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { PickupStrategy } from '@/modules/enum'
 import type { Image } from '@/modules/image/image.model'
 import { PositionType } from '@/modules/position'
 import type { Product } from '@/modules/product'
 import { TicketChangeProcedureApi } from '@/modules/ticket'
-import {
-  TicketProcedure,
-  TicketProcedureStatus
-} from '@/modules/ticket-procedure'
+import { TicketProcedure, TicketProcedureStatus } from '@/modules/ticket-procedure'
 import { TicketProduct } from '@/modules/ticket-product'
 import { TicketRegimen } from '@/modules/ticket-regimen'
 import { TicketUser } from '@/modules/ticket-user'
 import { ESImage } from '@/utils'
+import { BugDevelopment } from '@/views/component'
 import InputSearchProduct from '@/views/component/InputSearchProduct.vue'
 import TicketChangeTicketUserPosition from '@/views/room/room-user/TicketChangeTicketUserPosition.vue'
 import { nextTick, ref } from 'vue'
@@ -128,14 +127,15 @@ const selectProduct = async (productData: Product) => {
       })
       if (findIndex === -1) {
         const temp = new TicketProduct()
-        temp.quantity = 1
+        temp.unitQuantity = 1
+        temp.unitRate = 1
         temp.productId = productData.id
         temp.product = productData
         temp.warehouseIds = '[]'
         temp.pickupStrategy = PickupStrategy.AutoWithFIFO
         ticketProductConsumableList.value.push(temp)
       } else {
-        ticketProductConsumableList.value[findIndex].quantity++
+        ticketProductConsumableList.value[findIndex].unitQuantity++
       }
     }
   }
@@ -250,6 +250,7 @@ defineExpose({ openModal })
             <table>
               <thead>
                 <tr>
+                  <th v-if="CONFIG.MODE === 'development'"></th>
                   <th>#</th>
                   <th>Tên sản phẩm</th>
                   <th style="width: 200px">Số lượng</th>
@@ -264,17 +265,23 @@ defineExpose({ openModal })
                   v-for="(consumable, index) in ticketProductConsumableList"
                   :key="consumable.productId"
                 >
+                  <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+                    <BugDevelopment :data="consumable" />
+                  </td>
                   <td class="text-center">{{ index + 1 }}</td>
                   <td>
                     <div class="flex flex-wrap gap-1">
                       <span>{{ consumable.product?.brandName }}</span>
-                      <span style="font-weight: 500">(Tồn {{ consumable.product?.quantity }})</span>
+                      <span style="font-weight: 500">
+                        (Tồn {{ consumable.product?.quantity }}
+                        {{ consumable.product?.unitBasicName }})
+                      </span>
                     </div>
                   </td>
                   <td>
                     <div class="flex justify-center">
                       <InputNumber
-                        v-model:value="consumable.quantity"
+                        v-model:value="consumable.unitQuantity"
                         textAlign="right"
                         controlHorizontal
                       />

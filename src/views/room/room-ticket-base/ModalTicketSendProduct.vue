@@ -235,7 +235,7 @@ defineExpose({ openModal })
                 <td class="text-center">{{ ticketProduct.unitName }}</td>
                 <td class="text-right">{{ formatMoney(ticketProduct.unitActualPrice) }}</td>
                 <td class="text-right">
-                  {{ formatMoney(ticketProduct.actualPrice * ticketProduct.quantity) }}
+                  {{ formatMoney(ticketProduct.unitActualPrice * ticketProduct.unitQuantity) }}
                 </td>
               </tr>
             </tbody>

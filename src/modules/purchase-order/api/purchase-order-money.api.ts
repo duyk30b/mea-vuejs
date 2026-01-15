@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../../core/axios.instance'
-import type { BaseResponse } from '../../_base/base-dto'
+import type { FullResponse } from '../../_base/base-dto'
 import { Distributor } from '../../distributor'
 import { Payment, PaymentActionType } from '../../payment'
 import { PurchaseOrder } from '../purchase-order.model'
@@ -20,7 +20,7 @@ export class PurchaseOrderMoneyApi {
       `/purchase-order/${purchaseOrderId}/payment-money`,
       body,
     )
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       purchaseOrderModified: any
       distributorModified?: any
       paymentCreated?: any
@@ -43,7 +43,7 @@ export class PurchaseOrderMoneyApi {
     dataList: { purchaseOrderId: string; debtTotalMinus: number }[]
   }) {
     const response = await AxiosInstance.post('/purchase-order/pay-debt', body)
-    const { data } = response.data as BaseResponse<
+    const { data } = response.data as FullResponse<
       {
         purchaseOrderModified: PurchaseOrder
         distributorModified: Distributor

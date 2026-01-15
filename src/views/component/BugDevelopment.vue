@@ -20,7 +20,7 @@ const props = withDefaults(
     <template #trigger>
       <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
     </template>
-    <pre>{{ JSON.stringify(data, null, 4) }}</pre>
+    <pre style="">{{ JSON.stringify(data, null, 4) }}</pre>
   </VueTooltip>
 </template>
 
@@ -28,5 +28,9 @@ const props = withDefaults(
 a {
   color: inherit;
   text-decoration: none;
+}
+pre {
+  /* white-space: pre-wrap;
+  overflow-wrap: break-word; */
 }
 </style>

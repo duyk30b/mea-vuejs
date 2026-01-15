@@ -122,7 +122,7 @@ const colspan = computed(() => {
             {{ formatMoney(purchaseOrderItem.unitCostPrice) }}
           </td>
           <td class="text-right">
-            {{ formatMoney(purchaseOrderItem.amount) }}
+            {{ formatMoney(purchaseOrderItem.unitCostPrice * purchaseOrderItem.unitQuantity) }}
           </td>
         </tr>
         <tr v-if="settingStore.SCREEN_PURCHASE_ORDER_DETAIL.paymentInfo.itemsActualMoney">

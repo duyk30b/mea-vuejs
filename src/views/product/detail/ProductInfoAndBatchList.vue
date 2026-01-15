@@ -210,6 +210,7 @@ const closeExpiryDate = computed(() => {
       <div style="font-size: 1.2rem" class="flex items-center gap-2">
         <span><IconRead /></span>
         <span>Lô Hàng</span>
+        <span v-if="product.unitBasicName">- Đơn vị theo {{ product.unitBasicName }}</span>
       </div>
 
       <div class="ml-auto">

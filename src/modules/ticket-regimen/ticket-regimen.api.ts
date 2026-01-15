@@ -1,9 +1,9 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
-  TicketRegimenDetailQuery,
-  TicketRegimenGetQuery,
-  type TicketRegimenPaginationQuery,
+    TicketRegimenDetailQuery,
+    TicketRegimenGetQuery,
+    type TicketRegimenPaginationQuery,
 } from './ticket-regimen.dto'
 import { TicketRegimen } from './ticket-regimen.model'
 
@@ -12,7 +12,7 @@ export class TicketRegimenApi {
     const params = TicketRegimenGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/ticket-regimen/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
       page: data.page,
       limit: data.limit,
@@ -27,7 +27,7 @@ export class TicketRegimenApi {
     const response = await AxiosInstance.get(`/ticket-regimen/detail/${ticketRegimenId}`, {
       params,
     })
-    const { data } = response.data as BaseResponse<{ ticketRegimen: any }>
+    const { data } = response.data as FullResponse<{ ticketRegimen: any }>
     return TicketRegimen.from(data.ticketRegimen)
   }
 }

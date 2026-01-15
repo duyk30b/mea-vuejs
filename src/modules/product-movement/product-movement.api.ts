@@ -1,8 +1,8 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
-  ProductMovementGetQuery,
-  type ProductMovementPaginationQuery,
+    ProductMovementGetQuery,
+    type ProductMovementPaginationQuery,
 } from './product-movement.dto'
 import { ProductMovement } from './product-movement.model'
 
@@ -11,7 +11,7 @@ export class ProductMovementApi {
     const params = ProductMovementGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/product-movement/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
 
     return {
       total: data.total,

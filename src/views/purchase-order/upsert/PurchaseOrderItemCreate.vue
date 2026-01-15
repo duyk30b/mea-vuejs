@@ -8,6 +8,7 @@ import {
   InputMoney,
   InputNumber,
   InputOptions,
+  InputSelect,
   InputText,
   VueSelect,
 } from '@/common/vue-form'
@@ -25,6 +26,8 @@ import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
 import { purchaseOrder, warehouseId } from './purchase-order-upsert.store'
 import { ProductType } from '@/modules/enum.ts'
+import { CONFIG } from '@/config'
+import { BugDevelopment } from '@/views/component'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
@@ -136,7 +139,7 @@ const selectProduct = async (productData?: Product) => {
     purchaseOrderItem.value.product = Product.from(productData)
     purchaseOrderItem.value.productId = productData.id
     purchaseOrderItem.value.batchId = 0
-    purchaseOrderItem.value.unitRate = productData.unitDefault.rate
+    purchaseOrderItem.value.unitRate = productData.unitDefaultRate
 
     const batchListData = await BatchService.list({
       filter: { productId: productData.id, isActive: 1 },
@@ -180,8 +183,9 @@ const selectBatch = (batchData?: Batch) => {
   purchaseOrderItem.value.warehouseId = batchData.warehouseId
   purchaseOrderItem.value.lotNumber = batchData.lotNumber
   purchaseOrderItem.value.expiryDate = batchData.expiryDate
-  purchaseOrderItem.value.costPrice = batchData.costPrice
-  purchaseOrderItem.value.listPrice = batchData.product?.retailPrice || 0
+  purchaseOrderItem.value.unitCostPrice = batchData.costPrice * purchaseOrderItem.value.unitRate
+  purchaseOrderItem.value.unitListPrice =
+    (batchData.product?.retailPrice || 0) * purchaseOrderItem.value.unitRate
 }
 
 const addPurchaseOrderItem = async () => {
@@ -351,7 +355,9 @@ const clear = () => {
       </div>
 
       <div
-        v-if="settingStore.SCREEN_PURCHASE_ORDER_UPSERT.purchaseOrderItemsSelect.lotNumberAndExpiryDate"
+        v-if="
+          settingStore.SCREEN_PURCHASE_ORDER_UPSERT.purchaseOrderItemsSelect.lotNumberAndExpiryDate
+        "
         style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
       >
         <div>Số lô / Mã lô</div>
@@ -361,12 +367,18 @@ const clear = () => {
       </div>
 
       <div
-        v-if="settingStore.SCREEN_PURCHASE_ORDER_UPSERT.purchaseOrderItemsSelect.lotNumberAndExpiryDate"
+        v-if="
+          settingStore.SCREEN_PURCHASE_ORDER_UPSERT.purchaseOrderItemsSelect.lotNumberAndExpiryDate
+        "
         style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
       >
         <div>Hạn sử dụng</div>
         <div>
-          <InputDate v-model:value="purchaseOrderItem.expiryDate" class="w-full" typeParser="number" />
+          <InputDate
+            v-model:value="purchaseOrderItem.expiryDate"
+            class="w-full"
+            typeParser="number"
+          />
         </div>
       </div>
 
@@ -381,14 +393,19 @@ const clear = () => {
         </div>
         <div class="flex">
           <div style="width: 100px">
-            <VueSelect
-              v-model:value="purchaseOrderItem.unitRate"
+            <InputSelect
+              :value="purchaseOrderItem.unitRate"
               :disabled="product.unitObject.length <= 1"
-              :options="product.unitObject.map((i) => ({ value: i.rate, text: i.name, data: i }))"
+              :options="product.unitObject.map((i) => ({ value: i.rate, label: i.name, data: i }))"
+              @update:value="(v: any) => purchaseOrderItem.changeUnitRate(v)"
             />
           </div>
           <div class="flex-1">
-            <InputNumber v-model:value="purchaseOrderItem.unitQuantity" :validate="{ gt: 0 }" required />
+            <InputNumber
+              v-model:value="purchaseOrderItem.unitQuantity"
+              :validate="{ gt: 0 }"
+              required
+            />
           </div>
         </div>
       </div>
@@ -406,7 +423,7 @@ const clear = () => {
           <InputMoney
             v-model:value="purchaseOrderItem.unitCostPrice"
             :min="0"
-            :prepend="product.getUnitNameByRate(purchaseOrderItem.unitRate)"
+            :prepend="purchaseOrderItem.unitName"
             required
             style="width: 100%"
           />
@@ -426,14 +443,17 @@ const clear = () => {
           <InputMoney
             v-model:value="purchaseOrderItem.unitListPrice"
             :min="0"
-            :prepend="product.getUnitNameByRate(purchaseOrderItem.unitRate)"
+            :prepend="purchaseOrderItem.unitName"
             required
             style="width: 100%"
           />
         </div>
       </div>
     </div>
-    <div class="mt-6 flex justify-center">
+    <div class="mt-6 flex justify-center items-center gap-4">
+      <div v-if="CONFIG.MODE === 'development'">
+        <BugDevelopment :data="purchaseOrderItem" />
+      </div>
       <VueButton color="blue" icon="plus" type="submit">Thêm vào giỏ hàng</VueButton>
     </div>
   </form>

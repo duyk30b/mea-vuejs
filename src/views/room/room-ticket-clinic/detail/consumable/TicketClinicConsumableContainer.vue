@@ -2,7 +2,7 @@
 import VueButton from '@/common/VueButton.vue'
 import { IconFileSearch, IconSpin } from '@/common/icon-antd'
 import { IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
-import { IconEditSquare } from '@/common/icon-google'
+import { IconDelete, IconEditSquare } from '@/common/icon-google'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus, PaymentMoneyStatus } from '@/modules/enum'
@@ -19,6 +19,9 @@ import TicketDeliveryStatusTooltip from '@/views/room/room-ticket-base/TicketDel
 import { computed, onMounted, ref, watch } from 'vue'
 import ModalTicketClinicConsumableUpdate from './ModalTicketConsumableUpdate.vue'
 import TicketConsumableSelectItem from './TicketConsumableSelectItem.vue'
+import { CONFIG } from '@/config'
+import { BugDevelopment } from '@/views/component'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 
 const modalTicketClinicConsumableUpdate =
   ref<InstanceType<typeof ModalTicketClinicConsumableUpdate>>()
@@ -125,6 +128,54 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
     console.log('🚀 TicketClinicConsumable.vue:90 ~ error:', error)
   }
 }
+
+const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
+  if (ticketProductProp.deliveryStatus === DeliveryStatus.Delivered) {
+    return ModalStore.alert({
+      title: 'Không thể xóa vật tư ?',
+      content: [
+        '- Vật tư đã được xuất khỏi kho sẽ không thể xóa',
+        '- Chỉ có thể hoàn trả vật tư nếu bắt buộc phải thay đổi số lượng ?',
+      ],
+    })
+  }
+  if (
+    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+      ticketProductProp.paymentMoneyStatus,
+    )
+  ) {
+    return ModalStore.alert({
+      title: 'Không thể xóa vật tư - vật tư ?',
+      content: ['- Vật tư đã được thanh toán sẽ không thể xóa'],
+    })
+  }
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+    return ModalStore.alert({
+      title: 'Không thể xóa vật tư ?',
+      content: [
+        '- Phiếu khám đã đóng không thể xóa vật tư',
+        '- Nếu bắt buộc phải thay đổi số lượng, bạn cần mở lại phiếu khám',
+      ],
+    })
+  }
+  ModalStore.confirm({
+    title: 'Xác nhận xóa vật tư ?',
+    content: [
+      '- Hệ thống sẽ xóa vật tư này khỏi phiếu khám',
+      '- Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
+    ],
+    onOk: async () => {
+      try {
+        await TicketChangeProductApi.destroyTicketProductConsumable({
+          ticketId: ticketRoomRef.value.id,
+          ticketProductId: ticketProductProp.id,
+        })
+      } catch (error) {
+        console.log('🚀 ~ TicketClinicConsumableContainer.vue:174  ~ error:', error)
+      }
+    },
+  })
+}
 </script>
 <template>
   <ModalProductDetail ref="modalProductDetail" />
@@ -137,14 +188,16 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
       <table>
         <thead>
           <tr>
+            <th style="width: 40px" v-if="CONFIG.MODE === 'development'"></th>
             <th>#</th>
-            <th style="width: 32px"></th>
-            <th style="width: 32px"></th>
+            <th style="width: 40px"></th>
+            <th style="width: 40px"></th>
             <th>Tên vật tư</th>
             <th>SL</th>
             <th>Đ.Vị</th>
             <th>Giá</th>
             <th>T.Tiền</th>
+            <th></th>
             <th></th>
           </tr>
         </thead>
@@ -153,6 +206,9 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="(tpItem, index) in ticketProductConsumableList || []" :key="tpItem.productId">
+            <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+              <BugDevelopment :data="tpItem" />
+            </td>
             <td>
               <div class="flex flex-col items-center">
                 <button
@@ -211,13 +267,13 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
               {{ tpItem.unitName }}
             </td>
             <td class="text-right whitespace-nowrap">
-              <div v-if="tpItem.discountMoney" class="text-xs italic text-red-500">
+              <div v-if="tpItem.unitDiscountMoney" class="text-xs italic text-red-500">
                 <del>{{ formatMoney(tpItem.unitExpectedPrice) }}</del>
               </div>
               <div>{{ formatMoney(tpItem.unitActualPrice) }}</div>
             </td>
             <td class="text-right whitespace-nowrap">
-              {{ formatMoney(tpItem.actualPrice * tpItem.quantity || 0) }}
+              {{ formatMoney(tpItem.unitActualPrice * tpItem.unitQuantity || 0) }}
             </td>
             <td class="text-center">
               <a v-if="!tpItem.id">
@@ -235,8 +291,25 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
                 <IconEditSquare width="20" height="20" />
               </a>
             </td>
+            <td class="text-center">
+              <a v-if="!tpItem.id">
+                <IconSpin width="22" height="22" />
+              </a>
+              <a
+                v-else-if="
+                  [PaymentMoneyStatus.PendingPayment, PaymentMoneyStatus.TicketPaid].includes(
+                    tpItem.paymentMoneyStatus,
+                  ) && userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
+                "
+                style="color: var(--text-red)"
+                @click="clickDestroyTicketProduct(tpItem)"
+              >
+                <IconDelete width="22" height="22" />
+              </a>
+            </td>
           </tr>
           <tr>
+            <td v-if="CONFIG.MODE === 'development'"></td>
             <td colspan="7" class="text-right">
               <b>Tổng tiền</b>
             </td>
@@ -245,12 +318,13 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
                 {{
                   formatMoney(
                     ticketProductConsumableList.reduce((acc: number, item: TicketProduct) => {
-                      return (acc += item.actualPrice * item.quantity)
+                      return (acc += item.unitActualPrice * item.unitQuantity)
                     }, 0),
                   )
                 }}
               </b>
             </td>
+            <td></td>
             <td></td>
           </tr>
         </tbody>

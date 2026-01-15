@@ -8,7 +8,7 @@ watchEffect(() => {
   let itemsDiscountProcedure = 0
 
   ticketOrderDetailRef.value.ticketProductList?.forEach((item) => {
-    itemsDiscountProduct += item.discountMoney * item.quantity
+    itemsDiscountProduct += item.unitDiscountMoney * item.unitQuantity
   })
   ticketOrderDetailRef.value.ticketProcedureList?.forEach((item) => {
     itemsDiscountProcedure += item.discountMoney * item.quantity

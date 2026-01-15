@@ -1,11 +1,11 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import { debounceAsync } from '../../utils/helpers'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
-  RadiologySampleDetailQuery,
-  RadiologySampleGetQuery,
-  RadiologySampleListQuery,
-  type RadiologySamplePaginationQuery,
+    RadiologySampleDetailQuery,
+    RadiologySampleGetQuery,
+    RadiologySampleListQuery,
+    type RadiologySamplePaginationQuery,
 } from './radiology-sample.dto'
 import { RadiologySample } from './radiology-sample.model'
 
@@ -14,7 +14,7 @@ export class RadiologySampleApi {
     const params = RadiologySampleGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/radiology-sample/pagination', { params })
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       radiologySampleList: any[]
       total: number
       page: number
@@ -32,14 +32,14 @@ export class RadiologySampleApi {
     const params = RadiologySampleGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/radiology-sample/list', { params })
-    const { data, time } = response.data as BaseResponse<{ radiologySampleList: any }>
+    const { data, time } = response.data as FullResponse<{ radiologySampleList: any }>
     return RadiologySample.fromList(data.radiologySampleList)
   }
 
   static search: (params: RadiologySampleListQuery) => Promise<RadiologySample[]> = debounceAsync(
     async (params: RadiologySampleListQuery): Promise<RadiologySample[]> => {
       const response = await AxiosInstance.get('/radiology-sample/list', { params })
-      const { data } = response.data as BaseResponse<{ radiologySampleList: any }>
+      const { data } = response.data as FullResponse<{ radiologySampleList: any }>
       return RadiologySample.fromList(data.radiologySampleList)
     },
     200,
@@ -49,7 +49,7 @@ export class RadiologySampleApi {
     const params = RadiologySampleGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get(`/radiology-sample/detail/${id}`, { params })
-    const { data } = response.data as BaseResponse<{ radiologySample: any }>
+    const { data } = response.data as FullResponse<{ radiologySample: any }>
     return RadiologySample.from(data.radiologySample)
   }
 
@@ -67,7 +67,7 @@ export class RadiologySampleApi {
       customStyles: radiologySample.customStyles || '',
       customVariables: radiologySample.customVariables || '',
     })
-    const { data } = response.data as BaseResponse<{ radiologySample: any }>
+    const { data } = response.data as FullResponse<{ radiologySample: any }>
     return RadiologySample.from(data.radiologySample)
   }
 
@@ -84,13 +84,13 @@ export class RadiologySampleApi {
       customStyles: radiologySample.customStyles || '',
       customVariables: radiologySample.customVariables || '',
     })
-    const { data } = response.data as BaseResponse<{ radiologySample: any }>
+    const { data } = response.data as FullResponse<{ radiologySample: any }>
     return RadiologySample.from(data.radiologySample)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/radiology-sample/destroy/${id}`)
-    const result = response.data as BaseResponse<any>
+    const result = response.data as FullResponse<any>
 
     return result
   }

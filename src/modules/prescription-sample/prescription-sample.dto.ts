@@ -5,7 +5,7 @@ export class PrescriptionSampleGetQuery {
   page?: number
   limit?: number
   relation?: {
-    medicineList?: { product?: boolean }
+    prescriptionSampleItemList?: { product?: boolean }
     user?: boolean
   }
 

@@ -1,16 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
-import { IconMinus, IconPlus } from '@/common/icon-font-awesome'
 import { IconDelete } from '@/common/icon-google'
 import InputNumber from '@/common/vue-form/InputNumber.vue'
 import VueModal from '@/common/vue-modal/VueModal.vue'
+import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { PrescriptionSample, type MedicineType } from '@/modules/prescription-sample'
+import {
+  PrescriptionSample,
+  PrescriptionSampleItem,
+  PrescriptionSampleService,
+} from '@/modules/prescription-sample'
+import { BugDevelopment } from '@/views/component'
+import { ref } from 'vue'
 
 const emit = defineEmits<{
-  (e: 'success', medicineList: MedicineType[]): void
+  (e: 'success', prescriptionSampleItemList: PrescriptionSampleItem[]): void
 }>()
 
 const settingStore = useSettingStore()
@@ -23,6 +28,9 @@ const showModal = ref(false)
 const openModal = async (psProp: PrescriptionSample) => {
   showModal.value = true
   prescriptionSample.value = PrescriptionSample.from(psProp)
+  await PrescriptionSampleService.executeRelation([prescriptionSample.value], {
+    prescriptionSampleItemList: { product: true },
+  })
 }
 
 const closeModal = () => {
@@ -30,20 +38,21 @@ const closeModal = () => {
   prescriptionSample.value = PrescriptionSample.blank()
 }
 
-const removePrescriptionSampleItem = (index: number) => {
-  prescriptionSample.value.medicineList.splice(index, 1)
+const removePrescriptionSampleItem = (_localId: string) => {
+  const index = prescriptionSample.value.prescriptionSampleItemList.findIndex((i) => {
+    return i._localId === _localId
+  })
+  if (index !== -1) {
+    prescriptionSample.value.prescriptionSampleItemList.splice(index, 1)
+  }
 }
 
-const changeQuantityTable = (index: number, quantity: number) => {
-  prescriptionSample.value.medicineList[index].quantity = quantity
-}
-
-const handleSave = async () => {
+const handleSubmit = async () => {
   try {
-    emit('success', prescriptionSample.value.medicineList)
+    emit('success', prescriptionSample.value.prescriptionSampleItemList)
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ ModalSelectPrescriptionSample.vue:89 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ ModalSelectItemFromPrescriptionSample.vue:55 ~ handleSubmit ~ error:', error)
   }
 }
 
@@ -52,7 +61,7 @@ defineExpose({ openModal })
 
 <template>
   <VueModal v-model:show="showModal" style="margin-top: 50px; width: 1000px">
-    <form class="bg-white" @submit.prevent="handleSave">
+    <form class="bg-white" @submit.prevent="handleSubmit">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Đơn thuốc mẫu</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
@@ -66,101 +75,77 @@ defineExpose({ openModal })
             <table>
               <thead>
                 <tr>
+                  <th v-if="CONFIG.MODE === 'development'"></th>
                   <th style="width: 50px">#</th>
                   <th>Tên thuốc</th>
-                  <th>Đơn vị</th>
                   <th style="width: 200px">Số lượng</th>
-                  <th>Giá</th>
+                  <th>Đơn vị</th>
+                  <th>T.Tiền</th>
                   <th style="width: 50px"></th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-if="prescriptionSample.medicineList.length === 0">
+                <tr v-if="prescriptionSample.prescriptionSampleItemList.length === 0">
                   <td colspan="20" class="text-center">Không có dữ liệu</td>
                 </tr>
 
-                <tr v-for="(item, index) in prescriptionSample.medicineList" :key="index">
+                <tr
+                  v-for="(psItem, index) in prescriptionSample.prescriptionSampleItemList"
+                  :key="index"
+                >
+                  <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+                    <BugDevelopment :data="psItem" />
+                  </td>
                   <td class="text-center">{{ index + 1 }}</td>
                   <td>
-                    <div class="font-bold">{{ item.product?.brandName }}</div>
-                    <div style="font-size: 13px; font-style: italic">{{ item.hintUsage }}</div>
+                    <div class="font-bold">{{ psItem.product?.brandName }}</div>
+                    <div style="font-size: 13px">{{ psItem.product?.substance }}</div>
+                    <div style="font-size: 13px; font-style: italic">{{ psItem.hintUsage }}</div>
                   </td>
-                  <td class="text-center">{{ item.product?.unitDefaultName }}</td>
-                  <td class="text-center">
-                    <div class="flex items-center justify-between">
-                      <button
-                        style="
-                          width: 20px;
-                          height: 20px;
-                          border-radius: 50%;
-                          border: 1px solid #cdcdcd;
-                        "
-                        class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                        :disabled="item.quantity <= 0"
-                        type="button"
-                        @click="
-                          changeQuantityTable(
-                            index,
-                            item.quantity - (item.product?.unitDefaultRate || 1),
-                          )
-                        "
-                      >
-                        <IconMinus />
-                      </button>
-                      <div style="width: calc(100% - 60px); min-width: 50px">
-                        <InputNumber
-                          :value="item.quantity / (item.product?.unitDefaultRate || 1)"
-                          @update:value="
-                            (value) =>
-                              changeQuantityTable(
-                                index,
-                                value * (item.product?.unitDefaultRate || 1),
-                              )
-                          "
-                        />
-                      </div>
-                      <button
-                        style="
-                          width: 20px;
-                          height: 20px;
-                          border-radius: 50%;
-                          border: 1px solid #cdcdcd;
-                        "
-                        type="button"
-                        class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                        @click="
-                          changeQuantityTable(
-                            index,
-                            item.quantity + (item.product?.unitDefaultRate || 1),
-                          )
-                        "
-                      >
-                        <IconPlus />
-                      </button>
+                  <td>
+                    <div class="flex justify-center">
+                      <InputNumber
+                        v-model:value="psItem.unitQuantity"
+                        controlHorizontal
+                        :controlMinusDisable="psItem.unitQuantity <= 0"
+                        textAlign="right"
+                      />
+                    </div>
+                  </td>
+                  <td>
+                    <div class="flex justify-center flex-wrap gap-1">
+                      <span>
+                        {{ formatMoney((psItem.product?.retailPrice || 0) * psItem.unitRate) }}
+                      </span>
+                      <span v-if="psItem.unitName">/ {{ psItem.unitName }}</span>
                     </div>
                   </td>
                   <td class="text-right">
                     {{
                       formatMoney(
-                        (item.product?.retailPrice || 0) * (item.product?.unitDefaultRate || 1),
+                        (psItem.product?.retailPrice || 0) * psItem.unitRate * psItem.unitQuantity,
                       )
                     }}
                   </td>
                   <td class="text-center">
-                    <a class="text-red-500" @click="removePrescriptionSampleItem(index)">
+                    <a
+                      style="color: var(--text-red)"
+                      @click="removePrescriptionSampleItem(psItem._localId)"
+                    >
                       <IconDelete width="20" height="20" />
                     </a>
                   </td>
                 </tr>
                 <tr>
+                  <td v-if="CONFIG.MODE === 'development'"></td>
                   <td colspan="4" class="text-right">
                     <b>Tổng tiền</b>
                   </td>
                   <td class="text-right font-bold">
                     {{
                       formatMoney(
-                        prescriptionSample.medicineList.reduce((acc, i) => {
-                          return acc + (i.product?.retailPrice || 0) * i.quantity
+                        prescriptionSample.prescriptionSampleItemList.reduce((acc, i) => {
+                          return acc + (i.product?.retailPrice || 0) * i.unitQuantity * i.unitRate
                         }, 0),
                       )
                     }}

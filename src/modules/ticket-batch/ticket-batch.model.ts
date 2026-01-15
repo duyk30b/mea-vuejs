@@ -14,10 +14,10 @@ export class TicketBatch {
   batchId: number
   deliveryStatus: DeliveryStatus
   unitRate: number
-  quantity: number
+  unitQuantity: number
   costAmount: number
-  expectedPrice: number
-  actualPrice: number
+  unitExpectedPrice: number
+  unitActualPrice: number
 
   ticket?: Ticket
   customer?: Customer
@@ -26,30 +26,6 @@ export class TicketBatch {
 
   get unitName() {
     return this.product?.getUnitNameByRate(this.unitRate) || ''
-  }
-
-  get unitQuantity() {
-    return Number((this.quantity / this.unitRate).toFixed(3))
-  }
-
-  get unitExpectedPrice() {
-    return this.expectedPrice * this.unitRate
-  }
-
-  get unitActualPrice() {
-    return this.actualPrice * this.unitRate
-  }
-
-  set unitQuantity(data: number) {
-    this.quantity = data * this.unitRate
-  }
-
-  set unitExpectedPrice(data: number) {
-    this.expectedPrice = data / this.unitRate
-  }
-
-  set unitActualPrice(data: number) {
-    this.actualPrice = data / this.unitRate
   }
 
   static init(): TicketBatch {
@@ -61,8 +37,9 @@ export class TicketBatch {
     ins.batchId = 0
     ins.deliveryStatus = DeliveryStatus.Pending
     ins.unitRate = 1
-    ins.quantity = 0
-    ins.actualPrice = 0
+    ins.unitQuantity = 0
+    ins.unitExpectedPrice = 0
+    ins.unitActualPrice = 0
     return ins
   }
 
@@ -111,10 +88,10 @@ export class TicketBatch {
     if (a.productId != b.productId) return false
     if (a.batchId != b.batchId) return false
     if (a.deliveryStatus != b.deliveryStatus) return false
-    if (a.quantity != b.quantity) return false
+    if (a.unitQuantity != b.unitQuantity) return false
     if (a.costAmount != b.costAmount) return false
-    if (a.expectedPrice != b.expectedPrice) return false
-    if (a.actualPrice != b.actualPrice) return false
+    if (a.unitExpectedPrice != b.unitExpectedPrice) return false
+    if (a.unitActualPrice != b.unitActualPrice) return false
     return true
   }
 

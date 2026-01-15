@@ -1,6 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import { ESDom } from '../../utils'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { TicketGetQuery, TicketListQuery } from '../ticket'
 
 export class FileTicketApi {
@@ -9,7 +9,7 @@ export class FileTicketApi {
     const response = await AxiosInstance.get(`/file-ticket/download-excel`, {
       params,
     })
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       buffer: { type: 'Buffer'; data: any[] }
       mimeType: string
       filename: string

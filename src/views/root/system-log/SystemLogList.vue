@@ -3,21 +3,28 @@ import { VueButton } from '@/common'
 import VuePagination from '@/common/VuePagination.vue'
 import { IconApartment, IconBug } from '@/common/icon-antd'
 import { VueTooltip } from '@/common/popover'
-import { InputHint, InputSelect, InputText, VueSwitch } from '@/common/vue-form'
+import {
+  InputDate,
+  InputHint,
+  InputNumber,
+  InputSelect,
+  InputText,
+  VueSwitch,
+} from '@/common/vue-form'
 import { CONFIG } from '@/config'
-import type { ConditionString } from '@/modules/_base/base-condition'
+import type { ConditionNumber, ConditionString } from '@/modules/_base/base-condition'
 import { RootSystemLogApi } from '@/modules/root/system-log/root-system-log.api'
 import type { SystemLog, SystemLogGetFilter } from '@/modules/system-log'
-import { ESTimer } from '@/utils'
+import { ESObject, ESTimer } from '@/utils'
 import { computed, onBeforeMount, ref } from 'vue'
 
 type FilterCondition = {
   id: number
   isActive: boolean
   key: keyof SystemLog
-  condition: keyof ConditionString
+  condition: keyof ConditionNumber | keyof ConditionString
   value: any
-  valueType: 'Number' | 'String' | 'Object' | 'Boolean'
+  valueType: 'Number' | 'String' | 'Object' | 'Boolean' | 'Date'
 }
 
 const systemLogList = ref<SystemLog[]>([])
@@ -30,10 +37,26 @@ const total = ref(0)
 const filterConditions = ref<FilterCondition[]>([])
 
 const filterConditionHintList: FilterCondition[] = [
-  { id: 1, isActive: false, key: 'oid', condition: '==', value: undefined, valueType: 'Number' },
-  { id: 2, isActive: false, key: 'uid', condition: '==', value: undefined, valueType: 'Number' },
   {
-    id: 3,
+    id: 1,
+    isActive: false,
+    key: 'createdAt',
+    condition: '>=',
+    value: undefined,
+    valueType: 'Date',
+  },
+  { id: 2, isActive: false, key: 'oid', condition: '==', value: undefined, valueType: 'Number' },
+  { id: 3, isActive: false, key: 'uid', condition: '==', value: undefined, valueType: 'Number' },
+  {
+    id: 4,
+    isActive: false,
+    key: 'clientId',
+    condition: '==',
+    value: undefined,
+    valueType: 'String',
+  },
+  {
+    id: 5,
     isActive: false,
     key: 'apiMethod',
     condition: '==',
@@ -41,16 +64,32 @@ const filterConditionHintList: FilterCondition[] = [
     valueType: 'String',
   },
   {
-    id: 4,
+    id: 6,
     isActive: false,
     key: 'prefixController',
     condition: '==',
     value: undefined,
     valueType: 'String',
   },
-  { id: 5, isActive: false, key: 'url', condition: 'LIKE', value: undefined, valueType: 'String' },
+  { id: 7, isActive: false, key: 'url', condition: 'LIKE', value: undefined, valueType: 'String' },
   {
-    id: 6,
+    id: 8,
+    isActive: false,
+    key: 'statusCode',
+    condition: 'IN',
+    value: '[422,500]',
+    valueType: 'Object',
+  },
+  {
+    id: 9,
+    isActive: false,
+    key: 'errorName',
+    condition: 'NOT_NULL',
+    value: '1',
+    valueType: 'Boolean',
+  },
+  {
+    id: 10,
     isActive: false,
     key: 'errorMessage',
     condition: 'NOT_NULL',
@@ -67,7 +106,7 @@ const filterRaw = computed(() => {
     if (!i.isActive) return
     if (!i.key) return
     if (i.value == null) return
-    if (i.valueType === 'Number') {
+    if (i.valueType === 'Number' || i.valueType === 'Date') {
       filterAnd.push({ [i.key]: { [i.condition]: Number(i.value) } })
     }
     if (i.valueType === 'String') {
@@ -162,9 +201,9 @@ const handleUpdateValue = (id: number, value: any) => {
   <div class="page-main">
     <form @submit.prevent="startFetchData" class="px-4 mt-2">
       <div class="flex flex-wrap gap-5">
-        <div style="flex-grow: 1; min-width: 500px; flex-basis: 45%">
+        <div style="flex-grow: 1; flex-basis: 60%; overflow-x: auto; max-width: 100%">
           <div class="italic underline">Điều kiện lọc</div>
-          <table>
+          <table style="width: 100%; min-width: 600px">
             <tbody>
               <tr v-for="(filterCondition, index) in filterConditions" :key="filterCondition.id">
                 <td>
@@ -178,14 +217,17 @@ const handleUpdateValue = (id: number, value: any) => {
                       { value: 'String', label: 'String' },
                       { value: 'Object', label: 'Object' },
                       { value: 'Boolean', label: 'Boolean' },
+                      { value: 'Date', label: 'Date' },
                     ]"
                   />
                 </td>
-                <td class="pl-2">
-                  <InputHint
-                    v-model:value="filterCondition.key"
-                    :options="filterConditionHintList.map((i) => i.key)"
-                  />
+                <td class="pl-2" style="width: 160px">
+                  <div style="width: 160px">
+                    <InputHint
+                      v-model:value="filterCondition.key"
+                      :options="filterConditionHintList.map((i) => i.key)"
+                    />
+                  </div>
                 </td>
                 <td class="pl-2" style="width: 140px">
                   <InputSelect
@@ -206,7 +248,18 @@ const handleUpdateValue = (id: number, value: any) => {
                   />
                 </td>
                 <td class="pl-2">
+                  <InputNumber
+                    v-if="filterCondition.valueType === 'Number'"
+                    v-model:value="filterCondition.value"
+                    @update:value="(v) => handleUpdateValue(filterCondition.id, v)"
+                  />
+                  <InputDate
+                    v-else-if="filterCondition.valueType === 'Date'"
+                    v-model:value="filterCondition.value"
+                    @update:value="(v) => handleUpdateValue(filterCondition.id, v)"
+                  />
                   <InputText
+                    v-else
                     v-model:value="filterCondition.value"
                     @update:value="(v) => handleUpdateValue(filterCondition.id, v)"
                   />
@@ -224,11 +277,17 @@ const handleUpdateValue = (id: number, value: any) => {
           </table>
           <a @click="clickAddFilterCondition">✚ Thêm điều kiện lọc</a>
         </div>
-        <div style="flex-grow: 1; min-width: 500px; flex-basis: 45%">
+        <div style="flex-grow: 1; flex-basis: 35%" class="mb-2">
           <div class="italic underline">RAW QUERY</div>
-          <pre style="padding: 5px 10px; border: 1px solid #cdcdcd">{{
-            JSON.stringify(filterRaw)
-          }}</pre>
+          <pre
+            style="
+              padding: 5px 10px;
+              border: 1px solid #cdcdcd;
+              white-space: pre-wrap;
+              overflow-wrap: break-word;
+            "
+            >{{ ESObject.stringify(filterRaw) }}</pre
+          >
         </div>
       </div>
 
@@ -244,10 +303,10 @@ const handleUpdateValue = (id: number, value: any) => {
             <th></th>
             <th>#</th>
             <th>Time</th>
-            <th>OID</th>
-            <th>UID-Username</th>
+            <th>OID-UID</th>
             <th>ClientId</th>
             <th>ApiMethod</th>
+            <th>StatusCode</th>
             <th>PrefixController</th>
             <th>Url</th>
           </tr>
@@ -269,15 +328,18 @@ const handleUpdateValue = (id: number, value: any) => {
             <td class="text-center">
               {{ ESTimer.timeToText(systemLog.createdAt, 'hh:mm:ss DD/MM/YY', 7) }}
             </td>
-            <td class="text-center">{{ systemLog.oid }}</td>
-            <td class="">{{ systemLog.uid }} - {{ systemLog.username }}</td>
+            <td class="">{{ systemLog.oid }} - {{ systemLog.uid }}</td>
             <td class="">{{ systemLog.clientId }}</td>
             <td class="text-center">{{ systemLog.apiMethod }}</td>
+            <td class="text-center">{{ systemLog.statusCode }}</td>
             <td class="">{{ systemLog.prefixController }}</td>
             <td class="">
               <div>{{ systemLog.url }}</div>
-              <div style="color: var(--text-red); font-weight: 500">
-                {{ systemLog.errorMessage }}
+              <div
+                v-if="systemLog.errorName || systemLog.errorMessage"
+                style="color: var(--text-red); font-weight: 500"
+              >
+                {{ systemLog.errorName }} - {{ systemLog.errorMessage }}
               </div>
             </td>
           </tr>

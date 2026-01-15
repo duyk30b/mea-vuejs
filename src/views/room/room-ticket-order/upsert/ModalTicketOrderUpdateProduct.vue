@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert'
 import { InputHint, InputMoney, InputNumber, VueSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
@@ -37,34 +38,6 @@ const hasChangeData = computed(() => {
   return result
 })
 
-const handleChangeUnitDiscountMoney = (data: number) => {
-  const discountMoney = data / ticketProduct.value.unitRate
-  const expectedPrice = ticketProduct.value.expectedPrice || 0
-  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
-  ticketProduct.value.discountPercent = discountPercent
-  ticketProduct.value.discountMoney = discountMoney
-  ticketProduct.value.actualPrice = expectedPrice - discountMoney
-}
-
-const handleChangeDiscountPercent = (data: number) => {
-  const expectedPrice = ticketProduct.value.expectedPrice || 0
-  const discountMoney = Math.round((expectedPrice * (data || 0)) / 100)
-  ticketProduct.value.discountPercent = data
-  ticketProduct.value.discountMoney = discountMoney
-  ticketProduct.value.actualPrice = expectedPrice - discountMoney
-}
-
-const handleChangeUnitActualPrice = (data: number) => {
-  const actualPrice = data / ticketProduct.value.unitRate
-  const expectedPrice = ticketProduct.value.expectedPrice
-  const discountMoney = expectedPrice - actualPrice
-  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
-  ticketProduct.value.discountPercent = discountPercent
-  ticketProduct.value.discountMoney = discountMoney
-  ticketProduct.value.discountType = DiscountType.VND
-  ticketProduct.value.actualPrice = actualPrice
-}
-
 const closeModal = () => {
   showModal.value = false
   indexUpdate = -1
@@ -73,6 +46,9 @@ const closeModal = () => {
 }
 
 const updateTicketProduct = async () => {
+  if (!Number.isInteger(ticketProduct.value.unitQuantity)) {
+    return AlertStore.addWarning('Lỗi: Số lượng phải là 1 số nguyên dương')
+  }
   ticketOrderUpsertRef.value.ticketProductList![indexUpdate] = TicketProduct.from(
     ticketProduct.value,
   )
@@ -115,7 +91,7 @@ defineExpose({ openModal })
           <div class="flex">
             <div style="width: 120px">
               <VueSelect
-                v-model:value="ticketProduct.unitRate"
+                :value="ticketProduct.unitRate"
                 :disabled="(ticketProduct.product?.unitObject.length || 0) <= 1"
                 :options="
                   ticketProduct.product?.unitObject.map((i) => ({
@@ -124,6 +100,7 @@ defineExpose({ openModal })
                     data: i,
                   })) || []
                 "
+                @update:value="(v) => ticketProduct.changeUnitRate(v)"
                 required
               />
             </div>
@@ -148,7 +125,10 @@ defineExpose({ openModal })
           </div>
 
           <div style="width: 100%">
-            <InputMoney :value="ticketProduct.unitExpectedPrice" disabled />
+            <InputMoney
+              :value="ticketProduct.unitExpectedPrice"
+              @update:value="(v) => ticketProduct.changeUnitExpectedPrice(v)"
+            />
           </div>
         </div>
 
@@ -184,14 +164,14 @@ defineExpose({ openModal })
                 v-if="ticketProduct.discountType === DiscountType.VND"
                 :value="ticketProduct.unitDiscountMoney"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
-                @update:value="handleChangeUnitDiscountMoney"
+                @update:value="(v) => ticketProduct.changeUnitDiscountMoney(v)"
                 :validate="{ gte: 0 }"
               />
               <InputNumber
                 v-else
                 :value="ticketProduct.discountPercent"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
-                @update:value="handleChangeDiscountPercent"
+                @update:value="(v) => ticketProduct.changeDiscountPercent(v)"
                 :validate="{ gte: 0, lte: 100 }"
               />
             </div>
@@ -212,7 +192,7 @@ defineExpose({ openModal })
               :value="ticketProduct.unitActualPrice"
               :prepend="ticketProduct.unitRate !== 1 ? ticketProduct.unitName : ''"
               :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
-              @update:value="handleChangeUnitActualPrice"
+              @update:value="(v) => ticketProduct.changeUnitActualPrice(v)"
             />
           </div>
         </div>

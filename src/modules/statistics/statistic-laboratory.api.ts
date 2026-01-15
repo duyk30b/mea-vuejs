@@ -1,6 +1,6 @@
 import { AxiosInstance } from '@/core/axios.instance'
 import { OmitClass } from '@/utils'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { Laboratory } from '../laboratory'
 import { TicketLaboratoryGetQuery } from '../ticket-laboratory'
 
@@ -33,7 +33,7 @@ export class StatisticLaboratoryApi {
     const response = await AxiosInstance.get('/statistic/laboratory/statistic-ticket-laboratory', {
       params,
     })
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       statisticPagination: any[]
       statisticTotal: any
     }>

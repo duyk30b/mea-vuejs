@@ -67,7 +67,7 @@ const clickDelete = () => {
             title: 'Không thể xóa kho hàng khi còn tồn tại hàng hóa trong kho',
             content: [
               'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả sản phẩm và lô hàng của kho hàng này trước',
-              `Hiện tại kho hàng này đang có ${response.data.countBatch} lô hàng liên quan`,
+              `Hiện tại kho hàng này đang có ${response.countBatch} lô hàng liên quan`,
             ],
           })
         }

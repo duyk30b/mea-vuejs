@@ -33,6 +33,7 @@ export class PaymentTicketItem {
   discountType: DiscountType
   actualPrice: number
   quantity: number
+  unitRate: number
 
   paidMoney: number
   debtMoney: number

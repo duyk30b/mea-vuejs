@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
   LaboratorySampleDetailQuery,
   LaboratorySampleGetQuery,
@@ -13,10 +13,12 @@ export class LaboratorySampleApi {
     const params = LaboratorySampleGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/laboratory-sample/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
-      meta,
-      data: LaboratorySample.fromList(data),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
+      laboratorySampleList: LaboratorySample.fromList(data.laboratorySampleList),
     }
   }
 
@@ -24,7 +26,7 @@ export class LaboratorySampleApi {
     const params = LaboratorySampleGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/laboratory-sample/list', { params })
-    const { data, time } = response.data as BaseResponse
+    const { data, time } = response.data as FullResponse
     return {
       time: new Date(time),
       data: LaboratorySample.fromList(data),
@@ -37,7 +39,7 @@ export class LaboratorySampleApi {
   ): Promise<LaboratorySample> {
     const params = LaboratorySampleGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/laboratory-sample/detail/${id}`, { params })
-    const { data, meta } = response.data as BaseResponse<{ laboratorySample: any }>
+    const { data, meta } = response.data as FullResponse<{ laboratorySample: any }>
     return LaboratorySample.from(data.laboratorySample)
   }
 
@@ -47,7 +49,7 @@ export class LaboratorySampleApi {
       name: laboratorySample.name,
       laboratoryIds: laboratorySample.laboratoryIds,
     })
-    const { data } = response.data as BaseResponse<{ laboratorySample: any }>
+    const { data } = response.data as FullResponse<{ laboratorySample: any }>
     return LaboratorySample.from(data.laboratorySample)
   }
 
@@ -57,13 +59,13 @@ export class LaboratorySampleApi {
       name: laboratorySample.name,
       laboratoryIds: laboratorySample.laboratoryIds,
     })
-    const { data } = response.data as BaseResponse<{ laboratorySample: any }>
+    const { data } = response.data as FullResponse<{ laboratorySample: any }>
     return LaboratorySample.from(data.laboratorySample)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/laboratory-sample/destroy/${id}`)
-    const { data, meta } = response.data as BaseResponse<boolean>
+    const { data, meta } = response.data as FullResponse<boolean>
     return data
   }
 }

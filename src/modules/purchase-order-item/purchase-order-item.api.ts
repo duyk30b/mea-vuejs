@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { PurchaseOrderItemGetQuery, type PurchaseOrderItemPaginationQuery } from './purchase-order-item.dto'
 import { PurchaseOrderItem } from './purchase-order-item.model'
 
@@ -8,7 +8,7 @@ export class PurchaseOrderItemApi {
     const params = PurchaseOrderItemGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/purchase-order-item/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
       page: data.page,
       limit: data.limit,

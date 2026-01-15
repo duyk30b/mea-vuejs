@@ -1,5 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
+import { PrescriptionSampleItem } from './prescription-sample-item.model'
 import {
   PrescriptionSampleDetailQuery,
   PrescriptionSampleGetQuery,
@@ -13,10 +14,12 @@ export class PrescriptionSampleApi {
     const params = PrescriptionSampleGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/prescription-sample/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
-      meta,
-      data: PrescriptionSample.fromList(data),
+      prescriptionSampleList: PrescriptionSample.fromList(data.prescriptionSampleList),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
     }
   }
 
@@ -24,48 +27,90 @@ export class PrescriptionSampleApi {
     const params = PrescriptionSampleGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/prescription-sample/list', { params })
-    const { data, time } = response.data as BaseResponse
-    return {
-      time: new Date(time),
-      data: PrescriptionSample.fromList(data),
-    }
+    const { data, time } = response.data as FullResponse<{ prescriptionSampleList: any[] }>
+    return PrescriptionSample.fromList(data.prescriptionSampleList)
   }
 
   static async detail(
-    id: number,
-    options: PrescriptionSampleDetailQuery = {}
+    id: string,
+    options: PrescriptionSampleDetailQuery = {},
   ): Promise<PrescriptionSample> {
     const params = PrescriptionSampleGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/prescription-sample/detail/${id}`, { params })
-    const { data, meta } = response.data as BaseResponse<{ prescriptionSample: any }>
+    const { data, meta } = response.data as FullResponse<{ prescriptionSample: any }>
     return PrescriptionSample.from(data.prescriptionSample)
   }
 
-  static async createOne(prescriptionSample: PrescriptionSample) {
+  static async createOne(body: {
+    prescriptionSampleBody: PrescriptionSample
+    prescriptionSampleItemBodyList: PrescriptionSampleItem[]
+  }) {
+    const { prescriptionSampleBody, prescriptionSampleItemBodyList } = body
     const response = await AxiosInstance.post('/prescription-sample/create', {
-      priority: prescriptionSample.priority,
-      userId: prescriptionSample.userId,
-      name: prescriptionSample.name,
-      medicines: prescriptionSample.medicines,
+      prescriptionSampleBody: {
+        priority: prescriptionSampleBody.priority,
+        userId: prescriptionSampleBody.userId,
+        name: prescriptionSampleBody.name,
+      },
+      prescriptionSampleItemBodyList: prescriptionSampleItemBodyList.map((i) => {
+        return {
+          priority: i.priority,
+          productId: i.productId,
+          unitQuantity: i.unitQuantity,
+          unitRate: i.unitRate,
+          hintUsage: i.hintUsage || '',
+        }
+      }),
     })
-    const { data } = response.data as BaseResponse<{ prescriptionSample: any }>
-    return PrescriptionSample.from(data.prescriptionSample)
+    const { data } = response.data as FullResponse<{ prescriptionSampleCreated: any }>
+    return PrescriptionSample.from(data.prescriptionSampleCreated)
   }
 
-  static async updateOne(id: number, ins: Partial<PrescriptionSample>) {
+  static async updateOne(
+    id: string,
+    body: {
+      prescriptionSampleBody?: PrescriptionSample
+      prescriptionSampleItemBodyList?: PrescriptionSampleItem[]
+    },
+  ) {
+    const { prescriptionSampleBody, prescriptionSampleItemBodyList } = body
     const response = await AxiosInstance.post(`/prescription-sample/update/${id}`, {
-      priority: ins.priority,
-      userId: ins.userId,
-      name: ins.name,
-      medicines: ins.medicines,
+      prescriptionSampleBody: prescriptionSampleBody
+        ? {
+          priority: prescriptionSampleBody.priority,
+          userId: prescriptionSampleBody.userId,
+          name: prescriptionSampleBody.name,
+        }
+        : undefined,
+      prescriptionSampleItemBodyList: prescriptionSampleItemBodyList
+        ? prescriptionSampleItemBodyList.map((i) => {
+          return {
+            priority: i.priority,
+            productId: i.productId,
+            unitQuantity: i.unitQuantity,
+            unitRate: i.unitRate,
+            hintUsage: i.hintUsage || '',
+          }
+        })
+        : undefined,
     })
-    const { data } = response.data as BaseResponse<{ prescriptionSample: any }>
-    return PrescriptionSample.from(data.prescriptionSample)
+    const { data } = response.data as FullResponse<{
+      prescriptionSampleModified?: any
+      prescriptionSampleItemList?: any[]
+    }>
+    return {
+      prescriptionSampleModified: data.prescriptionSampleModified
+        ? PrescriptionSample.from(data.prescriptionSampleModified)
+        : undefined,
+      prescriptionSampleItemList: data.prescriptionSampleItemList
+        ? PrescriptionSampleItem.fromList(data.prescriptionSampleItemList)
+        : undefined,
+    }
   }
 
-  static async destroyOne(id: number) {
+  static async destroyOne(id: string) {
     const response = await AxiosInstance.post(`/prescription-sample/destroy/${id}`)
-    const { data, meta } = response.data as BaseResponse<boolean>
+    const { data, meta } = response.data as FullResponse<boolean>
     return data
   }
 }

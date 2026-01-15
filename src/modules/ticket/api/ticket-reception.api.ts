@@ -2,7 +2,7 @@ import { TicketProcedure } from '@/modules/ticket-procedure'
 import type { TicketReception } from '@/modules/ticket-reception'
 import type { TicketRegimen, TicketRegimenItem } from '@/modules/ticket-regimen'
 import { AxiosInstance } from '../../../core/axios.instance'
-import type { BaseResponse } from '../../_base/base-dto'
+import type { FullResponse } from '../../_base/base-dto'
 import type { Customer } from '../../customer'
 import type { TicketUser } from '../../ticket-user'
 import { Ticket, type TicketStatus } from '../ticket.model'
@@ -102,7 +102,7 @@ export class TicketChangeReceptionApi {
       fromAppointmentId: obj.fromAppointmentId,
       status: obj.status,
     })
-    const { data } = response.data as BaseResponse<{ ticket: any; ticketReceptionCreated: any }>
+    const { data } = response.data as FullResponse<{ ticket: any; ticketReceptionCreated: any }>
 
     const ticketResponse = Ticket.from(data.ticket)
     return ticketResponse
@@ -113,7 +113,7 @@ export class TicketChangeReceptionApi {
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/reception-destroy/${ticketReceptionId}`,
     )
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
   }
 
   static async update(body: {
@@ -141,7 +141,7 @@ export class TicketChangeReceptionApi {
           .map((i) => ({ userId: i.userId, positionId: i.positionId })),
       },
     )
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       ticketModified: any
       ticketReceptionModified: any
     }>

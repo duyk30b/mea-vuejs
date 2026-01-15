@@ -3,11 +3,11 @@ import { CONFIG } from '@/config'
 import { computed, nextTick, ref, watch } from 'vue'
 import { IconSearch } from '../icon-antd'
 
-export type ItemOption = { value: number; text: string; data?: any }
+export type ItemOption = { value: number | string; text: string; data?: any }
 
 const props = withDefaults(
   defineProps<{
-    value: number
+    value: string | number
     options: ItemOption[]
     disabled?: boolean
     placeholder?: string
@@ -48,7 +48,7 @@ const searchText = ref('')
 const indexFocus = ref<number>(-1)
 const showOptions = ref<boolean>(false)
 
-const currentValue = ref(0)
+const currentValue = ref<string | number>(0)
 let propsText = '' // lấy text từ item select khi chọn
 
 const randomId = computed(() => {

@@ -94,7 +94,7 @@ watch(
             </td>
             <td class="text-right">
               <div
-                v-if="ticketProduct.expectedPrice !== ticketProduct.actualPrice"
+                v-if="ticketProduct.unitExpectedPrice !== ticketProduct.unitActualPrice"
                 style="
                   color: var(--text-red);
                   font-size: 0.8rem;
@@ -149,7 +149,7 @@ watch(
             <td class="text-center">{{ ticketProduct.unitQuantity }}</td>
             <td class="text-right">
               <div
-                v-if="ticketProduct.expectedPrice !== ticketProduct.actualPrice"
+                v-if="ticketProduct.unitExpectedPrice !== ticketProduct.unitActualPrice"
                 style="
                   color: var(--text-red);
                   font-size: 0.8rem;

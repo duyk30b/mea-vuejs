@@ -1,16 +1,16 @@
 <script lang="ts" setup>
 import VueButton from '@/common/VueButton.vue'
-import VueTinyMCE from '@/common/VueTinyMCE.vue'
 import { IconFileSearch, IconSpin } from '@/common/icon-antd'
 import { IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
-import { IconEditSquare } from '@/common/icon-google'
+import { IconDelete, IconEditSquare } from '@/common/icon-google'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputArea, VueSwitch } from '@/common/vue-form'
+import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus, DiscountType, PaymentMoneyStatus } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PrescriptionSample, type MedicineType } from '@/modules/prescription-sample'
+import { PrescriptionSample, PrescriptionSampleItem } from '@/modules/prescription-sample'
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import { Product, ProductService } from '@/modules/product'
 import { ticketRoomRef } from '@/modules/room'
@@ -21,6 +21,7 @@ import {
 } from '@/modules/ticket-attribute'
 import { TicketProduct, TicketProductService, TicketProductType } from '@/modules/ticket-product'
 import { TicketUser } from '@/modules/ticket-user'
+import { BugDevelopment } from '@/views/component'
 import InputSearchPrescriptionSample from '@/views/component/InputSearchPrescriptionSample.vue'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
@@ -30,6 +31,7 @@ import ModalSavePrescriptionSample from './ModalSavePrescriptionSample.vue'
 import ModalSelectItemFromPrescriptionSample from './ModalSelectItemFromPrescriptionSample.vue'
 import ModalTicketPrescriptionUpdate from './ModalTicketPrescriptionUpdate.vue'
 import TicketPrescriptionSelectItem from './TicketPrescriptionSelectItem.vue'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 
 const modalTicketPrescriptionUpdate = ref<InstanceType<typeof ModalTicketPrescriptionUpdate>>()
 const ticketSpaPrescriptionSelectItem = ref<InstanceType<typeof TicketPrescriptionSelectItem>>()
@@ -218,20 +220,22 @@ const handleAddTicketProductPrescription = async (ticketProductAddList: TicketPr
 }
 
 const clickOpenModalSavePrescriptionSample = () => {
-  const medicineList: MedicineType[] = ticketProductPrescriptionList.value.map((i) => ({
-    productId: i.productId,
-    quantity: i.quantityPrescription,
-    hintUsage: i.hintUsage || '',
-  }))
-
   const psGenerate = PrescriptionSample.blank()
   psGenerate.name = ticketRoomRef.value.note
-  psGenerate.medicineList = medicineList
-  psGenerate.medicines = JSON.stringify(medicineList)
+  psGenerate.prescriptionSampleItemList = ticketProductPrescriptionList.value.map((i) => {
+    const psiBlank = PrescriptionSampleItem.blank()
+    psiBlank.productId = i.productId
+    psiBlank.unitQuantity = i.unitQuantityPrescription
+    psiBlank.unitRate = i.unitRate
+    psiBlank.hintUsage = i.hintUsage || ''
+    return psiBlank
+  })
   modalSavePrescriptionSample.value?.openModal(psGenerate)
 }
 
-const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
+const handleSelectPrescriptionSampleItemList = async (
+  prescriptionSampleItemList: PrescriptionSampleItem[],
+) => {
   if (
     ![
       TicketStatus.Schedule,
@@ -243,36 +247,38 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
     return AlertStore.addWarning(`Trạng thái phiếu khám không hợp lệ`)
   }
 
-  const priorityList = (ticketRoomRef.value.ticketProductPrescriptionList || []).map(
-    (i) => i.priority,
-  )
+  const priorityList = (ticketRoomRef.value.ticketProductPrescriptionList || []).map((i) => {
+    return i.priority
+  })
   priorityList.push(0) // tránh tạo mảng rỗng thì Math.max không tính được
   let priority = Math.max(...priorityList)
 
-  const ticketProductList = medicineList
-    .map((medicine) => {
-      const { product } = medicine
+  const ticketProductList = prescriptionSampleItemList
+    .map((psItem) => {
+      const { product } = psItem
       if (!product) {
         return null
       }
       priority = priority + 1
       const temp = TicketProduct.blank()
       temp.priority = priority
-      temp.pickupStrategy = MeService.getPickupStrategy().prescription
-      temp.customerId = ticketRoomRef.value.customerId
+      temp.productId = psItem.productId
       temp.product = Product.from(product)
-      temp.productId = medicine.productId
+      temp.pickupStrategy = MeService.getPickupStrategy(product).prescription
+      temp.customerId = ticketRoomRef.value.customerId
       temp.batchId = 0
 
-      temp.quantity = medicine.quantity // lấy theo mẫu
-      temp.quantityPrescription = medicine.quantity // lấy theo mẫu
+      temp.unitRate = psItem.unitRate || 1
+      temp.unitQuantity = psItem.unitQuantity // lấy theo mẫu
+      temp.unitQuantityPrescription = psItem.unitQuantity // lấy theo mẫu
+      temp.hintUsage = psItem.hintUsage // lấy theo mẫu
 
       temp.createdAt = Date.now()
       if (product?.warehouseIds !== '[]') {
         if (temp.quantity > product!.quantity) {
           AlertStore.addWarning(
             `Cảnh báo: ${product.brandName} không đủ tồn kho, còn ${product!.quantity} lấy ${
-              medicine.quantity
+              temp.quantity
             }`,
           )
         }
@@ -280,14 +286,13 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
 
       temp.type = TicketProductType.Prescription
       temp.deliveryStatus = DeliveryStatus.Pending
-      temp.unitRate = product.unitDefaultRate
 
-      temp.expectedPrice = product.retailPrice
+      temp.unitExpectedPrice = product.retailPrice * temp.unitRate
       temp.discountType = DiscountType.Percent
       temp.discountPercent = 0
-      temp.discountMoney = 0
-      temp.actualPrice = product.retailPrice
-      temp.hintUsage = medicine.hintUsage // lấy theo mẫu
+      temp.unitDiscountMoney = 0
+      temp.unitActualPrice = product.retailPrice * temp.unitRate
+
       temp.warehouseIds = JSON.stringify(
         settingStore.TICKET_CLINIC_DETAIL.prescriptions.warehouseIdList,
       )
@@ -302,7 +307,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
     const discountApply = tpItem.product?.discountApply
     if (discountApply) {
       let { discountType, discountPercent, discountMoney } = discountApply
-      const expectedPrice = tpItem.expectedPrice || 0
+      const expectedPrice = Math.floor((tpItem.unitExpectedPrice || 0) / tpItem.unitRate)
       if (discountType === DiscountType.Percent) {
         discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
       }
@@ -311,12 +316,60 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
       }
       tpItem.discountType = discountType
       tpItem.discountPercent = discountPercent
-      tpItem.discountMoney = discountMoney
-      tpItem.actualPrice = expectedPrice - discountMoney
+      tpItem.unitDiscountMoney = discountMoney * tpItem.unitRate
+      tpItem.unitActualPrice = tpItem.unitExpectedPrice - tpItem.unitDiscountMoney
     }
   }
 
   handleAddTicketProductPrescription(ticketProductList)
+}
+
+const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
+  if (ticketProductProp.deliveryStatus === DeliveryStatus.Delivered) {
+    return ModalStore.alert({
+      title: 'Không thể xóa thuốc ?',
+      content: [
+        '- Thuốc đã được xuất khỏi kho sẽ không thể xóa',
+        '- Chỉ có thể hoàn trả thuốc nếu bắt buộc phải thay đổi số lượng ?',
+      ],
+    })
+  }
+  if (
+    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
+      ticketProductProp.paymentMoneyStatus,
+    )
+  ) {
+    return ModalStore.alert({
+      title: 'Không thể xóa thuốc - vật tư ?',
+      content: ['- Thuốc - vật tư đã được thanh toán sẽ không thể xóa'],
+    })
+  }
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+    return ModalStore.alert({
+      title: 'Không thể xóa thuốc ?',
+      content: [
+        '- Phiếu khám đã đóng không thể xóa thuốc',
+        '- Nếu bắt buộc phải thay đổi số lượng, bạn cần mở lại phiếu khám',
+      ],
+    })
+  }
+  ModalStore.confirm({
+    title: 'Xác nhận xóa thuốc ?',
+    content: [
+      '- Hệ thống sẽ xóa thuốc này khỏi phiếu khám',
+      '- Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
+    ],
+    onOk: async () => {
+      try {
+        await TicketChangeProductApi.destroyTicketProductPrescription({
+          ticketId: ticketRoomRef.value.id,
+          ticketProductId: ticketProductProp.id,
+        })
+      } catch (error) {
+        console.log('🚀 ~ ModalTicketPrescriptionUpdate.vue:227 ~ clickDestroy ~ error:', error)
+      }
+    },
+  })
 }
 </script>
 <template>
@@ -329,7 +382,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
   <ModalSavePrescriptionSample ref="modalSavePrescriptionSample" />
   <ModalSelectItemFromPrescriptionSample
     ref="modalSelectItemFromPrescriptionSample"
-    @success="handleSelectMedicineList"
+    @success="handleSelectPrescriptionSampleItemList"
   />
   <div class="mt-4">
     <div class="flex flex-wrap justify-between items-baseline">
@@ -347,6 +400,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
       <table>
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>#</th>
             <th style="width: 32px"></th>
             <th style="width: 32px"></th>
@@ -358,6 +412,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
             <th>T.Tiền</th>
             <th>In</th>
             <th></th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -368,6 +423,9 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
             v-for="(tpItem, index) in ticketProductPrescriptionList || []"
             :key="tpItem.productId"
           >
+            <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+              <BugDevelopment :data="tpItem" />
+            </td>
             <td>
               <div class="flex flex-col items-center">
                 <button
@@ -426,13 +484,13 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
             <td class="text-center whitespace-nowrap">{{ tpItem.unitQuantity }}</td>
             <td class="text-center whitespace-nowrap">{{ tpItem.unitName }}</td>
             <td class="text-right whitespace-nowrap">
-              <div v-if="tpItem.discountMoney" class="text-xs italic text-red-500">
+              <div v-if="tpItem.unitDiscountMoney" class="text-xs italic text-red-500">
                 <del>{{ formatMoney(tpItem.unitExpectedPrice) }}</del>
               </div>
               <div>{{ formatMoney(tpItem.unitActualPrice) }}</div>
             </td>
             <td class="text-right whitespace-nowrap">
-              {{ formatMoney(tpItem.actualPrice * tpItem.quantity || 0) }}
+              {{ formatMoney(tpItem.unitActualPrice * tpItem.unitQuantity || 0) }}
             </td>
             <td class="">
               <div class="flex justify-center">
@@ -441,7 +499,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
             </td>
             <td class="text-center">
               <a v-if="!tpItem.id">
-                <IconSpin width="20" height="20" />
+                <IconSpin width="22" height="22" />
               </a>
               <a
                 v-else-if="
@@ -449,14 +507,31 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
                     tpItem.paymentMoneyStatus,
                   ) && userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
                 "
-                class="text-orange-500"
+                style="color: var(--text-orange)"
                 @click="modalTicketPrescriptionUpdate?.openModal(tpItem)"
               >
-                <IconEditSquare width="20" height="20" />
+                <IconEditSquare width="22" height="22" />
+              </a>
+            </td>
+            <td class="text-center">
+              <a v-if="!tpItem.id">
+                <IconSpin width="22" height="22" />
+              </a>
+              <a
+                v-else-if="
+                  [PaymentMoneyStatus.PendingPayment, PaymentMoneyStatus.TicketPaid].includes(
+                    tpItem.paymentMoneyStatus,
+                  ) && userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
+                "
+                style="color: var(--text-red)"
+                @click="clickDestroyTicketProduct(tpItem)"
+              >
+                <IconDelete width="22" height="22" />
               </a>
             </td>
           </tr>
           <tr>
+            <td v-if="CONFIG.MODE === 'development'"></td>
             <td colspan="8" class="text-right">
               <b>Tổng tiền</b>
             </td>
@@ -465,12 +540,13 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
                 {{
                   formatMoney(
                     ticketProductPrescriptionList.reduce((acc: number, item: TicketProduct) => {
-                      return (acc += item.actualPrice * item.quantity)
+                      return (acc += item.unitActualPrice * item.unitQuantity)
                     }, 0),
                   )
                 }}
               </b>
             </td>
+            <td></td>
             <td></td>
             <td></td>
           </tr>

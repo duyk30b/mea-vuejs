@@ -1,7 +1,7 @@
 import { ProductDB } from '@/core/indexed-db'
 import { AxiosInstance } from '../../core/axios.instance'
 import { ESDom } from '../../utils'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { Product } from '../product'
 import { PurchaseOrderItem } from '../purchase-order-item'
 
@@ -10,7 +10,7 @@ export class FilePurchaseOrderApi {
     const response = await AxiosInstance.get(
       `/file-purchase-order/download-excel/file-example-purchase-order-item`,
     )
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       buffer: { type: 'Buffer'; data: any[] }
       mimeType: string
       filename: string
@@ -34,7 +34,7 @@ export class FilePurchaseOrderApi {
         },
       },
     )
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       purchaseOrderItemInsertList: any
       productCreatedList: any[]
       productModifiedList: any[]

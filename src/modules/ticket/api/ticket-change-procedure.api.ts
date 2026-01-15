@@ -1,7 +1,7 @@
 import type { TicketProduct } from '@/modules/ticket-product'
 import { TicketRegimen, TicketRegimenItem } from '@/modules/ticket-regimen'
 import { AxiosInstance } from '../../../core/axios.instance'
-import type { BaseResponse } from '../../_base/base-dto'
+import type { FullResponse } from '../../_base/base-dto'
 import { TicketProcedure } from '../../ticket-procedure'
 import { TicketUser } from '../../ticket-user'
 
@@ -86,7 +86,7 @@ export class TicketChangeProcedureApi {
         }),
       },
     )
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       ticketModified: any
       ticketRegimenCreatedList: any[]
       ticketProcedureNormalCreatedList: any[]
@@ -98,7 +98,7 @@ export class TicketChangeProcedureApi {
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/procedure/destroy-ticket-procedure/${ticketProcedureId}`,
     )
-    const { data } = response.data as BaseResponse<{ ticketId: any; ticketProcedureId: string }>
+    const { data } = response.data as FullResponse<{ ticketId: any; ticketProcedureId: string }>
   }
 
   static async destroyTicketRegimen(body: { ticketId: string; ticketRegimenId: string }) {
@@ -106,7 +106,7 @@ export class TicketChangeProcedureApi {
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/procedure/destroy-ticket-regimen/${ticketRegimenId}`,
     )
-    const { data } = response.data as BaseResponse<{ ticketId: any; ticketRegimenId: string }>
+    const { data } = response.data as FullResponse<{ ticketId: any; ticketRegimenId: string }>
   }
 
   static async updateMoneyTicketProcedure(body: {
@@ -125,7 +125,7 @@ export class TicketChangeProcedureApi {
         actualPrice: ticketProcedure.actualPrice,
       },
     )
-    const { data } = response.data as BaseResponse<{ ticketProcedureModified: any }>
+    const { data } = response.data as FullResponse<{ ticketProcedureModified: any }>
     return TicketProcedure.from(data.ticketProcedureModified)
   }
 
@@ -153,7 +153,7 @@ export class TicketChangeProcedureApi {
           })),
       },
     )
-    const { data } = response.data as BaseResponse<{ ticketProcedureModified: any }>
+    const { data } = response.data as FullResponse<{ ticketProcedureModified: any }>
   }
 
   static async updatePriorityTicketProcedure(body: {
@@ -170,7 +170,7 @@ export class TicketChangeProcedureApi {
         })),
       },
     )
-    const { data } = response.data as BaseResponse<{ ticketProcedureList: any[] }>
+    const { data } = response.data as FullResponse<{ ticketProcedureList: any[] }>
   }
 
   static async updateMoneyTicketRegimen(body: {
@@ -203,7 +203,7 @@ export class TicketChangeProcedureApi {
         }),
       },
     )
-    const { data } = response.data as BaseResponse<any>
+    const { data } = response.data as FullResponse<any>
   }
 
   static async updateUserRequestTicketRegimen(body: {
@@ -223,7 +223,7 @@ export class TicketChangeProcedureApi {
           })),
       },
     )
-    const { data } = response.data as BaseResponse<{ ticketRegimenModified: any }>
+    const { data } = response.data as FullResponse<{ ticketRegimenModified: any }>
   }
 
   static async processResultTicketProcedure(options: {
@@ -283,8 +283,9 @@ export class TicketChangeProcedureApi {
       JSON.stringify(
         ticketProductConsumableList.map((i) => {
           return {
-            quantity: i.quantity,
             productId: i.productId,
+            unitQuantity: i.unitQuantity,
+            unitRate: i.unitRate,
             pickupStrategy: i.pickupStrategy,
             warehouseIds: i.warehouseIds,
           }
@@ -299,7 +300,7 @@ export class TicketChangeProcedureApi {
         headers: { 'Content-Type': 'multipart/form-data' },
       },
     )
-    const { data } = response.data as BaseResponse<any>
+    const { data } = response.data as FullResponse<any>
     return data
   }
 
@@ -308,7 +309,7 @@ export class TicketChangeProcedureApi {
     const response = await AxiosInstance.post(
       `ticket/${ticketId}/procedure/cancel-result-ticket-procedure/${ticketProcedureId}`,
     )
-    const { data } = response.data as BaseResponse<any>
+    const { data } = response.data as FullResponse<any>
 
     return data
   }

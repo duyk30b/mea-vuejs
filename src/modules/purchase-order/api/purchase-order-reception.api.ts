@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../../core/axios.instance'
-import type { BaseResponse } from '../../_base/base-dto'
+import type { FullResponse } from '../../_base/base-dto'
 import { PurchaseOrder } from '../purchase-order.model'
 
 export class PurchaseOrderReceptionApi {
@@ -22,9 +22,9 @@ export class PurchaseOrderReceptionApi {
         lotNumber: i.lotNumber || '',
         expiryDate: i.expiryDate,
         unitRate: i.unitRate,
-        quantity: i.quantity,
-        costPrice: Math.round(i.costPrice),
-        listPrice: Math.round(i.listPrice),
+        unitQuantity: i.unitQuantity,
+        unitCostPrice: i.unitCostPrice,
+        unitListPrice: i.unitListPrice,
       })),
     }
   }
@@ -37,7 +37,7 @@ export class PurchaseOrderReceptionApi {
       ...purchaseOrderBasicBody,
       distributorId: purchaseOrder.distributorId,
     })
-    const { data } = response.data as BaseResponse<{ purchaseOrderCreated: any }>
+    const { data } = response.data as FullResponse<{ purchaseOrderCreated: any }>
     return {
       purchaseOrderCreated: PurchaseOrder.from(data.purchaseOrderCreated),
     }
@@ -50,7 +50,7 @@ export class PurchaseOrderReceptionApi {
     const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/draft-update`, {
       ...purchaseOrderBasicBody,
     })
-    const { data } = response.data as BaseResponse<{ purchaseOrderModified: object }>
+    const { data } = response.data as FullResponse<{ purchaseOrderModified: object }>
     return data
   }
 
@@ -64,7 +64,7 @@ export class PurchaseOrderReceptionApi {
         ...purchaseOrderBasicBody,
       },
     )
-    const { data } = response.data as BaseResponse<{ purchaseOrderModified: object }>
+    const { data } = response.data as FullResponse<{ purchaseOrderModified: object }>
     return data
   }
 }

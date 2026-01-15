@@ -17,6 +17,7 @@ import { SETTING_DEFAULT } from './setting.default'
 import { useSettingStore } from './setting.store'
 import { SettingKey } from './store.variable'
 import { UserRoomService } from '../user-room'
+import type { Product } from '../product'
 
 export class MeService {
   static user = ref(LocalStorageService.getRefreshToken() ? User.blank() : null)
@@ -160,48 +161,44 @@ export class MeService {
     return splitRule
   }
 
-  static getPickupStrategy() {
+  static getPickupStrategy(productProp: Product) {
     const pickupStrategyMap = {
-      order: MeService.settingMap.value.SCREEN_INVOICE_UPSERT.pickupStrategy,
-      consumable: MeService.settingMap.value.TICKET_CLINIC_DETAIL.consumable.pickupStrategy,
-      prescription: MeService.settingMap.value.TICKET_CLINIC_DETAIL.prescriptions.pickupStrategy,
+      order: PickupStrategy.NoImpact,
+      consumable: PickupStrategy.NoImpact,
+      prescription: PickupStrategy.NoImpact,
     }
 
-    if (pickupStrategyMap.order === PickupStrategy.Inherit) {
-      pickupStrategyMap.order = MeService.settingMapRoot.value.SCREEN_INVOICE_UPSERT.pickupStrategy
+    if (productProp.warehouseIds !== '[]') {
+      pickupStrategyMap.order = MeService.settingMap.value.SCREEN_INVOICE_UPSERT.pickupStrategy
       if (pickupStrategyMap.order === PickupStrategy.Inherit) {
-        pickupStrategyMap.order = PickupStrategy.AutoWithFIFO
+        pickupStrategyMap.order =
+          MeService.settingMapRoot.value.SCREEN_INVOICE_UPSERT.pickupStrategy
+        if (pickupStrategyMap.order === PickupStrategy.Inherit) {
+          pickupStrategyMap.order = PickupStrategy.AutoWithFIFO
+        }
       }
-    }
-    if (pickupStrategyMap.consumable === PickupStrategy.Inherit) {
+
       pickupStrategyMap.consumable =
-        MeService.settingMapRoot.value.TICKET_CLINIC_DETAIL.consumable.pickupStrategy
+        MeService.settingMap.value.TICKET_CLINIC_DETAIL.consumable.pickupStrategy
       if (pickupStrategyMap.consumable === PickupStrategy.Inherit) {
-        pickupStrategyMap.consumable = PickupStrategy.AutoWithFIFO
+        pickupStrategyMap.consumable =
+          MeService.settingMapRoot.value.TICKET_CLINIC_DETAIL.consumable.pickupStrategy
+        if (pickupStrategyMap.consumable === PickupStrategy.Inherit) {
+          pickupStrategyMap.consumable = PickupStrategy.AutoWithFIFO
+        }
       }
-    }
-    if (pickupStrategyMap.prescription === PickupStrategy.Inherit) {
+
       pickupStrategyMap.prescription =
-        MeService.settingMapRoot.value.TICKET_CLINIC_DETAIL.prescriptions.pickupStrategy
+        MeService.settingMap.value.TICKET_CLINIC_DETAIL.prescriptions.pickupStrategy
       if (pickupStrategyMap.prescription === PickupStrategy.Inherit) {
-        pickupStrategyMap.prescription = PickupStrategy.AutoWithFIFO
+        pickupStrategyMap.prescription =
+          MeService.settingMapRoot.value.TICKET_CLINIC_DETAIL.prescriptions.pickupStrategy
+        if (pickupStrategyMap.prescription === PickupStrategy.Inherit) {
+          pickupStrategyMap.prescription = PickupStrategy.AutoWithFIFO
+        }
       }
     }
 
-    return pickupStrategyMap
-  }
-
-  static getPickupStrategySpa() {
-    const pickupStrategyMap = {
-      product: MeService.settingMap.value.TICKET_SPA_DETAIL.product.pickupStrategy,
-    }
-    if (pickupStrategyMap.product === PickupStrategy.Inherit) {
-      pickupStrategyMap.product =
-        MeService.settingMapRoot.value.TICKET_SPA_DETAIL.product.pickupStrategy
-      if (pickupStrategyMap.product === PickupStrategy.Inherit) {
-        pickupStrategyMap.product = PickupStrategy.AutoWithFIFO
-      }
-    }
     return pickupStrategyMap
   }
 

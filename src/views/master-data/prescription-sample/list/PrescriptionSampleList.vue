@@ -1,23 +1,19 @@
 <script setup lang="ts">
-import { onBeforeMount, ref, watch } from 'vue'
 import VueButton from '@/common/VueButton.vue'
 import VuePagination from '@/common/VuePagination.vue'
+import { IconDelete } from '@/common/icon-antd'
 import { IconEditSquare } from '@/common/icon-google'
 import { InputSelect } from '@/common/vue-form'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import {
-  PrescriptionSample,
-  PrescriptionSampleApi,
-  PrescriptionSampleService,
-} from '@/modules/prescription-sample'
-import { Breadcrumb } from '../../../component'
-import ModalPrescriptionSampleUpsert from '../upsert/ModalPrescriptionSampleUpsert.vue'
-import { CONFIG } from '@/config'
-import InputSearchUser from '@/views/component/InputSearchUser.vue'
+import { PrescriptionSample, PrescriptionSampleService } from '@/modules/prescription-sample'
 import type { User } from '@/modules/user'
-import { IconDelete } from '@/common/icon-antd'
-import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { Breadcrumb, BugDevelopment } from '@/views/component'
+import InputSearchUser from '@/views/component/InputSearchUser.vue'
+import { onBeforeMount, ref } from 'vue'
+import ModalPrescriptionSampleUpsert from '../upsert/ModalPrescriptionSampleUpsert.vue'
 
 const modalPrescriptionSampleUpsert = ref<InstanceType<typeof ModalPrescriptionSampleUpsert>>()
 
@@ -39,23 +35,18 @@ const startFetchData = async (options?: { refetch?: boolean; loading?: boolean }
   }
 
   try {
-    const { data, meta } = await PrescriptionSampleService.pagination({
+    const paginationResponse = await PrescriptionSampleService.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { user: true, medicineList: { product: true } },
+      relation: { user: true, prescriptionSampleItemList: { product: true } },
       filter: {
-        userId: userId.value ? { IN: [userId.value, 0] } : undefined,
+        userId: userId.value ? { IN: [0, userId.value] } : undefined,
       },
       sort: { priority: 'ASC' },
     })
 
-    // await PrescriptionSampleService.executeRelation(data, {
-    //   user: true,
-    //   medicineList: { product: true },
-    // })
-
-    prescriptionSampleList.value = data
-    total.value = meta.total
+    prescriptionSampleList.value = paginationResponse.prescriptionSampleList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: LaboratoryList.vue:42 ~ startFetchData ~ error:', error)
   } finally {
@@ -94,7 +85,7 @@ const handleSelectUser = async (userProps?: User) => {
   await startSearch()
 }
 
-const handleClickDestroyPrescription = async (prescriptionId: number) => {
+const handleClickDestroyPrescription = async (prescriptionId: string) => {
   ModalStore.confirm({
     title: 'Bạn có chắc muốn xóa mẫu này ?',
     content: 'Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
@@ -145,7 +136,7 @@ const handleClickDestroyPrescription = async (prescriptionId: number) => {
       <table>
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'" style="width: 100px">ID</th>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th style="width: 100px">STT</th>
             <th>Người dùng</th>
             <th>Tên</th>
@@ -173,14 +164,18 @@ const handleClickDestroyPrescription = async (prescriptionId: number) => {
           </tr>
           <tr v-for="prescriptionSample in prescriptionSampleList" :key="prescriptionSample.id">
             <td class="text-center" v-if="CONFIG.MODE === 'development'">
-              {{ prescriptionSample.id }}
+              <BugDevelopment :data="prescriptionSample" />
             </td>
             <td class="text-center">{{ prescriptionSample.priority }}</td>
             <td>{{ prescriptionSample.user?.fullName }}</td>
             <td>
               <div>{{ prescriptionSample.name }}</div>
               <div style="font-size: 13px; font-style: italic">
-                {{ prescriptionSample.medicineList.map((i) => i.product?.brandName).join(', ') }}
+                {{
+                  prescriptionSample.prescriptionSampleItemList
+                    .map((i) => `${i.product?.brandName} x ${i.unitRate} ${i.unitName}`)
+                    .join(', ')
+                }}
               </div>
             </td>
             <td class="text-center">

@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { Ticket } from '../ticket'
 import { CustomerGetQuery, CustomerListQuery, CustomerPaginationQuery } from './customer.dto'
 import { Customer } from './customer.model'
@@ -9,7 +9,7 @@ export class CustomerApi {
     const params = CustomerGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/customer/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
       page: data.page,
       limit: data.limit,
@@ -22,7 +22,7 @@ export class CustomerApi {
     const params = CustomerGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/customer/list', { params })
-    const { data, time } = response.data as BaseResponse<{ customerList: any[] }>
+    const { data, time } = response.data as FullResponse<{ customerList: any[] }>
     return {
       time: new Date(time),
       customerList: Customer.fromList(data.customerList),
@@ -38,7 +38,7 @@ export class CustomerApi {
 
   static async detail(id: number): Promise<Customer> {
     const response = await AxiosInstance.get(`/customer/detail/${id}`)
-    const { data } = response.data as BaseResponse<{ customer: any }>
+    const { data } = response.data as FullResponse<{ customer: any }>
     return Customer.from(data.customer)
   }
 
@@ -62,7 +62,7 @@ export class CustomerApi {
       customerSourceId: customer.customerSourceId || 0,
       isActive: customer.isActive, // Trạng thái
     })
-    const { data } = response.data as BaseResponse<{ customer: any }>
+    const { data } = response.data as FullResponse<{ customer: any }>
     return Customer.from(data.customer)
   }
 
@@ -88,13 +88,13 @@ export class CustomerApi {
         customer.customerSourceId !== undefined ? customer.customerSourceId || 0 : undefined,
       isActive: customer.isActive !== undefined ? customer.isActive : undefined, // Trạng thái
     })
-    const { data } = response.data as BaseResponse<{ customer: any }>
+    const { data } = response.data as FullResponse<{ customer: any }>
     return Customer.from(data.customer)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/customer/destroy/${id}`)
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       customerId: number
       ticketList: Ticket[]
       success: boolean

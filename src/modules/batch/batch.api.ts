@@ -1,9 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { Product } from '../product'
-import { PurchaseOrderItem } from '../purchase-order-item/purchase-order-item.model'
-import { TicketBatch } from '../ticket-batch'
-import { TicketProduct } from '../ticket-product'
 import { BatchDetailQuery, BatchGetQuery, BatchListQuery, BatchPaginationQuery } from './batch.dto'
 import { Batch } from './batch.model'
 
@@ -12,7 +9,7 @@ export class BatchApi {
     const params = BatchGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/batch/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
       page: data.page,
       total: data.total,
@@ -25,7 +22,7 @@ export class BatchApi {
     const params = BatchGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/batch/list', { params })
-    const { data, time } = response.data as BaseResponse<{ batchList: any[] }>
+    const { data, time } = response.data as FullResponse<{ batchList: any[] }>
     return {
       time: new Date(time),
       batchList: Batch.fromList(data.batchList),
@@ -36,7 +33,7 @@ export class BatchApi {
     const params = BatchGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get(`/batch/detail/${id}`, { params })
-    const { data } = response.data as BaseResponse<{ batch: any }>
+    const { data } = response.data as FullResponse<{ batch: any }>
     return Batch.from(data.batch)
   }
 
@@ -46,7 +43,7 @@ export class BatchApi {
       expiryDate: batch.expiryDate != null ? batch.expiryDate : null,
       warehouseId: batch.warehouseId,
     })
-    const { data } = response.data as BaseResponse<{ batch: any }>
+    const { data } = response.data as FullResponse<{ batch: any }>
     return Batch.from(data.batch)
   }
 
@@ -64,7 +61,7 @@ export class BatchApi {
         isActive: batch.isActive,
       },
     )
-    const { data } = response.data as BaseResponse<{ batch: any; product?: any }>
+    const { data } = response.data as FullResponse<{ batch: any; product?: any }>
     return {
       batch: Batch.from(data.batch),
       product: data.product ? Product.from(data.product) : undefined,
@@ -81,16 +78,13 @@ export class BatchApi {
       batchIdSourceList: options.batchIdSourceList,
       batchIdTarget: options.batchIdTarget,
     })
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
     return data
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/batch/destroy/${id}`)
-    const { data } = response.data as BaseResponse<{
-      success: boolean
-      batchId: number
-    }>
-    return data
+    const responseData = response.data as FullResponse<{ batchId: number }>
+    return responseData
   }
 }

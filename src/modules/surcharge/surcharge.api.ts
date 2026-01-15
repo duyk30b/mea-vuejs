@@ -1,10 +1,10 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
-  SurchargeDetailQuery,
-  SurchargeGetQuery,
-  type SurchargeListQuery,
-  type SurchargePaginationQuery,
+    SurchargeDetailQuery,
+    SurchargeGetQuery,
+    type SurchargeListQuery,
+    type SurchargePaginationQuery,
 } from './surcharge.dto'
 import { Surcharge } from './surcharge.model'
 
@@ -13,21 +13,21 @@ export class SurchargeApi {
     const params = SurchargeGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/surcharge/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
   }
 
   static async list(options: SurchargeListQuery) {
     const params = SurchargeGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/surcharge/list', { params })
-    const { data, time } = response.data as BaseResponse<{ surchargeList: any[] }>
+    const { data, time } = response.data as FullResponse<{ surchargeList: any[] }>
     return Surcharge.fromList(data.surchargeList)
   }
 
   static async detail(id: number, options: SurchargeDetailQuery = {}): Promise<Surcharge> {
     const params = SurchargeGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/surcharge/detail/${id}`, { params })
-    const { data, meta } = response.data as BaseResponse<{ surcharge: any }>
+    const { data, meta } = response.data as FullResponse<{ surcharge: any }>
     return Surcharge.from(data.surcharge)
   }
 
@@ -37,7 +37,7 @@ export class SurchargeApi {
       name: surcharge.name,
       isActive: surcharge.isActive,
     })
-    const { data } = response.data as BaseResponse<{ surcharge: any }>
+    const { data } = response.data as FullResponse<{ surcharge: any }>
     return Surcharge.from(data.surcharge)
   }
 
@@ -47,13 +47,13 @@ export class SurchargeApi {
       name: surcharge.name,
       isActive: surcharge.isActive,
     })
-    const { data } = response.data as BaseResponse<{ surcharge: any }>
+    const { data } = response.data as FullResponse<{ surcharge: any }>
     return Surcharge.from(data.surcharge)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/surcharge/destroy/${id}`)
-    const result = response.data as BaseResponse<{ surchargeId: number }>
+    const result = response.data as FullResponse<{ surchargeId: number }>
     return result
   }
 }

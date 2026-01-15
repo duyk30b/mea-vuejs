@@ -1,10 +1,10 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
-  PositionDetailQuery,
-  PositionGetQuery,
-  type PositionListQuery,
-  type PositionPaginationQuery,
+    PositionDetailQuery,
+    PositionGetQuery,
+    type PositionListQuery,
+    type PositionPaginationQuery,
 } from './position.dto'
 import { Position } from './position.model'
 
@@ -13,7 +13,7 @@ export class PositionApi {
     const params = PositionGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/position/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
       page: data.page,
       total: data.total,
@@ -26,14 +26,14 @@ export class PositionApi {
     const params = PositionGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/position/list', { params })
-    const { data, time } = response.data as BaseResponse<{ positionList: any[] }>
+    const { data, time } = response.data as FullResponse<{ positionList: any[] }>
     return Position.fromList(data.positionList)
   }
 
   static async detail(id: number, options: PositionDetailQuery = {}): Promise<Position> {
     const params = PositionGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/position/detail/${id}`, { params })
-    const { data, meta } = response.data as BaseResponse<{ position: any }>
+    const { data, meta } = response.data as FullResponse<{ position: any }>
     return Position.from(data.position)
   }
 
@@ -46,7 +46,7 @@ export class PositionApi {
       commissionValue: position.commissionValue,
       commissionCalculatorType: position.commissionCalculatorType,
     })
-    const { data } = response.data as BaseResponse<{ position: any }>
+    const { data } = response.data as FullResponse<{ position: any }>
     return Position.from(data.position)
   }
 
@@ -56,13 +56,13 @@ export class PositionApi {
       commissionCalculatorType: position.commissionCalculatorType,
       commissionValue: position.commissionValue,
     })
-    const { data } = response.data as BaseResponse<{ position: any }>
+    const { data } = response.data as FullResponse<{ position: any }>
     return Position.from(data.position)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/position/destroy/${id}`)
-    const result = response.data as BaseResponse<boolean>
+    const result = response.data as FullResponse<boolean>
     return result
   }
 
@@ -83,7 +83,7 @@ export class PositionApi {
         }
       }),
     })
-    const { data } = response.data as BaseResponse<{ positionList: any[] }>
+    const { data } = response.data as FullResponse<{ positionList: any[] }>
     return Position.fromList(data.positionList)
   }
 }

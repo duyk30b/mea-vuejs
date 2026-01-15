@@ -15,7 +15,6 @@ import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadi
 import TicketDeliveryStatusTooltip from '@/views/room/room-ticket-base/TicketDeliveryStatusTooltip.vue'
 import { computed, ref } from 'vue'
 import PaymentMoneyStatusTooltip from '../../payment/PaymentMoneyStatusTooltip.vue'
-import { InputMoney } from '@/common/vue-form'
 
 let ticketOrigin = Ticket.blank()
 const ticket = ref<Ticket>(Ticket.blank())
@@ -65,7 +64,7 @@ const procedureActualMoney = computed(() => {
 const consumableActualMoney = computed(() => {
   return (
     ticket.value.ticketProductConsumableList?.reduce((acc, item) => {
-      return acc + item.actualPrice * item.quantity
+      return acc + item.unitActualPrice * item.unitQuantity
     }, 0) || 0
   )
 })
@@ -73,7 +72,7 @@ const consumableActualMoney = computed(() => {
 const prescriptionActualMoney = computed(() => {
   return (
     ticket.value.ticketProductPrescriptionList?.reduce((acc, item) => {
-      return acc + item.actualPrice * item.quantity
+      return acc + item.unitActualPrice * item.unitQuantity
     }, 0) || 0
   )
 })
@@ -131,11 +130,11 @@ const startChangeAllMoney = async () => {
         )
         .map((i) => ({
           id: i.id,
-          quantity: i.quantity,
-          discountMoney: i.discountMoney,
+          unitQuantity: i.unitQuantity,
+          unitDiscountMoney: i.unitDiscountMoney,
           discountType: i.discountType,
           discountPercent: i.discountPercent,
-          actualPrice: i.actualPrice,
+          unitActualPrice: i.unitActualPrice,
         })),
       ticketLaboratoryList: (ticket.value.ticketLaboratoryList || [])
         .filter(
@@ -180,7 +179,7 @@ const startChangeAllMoney = async () => {
 
 const handleChangeDiscountPercent = (
   e: Event,
-  itemList: TicketProduct[] | TicketProcedure[] | TicketLaboratory[] | TicketRadiology[],
+  itemList: TicketProcedure[] | TicketLaboratory[] | TicketRadiology[],
   index: number,
 ) => {
   const discountPercent = Number((e.target as HTMLInputElement).value || 0)
@@ -192,9 +191,19 @@ const handleChangeDiscountPercent = (
   itemList[index].actualPrice = expectedPrice - discountMoney
 }
 
+const handleChangeUnitDiscountPercent = (e: Event, itemList: TicketProduct[], index: number) => {
+  const discountPercent = Number((e.target as HTMLInputElement).value || 0)
+  const unitExpectedPrice = itemList[index].unitExpectedPrice || 0
+  const unitDiscountMoney = Math.round((unitExpectedPrice * (discountPercent || 0)) / 100)
+  itemList[index].discountPercent = discountPercent
+  itemList[index].unitDiscountMoney = unitDiscountMoney
+  itemList[index].discountType = DiscountType.Percent
+  itemList[index].unitActualPrice = unitExpectedPrice - unitDiscountMoney
+}
+
 const handleChangeDiscountMoney = (
   e: Event,
-  itemList: TicketProduct[] | TicketProcedure[] | TicketLaboratory[] | TicketRadiology[],
+  itemList: TicketProcedure[] | TicketLaboratory[] | TicketRadiology[],
   index: number,
 ) => {
   const discountMoney = Number((e.target as HTMLInputElement).value || 0)
@@ -206,9 +215,20 @@ const handleChangeDiscountMoney = (
   itemList[index].actualPrice = expectedPrice - discountMoney
 }
 
+const handleChangeUnitDiscountMoney = (e: Event, itemList: TicketProduct[], index: number) => {
+  const unitDiscountMoney = Number((e.target as HTMLInputElement).value || 0)
+  const unitExpectedPrice = itemList[index].unitExpectedPrice || 0
+  const discountPercent =
+    unitExpectedPrice == 0 ? 0 : Math.round((unitDiscountMoney * 100) / unitExpectedPrice)
+  itemList[index].discountPercent = discountPercent
+  itemList[index].unitDiscountMoney = unitDiscountMoney
+  itemList[index].discountType = DiscountType.VND
+  itemList[index].unitActualPrice = unitExpectedPrice - unitDiscountMoney
+}
+
 const handleChangeActualPrice = (
   e: Event,
-  itemList: TicketProduct[] | TicketProcedure[] | TicketLaboratory[] | TicketRadiology[],
+  itemList: TicketProcedure[] | TicketLaboratory[] | TicketRadiology[],
   index: number,
 ) => {
   const actualPrice = Number((e.target as HTMLInputElement).value || 0)
@@ -221,13 +241,26 @@ const handleChangeActualPrice = (
   itemList[index].actualPrice = actualPrice
 }
 
-const handleChangeQuantity = (
-  e: Event,
-  itemList: TicketProduct[] | TicketProcedure[],
-  index: number,
-) => {
+const handleChangeUnitActualPrice = (e: Event, itemList: TicketProduct[], index: number) => {
+  const unitActualPrice = Number((e.target as HTMLInputElement).value || 0)
+  const unitExpectedPrice = itemList[index].unitExpectedPrice || 0
+  const unitDiscountMoney = unitExpectedPrice - unitActualPrice
+  const discountPercent =
+    unitExpectedPrice == 0 ? 0 : Math.round((unitDiscountMoney * 100) / unitExpectedPrice)
+  itemList[index].discountPercent = discountPercent
+  itemList[index].unitDiscountMoney = unitDiscountMoney
+  itemList[index].discountType = DiscountType.VND
+  itemList[index].unitActualPrice = unitActualPrice
+}
+
+const handleChangeQuantity = (e: Event, itemList: TicketProcedure[], index: number) => {
   const quantity = Number((e.target as HTMLInputElement).value || 0)
   itemList[index].quantity = quantity
+}
+
+const handleChangeUnitQuantity = (e: Event, itemList: TicketProduct[], index: number) => {
+  const unitQuantity = Number((e.target as HTMLInputElement).value || 0)
+  itemList[index].unitQuantity = unitQuantity
 }
 
 defineExpose({ openModal })
@@ -453,7 +486,7 @@ defineExpose({ openModal })
                   </td>
 
                   <td class="text-right whitespace-nowrap">
-                    <div>{{ formatMoney(ticketConsumable.expectedPrice) }}</div>
+                    <div>{{ formatMoney(ticketConsumable.unitExpectedPrice) }}</div>
                   </td>
                   <td class="text-right">
                     <span
@@ -473,7 +506,11 @@ defineExpose({ openModal })
                       :max="100"
                       @input="
                         (e) =>
-                          handleChangeDiscountPercent(e, ticket.ticketProductConsumableList!, index)
+                          handleChangeUnitDiscountPercent(
+                            e,
+                            ticket.ticketProductConsumableList!,
+                            index,
+                          )
                       "
                     />
                   </td>
@@ -485,17 +522,21 @@ defineExpose({ openModal })
                         ) || ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
                       "
                     >
-                      {{ ticketConsumable.discountMoney }}
+                      {{ ticketConsumable.unitDiscountMoney }}
                     </span>
                     <input
                       v-else
                       type="number"
                       :step="1000"
-                      :value="ticketConsumable.discountMoney"
+                      :value="ticketConsumable.unitDiscountMoney"
                       min="0"
                       @input="
                         (e) =>
-                          handleChangeDiscountMoney(e, ticket.ticketProductConsumableList!, index)
+                          handleChangeUnitDiscountMoney(
+                            e,
+                            ticket.ticketProductConsumableList!,
+                            index,
+                          )
                       "
                     />
                   </td>
@@ -507,17 +548,17 @@ defineExpose({ openModal })
                         ) || ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
                       "
                     >
-                      {{ ticketConsumable.actualPrice }}
+                      {{ ticketConsumable.unitActualPrice }}
                     </span>
                     <input
                       v-else
                       type="number"
                       :step="1000"
-                      :value="ticketConsumable.actualPrice"
+                      :value="ticketConsumable.unitActualPrice"
                       min="0"
                       @input="
                         (e) =>
-                          handleChangeActualPrice(e, ticket.ticketProductConsumableList!, index)
+                          handleChangeUnitActualPrice(e, ticket.ticketProductConsumableList!, index)
                       "
                     />
                   </td>
@@ -529,20 +570,23 @@ defineExpose({ openModal })
                         ) || ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
                       "
                     >
-                      {{ ticketConsumable.quantity }}
+                      {{ ticketConsumable.unitQuantity }}
                     </span>
                     <input
                       v-else
                       type="number"
-                      :value="ticketConsumable.quantity"
+                      :value="ticketConsumable.unitQuantity"
                       min="0"
                       @input="
-                        (e) => handleChangeQuantity(e, ticket.ticketProductConsumableList!, index)
+                        (e) =>
+                          handleChangeUnitQuantity(e, ticket.ticketProductConsumableList!, index)
                       "
                     />
                   </td>
                   <td class="text-right whitespace-nowrap">
-                    {{ formatMoney(ticketConsumable.actualPrice * ticketConsumable.quantity) }}
+                    {{
+                      formatMoney(ticketConsumable.unitActualPrice * ticketConsumable.unitQuantity)
+                    }}
                   </td>
                 </tr>
                 <tr>
@@ -608,7 +652,7 @@ defineExpose({ openModal })
                   </td>
 
                   <td class="text-right whitespace-nowrap">
-                    <div>{{ formatMoney(ticketPrescription.expectedPrice) }}</div>
+                    <div>{{ formatMoney(ticketPrescription.unitExpectedPrice) }}</div>
                   </td>
                   <td class="text-right">
                     <span
@@ -628,7 +672,7 @@ defineExpose({ openModal })
                       :max="100"
                       @input="
                         (e) =>
-                          handleChangeDiscountPercent(
+                          handleChangeUnitDiscountPercent(
                             e,
                             ticket.ticketProductPrescriptionList!,
                             index,
@@ -644,17 +688,21 @@ defineExpose({ openModal })
                         ) || ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
                       "
                     >
-                      {{ ticketPrescription.discountMoney }}
+                      {{ ticketPrescription.unitDiscountMoney }}
                     </span>
                     <input
                       v-else
                       type="number"
                       :step="1000"
-                      :value="ticketPrescription.discountMoney"
+                      :value="ticketPrescription.unitDiscountMoney"
                       min="0"
                       @input="
                         (e) =>
-                          handleChangeDiscountMoney(e, ticket.ticketProductPrescriptionList!, index)
+                          handleChangeUnitDiscountMoney(
+                            e,
+                            ticket.ticketProductPrescriptionList!,
+                            index,
+                          )
                       "
                     />
                   </td>
@@ -666,17 +714,21 @@ defineExpose({ openModal })
                         ) || ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
                       "
                     >
-                      {{ ticketPrescription.actualPrice }}
+                      {{ ticketPrescription.unitActualPrice }}
                     </span>
                     <input
                       v-else
                       type="number"
                       :step="1000"
-                      :value="ticketPrescription.actualPrice"
+                      :value="ticketPrescription.unitActualPrice"
                       min="0"
                       @input="
                         (e) =>
-                          handleChangeActualPrice(e, ticket.ticketProductPrescriptionList!, index)
+                          handleChangeUnitActualPrice(
+                            e,
+                            ticket.ticketProductPrescriptionList!,
+                            index,
+                          )
                       "
                     />
                   </td>
@@ -688,20 +740,25 @@ defineExpose({ openModal })
                         ) || ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
                       "
                     >
-                      {{ ticketPrescription.quantity }}
+                      {{ ticketPrescription.unitQuantity }}
                     </span>
                     <input
                       v-else
                       type="number"
-                      :value="ticketPrescription.quantity"
+                      :value="ticketPrescription.unitQuantity"
                       min="0"
                       @input="
-                        (e) => handleChangeQuantity(e, ticket.ticketProductPrescriptionList!, index)
+                        (e) =>
+                          handleChangeUnitQuantity(e, ticket.ticketProductPrescriptionList!, index)
                       "
                     />
                   </td>
                   <td class="text-right whitespace-nowrap">
-                    {{ formatMoney(ticketPrescription.actualPrice * ticketPrescription.quantity) }}
+                    {{
+                      formatMoney(
+                        ticketPrescription.unitActualPrice * ticketPrescription.unitQuantity,
+                      )
+                    }}
                   </td>
                 </tr>
                 <tr>

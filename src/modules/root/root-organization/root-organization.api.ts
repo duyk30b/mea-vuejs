@@ -1,9 +1,9 @@
 import { AxiosInstance } from '../../../core/axios.instance'
-import type { BaseResponse } from '../../_base/base-dto'
+import type { FullResponse } from '../../_base/base-dto'
 import { Organization } from '../../organization'
 import {
-  RootOrganizationGetQuery,
-  type RootOrganizationPaginationQuery,
+    RootOrganizationGetQuery,
+    type RootOrganizationPaginationQuery,
 } from './root-organization.dto'
 
 export class RootOrganizationApi {
@@ -11,7 +11,7 @@ export class RootOrganizationApi {
     const params = RootOrganizationGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/root/organization/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
       page: data.page,
       limit: data.limit,
@@ -38,7 +38,7 @@ export class RootOrganizationApi {
       note: organization.note || '',
       expiryDate: organization.expiryDate,
     })
-    const { data } = response.data as BaseResponse<{ organizationCreated: any }>
+    const { data } = response.data as FullResponse<{ organizationCreated: any }>
 
     return Organization.from(data.organizationCreated)
   }
@@ -61,7 +61,7 @@ export class RootOrganizationApi {
       note: organization.note,
       expiryDate: organization.expiryDate,
     })
-    const { data } = response.data as BaseResponse<{ organizationModified: any }>
+    const { data } = response.data as FullResponse<{ organizationModified: any }>
 
     return Organization.from(data.organizationModified)
   }
@@ -71,7 +71,7 @@ export class RootOrganizationApi {
     body: { createdAt: number; expiryAt: number; money: number; note: string },
   ) {
     const response = await AxiosInstance.post(`/root/organization/payment-money/${oid}`, body)
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
 
     return data
   }
@@ -81,7 +81,7 @@ export class RootOrganizationApi {
     body: { tableNameDeleteList: string[]; tableNameClearList: string[] },
   ) {
     const response = await AxiosInstance.post(`/root/organization/clear/${oid}`, body)
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
 
     return data
   }

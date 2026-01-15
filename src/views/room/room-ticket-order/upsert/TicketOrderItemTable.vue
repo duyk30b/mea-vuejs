@@ -253,7 +253,7 @@ const startRemoveTicketProcedure = (_localId: string) => {
                 <div class="" style="font-size: 0.8rem">
                   <div
                     v-if="
-                      ticketProduct.discountMoney &&
+                      ticketProduct.unitDiscountMoney &&
                       settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expectedPrice
                     "
                   >
@@ -272,13 +272,13 @@ const startRemoveTicketProcedure = (_localId: string) => {
                   </div>
                   <div
                     v-if="
-                      ticketProduct.discountMoney &&
+                      ticketProduct.unitDiscountMoney &&
                       settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount
                     "
                   >
                     - CK:
                     <VueTag v-if="ticketProduct.discountType === 'VNĐ'" color="green">
-                      {{ formatMoney(ticketProduct.discountMoney * ticketProduct.unitRate) }}
+                      {{ formatMoney(ticketProduct.unitDiscountMoney) }}
                     </VueTag>
                     <VueTag v-if="ticketProduct.discountType === '%'" color="green">
                       {{ ticketProduct.discountPercent || 0 }}%
@@ -304,7 +304,7 @@ const startRemoveTicketProcedure = (_localId: string) => {
                 <InputNumber v-model:value="ticketProduct.unitQuantity" controlVertical />
               </td>
               <td class="text-right whitespace-nowrap">
-                {{ formatMoney(ticketProduct.actualPrice * ticketProduct.quantity) }}
+                {{ formatMoney(ticketProduct.unitActualPrice * ticketProduct.unitQuantity) }}
               </td>
               <td class="text-center" style="font-size: 20px">
                 <a class="text-orange-500" @click="modalTicketOrderUpdateProduct?.openModal(index)">
@@ -544,7 +544,7 @@ const startRemoveTicketProcedure = (_localId: string) => {
                 style="width: 40px"
               >
                 <VueTag v-if="ticketProduct.discountType === 'VNĐ'" color="green">
-                  {{ formatMoney(ticketProduct.discountMoney * ticketProduct.unitRate) }}
+                  {{ formatMoney(ticketProduct.unitDiscountMoney) }}
                 </VueTag>
                 <VueTag v-if="ticketProduct.discountType === '%'" color="green">
                   {{ ticketProduct.discountPercent || 0 }}%
@@ -555,12 +555,12 @@ const startRemoveTicketProcedure = (_localId: string) => {
                 {{ formatMoney(ticketProduct.unitActualPrice) }}
               </td>
               <td class="text-right">
-                <div v-if="ticketProduct.discountMoney" class="text-xs italic text-red-500">
+                <div v-if="ticketProduct.unitDiscountMoney" class="text-xs italic text-red-500">
                   <del>
-                    {{ formatMoney(ticketProduct.unitExpectedPrice * ticketProduct.quantity) }}
+                    {{ formatMoney(ticketProduct.unitExpectedPrice * ticketProduct.unitQuantity) }}
                   </del>
                 </div>
-                <div>{{ formatMoney(ticketProduct.unitActualPrice * ticketProduct.quantity) }}</div>
+                <div>{{ formatMoney(ticketProduct.unitActualPrice * ticketProduct.unitQuantity) }}</div>
               </td>
               <td class="text-center" style="width: 24px; font-size: 20px">
                 <a class="text-orange-500" @click="modalTicketOrderUpdateProduct?.openModal(index)">

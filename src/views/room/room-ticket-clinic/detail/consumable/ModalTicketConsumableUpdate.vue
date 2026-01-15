@@ -101,46 +101,6 @@ const handleChangeUnitQuantity = (data: number) => {
   }
 }
 
-const handleChangeUnitExpectPrice = (data: number) => {
-  const expectedPrice = data / ticketProduct.value.unitRate
-  const actualPrice = ticketProduct.value.actualPrice
-  const discountMoney = expectedPrice - actualPrice
-  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
-  ticketProduct.value.expectedPrice = expectedPrice
-  ticketProduct.value.discountPercent = discountPercent
-  ticketProduct.value.discountMoney = discountMoney
-  ticketProduct.value.discountType = DiscountType.VND
-  ticketProduct.value.actualPrice = actualPrice
-}
-
-const handleChangeUnitDiscountMoney = (data: number) => {
-  const discountMoney = data / ticketProduct.value.unitRate
-  const expectedPrice = ticketProduct.value.expectedPrice || 0
-  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
-  ticketProduct.value.discountPercent = discountPercent
-  ticketProduct.value.discountMoney = discountMoney
-  ticketProduct.value.actualPrice = expectedPrice - discountMoney
-}
-
-const handleChangeDiscountPercent = (data: number) => {
-  const expectedPrice = ticketProduct.value.expectedPrice || 0
-  const discountMoney = Math.round((expectedPrice * (data || 0)) / 100)
-  ticketProduct.value.discountPercent = data
-  ticketProduct.value.discountMoney = discountMoney
-  ticketProduct.value.actualPrice = expectedPrice - discountMoney
-}
-
-const handleChangeUnitActualPrice = (data: number) => {
-  const actualPrice = data / ticketProduct.value.unitRate
-  const expectedPrice = ticketProduct.value.expectedPrice
-  const discountMoney = expectedPrice - actualPrice
-  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
-  ticketProduct.value.discountPercent = discountPercent
-  ticketProduct.value.discountMoney = discountMoney
-  ticketProduct.value.discountType = DiscountType.VND
-  ticketProduct.value.actualPrice = actualPrice
-}
-
 const closeModal = () => {
   showModal.value = false
   ticketProduct.value = TicketProduct.blank()
@@ -248,7 +208,7 @@ defineExpose({ openModal })
           <div class="flex">
             <div style="width: 120px">
               <VueSelect
-                v-model:value="ticketProduct.unitRate"
+                :value="ticketProduct.unitRate"
                 :disabled="(ticketProduct.product?.unitObject.length || 0) <= 1"
                 :options="
                   ticketProduct.product?.unitObject.map((i) => ({
@@ -257,6 +217,7 @@ defineExpose({ openModal })
                     data: i,
                   })) || []
                 "
+                @update:value="(v) => ticketProduct.changeUnitRate(v)"
                 required
               />
             </div>
@@ -285,7 +246,7 @@ defineExpose({ openModal })
             <InputMoney
               :value="ticketProduct.unitExpectedPrice"
               :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
-              @update:value="handleChangeUnitExpectPrice"
+              @update:value="(v) => ticketProduct.changeUnitExpectedPrice(v)"
             />
           </div>
         </div>
@@ -322,14 +283,14 @@ defineExpose({ openModal })
                 v-if="ticketProduct.discountType === DiscountType.VND"
                 :value="ticketProduct.unitDiscountMoney"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
-                @update:value="handleChangeUnitDiscountMoney"
+                @update:value="(v) => ticketProduct.changeUnitDiscountMoney(v)"
                 :validate="{ gte: 0 }"
               />
               <InputNumber
                 v-else
                 :value="ticketProduct.discountPercent"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
-                @update:value="handleChangeDiscountPercent"
+                @update:value="(v) => ticketProduct.changeDiscountPercent(v)"
                 :validate="{ gte: 0, lte: 100 }"
               />
             </div>
@@ -350,7 +311,7 @@ defineExpose({ openModal })
               :value="ticketProduct.unitActualPrice"
               :prepend="ticketProduct.unitRate !== 1 ? ticketProduct.unitName : ''"
               :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
-              @update:value="handleChangeUnitActualPrice"
+              @update:value="(v) => ticketProduct.changeUnitActualPrice(v)"
             />
           </div>
         </div>

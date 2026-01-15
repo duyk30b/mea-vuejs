@@ -148,7 +148,7 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
             {{ formatMoney(purchaseOrderItem.unitCostPrice) }}
           </td>
           <td class="text-right whitespace-nowrap">
-            {{ formatMoney(purchaseOrderItem.amount) }}
+            {{ formatMoney(purchaseOrderItem.unitCostPrice * purchaseOrderItem.unitQuantity) }}
           </td>
           <td class="text-center">
             <a
@@ -187,8 +187,11 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
         <tr v-if="purchaseOrder.purchaseOrderItemList!.length === 0">
           <td colspan="20" class="text-center">Chưa có dữ liệu</td>
         </tr>
-        <tr v-for="(purchaseOrderItem, index) in purchaseOrder.purchaseOrderItemList" :key="index">
-          <td v-if="CONFIG.MODE === 'development'">
+        <tr
+          v-for="(purchaseOrderItem, index) in purchaseOrder.purchaseOrderItemList"
+          :key="purchaseOrderItem._localId"
+        >
+          <td v-if="CONFIG.MODE === 'development'" class="text-center">
             <BugDevelopment :data="purchaseOrder" />
           </td>
           <td>
@@ -269,7 +272,7 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
               v-model:value="purchaseOrderItem.unitQuantity"
               textAlign="right"
               controlHorizontal
-              :controlMinusDisable="purchaseOrderItem.quantity === 0"
+              :controlMinusDisable="purchaseOrderItem.unitQuantity === 0"
             />
           </td>
           <td
@@ -282,7 +285,7 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
             {{ formatMoney(purchaseOrderItem.unitCostPrice) }}
           </td>
           <td class="text-right">
-            {{ formatMoney(purchaseOrderItem.amount) }}
+            {{ formatMoney(purchaseOrderItem.unitCostPrice * purchaseOrderItem.unitQuantity) }}
           </td>
           <td class="text-center">
             <a
@@ -303,10 +306,19 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
           </td>
         </tr>
         <tr>
-          <td colspan="100" class="text-right">
-            <span class="mr-10">Tổng tiền hàng:</span>
-            <span class="mr-20">{{ formatMoney(purchaseOrder.itemsActualMoney) }}</span>
+          <td v-if="CONFIG.MODE === 'development'"></td>
+          <td
+            v-if="settingStore.SCREEN_PURCHASE_ORDER_UPSERT.purchaseOrderItemsTable.warehouse"
+          ></td>
+          <td
+            v-if="settingStore.SCREEN_PURCHASE_ORDER_UPSERT.purchaseOrderItemsTable.unit"
+            class="text-center"
+          ></td>
+          <td colspan="4" class="text-right">Tổng tiền hàng:</td>
+          <td colspan="2" class="text-right">
+            {{ formatMoney(purchaseOrder.itemsActualMoney) }}
           </td>
+          <td colspan="2"></td>
         </tr>
       </tbody>
     </table>

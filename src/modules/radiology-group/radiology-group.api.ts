@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
   RadiologyGroupDetailQuery,
   RadiologyGroupGetQuery,
@@ -13,10 +13,12 @@ export class RadiologyGroupApi {
     const params = RadiologyGroupGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/radiology-group/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
-      meta,
-      data: RadiologyGroup.fromList(data),
+      radiologyGroupList: RadiologyGroup.fromList(data.radiologyGroupList),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
     }
   }
 
@@ -24,7 +26,7 @@ export class RadiologyGroupApi {
     const params = RadiologyGroupGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/radiology-group/list', { params })
-    const { data, time } = response.data as BaseResponse
+    const { data, time } = response.data as FullResponse
     return {
       time: new Date(time),
       data: RadiologyGroup.fromList(data),
@@ -37,7 +39,7 @@ export class RadiologyGroupApi {
   ): Promise<RadiologyGroup> {
     const params = RadiologyGroupGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/radiology-group/detail/${id}`, { params })
-    const { data, meta } = response.data as BaseResponse<{ radiologyGroup: any }>
+    const { data, meta } = response.data as FullResponse<{ radiologyGroup: any }>
     return RadiologyGroup.from(data.radiologyGroup)
   }
 
@@ -46,7 +48,7 @@ export class RadiologyGroupApi {
       name: radiologyGroup.name,
       roomId: radiologyGroup.roomId,
     })
-    const { data } = response.data as BaseResponse<{ radiologyGroup: any }>
+    const { data } = response.data as FullResponse<{ radiologyGroup: any }>
     return RadiologyGroup.from(data.radiologyGroup)
   }
 
@@ -55,13 +57,13 @@ export class RadiologyGroupApi {
       name: radiologyGroup.name,
       roomId: radiologyGroup.roomId,
     })
-    const { data } = response.data as BaseResponse<{ radiologyGroup: any }>
+    const { data } = response.data as FullResponse<{ radiologyGroup: any }>
     return RadiologyGroup.from(data.radiologyGroup)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/radiology-group/destroy/${id}`)
-    const { data, meta } = response.data as BaseResponse<boolean>
+    const { data, meta } = response.data as FullResponse<boolean>
     return data
   }
 
@@ -75,13 +77,13 @@ export class RadiologyGroupApi {
         }
       }),
     })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return data
   }
 
   static async systemList() {
     const response = await AxiosInstance.get('/radiology-group/system-list')
-    const { data, time } = response.data as BaseResponse
+    const { data, time } = response.data as FullResponse
     return RadiologyGroup.fromList(data)
   }
 }

@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
   TicketBatchGetQuery,
   TicketBatchListQuery,
@@ -12,10 +12,12 @@ export class TicketBatchApi {
     const params = TicketBatchGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/ticket-batch/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
-      meta,
-      data: TicketBatch.fromList(data),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
+      ticketBatchList: TicketBatch.fromList(data.ticketBatchList),
     }
   }
 
@@ -23,7 +25,7 @@ export class TicketBatchApi {
     const params = TicketBatchGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/ticket-batch/list', { params })
-    const { data, time } = response.data as BaseResponse<{ ticketBatchList: any }>
+    const { data, time } = response.data as FullResponse<{ ticketBatchList: any }>
     return TicketBatch.fromList(data.ticketBatchList)
   }
 }

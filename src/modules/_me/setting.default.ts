@@ -51,7 +51,7 @@ export const SETTING_DEFAULT = {
     warehouse: false,
     distributor: false,
     expiryDate: true,
-    unit: false,
+    unit: true,
     costPrice: true,
     action: true,
   },
@@ -285,16 +285,6 @@ export const SETTING_DEFAULT = {
     },
     laboratory: {},
     radiology: {},
-  },
-  TICKET_SPA_LIST: {
-    roleIdList: [],
-  },
-  TICKET_SPA_DETAIL: {
-    product: {
-      warehouseIdList: [0],
-      searchIncludeZeroQuantity: 1,
-      pickupStrategy: PickupStrategy.Inherit,
-    },
   },
 
   TICKET_STATISTIC: {

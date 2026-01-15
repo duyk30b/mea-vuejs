@@ -110,7 +110,7 @@ const startLoginDemo = async () => {
           <a @click="startLoginDemo">Dùng thử</a>
         </div>
         <div class="flex justify-center">
-          <VueButton color="blue" type="submit">Đăng nhập</VueButton>
+          <VueButton color="blue" type="submit" :loading="loading">Đăng nhập</VueButton>
         </div>
       </form>
     </div>

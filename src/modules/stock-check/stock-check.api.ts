@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
   StockCheckDetailQuery,
   StockCheckGetQuery,
@@ -13,10 +13,12 @@ export class StockCheckApi {
     const params = StockCheckGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/stock-check/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
-      meta,
-      data: StockCheck.fromList(data),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
+      stockCheckList: StockCheck.fromList(data.stockCheckList),
     }
   }
 
@@ -24,7 +26,7 @@ export class StockCheckApi {
     const params = StockCheckGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/stock-check/list', { params })
-    const { data } = response.data as BaseResponse<{ stockCheckList: any[] }>
+    const { data } = response.data as FullResponse<{ stockCheckList: any[] }>
     return StockCheck.fromList(data.stockCheckList)
   }
 
@@ -32,7 +34,7 @@ export class StockCheckApi {
     const params = StockCheckGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get(`/stock-check/detail/${stockCheckId}`, { params })
-    const { data } = response.data as BaseResponse<{ stockCheck: any }>
+    const { data } = response.data as FullResponse<{ stockCheck: any }>
     return StockCheck.from(data.stockCheck)
   }
 
@@ -54,49 +56,49 @@ export class StockCheckApi {
         note: i.note,
       })),
     })
-    const { data } = response.data as BaseResponse<{ stockCheck: StockCheck }>
+    const { data } = response.data as FullResponse<{ stockCheck: StockCheck }>
     return data
   }
 
   static async draftDestroy(stockCheckId: string) {
     const response = await AxiosInstance.post(`/stock-check/draft-destroy/${stockCheckId}`)
 
-    const { data } = response.data as BaseResponse<{ stockCheckId: string }>
+    const { data } = response.data as FullResponse<{ stockCheckId: string }>
     return data
   }
 
   static async draftSubmit(stockCheckId: string) {
     const response = await AxiosInstance.post(`/stock-check/draft-submit/${stockCheckId}`)
 
-    const { data } = response.data as BaseResponse<{ stockCheck: any }>
+    const { data } = response.data as FullResponse<{ stockCheck: any }>
     return StockCheck.from(data.stockCheck)
   }
 
   static async pendingApprove(stockCheckId: string) {
     const response = await AxiosInstance.post(`/stock-check/pending-approve/${stockCheckId}`)
 
-    const { data } = response.data as BaseResponse<{ stockCheck: any }>
+    const { data } = response.data as FullResponse<{ stockCheck: any }>
     return StockCheck.from(data.stockCheck)
   }
 
   static async confirmReconcile(stockCheckId: string) {
     const response = await AxiosInstance.post(`/stock-check/confirm-reconcile/${stockCheckId}`)
 
-    const { data } = response.data as BaseResponse<{ stockCheck: any }>
+    const { data } = response.data as FullResponse<{ stockCheck: any }>
     return StockCheck.from(data.stockCheck)
   }
 
   static async void(stockCheckId: string) {
     const response = await AxiosInstance.post(`/stock-check/void/${stockCheckId}`)
 
-    const { data } = response.data as BaseResponse<{ stockCheck: any }>
+    const { data } = response.data as FullResponse<{ stockCheck: any }>
     return StockCheck.from(data.stockCheck)
   }
 
   static async cancelledDestroy(stockCheckId: string) {
     const response = await AxiosInstance.post(`/stock-check/cancelled-destroy/${stockCheckId}`)
 
-    const { data } = response.data as BaseResponse<{ stockCheckId: string }>
+    const { data } = response.data as FullResponse<{ stockCheckId: string }>
     return data
   }
 }

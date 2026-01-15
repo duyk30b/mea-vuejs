@@ -1,20 +1,15 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import VuePagination from '@/common/VuePagination.vue'
+import { IconDelete, IconEditSquare } from '@/common/icon-google'
+import { InputSelect } from '@/common/vue-form'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { MeService } from '@/modules/_me/me.service'
+import { CustomerSource, CustomerSourceApi, CustomerSourceService } from '@/modules/customer-source'
+import { PermissionId } from '@/modules/permission/permission.enum'
 import { onBeforeMount, ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import VuePagination from '../../../common/VuePagination.vue'
-import { IconSetting } from '../../../common/icon-antd'
-import { IconDelete, IconEditSquare } from '../../../common/icon-google'
-import { InputSelect } from '../../../common/vue-form'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { MeService } from '../../../modules/_me/me.service'
-import {
-  CustomerSource,
-  CustomerSourceApi,
-  CustomerSourceService,
-} from '../../../modules/customer-source'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import ModalCustomerSourceUpsert from './ModalCustomerSourceUpsert.vue'
 import { Breadcrumb } from '../../component'
+import ModalCustomerSourceUpsert from './ModalCustomerSourceUpsert.vue'
 
 const modalCustomerSourceUpsert = ref<InstanceType<typeof ModalCustomerSourceUpsert>>()
 
@@ -32,7 +27,7 @@ const startFetchData = async () => {
   try {
     dataLoading.value = true
 
-    const { data, meta } = await CustomerSourceApi.pagination({
+    const paginationResponse = await CustomerSourceApi.pagination({
       page: page.value,
       limit: limit.value,
       relation: {},
@@ -40,8 +35,8 @@ const startFetchData = async () => {
       sort: { id: 'ASC' },
     })
 
-    customerSourceList.value = data
-    total.value = meta.total
+    customerSourceList.value = paginationResponse.customerSourceList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: CustomerSourceList.vue:39 ~ startFetchData ~ error:', error)
   } finally {

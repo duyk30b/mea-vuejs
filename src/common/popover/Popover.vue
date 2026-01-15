@@ -10,13 +10,14 @@
           :class="isClick ? 'dropdown-content-clicked' : ''"
           :style="customStyle?.dropdownContent || ''"
         >
-          <div
+          <!-- Lỗi sinh ra 1 cái scroll mà chưa biết sửa thế nào -->
+          <!-- <div
             v-if="customStyle?.arrow"
             class="dropdown-arrow"
             :style="customStyle?.dropdownArrow || ''"
             :class="`arrow-${positionFix.vertical} arrow-${positionFix.horizontal}`"
             ref="dropdownArrowRef"
-          ></div>
+          ></div> --> 
           <slot name="content"></slot>
         </div>
       </Transition>

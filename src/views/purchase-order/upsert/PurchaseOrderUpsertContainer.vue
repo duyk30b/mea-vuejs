@@ -181,9 +181,9 @@ const savePurchaseOrder = async (type: EPurchaseOrderSave) => {
   if (purchaseOrder.value.purchaseOrderItemList!.length == 0) {
     return AlertStore.addError('Lỗi: cần có ít nhất 1 sản phẩm trong phiếu')
   }
-  const invalidPurchaseOrderItem = purchaseOrder.value.purchaseOrderItemList!.find(
-    (ri) => ri.quantity === 0,
-  )
+  const invalidPurchaseOrderItem = purchaseOrder.value.purchaseOrderItemList!.find((ri) => {
+    return ri.unitQuantity === 0
+  })
   if (invalidPurchaseOrderItem) {
     return AlertStore.addError(
       `Lỗi: sản phẩm ${invalidPurchaseOrderItem!.product!.brandName} có số lượng 0`,

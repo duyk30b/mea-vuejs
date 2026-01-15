@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 
 export class FileICDApi {
   static async uploadExcelICDList(file: File) {
@@ -16,7 +16,7 @@ export class FileICDApi {
         }
       },
     })
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
     return data
   }
 }

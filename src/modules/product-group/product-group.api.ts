@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
   ProductGroupDetailQuery,
   ProductGroupGetQuery,
@@ -13,10 +13,12 @@ export class ProductGroupApi {
     const params = ProductGroupGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/product-group/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
-      meta,
-      data: ProductGroup.fromList(data),
+      productGroupList: ProductGroup.fromList(data.productGroupList),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
     }
   }
 
@@ -24,7 +26,7 @@ export class ProductGroupApi {
     const params = ProductGroupGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/product-group/list', { params })
-    const { data, time } = response.data as BaseResponse
+    const { data, time } = response.data as FullResponse
     return {
       time: new Date(time),
       data: ProductGroup.fromList(data),
@@ -34,7 +36,7 @@ export class ProductGroupApi {
   static async detail(id: number, options: ProductGroupDetailQuery = {}): Promise<ProductGroup> {
     const params = ProductGroupGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/product-group/detail/${id}`, { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return ProductGroup.from(data)
   }
 
@@ -47,7 +49,7 @@ export class ProductGroupApi {
         }
       }),
     })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return data
   }
 
@@ -55,7 +57,7 @@ export class ProductGroupApi {
     const response = await AxiosInstance.post('/product-group/create', {
       name: productGroup.name,
     })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return ProductGroup.from(data)
   }
 
@@ -63,13 +65,13 @@ export class ProductGroupApi {
     const response = await AxiosInstance.post(`/product-group/update/${id}`, {
       name: productGroup.name,
     })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return ProductGroup.from(data)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/product-group/destroy/${id}`)
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return ProductGroup.from(data)
   }
 }

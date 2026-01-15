@@ -492,6 +492,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
 }
 
 const startPrintParaClinicalRequest = async () => {
+  await ticketRoomRef.value.refreshRelation()
   await PrintHtmlAction.startPrintParaClinicalRequest({
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
@@ -800,7 +801,11 @@ const startPrintParaClinicalRequest = async () => {
                 <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
                   <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
                     <template #trigger>
-                      <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
+                      <IconBug
+                        style="color: violet; cursor: pointer"
+                        width="1.2em"
+                        height="1.2em"
+                      />
                     </template>
                     <pre>{{ JSON.stringify(tlItem, null, 4) }}</pre>
                   </VueTooltip>
@@ -889,7 +894,11 @@ const startPrintParaClinicalRequest = async () => {
                 <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
                   <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
                     <template #trigger>
-                      <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
+                      <IconBug
+                        style="color: violet; cursor: pointer"
+                        width="1.2em"
+                        height="1.2em"
+                      />
                     </template>
                     <pre>{{ JSON.stringify(laboratoryChild, null, 4) }}</pre>
                   </VueTooltip>

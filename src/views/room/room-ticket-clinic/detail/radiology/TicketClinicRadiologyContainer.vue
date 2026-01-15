@@ -65,8 +65,6 @@ onMounted(async () => {
   try {
     const radiologyAll = await RadiologyService.list({})
     await Promise.all([
-      TicketLaboratoryService.refreshRelationGroup(ticketRoomRef.value.ticketLaboratoryGroupList),
-      TicketLaboratoryService.refreshRelation(ticketRoomRef.value.ticketLaboratoryList),
       TicketRadiologyService.refreshRelation(ticketRoomRef.value.ticketRadiologyList),
     ])
     ticketRoomRef.value.refreshTicketRadiology()
@@ -122,6 +120,7 @@ const openModalResult = (data: { ticketRadiology: TicketRadiology; noEdit?: bool
 }
 
 const startPrintParaClinicalRequest = async () => {
+  await ticketRoomRef.value.refreshRelation()
   await PrintHtmlAction.startPrintParaClinicalRequest({
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,

@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../../core/axios.instance'
-import type { BaseResponse } from '../../_base/base-dto'
+import type { FullResponse } from '../../_base/base-dto'
 import type { TicketProduct } from '../../ticket-product'
 import type { TicketUser } from '../../ticket-user'
 
@@ -21,20 +21,20 @@ export class TicketChangeProductApi {
           pickupStrategy: i.pickupStrategy,
 
           unitRate: i.unitRate,
-          quantityPrescription: i.quantityPrescription,
+          unitQuantityPrescription: i.unitQuantityPrescription,
           printPrescription: i.printPrescription,
-          quantity: i.quantity,
-          expectedPrice: i.expectedPrice,
-          discountMoney: i.discountMoney,
+          unitQuantity: i.unitQuantity,
+          unitExpectedPrice: i.unitExpectedPrice,
+          unitDiscountMoney: i.unitDiscountMoney,
           discountPercent: i.discountPercent,
           discountType: i.discountType,
-          actualPrice: i.actualPrice,
+          unitActualPrice: i.unitActualPrice,
 
           createdAt: i.createdAt,
         })),
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 
   static async addTicketProductPrescriptionList(body: {
@@ -54,21 +54,21 @@ export class TicketChangeProductApi {
           pickupStrategy: i.pickupStrategy,
 
           unitRate: i.unitRate,
-          quantityPrescription: i.quantityPrescription,
+          unitQuantityPrescription: i.unitQuantityPrescription,
           printPrescription: i.printPrescription,
-          quantity: i.quantity,
-          expectedPrice: i.expectedPrice,
-          discountMoney: i.discountMoney,
+          unitQuantity: i.unitQuantity,
+          unitExpectedPrice: i.unitExpectedPrice,
+          unitDiscountMoney: i.unitDiscountMoney,
           discountPercent: i.discountPercent,
           discountType: i.discountType,
-          actualPrice: i.actualPrice,
+          unitActualPrice: i.unitActualPrice,
 
           hintUsage: i.hintUsage,
           createdAt: i.createdAt,
         })),
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 
   static async destroyTicketProductConsumable(body: { ticketId: string; ticketProductId: string }) {
@@ -76,7 +76,7 @@ export class TicketChangeProductApi {
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/consumable/destroy-ticket-product-consumable/${ticketProductId}`,
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 
   static async destroyTicketProductPrescription(body: {
@@ -87,7 +87,7 @@ export class TicketChangeProductApi {
     const response = await AxiosInstance.post(
       `/ticket/${ticketId}/prescription/destroy-ticket-product-prescription/${ticketProductId}`,
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 
   static async updatePriorityTicketProductConsumable(body: {
@@ -104,7 +104,7 @@ export class TicketChangeProductApi {
         })),
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 
   static async updatePriorityTicketProductPrescription(body: {
@@ -121,7 +121,7 @@ export class TicketChangeProductApi {
         })),
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 
   static async updateTicketProductConsumable(body: {
@@ -136,14 +136,15 @@ export class TicketChangeProductApi {
       {
         ticketProduct: ticketProduct
           ? {
-            quantity: ticketProduct.quantity,
-            quantityPrescription: ticketProduct.quantityPrescription,
+            unitRate: ticketProduct.unitRate,
+            unitQuantity: ticketProduct.unitQuantity,
+            unitQuantityPrescription: ticketProduct.unitQuantityPrescription,
             printPrescription: ticketProduct.printPrescription,
-            expectedPrice: ticketProduct.expectedPrice,
+            unitExpectedPrice: ticketProduct.unitExpectedPrice,
             discountType: ticketProduct.discountType,
-            discountMoney: ticketProduct.discountMoney,
+            unitDiscountMoney: ticketProduct.unitDiscountMoney,
             discountPercent: ticketProduct.discountPercent,
-            actualPrice: ticketProduct.actualPrice,
+            unitActualPrice: ticketProduct.unitActualPrice,
             hintUsage: ticketProduct.hintUsage,
           }
           : undefined,
@@ -157,7 +158,7 @@ export class TicketChangeProductApi {
           : undefined,
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 
   static async updateTicketProductPrescription(body: {
@@ -172,14 +173,15 @@ export class TicketChangeProductApi {
       {
         ticketProduct: ticketProduct
           ? {
-            quantity: ticketProduct.quantity,
-            quantityPrescription: ticketProduct.quantityPrescription,
+            unitRate: ticketProduct.unitRate,
+            unitQuantity: ticketProduct.unitQuantity,
+            unitQuantityPrescription: ticketProduct.unitQuantityPrescription,
             printPrescription: ticketProduct.printPrescription,
-            expectedPrice: ticketProduct.expectedPrice,
+            unitExpectedPrice: ticketProduct.unitExpectedPrice,
             discountType: ticketProduct.discountType,
-            discountMoney: ticketProduct.discountMoney,
+            unitDiscountMoney: ticketProduct.unitDiscountMoney,
             discountPercent: ticketProduct.discountPercent,
-            actualPrice: ticketProduct.actualPrice,
+            unitActualPrice: ticketProduct.unitActualPrice,
             hintUsage: ticketProduct.hintUsage,
           }
           : undefined,
@@ -193,6 +195,6 @@ export class TicketChangeProductApi {
           : undefined,
       },
     )
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
   }
 }

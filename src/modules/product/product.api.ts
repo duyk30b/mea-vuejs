@@ -1,15 +1,15 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { Batch } from '../batch'
 import type { Discount } from '../discount'
 import type { Position } from '../position'
 import { PurchaseOrderItem } from '../purchase-order-item'
 import { TicketProduct } from '../ticket-product'
 import {
-  ProductDetailQuery,
-  ProductGetQuery,
-  ProductListQuery,
-  ProductPaginationQuery,
+    ProductDetailQuery,
+    ProductGetQuery,
+    ProductListQuery,
+    ProductPaginationQuery,
 } from './product.dto'
 import { Product } from './product.model'
 
@@ -18,7 +18,7 @@ export class ProductApi {
     const params = ProductGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/product/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data, meta } = response.data as FullResponse
     return {
       total: data.total,
       page: data.page,
@@ -31,7 +31,7 @@ export class ProductApi {
     const params = ProductGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/product/list', { params })
-    const { data, time } = response.data as BaseResponse<{ productList: any[] }>
+    const { data, time } = response.data as FullResponse<{ productList: any[] }>
     return {
       time: new Date(time),
       productList: Product.fromList(data.productList),
@@ -48,7 +48,7 @@ export class ProductApi {
   static async detail(id: number, options: ProductDetailQuery = {}): Promise<Product> {
     const params = ProductGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/product/detail/${id}`, { params })
-    const { data } = response.data as BaseResponse<{ product: any }>
+    const { data } = response.data as FullResponse<{ product: any }>
     return Product.from(data.product)
   }
 
@@ -109,7 +109,7 @@ export class ProductApi {
         }
       }),
     })
-    const { data } = response.data as BaseResponse<{ product: any }>
+    const { data } = response.data as FullResponse<{ product: any }>
     return Product.from(data.product)
   }
 
@@ -171,18 +171,18 @@ export class ProductApi {
         }
       }),
     })
-    const result = response.data as BaseResponse<{ product: any; batchError: any[] }>
+    const result = response.data as FullResponse<{ product: any; batchError: any[] }>
     if (result.success) {
       result.data.product = Product.from(result.data.product)
     } else {
       result.data.batchError = Batch.fromList(result.data.batchError)
     }
-    return result as BaseResponse<{ product: Product; batchError: Batch[] }>
+    return result as FullResponse<{ product: Product; batchError: Batch[] }>
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/product/destroy/${id}`)
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       success: boolean
       productId: number
       purchaseOrderItemList: PurchaseOrderItem[]
@@ -198,7 +198,7 @@ export class ProductApi {
       productIdSourceList: options.productIdSourceList,
       productIdTarget: options.productIdTarget,
     })
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
     return data
   }
 }

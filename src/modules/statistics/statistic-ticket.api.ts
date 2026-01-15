@@ -1,6 +1,6 @@
 import { AxiosInstance } from '@/core/axios.instance'
 import { OmitClass } from '@/utils'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { Customer } from '../customer'
 import { TicketGetQuery, type TicketFilterQuery } from '../ticket'
 
@@ -58,7 +58,7 @@ export class StatisticTicketApi {
     const response = await AxiosInstance.get('statistic/ticket/group-by-customer', {
       params,
     })
-    const { data } = response.data as BaseResponse<{ dataStatistic: any[] }>
+    const { data } = response.data as FullResponse<{ dataStatistic: any[] }>
 
     return {
       dataStatistic: data.dataStatistic.map((i: any) => {
@@ -94,7 +94,7 @@ export class StatisticTicketApi {
         groupTimeType: options.groupTimeType,
       },
     })
-    const { data } = response.data as BaseResponse<{
+    const { data } = response.data as FullResponse<{
       statisticData: Record<string, Omit<StatisticTicketQueryTimeResponseType, 'timeLabel'>>
     }>
     return Object.entries(data.statisticData).map(([key, value]) => ({ timeLabel: key, ...value }))

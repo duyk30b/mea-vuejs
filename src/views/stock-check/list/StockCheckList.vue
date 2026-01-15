@@ -43,7 +43,7 @@ const startFetchData = async () => {
   try {
     dataLoading.value = true
 
-    const { data, meta } = await StockCheckApi.pagination({
+    const paginationResponse = await StockCheckApi.pagination({
       relation: {
         createdByUser: true,
         updatedByUser: false,
@@ -66,8 +66,8 @@ const startFetchData = async () => {
         : { id: 'DESC' },
     })
 
-    stockCheckList.value = data
-    total.value = meta.total
+    stockCheckList.value = paginationResponse.stockCheckList
+    total.value = paginationResponse.total
     dataLoading.value = false
   } catch (error) {
     console.log('🚀 ~ StockCheckList.vue:73 ~ startFetchData ~ error:', error)

@@ -1,11 +1,11 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { Organization } from './organization.model'
 
 export class OrganizationApi {
   static async info() {
     const response = await AxiosInstance.get('/organization/info')
-    const { data } = response.data as BaseResponse<{ organization: any }>
+    const { data } = response.data as FullResponse<{ organization: any }>
 
     return Organization.from(data.organization)
   }
@@ -43,14 +43,14 @@ export class OrganizationApi {
         'Content-Type': 'multipart/form-data',
       },
     })
-    const { data } = response.data as BaseResponse<{ organization: any }>
+    const { data } = response.data as FullResponse<{ organization: any }>
 
     return Organization.from(data.organization)
   }
 
   static async sendEmailVerifyOrganizationEmail() {
     const response = await AxiosInstance.post('/organization/send-email-verify-organization-email')
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
 
     return data
   }
@@ -59,7 +59,7 @@ export class OrganizationApi {
     const response = await AxiosInstance.post('/organization/change-email', {
       email,
     })
-    const { data } = response.data as BaseResponse<{ organization: any }>
+    const { data } = response.data as FullResponse<{ organization: any }>
 
     return Organization.from(data.organization)
   }

@@ -1,5 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { Organization } from '../organization'
 import { Permission } from '../permission/permission.model'
 import { User } from '../user/user.model'
@@ -7,7 +7,7 @@ import { User } from '../user/user.model'
 export class MeApi {
   static async data() {
     const response = await AxiosInstance.get('/me/data')
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return {
       organization: Organization.from(data.organization),
       permissionAll: Permission.fromList(data.permissionAll),
@@ -21,7 +21,7 @@ export class MeApi {
 
   static async info() {
     const response = await AxiosInstance.get('/me/info')
-    const { data } = response.data as BaseResponse<{ user: any }>
+    const { data } = response.data as FullResponse<{ user: any }>
     return User.from(data.user)
   }
 
@@ -30,7 +30,7 @@ export class MeApi {
       oldPassword,
       newPassword,
     })
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as FullResponse<boolean>
     return data
   }
 
@@ -61,7 +61,7 @@ export class MeApi {
         'Content-Type': 'multipart/form-data',
       },
     })
-    const { data } = response.data as BaseResponse<{ user: any }>
+    const { data } = response.data as FullResponse<{ user: any }>
 
     return User.from(data.user)
   }

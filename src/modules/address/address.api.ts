@@ -1,11 +1,11 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import { Address } from './address.model'
 
 export class AddressApi {
   static async all() {
     const response = await AxiosInstance.get('/address/all')
-    const { data } = response.data as BaseResponse<{ addressAll: any[] }>
+    const { data } = response.data as FullResponse<{ addressAll: any[] }>
     return Address.fromList(data.addressAll)
   }
 
@@ -18,6 +18,6 @@ export class AddressApi {
         }
       }),
     })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
   }
 }

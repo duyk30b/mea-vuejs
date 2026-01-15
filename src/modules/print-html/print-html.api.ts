@@ -1,11 +1,11 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import type { FullResponse } from '../_base/base-dto'
 import {
-  PrintHtmlGetQuery,
-  type PrintHtmlDetailQuery,
-  type PrintHtmlGetListQuery,
-  type PrintHtmlGetOneQuery,
-  type PrintHtmlPaginationQuery,
+    PrintHtmlGetQuery,
+    type PrintHtmlDetailQuery,
+    type PrintHtmlGetListQuery,
+    type PrintHtmlGetOneQuery,
+    type PrintHtmlPaginationQuery,
 } from './print-html.dto'
 import { PrintHtml } from './print-html.model'
 
@@ -14,7 +14,7 @@ export class PrintHtmlApi {
     const params = PrintHtmlGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/print-html/pagination', { params })
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as FullResponse
     return {
       total: data.total,
       page: data.page,
@@ -27,7 +27,7 @@ export class PrintHtmlApi {
     const params = PrintHtmlGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/print-html/get-list', { params })
-    const { data, time } = response.data as BaseResponse<{ printHtmlList: any[] }>
+    const { data, time } = response.data as FullResponse<{ printHtmlList: any[] }>
     return {
       printHtmlList: PrintHtml.fromList(data.printHtmlList),
     }
@@ -37,14 +37,14 @@ export class PrintHtmlApi {
     const params = PrintHtmlGetQuery.toQuery(query)
 
     const response = await AxiosInstance.get('/print-html/get-one', { params })
-    const { data, meta } = response.data as BaseResponse<{ printHtml: any }>
+    const { data, meta } = response.data as FullResponse<{ printHtml: any }>
     return data.printHtml ? PrintHtml.from(data.printHtml) : null
   }
 
   static async detail(id: number, options: PrintHtmlDetailQuery = {}): Promise<PrintHtml> {
     const params = PrintHtmlGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/print-html/detail/${id}`, { params })
-    const { data, meta } = response.data as BaseResponse<{ printHtml: any }>
+    const { data, meta } = response.data as FullResponse<{ printHtml: any }>
     return PrintHtml.from(data.printHtml)
   }
 
@@ -58,7 +58,7 @@ export class PrintHtmlApi {
       initVariable: printHtml.initVariable || '',
       dataExample: printHtml.dataExample || '',
     })
-    const { data } = response.data as BaseResponse<{ printHtml: any }>
+    const { data } = response.data as FullResponse<{ printHtml: any }>
     return PrintHtml.from(data.printHtml)
   }
 
@@ -72,19 +72,19 @@ export class PrintHtmlApi {
       initVariable: printHtml.initVariable || '',
       dataExample: printHtml.dataExample || '',
     })
-    const { data } = response.data as BaseResponse<{ printHtml: any }>
+    const { data } = response.data as FullResponse<{ printHtml: any }>
     return PrintHtml.from(data.printHtml)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.post(`/print-html/destroy/${id}`)
-    const { data, meta } = response.data as BaseResponse<boolean>
+    const { data, meta } = response.data as FullResponse<boolean>
     return data
   }
 
   static async systemList() {
     const response = await AxiosInstance.get('/print-html/system-list')
-    const { data, time } = response.data as BaseResponse<{ printHtmlSystem: any[] }>
+    const { data, time } = response.data as FullResponse<{ printHtmlSystem: any[] }>
     return PrintHtml.fromList(data.printHtmlSystem)
   }
 }
