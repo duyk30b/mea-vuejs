@@ -1,5 +1,11 @@
 import { BaseModel } from '../_base/base.model'
+import type { Laboratory } from '../laboratory'
+import type { LaboratoryGroup } from '../laboratory-group'
 import { CommissionCalculatorType, Position, PositionType } from '../position'
+import type { Procedure } from '../procedure'
+import type { Product } from '../product'
+import type { Radiology } from '../radiology'
+import type { Regimen } from '../regimen'
 import type { Role } from '../role'
 import type { TicketProcedure } from '../ticket-procedure'
 import type { TicketRegimen } from '../ticket-regimen'
@@ -34,6 +40,13 @@ export class TicketUser extends BaseModel {
   user?: User
   role?: Role
   position?: Position
+
+  product?: Product
+  procedure?: Procedure
+  regimen?: Regimen
+  laboratory?: Laboratory
+  laboratoryGroup?: LaboratoryGroup
+  radiology?: Radiology
 
   ticketProcedure?: TicketProcedure // chỉ convert tại màn TicketUserContainer
   ticketRegimen?: TicketRegimen // chỉ convert tại màn TicketUserContainer

@@ -29,8 +29,8 @@ a {
   color: inherit;
   text-decoration: none;
 }
-pre {
-  /* white-space: pre-wrap;
-  overflow-wrap: break-word; */
-}
+/* pre {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+} */
 </style>

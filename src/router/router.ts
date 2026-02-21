@@ -78,6 +78,12 @@ const Router = createRouter({
                 },
               ],
             },
+            {
+              path: 'user-action',
+              meta: { title: 'Hoạt động' },
+              name: 'UserAction',
+              component: () => import('../views/user/user-action/UserActionList.vue'),
+            },
           ],
         },
         {

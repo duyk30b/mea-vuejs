@@ -257,6 +257,9 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item v-if="userPermission[PermissionId.USER_ACCOUNT_MENU]" key="Account">
         <router-link :to="{ name: 'Account' }">Tài khoản</router-link>
       </a-menu-item>
+      <a-menu-item v-if="userPermission[PermissionId.USER_ACTION_MENU]" key="UserAction">
+        <router-link :to="{ name: 'UserAction' }">Hoạt động</router-link>
+      </a-menu-item>
     </a-sub-menu>
     <a-sub-menu key="Systems">
       <template #icon>
