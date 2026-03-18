@@ -109,7 +109,7 @@ defineExpose({ openModal })
             </VueTabMenu>
             <VueTabMenu style="padding: 6px 6px" :tabKey="TABS_KEY.TICKET_HISTORY">
               <IconAudit />
-              Tiếp đón
+              Phiếu
             </VueTabMenu>
             <VueTabMenu
               v-if="organizationPermission[PermissionId.PAYMENT]"

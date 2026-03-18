@@ -1,0 +1,11 @@
+input.input-basic-line {
+  width: 100%;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: 1px solid #cdcdcd;
+
+  &:focus {
+    outline: none;
+  }
+}

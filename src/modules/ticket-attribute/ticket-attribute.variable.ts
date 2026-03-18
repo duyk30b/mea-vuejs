@@ -108,15 +108,24 @@ export const TicketAttributeKeyEyeList = [
 
   'NhanAp_MP_mmHg',
   'BeDayGiacMac_MP_micrometer',
+  'DuongKinhGiacMac_MP_millimeter',
   'DuongKinhDongTu_MP_millimeter',
   'ChieuDaiTrucNhanCau_MP',
   'BienDoDieuTiet_MP',
+  'K1AndK2_MP_diopter',
 
   'NhanAp_MT_mmHg',
   'BeDayGiacMac_MT_micrometer',
+  'DuongKinhGiacMac_MT_millimeter',
   'DuongKinhDongTu_MT_millimeter',
   'ChieuDaiTrucNhanCau_MT',
   'BienDoDieuTiet_MT',
+  'K1AndK2_MT_diopter',
+
+  'SacGiac',
+  'HinhNoi',
+  'CoverTest',
+  'DayMat',
 
   'SoKinhChiDinh_MP_Cau',
   'SoKinhChiDinh_MP_Tru',
