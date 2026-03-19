@@ -38,9 +38,7 @@ export const SETTING_DEFAULT = {
   ],
   PRODUCT_ROUTE: <string[]>['Uống', 'Bôi', 'Ngậm', 'Tiêm', 'Xịt'],
   PRODUCT_HINT_USAGE: <string[]>[
-    'Uống 2 lần/ngày sau ăn, sáng 1 viên, chiều 1 viên',
-    'Uống 1 viên khi sốt, sau 4h có thể uống tiếp',
-    'Bôi dưới da 3 lần/ngày',
+
   ],
 
   SCREEN_PRODUCT_LIST: {

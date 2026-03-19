@@ -403,7 +403,7 @@ const startPrint = async () => {
                 <td><input v-model="ticketAttributeMap.NhanAp_MT_mmHg" /></td>
               </tr>
               <tr>
-                <td style="padding: 0 6px">Bề dày giác mạc (μm)</td>
+                <td style="padding: 0 6px">Độ dày giác mạc (μm)</td>
                 <td><input v-model="ticketAttributeMap.BeDayGiacMac_MP_micrometer" /></td>
                 <td><input v-model="ticketAttributeMap.BeDayGiacMac_MT_micrometer" /></td>
               </tr>
