@@ -116,7 +116,7 @@ const selectRadiology = async (radiologyData: Radiology) => {
   temp.roomId = radiologyGroup.roomId || 0
   temp.radiology = radiologyData
 
-  temp.printHtmlId = radiologyData.printHtmlId
+  temp.templateHtmlId = radiologyData.templateHtmlId
   temp.description = radiologyData.descriptionDefault
   temp.result = radiologyData.resultDefault
   temp.customStyles = radiologyData.customStyles

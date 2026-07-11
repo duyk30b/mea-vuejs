@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { VueButton } from '@/common'
 import {
-  IconBug,
   IconContacts,
   IconDelete,
   IconDisconnect,
@@ -13,17 +12,11 @@ import {
   IconMore,
   IconOneToOne,
   IconPicCenter,
+  IconPrint,
   IconSetting,
   IconUser,
 } from '@/common/icon-antd'
-import {
-  IconEyeGlasses,
-  IconFluidMed,
-  IconLabPanel,
-  IconRadiology,
-  IconStethoscope,
-} from '@/common/icon-google'
-import { VueTooltip } from '@/common/popover'
+import { IconFluidMed, IconLabPanel, IconRadiology, IconStethoscope } from '@/common/icon-google'
 import VueDropdown from '@/common/popover/VueDropdown.vue'
 import { AlertStore } from '@/common/vue-alert'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
@@ -36,12 +29,14 @@ import { Customer } from '@/modules/customer'
 import { DeliveryStatus, PaymentViewType, PickupStrategy } from '@/modules/enum'
 import { PaymentActionType } from '@/modules/payment'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Room, RoomService, RoomTicketStyle, ticketRoomRef } from '@/modules/room'
+import { ticketRoomRef } from '@/modules/room'
 import { Ticket, TicketActionApi, TicketService, TicketStatus } from '@/modules/ticket'
 import { TicketProcedureStatus } from '@/modules/ticket-procedure'
 import { TicketRadiologyStatus } from '@/modules/ticket-radiology'
 import { TicketUserService } from '@/modules/ticket-user'
+import { useTicketClinicDetailStore } from '@/store/ticket-clinic-detail.store'
 import { ESString } from '@/utils'
+import { BugDevelopment } from '@/views/component'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
 import ModalTicketPaymentItem from '@/views/room/room-ticket-base/ModalTicketPaymentItem.vue'
 import { computed, onBeforeMount, onUnmounted, ref, watch } from 'vue'
@@ -52,17 +47,16 @@ import ModalTicketReturnProduct from '../../room-ticket-base/ModalTicketReturnPr
 import ModalTicketClinicHistory from '../history/ModalTicketClinicHistory.vue'
 import TicketClinicConsumableContainer from './consumable/TicketClinicConsumableContainer.vue'
 import TicketClinicDiagnosis from './diagnosis/TicketClinicDiagnosis.vue'
-import TicketClinicDiagnosisEyeSpecial from './diagnosis/TicketClinicDiagnosisEyeSpecial.vue'
 import TicketClinicLaboratoryContainer from './laboratory/TicketClinicLaboratoryContainer.vue'
-import ModalTicketClinicDetailSetting from './modal/ModalTicketClinicDetailSetting.vue'
+import ModalRoomSetting from './modal/ModalRoomSetting.vue'
 import TicketClinicPrescriptionContainer from './prescription/TicketClinicPrescriptionContainer.vue'
 import TicketClinicProcedureContainer from './procedure/TicketClinicProcedureContainer.vue'
 import TicketClinicRadiologyContainer from './radiology/TicketClinicRadiologyContainer.vue'
 import TicketClinicSummaryContainer from './summary/TicketClinicSummaryContainer.vue'
 import TicketClinicUserContainer from './user/TicketClinicUserContainer.vue'
-import { BugDevelopment } from '@/views/component'
+import { TemplateHtmlAction } from '@/modules/template-html'
 
-const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
+const modalRoomSetting = ref<InstanceType<typeof ModalRoomSetting>>()
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
 const modalTicketPaymentItem = ref<InstanceType<typeof ModalTicketPaymentItem>>()
 const modalTicketPayment = ref<InstanceType<typeof ModalTicketPayment>>()
@@ -73,11 +67,9 @@ const modalTicketPaymentHistory = ref<InstanceType<typeof ModalTicketPaymentHist
 const route = useRoute()
 const router = useRouter()
 const settingStore = useSettingStore()
+const ticketClinicDetailStore = useTicketClinicDetailStore()
 const { userPermission, organizationPermission } = MeService
 const { formatMoney } = settingStore
-
-const roomMap = RoomService.roomMap
-const currentRoom = ref<Room>(Room.blank())
 
 const ticketLoaded = ref(false)
 
@@ -87,12 +79,7 @@ watch(
   () => route.params.roomId,
   async (newValue) => {
     const roomId = Number(newValue) || 0
-    await RoomService.getMap()
-    currentRoom.value = roomMap.value[roomId]
-    if (!currentRoom.value) {
-      currentRoom.value = Room.blank()
-      AlertStore.addError('Phòng khám không hợp lệ')
-    }
+    await ticketClinicDetailStore.fetchRoom(roomId)
     startFetchData()
   },
   { immediate: true },
@@ -469,11 +456,32 @@ const clickReturnProduct = () => {
     modalTicketReturnProduct.value?.openModal(ticketRoomRef.value)
   }
 }
+
+const startPrintTicketClinicDiagnosis = async () => {
+  await TemplateHtmlAction.startPrintTicketClinicDiagnosis({
+    ticket: ticketRoomRef.value,
+    customer: ticketRoomRef.value.customer!,
+  })
+}
+
+const startPrintTicketClinicPrescription = async () => {
+  await TemplateHtmlAction.startPrintTicketClinicPrescription({
+    ticket: ticketRoomRef.value,
+    customer: ticketRoomRef.value.customer!,
+  })
+}
+
+const startPrintTicketClinicAllMoney = async () => {
+  await TemplateHtmlAction.startPrintTicketClinicAllMoney({
+    ticket: ticketRoomRef.value,
+    customer: ticketRoomRef.value.customer!,
+  })
+}
 </script>
 
 <template>
   <ModalCustomerDetail ref="modalCustomerDetail" />
-  <ModalTicketClinicDetailSetting ref="modalTicketClinicDetailSetting" />
+  <ModalRoomSetting ref="modalRoomSetting" />
   <ModalTicketPaymentItem ref="modalTicketPaymentItem" />
   <ModalTicketPayment ref="modalTicketPayment" />
   <ModalTicketPaymentHistory ref="modalTicketPaymentHistory" />
@@ -523,7 +531,7 @@ const clickReturnProduct = () => {
     </div>
 
     <div
-      v-if="!settingStore.TICKET_CLINIC_DETAIL.other.hideMoneyTitle"
+      v-if="ticketClinicDetailStore.roomRef?.roomSettingObj?.general?.showMoneyTitle"
       class="ml-auto mx-8 flex flex-wrap items-center gap-8"
     >
       <div
@@ -748,6 +756,19 @@ const clickReturnProduct = () => {
 
       <VueDropdown>
         <template #trigger>
+          <span style="font-size: 1.4rem; cursor: pointer; color: blue">
+            <IconPrint />
+          </span>
+        </template>
+        <div class="vue-menu">
+          <a @click="startPrintTicketClinicDiagnosis()">In phiếu khám</a>
+          <a @click="startPrintTicketClinicPrescription()">In đơn thuốc</a>
+          <a @click="startPrintTicketClinicAllMoney()">In bảng kê chi phí</a>
+        </div>
+      </VueDropdown>
+
+      <VueDropdown>
+        <template #trigger>
           <span style="font-size: 1.4rem; cursor: pointer">
             <IconSetting />
           </span>
@@ -755,7 +776,7 @@ const clickReturnProduct = () => {
         <div class="vue-menu">
           <a
             v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-            @click="modalTicketClinicDetailSetting?.openModal()"
+            @click="modalRoomSetting?.openModal()"
           >
             Cài đặt dữ liệu
           </a>
@@ -786,23 +807,6 @@ const clickReturnProduct = () => {
           <IconStethoscope />
           Khám
         </VueTabMenu>
-        <template
-          v-if="
-            [TicketStatus.Executing, TicketStatus.Debt, TicketStatus.Completed].includes(
-              ticketRoomRef.status,
-            )
-          "
-        >
-          <VueTabMenu
-            v-if="currentRoom.roomStyle === RoomTicketStyle.TicketClinicEye"
-            style="padding: 6px 12px"
-            :tabKey="TicketClinicDiagnosisEyeSpecial.__name!"
-            @active="router.push({ name: TicketClinicDiagnosisEyeSpecial.__name })"
-          >
-            <IconEyeGlasses />
-            Đo thị lực
-          </VueTabMenu>
-        </template>
         <VueTabMenu
           :tabKey="TicketClinicProcedureContainer.__name!"
           style="padding: 6px 12px"
@@ -819,6 +823,7 @@ const clickReturnProduct = () => {
           "
         >
           <VueTabMenu
+            v-if="ticketClinicDetailStore.roomRef?.roomSettingObj?.general?.showMenuConsumable"
             style="padding: 6px 12px"
             :tabKey="TicketClinicConsumableContainer.__name!"
             @active="router.push({ name: TicketClinicConsumableContainer.__name })"
@@ -827,6 +832,7 @@ const clickReturnProduct = () => {
             Vật tư
           </VueTabMenu>
           <VueTabMenu
+            v-if="ticketClinicDetailStore.roomRef?.roomSettingObj?.general?.showMenuLaboratory"
             style="padding: 6px 12px"
             :tabKey="TicketClinicLaboratoryContainer.__name!"
             @active="router.push({ name: TicketClinicLaboratoryContainer.__name })"
@@ -835,6 +841,7 @@ const clickReturnProduct = () => {
             Xét nghiệm
           </VueTabMenu>
           <VueTabMenu
+            v-if="ticketClinicDetailStore.roomRef?.roomSettingObj?.general?.showMenuRadiology"
             style="padding: 6px 12px"
             :tabKey="TicketClinicRadiologyContainer.__name!"
             @active="router.push({ name: TicketClinicRadiologyContainer.__name })"
@@ -851,6 +858,7 @@ const clickReturnProduct = () => {
             Đơn thuốc
           </VueTabMenu>
           <VueTabMenu
+            v-if="ticketClinicDetailStore.roomRef?.roomSettingObj?.general?.showMenuUser"
             style="padding: 6px 12px"
             :tabKey="TicketClinicUserContainer.__name!"
             @active="router.push({ name: TicketClinicUserContainer.__name })"
@@ -874,7 +882,6 @@ const clickReturnProduct = () => {
         :include="
           [
             TicketClinicDiagnosis.__name,
-            TicketClinicDiagnosisEyeSpecial.__name,
             TicketClinicProcedureContainer.__name,
             TicketClinicConsumableContainer.__name,
             TicketClinicLaboratoryContainer.__name,

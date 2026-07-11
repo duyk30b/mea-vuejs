@@ -20,7 +20,7 @@ import {
   PaymentVoucherType,
 } from '@/modules/payment/payment.model'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PrintHtmlAction } from '@/modules/print-html'
+import { TemplateHtmlAction } from '@/modules/template-html'
 import { ESTimer } from '@/utils'
 import { Breadcrumb } from '@/views/component'
 import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
@@ -159,7 +159,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 const startPrintCustomerPayment = async (options: { customer: Customer; payment: Payment }) => {
   const payment = options.payment
   const paymentPrint = await Payment.refreshData(payment)
-  await PrintHtmlAction.startPrintCustomerPayment({
+  await TemplateHtmlAction.startPrintTicketClinicCustomerPayment({
     customer: options.customer!,
     payment: paymentPrint,
   })
@@ -168,7 +168,7 @@ const startPrintCustomerPayment = async (options: { customer: Customer; payment:
 const startPrintCustomerRefund = async (options: { customer: Customer; payment: Payment }) => {
   const payment = options.payment
   const paymentPrint = await Payment.refreshData(payment)
-  await PrintHtmlAction.startPrintCustomerRefund({
+  await TemplateHtmlAction.startPrintTicketClinicCustomerRefund({
     customer: options.customer!,
     payment: paymentPrint,
   })

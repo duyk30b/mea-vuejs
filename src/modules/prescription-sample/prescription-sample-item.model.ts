@@ -73,4 +73,14 @@ export class PrescriptionSampleItem extends BaseModel {
     if (a.hintUsage != b.hintUsage) return false
     return true
   }
+
+  static equalList(a: PrescriptionSampleItem[], b: PrescriptionSampleItem[]) {
+    if (a.length != b.length) return false
+    for (let i = 0; i < a.length; i++) {
+      if (!PrescriptionSampleItem.equal(a[i], b[i])) {
+        return false
+      }
+    }
+    return true
+  }
 }

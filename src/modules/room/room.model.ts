@@ -1,34 +1,49 @@
+import { objectUpdatePropertyByObject } from '@/utils'
+import { PickupStrategy } from '../enum'
 import { User } from '../user'
 import { UserRoom } from '../user-room'
 
 export enum RoomType {
-  Ticket = 1,
-  Product = 2,
-  Procedure = 3,
-  Laboratory = 4,
-  Radiology = 5,
+  TicketOrder = 1,
+  TicketClinic = 2,
+  Product = 3,
+  Procedure = 4,
+  Laboratory = 5,
+  Radiology = 6,
 }
 
 export const RoomTypeText = {
-  [RoomType.Ticket]: 'Phòng Chính',
+  [RoomType.TicketOrder]: 'Phòng Bán Hàng',
+  [RoomType.TicketClinic]: 'Phòng Khám',
   [RoomType.Product]: 'Phòng Sản phẩm',
   [RoomType.Procedure]: 'Phòng Dịch vụ',
   [RoomType.Laboratory]: 'Phòng Xét nghiệm',
   [RoomType.Radiology]: 'Phòng CĐHA',
 }
 
-export enum RoomTicketStyle {
-  TicketOrder = 111,
-  TicketClinicGeneral = 121,
-  TicketClinicObstetric = 122,
-  TicketClinicEye = 123,
-}
-
-export const RoomTicketStyleText = {
-  [RoomTicketStyle.TicketOrder]: 'Phòng bán hàng',
-  [RoomTicketStyle.TicketClinicGeneral]: 'Phòng khám cơ bản',
-  [RoomTicketStyle.TicketClinicObstetric]: 'Phòng khám sản',
-  [RoomTicketStyle.TicketClinicEye]: 'Phòng khám mắt',
+export const ROOM_SETTING_DEFAULT = {
+  general: {
+    showMoneyTitle: 1,
+    showMenuConsumable: 1,
+    showMenuLaboratory: 1,
+    showMenuRadiology: 1,
+    showMenuUser: 1,
+  },
+  diagnosis: { icd10: 0, templateHtmlIdList: [] },
+  procedure: {},
+  regimen: { isEffectTotalMoney: 1 },
+  consumable: {
+    warehouseIdList: [0],
+    searchIncludeZeroQuantity: 1,
+    pickupStrategy: PickupStrategy.Inherit,
+  },
+  prescription: {
+    warehouseIdList: [0],
+    searchIncludeZeroQuantity: 1,
+    pickupStrategy: PickupStrategy.Inherit,
+  },
+  laboratory: {},
+  radiology: {},
 }
 
 export class Room {
@@ -36,9 +51,10 @@ export class Room {
   code: string
   name: string
   roomType: RoomType
-  roomStyle: RoomTicketStyle
 
   isCommon: 1 | 0 // Trạng thái
+  roomSetting: string
+  roomSettingObj: typeof ROOM_SETTING_DEFAULT
   userRoomList?: UserRoom[]
 
   static init() {
@@ -46,10 +62,10 @@ export class Room {
     ins.id = 0
     ins.code = ''
     ins.name = ''
-    ins.roomType = RoomType.Ticket
-    ins.roomStyle = RoomTicketStyle.TicketClinicGeneral
+    ins.roomType = RoomType.TicketClinic
     ins.isCommon = 0
-
+    ins.roomSetting = '{}'
+    ins.roomSettingObj = JSON.parse(JSON.stringify(ROOM_SETTING_DEFAULT))
     return ins
   }
 
@@ -66,6 +82,16 @@ export class Room {
       if (value === undefined) delete target[key as keyof typeof target]
     })
     Object.assign(target, source)
+    target.roomSettingObj = target.roomSetting ? JSON.parse(target.roomSetting) : {}
+    try {
+      target.roomSettingObj = objectUpdatePropertyByObject(
+        JSON.parse(JSON.stringify(ROOM_SETTING_DEFAULT)),
+        JSON.parse(source?.roomSetting || '{}'),
+      )
+    } catch (error) {
+      target.roomSettingObj = JSON.parse(JSON.stringify(ROOM_SETTING_DEFAULT))
+    }
+
     return target
   }
 
@@ -96,9 +122,8 @@ export class Room {
     if (a.code != b.code) return false
     if (a.name != b.name) return false
     if (a.roomType != b.roomType) return false
-    if (a.roomStyle != b.roomStyle) return false
     if (a.isCommon != b.isCommon) return false
-
+    if (a.roomSetting != b.roomSetting) return false
     return true
   }
 }

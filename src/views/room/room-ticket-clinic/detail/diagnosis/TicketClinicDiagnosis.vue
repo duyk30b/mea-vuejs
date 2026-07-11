@@ -1,54 +1,32 @@
 <script lang="ts" setup>
 import VueButton from '@/common/VueButton.vue'
-import VueTinyMCE from '@/common/VueTinyMCE.vue'
 import ImageUploadCloudinary from '@/common/image-upload/ImageUploadCloudinary.vue'
-import { InputArea, InputOptions, InputOptionsText, InputText } from '@/common/vue-form'
+import { InputArea, InputOptionsText, InputText } from '@/common/vue-form'
 import type { ItemOption } from '@/common/vue-form/InputOptions.vue'
 import { MeService } from '@/modules/_me/me.service'
-import { useSettingStore } from '@/modules/_me/setting.store'
 import { CustomerService } from '@/modules/customer'
 import { ICD, ICDService } from '@/modules/icd'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Room, RoomService, RoomTicketStyle, RoomType, ticketRoomRef } from '@/modules/room'
+import { ticketRoomRef } from '@/modules/room'
+import { TemplateHtml, TemplateHtmlAction, TemplateHtmlService } from '@/modules/template-html'
 import { TicketChangeAttributeApi } from '@/modules/ticket'
 import {
   TicketAttributeKeyGeneralList,
   type TicketAttributeKeyGeneralType,
   type TicketAttributeKeyType,
 } from '@/modules/ticket-attribute'
+import { useTicketClinicDetailStore } from '@/store/ticket-clinic-detail.store'
 import { ESImage } from '@/utils'
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import DiagnosisEye from './DiagnosisEye.vue'
-import DiagnosisObstetric from './DiagnosisObstetric.vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import DiagnosisVitalSigns from './DiagnosisVitalSigns.vue'
 
-const inputOptionsICD = ref<InstanceType<typeof InputOptions>>()
-
-const router = useRouter()
-const route = useRoute()
-
-const roomMap = RoomService.roomMap
-const currentRoom = ref<Room>(Room.blank())
-
-watch(
-  () => route.params.roomId,
-  async (newValue) => {
-    const roomId = Number(newValue) || 0
-    await RoomService.getMap()
-    currentRoom.value = roomMap.value[roomId]
-    if (!currentRoom.value) {
-      currentRoom.value = Room.blank()
-      currentRoom.value.isCommon = 1
-      currentRoom.value.roomType = RoomType.Ticket
-    }
-  },
-  { immediate: true },
-)
-
+const ticketClinicDetailStore = useTicketClinicDetailStore()
 const { userPermission, organization, user } = MeService
-const settingStore = useSettingStore()
 
+const templateHtmlMap = ref<{ [id: number]: TemplateHtml }>({})
+const templateHtmlIdList = ref<number[]>([])
+
+const templateHtmlIdCurrent = ref<number>(0)
 const note = ref<string>('')
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadCloudinary>>()
 
@@ -64,10 +42,38 @@ const saveLoading = ref(false)
 const hasChangeImage = ref(false)
 const loadingImage = ref(false)
 
+const selectTemplateHtml = (templateHtmlId: number) => {
+  templateHtmlIdCurrent.value = templateHtmlId
+
+  nextTick(() => {
+    eval(templateHtmlMap.value[templateHtmlIdCurrent.value]?.jsInput || '')
+    document.querySelectorAll('input[data-field]').forEach((el: Element) => {
+      const field = el.getAttribute('data-field') as TicketAttributeKeyType
+      if (!field) return
+      ;(el as HTMLInputElement).value = ticketAttributeMap.value[field] || ''
+
+      el.addEventListener('input', (e) => {
+        const target = e.target as HTMLInputElement
+        // const field = target.dataset.field as TicketAttributeKeyType
+        ticketAttributeMap.value[field] = target.value
+      })
+    })
+  })
+}
+
 onMounted(async () => {
-  if (settingStore.TICKET_CLINIC_DETAIL.diagnosis.icd10) {
+  if (ticketClinicDetailStore.roomRef.roomSettingObj.diagnosis.icd10) {
     await ICDService.fetchAll()
   }
+  templateHtmlIdList.value =
+    ticketClinicDetailStore.roomRef?.roomSettingObj?.diagnosis?.templateHtmlIdList || []
+  const templateHtmlList = await TemplateHtmlService.list({
+    filter: { id: { IN: templateHtmlIdList.value } },
+  })
+
+  templateHtmlIdList.value.forEach((i) => {
+    templateHtmlMap.value[i] = templateHtmlList.find((t) => t.id === i) || TemplateHtml.blank()
+  })
 })
 
 watch(
@@ -210,10 +216,44 @@ const updateTextICD = (text: string) => {
   }
 }
 
+const startPrintTicketClinicDiagnosis = async () => {
+  await TemplateHtmlAction.startPrintTicketClinicDiagnosis({
+    ticket: ticketRoomRef.value,
+    customer: ticketRoomRef.value.customer!,
+  })
+}
+
+const startPrintTicketClinicDocumentExtra = async () => {
+  await TemplateHtmlAction.startPrintTicketClinicDocumentExtra({
+    ticket: ticketRoomRef.value,
+    customer: ticketRoomRef.value.customer!,
+    templateHtmlId: templateHtmlIdCurrent.value,
+  })
+}
+
 defineExpose({ getDataTicketDiagnosis })
 </script>
 <template>
-  <div class="mt-4">
+  <div class="mt-2 flex gap-2 flex-wrap">
+    <a
+      class="diagnosis_menu"
+      :class="templateHtmlIdCurrent == 0 ? 'active' : ''"
+      @click="() => selectTemplateHtml(0)"
+    >
+      Cơ bản
+    </a>
+    <a
+      class="diagnosis_menu"
+      :class="templateHtmlIdCurrent == templateHtmlId ? 'active' : ''"
+      v-for="templateHtmlId in templateHtmlIdList"
+      :key="templateHtmlId"
+      @click="() => selectTemplateHtml(templateHtmlId)"
+    >
+      {{ templateHtmlMap[templateHtmlId]?.name }}
+    </a>
+  </div>
+
+  <div v-if="!templateHtmlIdCurrent" class="mt-2">
     <div>
       <div>Lý do khám</div>
       <div>
@@ -237,13 +277,6 @@ defineExpose({ getDataTicketDiagnosis })
         <DiagnosisVitalSigns :ticketAttributeMap="ticketAttributeMap" />
       </div>
     </div>
-    <div v-if="currentRoom.roomStyle === RoomTicketStyle.TicketClinicObstetric" class="mt-4">
-      <DiagnosisObstetric :ticketAttributeMap="ticketAttributeMap" />
-    </div>
-
-    <div v-if="currentRoom.roomStyle === RoomTicketStyle.TicketClinicEye" class="mt-4">
-      <DiagnosisEye :ticketAttributeMap="ticketAttributeMap" />
-    </div>
     <!-- <pre>{{ JSON.stringify(ticketRoomRef?.imageDiagnosisList, null, 4) }}</pre> -->
     <div class="mt-4">
       <div>Hình ảnh</div>
@@ -264,7 +297,7 @@ defineExpose({ getDataTicketDiagnosis })
         @loading="(v) => (loadingImage = v)"
       />
     </div>
-    <div class="mt-4" v-if="settingStore.TICKET_CLINIC_DETAIL.diagnosis.icd10">
+    <div class="mt-4" v-if="ticketClinicDetailStore.roomRef.roomSettingObj.diagnosis.icd10">
       <div>Chẩn đoán theo ICD10</div>
       <div>
         <InputOptionsText
@@ -286,7 +319,36 @@ defineExpose({ getDataTicketDiagnosis })
       </div>
     </div>
     <div class="mt-4 flex justify-between gap-4">
-      <div></div>
+      <div>
+        <VueButton color="blue" icon="print" @click="startPrintTicketClinicDiagnosis">
+          In phiếu khám
+        </VueButton>
+      </div>
+      <VueButton
+        v-if="ticketRoomRef.id && userPermission[PermissionId.TICKET_CHANGE_ATTRIBUTE]"
+        color="blue"
+        :disabled="!hasChangeData || loadingImage"
+        :loading="saveLoading"
+        icon="save"
+        @click="saveTicketDiagnosis"
+      >
+        Lưu lại
+      </VueButton>
+    </div>
+  </div>
+  <div v-else class="mt-2">
+    <div v-html="templateHtmlMap[templateHtmlIdCurrent]?.htmlInput"></div>
+    <div class="mt-4 flex justify-between gap-4">
+      <div>
+        <VueButton
+          v-if="templateHtmlMap[templateHtmlIdCurrent]?.htmlPrint"
+          color="blue"
+          icon="print"
+          @click="startPrintTicketClinicDocumentExtra"
+        >
+          In phiếu {{ templateHtmlMap[templateHtmlIdCurrent]?.name }}
+        </VueButton>
+      </div>
       <VueButton
         v-if="ticketRoomRef.id && userPermission[PermissionId.TICKET_CHANGE_ATTRIBUTE]"
         color="blue"
@@ -300,32 +362,18 @@ defineExpose({ getDataTicketDiagnosis })
     </div>
   </div>
 </template>
-<style lang="scss" scoped>
-.table-vital-signs {
-  width: 100%;
-  td.title-vital-signs {
-    padding: 4px 4px 4px 8px;
-    white-space: nowrap;
+
+<style scoped lang="scss">
+.diagnosis_menu {
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  &:hover {
+    background-color: #f0f0f0;
   }
-  td.unit-vital-signs {
-    padding: 4px 8px 4px 8px;
-    white-space: nowrap;
-  }
-  td.input-vital-signs {
-    padding-left: 8px;
-  }
-  input {
-    padding-left: 0.5rem;
-    text-align: left;
-    font-style: italic;
-    width: 100%;
-    border-top: none;
-    border-left: none;
-    border-right: none;
-    border-bottom: 1px solid #cdcdcd;
-    &:focus {
-      outline: none;
-    }
+  &.active {
+    background-color: #1890ff;
+    color: white;
   }
 }
 </style>

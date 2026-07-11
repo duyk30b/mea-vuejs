@@ -23,7 +23,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus, DeliveryStatusText, PaymentViewType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PrintHtmlAction, PrintHtmlType } from '@/modules/print-html'
+import { TemplateHtmlAction, TemplateHtmlType } from '@/modules/template-html'
 import { Ticket, TicketActionApi, TicketService, TicketStatus } from '@/modules/ticket'
 import { TicketProcedureService } from '@/modules/ticket-procedure'
 import { TicketProduct, TicketProductService } from '@/modules/ticket-product'
@@ -189,16 +189,16 @@ const clickDestroy = () => {
 }
 
 const startPrint = async () => {
-  await PrintHtmlAction.startPrintTicketOrderDetail({
+  await TemplateHtmlAction.startPrintTicketOrderDetail({
     ticket: ticketOrderDetailRef.value,
     customer: ticketOrderDetailRef.value.customer!,
   })
 }
 
 const openModalTicketOrderPreview = async () => {
-  const htmlText = await PrintHtmlAction.startWriteTicketOrderPreview({
+  const htmlText = await TemplateHtmlAction.startWriteTicketOrderPreview({
     data: { ticket: ticketOrderDetailRef.value, customer: ticketOrderDetailRef.value.customer! },
-    printHtmlType: PrintHtmlType.TicketOrderDetail,
+    templateHtmlType: TemplateHtmlType.TicketOrderDetail,
   })
   if (!htmlText) return
 

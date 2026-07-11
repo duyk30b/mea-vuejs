@@ -3,6 +3,8 @@ import { useRouter } from 'vue-router'
 import {
   IconApartment,
   IconDollar,
+  IconForm,
+  IconPicCenter,
   IconPrint,
   IconReconciliation,
   IconTeam,
@@ -69,7 +71,9 @@ const { organizationPermission, userPermission } = MeService
         </div>
         <div class="card-content">
           <div class="card-title">3. Combo - Liệu trình</div>
-          <div class="card-description">Quản lý combo, tổng hợp các gói liệu trình, giá mua theo gói</div>
+          <div class="card-description">
+            Quản lý combo, tổng hợp các gói liệu trình, giá mua theo gói
+          </div>
         </div>
       </div>
 
@@ -105,22 +109,6 @@ const { organizationPermission, userPermission } = MeService
 
       <div
         class="card"
-        @click="router.push({ name: 'PrintHtml' })"
-        v-if="userPermission[PermissionId.MASTER_DATA_PRINT_HTML]"
-      >
-        <div class="card-icon">
-          <IconPrint />
-        </div>
-        <div class="card-content">
-          <div class="card-title">6. Cài đặt mẫu in</div>
-          <div class="card-description">
-            Quản lý cách hiển thị mẫu in cho phiếu xét nghiệm, CĐHA, hóa đơn, ...
-          </div>
-        </div>
-      </div>
-
-      <div
-        class="card"
         @click="router.push({ name: 'Warehouse' })"
         v-if="userPermission[PermissionId.MASTER_DATA_WAREHOUSE]"
       >
@@ -128,7 +116,7 @@ const { organizationPermission, userPermission } = MeService
           <IconWarehouse />
         </div>
         <div class="card-content">
-          <div class="card-title">7. Danh sách kho</div>
+          <div class="card-title">6. Danh sách kho</div>
           <div class="card-description">Quản lý thông tin, danh sách kho</div>
         </div>
       </div>
@@ -142,7 +130,7 @@ const { organizationPermission, userPermission } = MeService
           <IconTeam />
         </div>
         <div class="card-content">
-          <div class="card-title">8. Vị trí và Quy tắc tính hoa hồng</div>
+          <div class="card-title">7. Vị trí và Quy tắc tính hoa hồng</div>
           <div class="card-description">
             Cài đặt các vị trí và vai trò làm việc, hoa hồng tính cho mỗi vị trí
           </div>
@@ -158,7 +146,7 @@ const { organizationPermission, userPermission } = MeService
           <IconDollar />
         </div>
         <div class="card-content">
-          <div class="card-title">9. Chương trình khuyến mại</div>
+          <div class="card-title">8. Chương trình khuyến mại</div>
           <div class="card-description">
             Cài đặt số tiền khuyến mại cho mỗi loại mặt hàng, thời gian khuyến mại ...
           </div>
@@ -174,9 +162,10 @@ const { organizationPermission, userPermission } = MeService
           <IconDollar />
         </div>
         <div class="card-content">
-          <div class="card-title">10. Ví tiền và Phương thức thanh toán</div>
+          <div class="card-title">9. Ví tiền và Phương thức thanh toán</div>
           <div class="card-description">
-            Quản lý ví tiền, số dư hiện tại, các phương thức thanh toán như: Tiền mặt, chuyển khoản, ...
+            Quản lý ví tiền, số dư hiện tại, các phương thức thanh toán như: Tiền mặt, chuyển khoản,
+            ...
           </div>
         </div>
       </div>
@@ -190,7 +179,7 @@ const { organizationPermission, userPermission } = MeService
           <IconUser />
         </div>
         <div class="card-content">
-          <div class="card-title">11. Nguồn khách hàng</div>
+          <div class="card-title">10. Nguồn khách hàng</div>
           <div class="card-description">Quản lý danh sách nguồn khách hàng</div>
         </div>
       </div>
@@ -204,7 +193,7 @@ const { organizationPermission, userPermission } = MeService
           <IconDollar />
         </div>
         <div class="card-content">
-          <div class="card-title">12. Phụ phí</div>
+          <div class="card-title">11. Phụ phí</div>
           <div class="card-description">
             Danh sách các phụ phí khách hàng cần trả thêm như: phí tư vấn, phí vận chuyển, ...
           </div>
@@ -220,7 +209,7 @@ const { organizationPermission, userPermission } = MeService
           <IconDollar />
         </div>
         <div class="card-content">
-          <div class="card-title">13. Chi phí</div>
+          <div class="card-title">12. Chi phí</div>
           <div class="card-description">
             Danh sách chi phí khi bán hàng mà người bán cần chịu: tiền hoa hồng, tiền bảo quản, ...
           </div>
@@ -274,8 +263,56 @@ const { organizationPermission, userPermission } = MeService
         </div>
         <div class="card-content">
           <div class="card-title">15. Mẫu kết quả phiếu CĐHA</div>
+          <div class="card-description">Quản lý danh sách các mẫu kết quả phiếu CĐHA đã tạo</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 mx-4 bg-white">
+    <div class="px-4 py-4 text-lg font-medium" style="border-bottom: 1px solid #dfdfdf">
+      3**. Nâng cao
+    </div>
+    <div class="p-4 flex flex-wrap gap-4">
+      <div class="card" @click="router.push({ name: 'Attribute' })">
+        <div class="card-icon">
+          <IconPicCenter />
+        </div>
+        <div class="card-content">
+          <div class="card-title">1. Cài đặt biến, thuộc tính</div>
           <div class="card-description">
-            Quản lý danh sách các bộ xét nghiệm phục vụ chỉ định nhanh xét nghiệm
+            Danh sách các biến, thuộc tính có thể sử dụng trong mẫu in phiếu xét nghiệm, CĐHA, hóa
+            đơn, ...
+          </div>
+        </div>
+      </div>
+      <div
+        class="card"
+        @click="router.push({ name: 'TemplateHtml' })"
+        v-if="userPermission[PermissionId.MASTER_DATA_TEMPLATE_HTML]"
+      >
+        <div class="card-icon">
+          <IconForm/>
+        </div>
+        <div class="card-content">
+          <div class="card-title">2**. Template HTML</div>
+          <div class="card-description">
+            Quản lý các template, biểu mẫu, tài liệu, logic mẫu in...
+          </div>
+        </div>
+      </div>
+      <div
+        class="card"
+        @click="router.push({ name: 'PrintSetting' })"
+        v-if="userPermission[PermissionId.MASTER_DATA_TEMPLATE_HTML]"
+      >
+        <div class="card-icon">
+          <IconPrint />
+        </div>
+        <div class="card-content">
+          <div class="card-title">3. Cài đặt mẫu in</div>
+          <div class="card-description">
+            Quản lý cách hiển thị mẫu in cho phiếu xét nghiệm, CĐHA, hóa đơn, ...
           </div>
         </div>
       </div>

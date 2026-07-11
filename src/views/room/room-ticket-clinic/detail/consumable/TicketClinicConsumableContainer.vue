@@ -22,6 +22,7 @@ import TicketConsumableSelectItem from './TicketConsumableSelectItem.vue'
 import { CONFIG } from '@/config'
 import { BugDevelopment } from '@/views/component'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { TemplateHtmlAction } from '@/modules/template-html'
 
 const modalTicketClinicConsumableUpdate =
   ref<InstanceType<typeof ModalTicketClinicConsumableUpdate>>()
@@ -174,6 +175,13 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
         console.log('🚀 ~ TicketClinicConsumableContainer.vue:174  ~ error:', error)
       }
     },
+  })
+}
+
+const startPrint = async () => {
+  await TemplateHtmlAction.startPrintTicketClinicConsumable({
+    ticket: ticketRoomRef.value,
+    customer: ticketRoomRef.value.customer!,
   })
 }
 </script>
@@ -333,6 +341,7 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
   </div>
 
   <div class="mt-4 flex gap-4">
+    <VueButton color="blue" icon="print" @click="startPrint">In phiếu vật tư</VueButton>
     <VueButton
       v-if="userPermission[PermissionId.TICKET_CHANGE_PRODUCT_CONSUMABLE]"
       :disabled="disabledButton"

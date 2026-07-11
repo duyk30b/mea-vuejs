@@ -40,7 +40,7 @@ export class TicketChangeRadiologyApi {
               discountType: ticketRadiology.discountType,
               actualPrice: ticketRadiology.actualPrice,
 
-              printHtmlId: ticketRadiology.printHtmlId,
+              templateHtmlId: ticketRadiology.templateHtmlId,
               description: ticketRadiology.description,
               result: ticketRadiology.result,
               customStyles: ticketRadiology.customStyles,
@@ -138,7 +138,7 @@ export class TicketChangeRadiologyApi {
       'ticketRadiology',
       JSON.stringify({
         completedAt: ticketRadiology.completedAt,
-        printHtmlId: ticketRadiology.printHtmlId,
+        templateHtmlId: ticketRadiology.templateHtmlId,
         description: ticketRadiology.description,
         result: ticketRadiology.result,
         customStyles: ticketRadiology.customStyles,
@@ -172,7 +172,7 @@ export class TicketChangeRadiologyApi {
     ticketId: string
     ticketRadiologyId: string
     body: {
-      printHtmlId: number
+      templateHtmlId: number
       description: string
       result: string
       customStyles: string

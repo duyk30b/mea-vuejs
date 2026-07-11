@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { InputSelect, type InputSelectOption } from '@/common/vue-form'
 import { CONFIG } from '@/config'
-import { Room, RoomType, RoomService, RoomTicketStyle } from '@/modules/room'
+import { Room, RoomType, RoomService } from '@/modules/room'
 import { onMounted, ref } from 'vue'
 
 const emit = defineEmits<{
@@ -13,7 +13,6 @@ const props = withDefaults(
   defineProps<{
     roomId: number
     roomType?: RoomType
-    roomTicketStyle?: RoomTicketStyle[]
     disabled?: boolean
     required?: boolean
     label?: string
@@ -38,7 +37,6 @@ onMounted(async () => {
   const roomList = await RoomService.list({
     filter: {
       roomType: props.roomType ? props.roomType : undefined,
-      roomStyle: props.roomTicketStyle ? { IN: props.roomTicketStyle } : undefined,
     },
   })
   roomOptions.value = roomList.map((i) => {

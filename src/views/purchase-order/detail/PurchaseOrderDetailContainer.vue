@@ -19,7 +19,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus, DeliveryStatusText, PaymentViewType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PrintHtmlAction } from '@/modules/print-html'
+import { TemplateHtmlAction } from '@/modules/template-html'
 import {
   PurchaseOrder,
   PurchaseOrderActionApi,
@@ -151,7 +151,7 @@ const openModalDistributorDetail = (distributorId: number) => {
 const handleModalPurchaseOrderPaymentSuccess = () => {}
 
 const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) => {
-  await PrintHtmlAction.startPrintPurchaseOrderDetail({ purchaseOrder: purchaseOrderData })
+  await TemplateHtmlAction.startPrintPurchaseOrderDetail({ purchaseOrder: purchaseOrderData })
 }
 </script>
 

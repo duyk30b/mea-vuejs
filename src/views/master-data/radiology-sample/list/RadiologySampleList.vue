@@ -44,7 +44,7 @@ const startFetchData = async (options?: { refetch?: boolean }) => {
       {
         page: page.value,
         limit: limit.value,
-        relation: { radiology: true, printHtml: true, user: true },
+        relation: { radiology: true, templateHtml: true, user: true },
         filter: {
           userId: userId.value ? { IN: [userId.value, 0] } : undefined,
           radiologyId: radiologyId.value ? { IN: [radiologyId.value, 0] } : undefined,
@@ -195,7 +195,7 @@ const handleClickDestroyRadiologySample = async (radiologySampleId: number) => {
               <span>{{ radiologySample.name }}</span>
             </td>
             <td>{{ radiologySample.radiology?.name }}</td>
-            <td>{{ radiologySample.printHtml?.name }}</td>
+            <td>{{ radiologySample.templateHtml?.name }}</td>
             <td class="text-center">
               <router-link
                 :to="{ name: 'RadiologySampleUpsert', params: { id: radiologySample.id } }"

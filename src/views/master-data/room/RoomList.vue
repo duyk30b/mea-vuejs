@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { onBeforeMount, ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import VuePagination from '../../../common/VuePagination.vue'
-import { IconEditSquare } from '../../../common/icon-google'
-import { InputSelect } from '../../../common/vue-form'
-import { MeService } from '../../../modules/_me/me.service'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { RoomTypeText, RoomTicketStyleText, type Room } from '../../../modules/room'
-import { RoomService } from '../../../modules/room/room.service'
-import Breadcrumb from '../../component/Breadcrumb.vue'
-import ModalRoomUpsert from './ModalRoomUpsert.vue'
-import { CONFIG } from '@/config'
+import VueButton from '@/common/VueButton.vue'
+import VuePagination from '@/common/VuePagination.vue'
 import { IconBug, IconMergeCells } from '@/common/icon-antd'
-import ModalRoomMerge from './ModalRoomMerge.vue'
+import { IconEditSquare } from '@/common/icon-google'
 import { VueTooltip } from '@/common/popover'
+import { InputSelect } from '@/common/vue-form'
+import { CONFIG } from '@/config'
+import { MeService } from '@/modules/_me/me.service'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { RoomTypeText, type Room } from '@/modules/room'
+import { RoomService } from '@/modules/room/room.service'
+import { onBeforeMount, ref } from 'vue'
+import Breadcrumb from '../../component/Breadcrumb.vue'
+import ModalRoomMerge from './ModalRoomMerge.vue'
+import ModalRoomUpsert from './ModalRoomUpsert.vue'
 
 const modalRoomUpsert = ref<InstanceType<typeof ModalRoomUpsert>>()
 const modalRoomMerge = ref<InstanceType<typeof ModalRoomMerge>>()
@@ -112,7 +112,6 @@ const handleModalRoomMergeSuccess = async () => {
             <th>Mã</th>
             <th>Tên</th>
             <th>Loại phòng</th>
-            <th>Kiểu phòng</th>
             <th>Chức năng</th>
             <th>Tài khoản truy cập</th>
             <th>#</th>
@@ -148,7 +147,6 @@ const handleModalRoomMergeSuccess = async () => {
             <td class="text-center">{{ room.code }}</td>
             <td>{{ room.name }}</td>
             <td>{{ RoomTypeText[room.roomType] }}</td>
-            <td>{{ RoomTicketStyleText[room.roomStyle] }}</td>
             <td>{{ room.isCommon ? 'Phòng chung' : 'Phòng lẻ' }}</td>
             <td>{{ room.userRoomList?.map((i) => i.user?.fullName).join(', ') }}</td>
             <td

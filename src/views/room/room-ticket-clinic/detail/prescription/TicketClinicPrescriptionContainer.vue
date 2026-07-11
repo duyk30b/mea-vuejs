@@ -8,10 +8,10 @@ import { InputArea, VueSwitch } from '@/common/vue-form'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DeliveryStatus, DiscountType, PaymentMoneyStatus } from '@/modules/enum'
+import { DeliveryStatus, DiscountType, PaymentMoneyStatus, PickupStrategy } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrescriptionSample, PrescriptionSampleItem } from '@/modules/prescription-sample'
-import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
+import { TemplateHtmlAction } from '@/modules/template-html'
 import { Product, ProductService } from '@/modules/product'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeAttributeApi, TicketChangeProductApi, TicketStatus } from '@/modules/ticket'
@@ -32,6 +32,7 @@ import ModalSelectItemFromPrescriptionSample from './ModalSelectItemFromPrescrip
 import ModalTicketPrescriptionUpdate from './ModalTicketPrescriptionUpdate.vue'
 import TicketPrescriptionSelectItem from './TicketPrescriptionSelectItem.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { useTicketClinicDetailStore } from '@/store/ticket-clinic-detail.store'
 
 const modalTicketPrescriptionUpdate = ref<InstanceType<typeof ModalTicketPrescriptionUpdate>>()
 const ticketSpaPrescriptionSelectItem = ref<InstanceType<typeof TicketPrescriptionSelectItem>>()
@@ -41,6 +42,7 @@ const modalSelectItemFromPrescriptionSample =
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalSavePrescriptionSample = ref<InstanceType<typeof ModalSavePrescriptionSample>>()
 
+const ticketClinicDetailStore = useTicketClinicDetailStore()
 const { userPermission, organizationPermission, organization } = MeService
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -158,7 +160,7 @@ const changeItemPosition = (index: number, count: number) => {
 }
 
 const startPrint = async () => {
-  await PrintHtmlAction.startPrintPrescription({
+  await TemplateHtmlAction.startPrintTicketClinicPrescription({
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
   })
@@ -264,7 +266,11 @@ const handleSelectPrescriptionSampleItemList = async (
       temp.priority = priority
       temp.productId = psItem.productId
       temp.product = Product.from(product)
-      temp.pickupStrategy = MeService.getPickupStrategy(product).prescription
+      temp.pickupStrategy =
+        product.warehouseIds === '[]'
+          ? PickupStrategy.NoImpact
+          : ticketClinicDetailStore.roomRef.roomSettingObj.consumable.pickupStrategy ||
+            PickupStrategy.RequireBatchSelection
       temp.customerId = ticketRoomRef.value.customerId
       temp.batchId = 0
 
@@ -294,7 +300,7 @@ const handleSelectPrescriptionSampleItemList = async (
       temp.unitActualPrice = product.retailPrice * temp.unitRate
 
       temp.warehouseIds = JSON.stringify(
-        settingStore.TICKET_CLINIC_DETAIL.prescriptions.warehouseIdList,
+        ticketClinicDetailStore.roomRef.roomSettingObj.prescription.warehouseIdList,
       )
 
       return temp

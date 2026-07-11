@@ -1,13 +1,14 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import VuePagination from '@/common/VuePagination.vue'
+import VueTag from '@/common/VueTag.vue'
+import { IconApartment, IconForm } from '@/common/icon-antd'
+import { InputSelect } from '@/common/vue-form'
 import { CONFIG } from '@/config'
+import { MeService } from '@/modules/_me/me.service'
+import { RoleService, type Role } from '@/modules/role'
+import { BugDevelopment } from '@/views/component'
 import { onBeforeMount, ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import VuePagination from '../../../common/VuePagination.vue'
-import VueTag from '../../../common/VueTag.vue'
-import { IconApartment, IconForm } from '../../../common/icon-antd'
-import { InputSelect } from '../../../common/vue-form'
-import { MeService } from '../../../modules/_me/me.service'
-import { RoleApi, RoleService, type Role } from '../../../modules/role'
 
 const roleList = ref<Role[]>([])
 
@@ -84,8 +85,8 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="role in roleList" :key="role.id">
-            <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
-              {{ role.id }}
+            <td class="text-center" v-if="CONFIG.MODE === 'development'">
+              <BugDevelopment :data="role" />
             </td>
             <td class="text-center">{{ role.roleCode }}</td>
             <td>{{ role.name }}</td>

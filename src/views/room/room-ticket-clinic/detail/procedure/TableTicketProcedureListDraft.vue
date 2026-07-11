@@ -19,6 +19,7 @@ import ModalTicketRegimenUpdateMoney from './ModalTicketRegimenUpdateMoney.vue'
 import ModalTicketRegimenUpdateUser from './ModalTicketRegimenUpdateUser.vue'
 import { IconEditSquare } from '@/common/icon-google'
 import { VueTooltip } from '@/common/popover'
+import { useTicketClinicDetailStore } from '@/store/ticket-clinic-detail.store'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
@@ -47,7 +48,7 @@ const emit = defineEmits<{
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
-
+const ticketClinicDetailStore = useTicketClinicDetailStore()
 const selectProcedure = async (data: { procedure: Procedure }) => {
   const procedureData = data.procedure
   const temp = TicketProcedure.blank()
@@ -103,7 +104,9 @@ const selectRegimen = async (data: { regimen: Regimen }) => {
   temp.ticketId = ''
   temp.customerId = 0
   temp.regimenId = regimenData.id
-  temp.isEffectTotalMoney = Number(settingStore.TICKET_CLINIC_DETAIL.regimen.isEffectTotalMoney)
+  temp.isEffectTotalMoney = Number(
+    ticketClinicDetailStore.roomRef.roomSettingObj.regimen.isEffectTotalMoney,
+  )
 
   temp.expectedPrice = regimenData.totalMoney
   const discountApply = regimenData.discountApply

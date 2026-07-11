@@ -6,7 +6,7 @@ import VueModal from '@/common/vue-modal/VueModal.vue'
 import { MeService } from '@/modules/_me/me.service'
 import { LaboratoryService, LaboratoryValueType } from '@/modules/laboratory'
 import { LaboratoryGroupService } from '@/modules/laboratory-group'
-import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
+import { TemplateHtmlAction } from '@/modules/template-html/template-html.action'
 import { TicketChangeLaboratoryApi } from '@/modules/ticket'
 import {
   TicketLaboratoryGroup,
@@ -130,7 +130,7 @@ const updateResult = async (options: { print: boolean }) => {
         TicketLaboratoryService.refreshRelationGroup([ticketLaboratoryGroupUpdate]),
         TicketLaboratoryService.refreshRelation(ticketLaboratoryGroupUpdate.ticketLaboratoryList),
       ])
-      await PrintHtmlAction.startPrintResultTicketLaboratory({
+      await TemplateHtmlAction.startPrintTicketClinicLaboratoryResult({
         ticketLaboratoryGroup: ticketLaboratoryGroupUpdate,
         ticket: ticketLaboratoryGroup.value.ticket!,
         customer: ticketLaboratoryGroup.value.customer!,
@@ -139,7 +139,7 @@ const updateResult = async (options: { print: boolean }) => {
 
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalProductUpsert.vue:42 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ file: ModalTicketLaboratoryGroupResult.vue:42 ~ updateResult ~ error:', error)
   } finally {
     saveLoading.value = false
   }

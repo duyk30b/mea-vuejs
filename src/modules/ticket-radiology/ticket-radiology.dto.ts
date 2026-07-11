@@ -11,7 +11,7 @@ export class TicketRadiologyGetQuery {
     customer?: boolean
     ticketUserRequestList?: boolean
     ticketUserResultList?: boolean
-    radiology?: { radiologyGroup?: boolean; printHtml?: boolean } | false
+    radiology?: { radiologyGroup?: boolean; templateHtml?: boolean } | false
     imageList?: boolean
   }
 

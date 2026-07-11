@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import { ESArray } from '../../utils'
 import { DiscountInteractType, DiscountService, type Discount } from '../discount'
 import { Position, PositionService, PositionType } from '../position'
-import { PrintHtml, PrintHtmlService } from '../print-html'
 import { RadiologyGroup, RadiologyGroupService } from '../radiology-group'
 import { RadiologyApi } from './radiology.api'
 import type {
@@ -13,6 +12,7 @@ import type {
   RadiologyPaginationQuery,
 } from './radiology.dto'
 import { Radiology } from './radiology.model'
+import { TemplateHtml, TemplateHtmlService } from '../template-html'
 
 const RadiologyDBQuery = new CollectionQuery<Radiology>()
 
@@ -50,10 +50,10 @@ export class RadiologyService {
       })
     }
     if (query.relation) {
-      if (query.relation.printHtml) {
-        const printHtmlMap = await PrintHtmlService.getMap()
+      if (query.relation.templateHtml) {
+        const templateHtmlMap = await TemplateHtmlService.getMap()
         data.forEach((i) => {
-          i.printHtml = PrintHtml.from(printHtmlMap[i.printHtmlId])
+          i.templateHtml = TemplateHtml.from(templateHtmlMap[i.templateHtmlId])
         })
       }
     }
@@ -70,8 +70,8 @@ export class RadiologyService {
     try {
       const radiologyIdList = radiologyList.map((i) => i.id)
 
-      const [printHtmlMap, radiologyGroupMap, discountAll, positionAll] = await Promise.all([
-        relation?.printHtml ? PrintHtmlService.getMap() : <Record<string, PrintHtml>>{},
+      const [templateHtmlMap, radiologyGroupMap, discountAll, positionAll] = await Promise.all([
+        relation?.templateHtml ? TemplateHtmlService.getMap() : <Record<string, TemplateHtml>>{},
         relation?.radiologyGroup
           ? RadiologyGroupService.getMap()
           : <Record<string, RadiologyGroup>>{},
@@ -80,8 +80,8 @@ export class RadiologyService {
       ])
 
       radiologyList.forEach((radiology) => {
-        if (relation?.printHtml) {
-          radiology.printHtml = printHtmlMap[radiology.printHtmlId]
+        if (relation?.templateHtml) {
+          radiology.templateHtml = templateHtmlMap[radiology.templateHtmlId]
         }
         if (relation?.radiologyGroup) {
           radiology.radiologyGroup = radiologyGroupMap[radiology.radiologyGroupId]

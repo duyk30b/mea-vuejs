@@ -16,6 +16,7 @@ import { ESString, ESTimer } from '@/utils'
 import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '@/views/product/upsert/ModalProductUpsert.vue'
 import { ticketRoomRef } from '@/modules/room'
+import { useTicketClinicDetailStore } from '@/store/ticket-clinic-detail.store'
 
 const emit = defineEmits<{ (e: 'success', value: TicketProduct[]): void }>()
 
@@ -26,7 +27,7 @@ const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const { userPermission } = MeService
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-
+const ticketClinicDetailStore = useTicketClinicDetailStore()
 const productOptions = ref<{ value: number; text: string; data: Product }[]>([])
 const batchList = ref<Batch[]>([])
 
@@ -58,7 +59,8 @@ const searchingProduct = async (text: string) => {
         {
           $OR: [
             {
-              quantity: settingStore.TICKET_CLINIC_DETAIL.prescriptions.searchIncludeZeroQuantity
+              quantity: ticketClinicDetailStore.roomRef.roomSettingObj.prescription
+                .searchIncludeZeroQuantity
                 ? undefined
                 : { NOT: 0 },
             },
@@ -69,7 +71,7 @@ const searchingProduct = async (text: string) => {
       warehouseIds: (value) => {
         try {
           const warehouseIdAcceptList =
-            settingStore.TICKET_CLINIC_DETAIL.prescriptions.warehouseIdList
+            ticketClinicDetailStore.roomRef.roomSettingObj.prescription.warehouseIdList
           const v: number[] = JSON.parse(value)
           if (!warehouseIdAcceptList.length || warehouseIdAcceptList.includes(0)) return true
           if (!v.length || v.includes(0)) return true
@@ -104,7 +106,11 @@ const selectProduct = async (productSelect: Product) => {
 
   const temp = TicketProduct.blank()
   temp.priority = priorityMax + 1
-  temp.pickupStrategy = MeService.getPickupStrategy(productSelect).prescription
+  temp.pickupStrategy =
+    productSelect.warehouseIds === '[]'
+      ? PickupStrategy.NoImpact
+      : ticketClinicDetailStore.roomRef.roomSettingObj.consumable.pickupStrategy ||
+        PickupStrategy.RequireBatchSelection
   temp.customerId = ticketRoomRef.value.customerId
   temp.product = Product.from(productSelect)
   temp.productId = productSelect.id
@@ -123,7 +129,7 @@ const selectProduct = async (productSelect: Product) => {
   temp.createdAt = Date.now()
   temp.hintUsage = productSelect.hintUsage
   temp.warehouseIds = JSON.stringify(
-    settingStore.TICKET_CLINIC_DETAIL.prescriptions.warehouseIdList,
+    ticketClinicDetailStore.roomRef.roomSettingObj.prescription.warehouseIdList,
   ) // set tạm trước thôi, tí nữa tính toán lại
 
   await ProductService.executeRelation([productSelect], { discountList: true })
@@ -148,7 +154,7 @@ const selectProduct = async (productSelect: Product) => {
   // Tính toán cho batchID // lằng nhằng nhé
   if (temp.product.productType === ProductType.SplitBatch) {
     const warehouseIdAcceptList: number[] =
-      settingStore.TICKET_CLINIC_DETAIL.prescriptions.warehouseIdList
+      ticketClinicDetailStore.roomRef.roomSettingObj.prescription.warehouseIdList
     let canGetAllWarehouse = false
     if (!warehouseIdAcceptList.length) canGetAllWarehouse = true
     else if (warehouseIdAcceptList.includes(0)) canGetAllWarehouse = true

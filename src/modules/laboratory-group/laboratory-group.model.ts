@@ -1,19 +1,19 @@
 import { Laboratory } from '../laboratory/laboratory.model'
-import { PrintHtml } from '../print-html'
+import { TemplateHtml } from '../template-html'
 
 export class LaboratoryGroup {
   id: number
   name: string
-  printHtmlId: number
+  templateHtmlId: number
   roomId: number
 
-  printHtml?: PrintHtml
+  templateHtml?: TemplateHtml
   laboratoryList?: Laboratory[]
 
   static init(): LaboratoryGroup {
     const ins = new LaboratoryGroup()
     ins.id = 0
-    ins.printHtmlId = 0
+    ins.templateHtmlId = 0
     ins.name = ''
     ins.roomId = 0
     return ins
@@ -40,8 +40,8 @@ export class LaboratoryGroup {
 
   static from(source: LaboratoryGroup) {
     const target = LaboratoryGroup.basic(source)
-    if (Object.prototype.hasOwnProperty.call(source, 'printHtml')) {
-      target.printHtml = target.printHtml ? PrintHtml.basic(target.printHtml) : target.printHtml
+    if (Object.prototype.hasOwnProperty.call(source, 'templateHtml')) {
+      target.templateHtml = target.templateHtml ? TemplateHtml.basic(target.templateHtml) : target.templateHtml
     }
     if (source.laboratoryList) {
       target.laboratoryList = Laboratory.basicList(source.laboratoryList)

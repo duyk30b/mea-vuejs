@@ -56,7 +56,6 @@ export class RoomApi {
         code: room.code,
         name: room.name,
         roomType: room.roomType,
-        roomStyle: room.roomStyle,
         isCommon: room.isCommon,
       },
       userIdList,
@@ -72,10 +71,17 @@ export class RoomApi {
         code: room.code,
         name: room.name,
         // roomType: room.roomType,
-        roomStyle: room.roomStyle,
         isCommon: room.isCommon,
       },
       userIdList: userIdList ? userIdList : undefined, // không gửi lên nếu không cập nhật
+    })
+    const { data } = response.data as FullResponse<{ room: any }>
+    return Room.from(data.room)
+  }
+
+  static async updateRoomSetting(id: number, roomSetting: string) {
+    const response = await AxiosInstance.post(`/room/update/${id}`, {
+      room: { roomSetting },
     })
     const { data } = response.data as FullResponse<{ room: any }>
     return Room.from(data.room)

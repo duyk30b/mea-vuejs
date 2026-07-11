@@ -89,7 +89,7 @@ watch(
               <div style="font-weight: 500">
                 {{ formatMoney(ticket.totalMoney) }}
               </div>
-              <div v-if="ticket.status === TicketStatus.Debt" class="text-xs">
+              <div v-if="ticket.debtTotal" class="text-xs">
                 Nợ: {{ formatMoney(ticket.debtTotal) }}
               </div>
               <div v-if="ticket.status === TicketStatus.Deposited" class="text-xs">

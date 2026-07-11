@@ -123,7 +123,7 @@ const startPrintPayment = async () => {
   // tempPayment.createdAt = Date.now()
   // tempPayment.reason = reason.value
   // tempPayment.moneyDirection = MoneyDirection.In
-  // await PrintHtmlAction.startPrintCustomerPayment({
+  // await TemplateHtmlAction.startPrintCustomerPayment({
   //   customer: customer.value,
   //   payment: tempPayment,
   // })

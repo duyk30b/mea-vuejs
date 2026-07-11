@@ -102,6 +102,12 @@ const startFetchData = async () => {
             return record.batchList.some((b) => b.distributorId === distributorId.value)
           }
         : undefined,
+      ['batchList.warehouseId' as any]: warehouseId.value
+        ? (v: any, record: Product) => {
+            if (!record.batchList?.length) return false
+            return record.batchList.some((b) => b.warehouseId === warehouseId.value)
+          }
+        : undefined,
       isActive: isActive.value !== '' ? isActive.value : undefined,
     },
     sort: sortValue.value
@@ -694,7 +700,10 @@ const handleModalUploadProductSuccess = async () => {
                 </td>
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.distributor"></td>
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.expiryDate"></td>
-                <td class="text-center" :class="(product.unitQuantity || 0) <= 0 ? 'text-red-500' : ''">
+                <td
+                  class="text-center"
+                  :class="(product.unitQuantity || 0) <= 0 ? 'text-red-500' : ''"
+                >
                   {{ product.warehouseIds !== '[]' ? product.unitQuantity || 0 : '' }}
                 </td>
                 <td

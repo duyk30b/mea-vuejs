@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import VueButton from '@/common/VueButton.vue'
-import VuePagination from '@/common/VuePagination.vue'
 import { IconBug, IconEye, IconPrint, IconRight } from '@/common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import { IconEditSquare } from '@/common/icon-google'
+import { VueTooltip } from '@/common/popover'
 import { InputDate, InputOptions, InputSelect, VueSelect } from '@/common/vue-form'
+import VueButton from '@/common/VueButton.vue'
+import VuePagination from '@/common/VuePagination.vue'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer, CustomerService } from '@/modules/customer'
-import { PrintHtmlService } from '@/modules/print-html'
-import { Radiology, RadiologyService } from '@/modules/radiology'
-import { Room, RoomType, roomRadiology, RoomService } from '@/modules/room'
-import { Ticket } from '@/modules/ticket'
+import { PaymentMoneyStatus } from '@/modules/enum'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { RadiologyService } from '@/modules/radiology'
+import { Room, roomRadiology, RoomService, RoomType } from '@/modules/room'
+import { TemplateHtmlAction } from '@/modules/template-html'
 import {
   TicketRadiology,
   TicketRadiologyApi,
@@ -20,17 +22,13 @@ import {
 } from '@/modules/ticket-radiology'
 import { ESString, ESTimer } from '@/utils'
 import Breadcrumb from '@/views/component/Breadcrumb.vue'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import { onBeforeMount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import ModalTicketRadiologyGroupResult from '../ModalTicketRadiologyResult.vue'
-import TicketRadiologyStatusTag from '../TicketRadiologyStatusTag.vue'
-import { PermissionId } from '@/modules/permission/permission.enum'
-import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
-import { PaymentMoneyStatus } from '@/modules/enum'
-import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import { fromTime, toTime } from '../../room-ticket-base/room-ticket.ref'
 import TicketLink from '../../room-ticket-base/TicketLink.vue'
-import { VueTooltip } from '@/common/popover'
+import ModalTicketRadiologyGroupResult from '../ModalTicketRadiologyResult.vue'
+import TicketRadiologyStatusTag from '../TicketRadiologyStatusTag.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -208,13 +206,13 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
     ticketRadiologyData.radiology = await RadiologyService.detail(ticketRadiologyData.radiologyId, {
       relation: { radiologyGroup: true },
     })
-    await PrintHtmlAction.startPrintResultTicketRadiology({
+    await TemplateHtmlAction.startPrintTicketClinicRadiologyResult({
       ticketRadiologyData,
       customer: ticketRadiologySelect.customer!,
       ticket: ticketRadiologySelect.ticket!,
     })
   } catch (error) {
-    console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
+    console.log('🚀 ~ file: TicketRadiologyList.vue:153 ~ startPrintResult ~ error:', error)
   }
 }
 </script>

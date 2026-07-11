@@ -1,11 +1,11 @@
 <script setup lang="ts">
 // 2 màu khác trông cũng đẹp:  9dc183 ff6761 daa520
+import { MeService } from '@/modules/_me/me.service'
 import { PermissionId } from '@/modules/permission/permission.enum'
+import { Room, RoomService, RoomType } from '@/modules/room'
+import { onMounted, ref } from 'vue'
 import { IconAreaChart, IconMedicalBox, IconShop, IconShoppingCart } from '../common/icon-antd'
 import AppHomeStatistic from './AppHomeStatistic.vue'
-import { MeService } from '@/modules/_me/me.service'
-import { Room, RoomType, RoomService, RoomTicketStyle } from '@/modules/room'
-import { onMounted, ref } from 'vue'
 
 const { userPermission, organizationPermission, user, roomIdMap } = MeService
 
@@ -14,9 +14,7 @@ const roomOrder = ref<Room>()
 onMounted(async () => {
   const roomList = await RoomService.getAll()
   roomOrder.value = roomList.find((i) => {
-    return (
-      i.roomType === RoomType.Ticket && i.roomStyle === RoomTicketStyle.TicketOrder
-    )
+    return i.roomType === RoomType.TicketOrder
   })
 })
 </script>

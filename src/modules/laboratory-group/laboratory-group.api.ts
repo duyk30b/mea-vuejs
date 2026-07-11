@@ -46,7 +46,7 @@ export class LaboratoryGroupApi {
   static async createOne(laboratoryGroup: LaboratoryGroup) {
     const response = await AxiosInstance.post('/laboratory-group/create', {
       name: laboratoryGroup.name,
-      printHtmlId: laboratoryGroup.printHtmlId,
+      templateHtmlId: laboratoryGroup.templateHtmlId,
       roomId: laboratoryGroup.roomId,
     })
     const { data } = response.data as FullResponse<{ laboratoryGroup: any }>
@@ -56,7 +56,7 @@ export class LaboratoryGroupApi {
   static async updateOne(id: number, laboratoryGroup: LaboratoryGroup) {
     const response = await AxiosInstance.post(`/laboratory-group/update/${id}`, {
       name: laboratoryGroup.name,
-      printHtmlId: laboratoryGroup.printHtmlId,
+      templateHtmlId: laboratoryGroup.templateHtmlId,
       roomId: laboratoryGroup.roomId,
     })
     const { data } = response.data as FullResponse<{ laboratoryGroup: any }>
@@ -75,7 +75,7 @@ export class LaboratoryGroupApi {
         return {
           id: i.id || 0,
           name: i.name,
-          printHtmlId: i.printHtmlId || 0,
+          templateHtmlId: i.templateHtmlId || 0,
           roomId: i.roomId,
         }
       }),

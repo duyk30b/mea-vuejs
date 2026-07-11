@@ -75,7 +75,7 @@ const startFetchData = async () => {
       groupTimeType: timeType.value,
       filter: {
         roomId: roomId.value ? roomId.value : undefined,
-        status: { NOT: TicketStatus.Draft },
+        status: { NOT_IN: [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Cancelled] },
         // status: { IN: [TicketStatus.Debt, TicketStatus.Completed] },
       },
     })
@@ -199,7 +199,6 @@ const downloadTicketList = (menu: { key: string }) => {
         <div>
           <InputSelectRoom
             v-model:roomId="roomId"
-            :roomType="RoomType.Ticket"
             removeLabelWrapper
             optionZero
             @update:roomId="startFetchData"

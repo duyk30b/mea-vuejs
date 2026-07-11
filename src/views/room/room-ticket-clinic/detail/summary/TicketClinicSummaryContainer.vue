@@ -18,7 +18,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Appointment } from '@/modules/appointment'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PrintHtmlAction } from '@/modules/print-html'
+import { TemplateHtmlAction } from '@/modules/template-html'
 import { ticketRoomRef } from '@/modules/room/room.ref'
 import { TicketStatus } from '@/modules/ticket'
 import { TicketSurchargeService } from '@/modules/ticket-surcharge'
@@ -55,7 +55,7 @@ onMounted(async () => {
 })
 
 const startPrintAllMoney = async () => {
-  await PrintHtmlAction.startPrintAllMoney({
+  await TemplateHtmlAction.startPrintTicketClinicAllMoney({
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
   })

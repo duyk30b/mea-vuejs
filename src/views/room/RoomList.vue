@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { IconDoorOpen } from '@/common/icon-google'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { RoomType, RoomService, RoomTicketStyle } from '@/modules/room'
+import { RoomType, RoomService } from '@/modules/room'
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { IconApartment } from '../../common/icon-antd'
@@ -41,11 +41,7 @@ onMounted(async () => {
       </div>
       <template v-for="room in roomList" :key="room.id">
         <div
-          v-if="
-            roomIdMap[room.id] &&
-            room.roomType === RoomType.Ticket &&
-            [RoomTicketStyle.TicketOrder].includes(room.roomStyle)
-          "
+          v-if="roomIdMap[room.id] && room.roomType === RoomType.TicketOrder"
           class="card"
           @click="router.push({ name: 'RoomTicketOrder', params: { roomId: room.id } })"
         >
@@ -58,15 +54,7 @@ onMounted(async () => {
           </div>
         </div>
         <div
-          v-if="
-            roomIdMap[room.id] &&
-            room.roomType === RoomType.Ticket &&
-            [
-              RoomTicketStyle.TicketClinicGeneral,
-              RoomTicketStyle.TicketClinicObstetric,
-              RoomTicketStyle.TicketClinicEye,
-            ].includes(room.roomStyle)
-          "
+          v-if="roomIdMap[room.id] && room.roomType === RoomType.TicketClinic"
           class="card"
           @click="router.push({ name: 'RoomTicketClinic', params: { roomId: room.id } })"
         >

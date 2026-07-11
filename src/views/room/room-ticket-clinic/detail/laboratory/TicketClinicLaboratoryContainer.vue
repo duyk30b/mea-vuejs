@@ -13,7 +13,7 @@ import { Laboratory, LaboratoryService, LaboratoryValueType } from '@/modules/la
 import { LaboratoryGroup, LaboratoryGroupService } from '@/modules/laboratory-group'
 import { LaboratorySample, LaboratorySampleService } from '@/modules/laboratory-sample'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
+import { TemplateHtmlAction } from '@/modules/template-html'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeLaboratoryApi, TicketStatus } from '@/modules/ticket'
 import {
@@ -484,7 +484,7 @@ const clickDestroyTicketLaboratory = async (ticketLaboratoryData: TicketLaborato
 }
 
 const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
-  await PrintHtmlAction.startPrintResultTicketLaboratory({
+  await TemplateHtmlAction.startPrintTicketClinicLaboratoryResult({
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
     ticketLaboratoryGroup: tlgData,
@@ -493,7 +493,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
 
 const startPrintParaClinicalRequest = async () => {
   await ticketRoomRef.value.refreshRelation()
-  await PrintHtmlAction.startPrintParaClinicalRequest({
+  await TemplateHtmlAction.startPrintTicketClinicParaClinicalRequest({
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
   })

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import VueTag from '@/common/VueTag.vue'
-import { RoomService, RoomTicketStyle } from '@/modules/room'
+import { RoomService, RoomType } from '@/modules/room'
 import { Ticket } from '@/modules/ticket'
 import { useRouter } from 'vue-router'
 import TicketStatusTag from './TicketStatusTag.vue'
@@ -46,13 +46,13 @@ const openBlankTicketClinicDetail = async (ticket: Ticket) => {
     <VueTag icon="exclamation">T{{ ticketId || 0 }} - Bị xóa</VueTag>
   </template>
   <template v-else>
-    <div v-if="roomMap[ticket.roomId]?.roomStyle === RoomTicketStyle.TicketOrder" style="">
+    <div v-if="roomMap[ticket.roomId]?.roomType === RoomType.TicketOrder" style="">
       <a v-if="link" style="margin-right: 0.5em" @click="openBlankTicketOrderDetail(ticket)">
         BH{{ ticket.id }}
       </a>
       <TicketStatusTag v-if="status" :ticket="ticket" />
     </div>
-    <div v-else style="">
+    <div v-else-if="roomMap[ticket.roomId]?.roomType === RoomType.TicketClinic" style="">
       <a v-if="link" style="margin-right: 0.5em" @click="openBlankTicketClinicDetail(ticket)">
         KB{{ ticket.id }}
       </a>

@@ -35,6 +35,10 @@ export class PrescriptionSampleService {
           prescriptionSampleItemList: { product: false },
         })
         PrescriptionSampleService.prescriptionSampleAll.value = prescriptionSampleAll
+        PrescriptionSampleService.prescriptionSampleMap.value = ESArray.arrayToKeyValue(
+          prescriptionSampleAll,
+          'id',
+        )
       } catch (error: any) {
         console.log('🚀 ~ prescription-sample.service.ts:39 ~ start ~ error:', error)
       }

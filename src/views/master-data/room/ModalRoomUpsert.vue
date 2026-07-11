@@ -1,24 +1,18 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon-antd'
-import { InputRadio, InputSelect, InputText } from '../../../common/vue-form'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import {
-  Room,
-  RoomType,
-  RoomTypeText,
-  RoomTicketStyle,
-  RoomTicketStyleText,
-} from '../../../modules/room'
-import { RoomService } from '../../../modules/room/room.service'
-import { MeService } from '../../../modules/_me/me.service'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert'
-import InputCheckboxUserList from '@/views/component/InputCheckboxUserList.vue'
+import { InputRadio, InputSelect, InputText } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { CONFIG } from '@/config'
+import { MeService } from '@/modules/_me/me.service'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { Room, RoomType, RoomTypeText } from '@/modules/room'
+import { RoomService } from '@/modules/room/room.service'
 import { ESArray, ESTypescript } from '@/utils'
+import InputCheckboxUserList from '@/views/component/InputCheckboxUserList.vue'
+import { computed, ref } from 'vue'
 
 const emit = defineEmits<{
   (e: 'success', value: Room, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
@@ -34,9 +28,9 @@ const userIdList = ref<number[]>([])
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-const roomTicketStyleOptions = ESTypescript.keysEnum(RoomTicketStyle).map((key) => ({
-  value: RoomTicketStyle[key],
-  label: RoomTicketStyleText[RoomTicketStyle[key]],
+const roomTypeOptions = ESTypescript.keysEnum(RoomType).map((key) => ({
+  value: RoomType[key],
+  label: RoomTypeText[RoomType[key]],
 }))
 
 const openModal = async (roomId?: number) => {
@@ -79,12 +73,6 @@ const hasChangeData = computed(() => {
   }
   return false
 })
-
-const handleUpdateRoomStyle = (v: any) => {
-  if (!room.value.name) {
-    room.value.name = RoomTicketStyleText[room.value.roomStyle]
-  }
-}
 
 const handleSave = async () => {
   if (!room.value.roomType) {
@@ -177,44 +165,8 @@ defineExpose({ openModal })
               v-model:value="room.roomType"
               required
               :disabled="!!room.id"
-              :options="[
-                {
-                  value: RoomType.Ticket,
-                  label: RoomTypeText[RoomType.Ticket],
-                },
-                {
-                  value: RoomType.Product,
-                  label: RoomTypeText[RoomType.Product],
-                },
-                {
-                  value: RoomType.Procedure,
-                  label: RoomTypeText[RoomType.Procedure],
-                },
-                {
-                  value: RoomType.Laboratory,
-                  label: RoomTypeText[RoomType.Laboratory],
-                },
-                {
-                  value: RoomType.Radiology,
-                  label: RoomTypeText[RoomType.Radiology],
-                },
-              ]"
+              :options="roomTypeOptions"
             ></InputSelect>
-          </div>
-        </div>
-
-        <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-          <div>Kiểu phòng</div>
-          <div v-if="room.roomType === RoomType.Ticket">
-            <InputSelect
-              v-model:value="room.roomStyle"
-              required
-              :options="roomTicketStyleOptions"
-              @update:value="handleUpdateRoomStyle"
-            ></InputSelect>
-          </div>
-          <div v-else>
-            <InputText :value="''" disabled />
           </div>
         </div>
 

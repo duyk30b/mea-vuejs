@@ -88,30 +88,6 @@ export const masterDataRouter: RouteRecordRaw = {
       ],
     },
     {
-      path: 'print-html',
-      name: 'PrintHtml',
-      meta: { title: 'Mẫu in' },
-      redirect: () => ({ name: 'PrintHtmlContainer' }),
-      children: [
-        {
-          path: 'list',
-          name: 'PrintHtmlContainer',
-          component: () => import('../views/master-data/print-html/PrintHtmlContainer.vue'),
-        },
-        {
-          path: 'upsert/:id?',
-          name: 'PrintHtmlUpsert',
-          component: () => import('../views/master-data/print-html/upsert/PrintHtmlUpsert.vue'),
-          meta: {
-            title: (route: RouteLocationNormalizedLoaded) => {
-              if (route.params.id) return 'Cập nhật mẫu in'
-              return 'Tạo mới mẫu in'
-            },
-          },
-        },
-      ],
-    },
-    {
       path: 'warehouse',
       name: 'Warehouse',
       meta: { title: 'Danh sách kho' },
@@ -252,6 +228,50 @@ export const masterDataRouter: RouteRecordRaw = {
           },
         },
       ],
+    },
+
+    {
+      path: 'attribute',
+      name: 'Attribute',
+      meta: { title: 'Thuộc tính' },
+      redirect: () => ({ name: 'AttributeContainer' }),
+      children: [
+        {
+          path: 'list',
+          name: 'AttributeContainer',
+          component: () => import('../views/master-data/attribute/AttributeList.vue'),
+        },
+      ],
+    },
+    {
+      path: 'template-html',
+      name: 'TemplateHtml',
+      meta: { title: 'Template HTML' },
+      redirect: () => ({ name: 'TemplateHtmlList' }),
+      children: [
+        {
+          path: 'list',
+          name: 'TemplateHtmlList',
+          component: () => import('../views/master-data/template-html/TemplateHtmlList.vue'),
+        },
+        {
+          path: 'upsert/:id?',
+          name: 'TemplateHtmlUpsert',
+          component: () => import('../views/master-data/template-html/upsert/TemplateHtmlUpsert.vue'),
+          meta: {
+            title: (route: RouteLocationNormalizedLoaded) => {
+              if (route.params.id) return 'Cập nhật Template HTML'
+              return 'Tạo mới Template HTML'
+            },
+          },
+        },
+      ],
+    },
+    {
+      path: 'print-setting',
+      name: 'PrintSetting',
+      meta: { title: 'Cài đặt mẫu in' },
+      component: () => import('../views/master-data/print-setting/PrintSettingList.vue'),
     },
   ],
 }

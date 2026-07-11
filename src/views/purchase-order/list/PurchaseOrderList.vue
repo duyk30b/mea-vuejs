@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PrintHtmlAction } from '@/modules/print-html'
+import { TemplateHtmlAction } from '@/modules/template-html'
 import { onBeforeMount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
@@ -126,7 +126,7 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderId: string) => {
       purchaseOrderItemList: { product: true },
     },
   })
-  await PrintHtmlAction.startPrintPurchaseOrderDetail({ purchaseOrder: purchaseOrderData })
+  await TemplateHtmlAction.startPrintPurchaseOrderDetail({ purchaseOrder: purchaseOrderData })
 }
 </script>
 

@@ -10,7 +10,7 @@ import {
   PaymentActionTypeText,
   PaymentPersonType,
 } from '@/modules/payment'
-import { PrintHtmlAction } from '@/modules/print-html'
+import { TemplateHtmlAction } from '@/modules/template-html'
 import { Ticket } from '@/modules/ticket'
 import { WalletService } from '@/modules/wallet'
 import { timeToText } from '@/utils'
@@ -35,7 +35,7 @@ onMounted(async () => {
 const startPrintCustomerPayment = async (options: { customer: Customer; payment: Payment }) => {
   let payment = options.payment
   const paymentPrint = await Payment.refreshData(payment)
-  await PrintHtmlAction.startPrintCustomerPayment({
+  await TemplateHtmlAction.startPrintTicketClinicCustomerPayment({
     customer: props.ticket.customer!,
     payment: paymentPrint,
   })
@@ -44,7 +44,7 @@ const startPrintCustomerPayment = async (options: { customer: Customer; payment:
 const startPrintCustomerRefund = async (options: { customer: Customer; payment: Payment }) => {
   const payment = options.payment
   const paymentPrint = await Payment.refreshData(payment)
-  await PrintHtmlAction.startPrintCustomerRefund({
+  await TemplateHtmlAction.startPrintTicketClinicCustomerRefund({
     customer: props.ticket.customer!,
     payment: paymentPrint,
   })

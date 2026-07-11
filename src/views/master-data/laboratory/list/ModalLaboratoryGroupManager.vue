@@ -5,7 +5,7 @@ import { InputText, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
-import { PrintHtmlService } from '../../../../modules/print-html'
+import { TemplateHtmlService } from '../../../../modules/template-html'
 import { RoomType, RoomService } from '@/modules/room'
 
 const emit = defineEmits<{
@@ -14,15 +14,15 @@ const emit = defineEmits<{
 
 const showModal = ref(false)
 const laboratoryGroupList = ref<LaboratoryGroup[]>([])
-const printHtmlOptions = ref<{ value: number; text: string }[]>([])
+const templateHtmlOptions = ref<{ value: number; text: string }[]>([])
 const roomOptions = ref<{ value: number; text: string }[]>([])
 const saveLoading = ref(false)
 
-const startFetchPrintHtml = async () => {
-  const printHtmlAll = await PrintHtmlService.list({ sort: { priority: 'ASC' } })
-  printHtmlOptions.value = [
+const startFetchTemplateHtml = async () => {
+  const templateHtmlAll = await TemplateHtmlService.list({ sort: { priority: 'ASC' } })
+  templateHtmlOptions.value = [
     { value: 0, text: 'Mặc định' },
-    ...printHtmlAll.map((i) => ({ value: i.id, text: i.name })),
+    ...templateHtmlAll.map((i) => ({ value: i.id, text: i.name })),
   ]
 }
 
@@ -40,7 +40,7 @@ const startFetchRoom = async () => {
 const startFetchData = async () => {
   try {
     laboratoryGroupList.value = await LaboratoryGroupService.list({ sort: { id: 'ASC' } })
-    await Promise.all([startFetchPrintHtml(), startFetchRoom()])
+    await Promise.all([startFetchTemplateHtml(), startFetchRoom()])
   } catch (error) {
     console.log('🚀 ~ file: ModalLaboratoryGroupManager.vue:30 ~ startFetchData ~ error:', error)
   }
@@ -66,7 +66,7 @@ const handleSave = async () => {
     emit('success')
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalProductUpsert.vue:42 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ file: ModalLaboratoryGroupManager.vue:42 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -121,8 +121,8 @@ defineExpose({ openModal })
                 </td>
                 <td>
                   <VueSelect
-                    v-model:value="laboratoryGroupList[index].printHtmlId"
-                    :options="printHtmlOptions"
+                    v-model:value="laboratoryGroupList[index].templateHtmlId"
+                    :options="templateHtmlOptions"
                   />
                 </td>
                 <td class="text-center">

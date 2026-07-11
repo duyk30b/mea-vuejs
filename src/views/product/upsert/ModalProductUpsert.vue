@@ -368,7 +368,7 @@ defineExpose({ openModal })
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
           <span v-if="!product.id">Thêm sản phẩm</span>
-          <span v-if="product.id">Sửa sản phẩm</span>
+          <span v-if="product.id">Sửa: {{ product.brandName }}</span>
         </div>
         <div
           v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"

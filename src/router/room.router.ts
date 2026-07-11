@@ -93,15 +93,6 @@ export const roomRouter: RouteRecordRaw = {
               meta: { keepAlive: true, title: 'Khám' },
             },
             {
-              path: 'diagnosis-eye-special',
-              name: 'TicketClinicDiagnosisEyeSpecial',
-              component: () =>
-                import(
-                  '../views/room/room-ticket-clinic/detail/diagnosis/TicketClinicDiagnosisEyeSpecial.vue'
-                ),
-              meta: { keepAlive: true, title: 'Đo thị lực' },
-            },
-            {
               path: 'procedure',
               name: 'TicketClinicProcedureContainer',
               component: () =>

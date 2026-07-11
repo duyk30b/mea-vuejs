@@ -21,7 +21,7 @@ export class TicketRadiology extends BaseModel {
   roomId: number
   radiologyId: number
 
-  printHtmlId: number
+  templateHtmlId: number
   customVariables: string // Dạng Javascript
   customStyles: string // Dạng Style
   description: string
@@ -61,7 +61,7 @@ export class TicketRadiology extends BaseModel {
     ins.paid = 0
     ins.debt = 0
 
-    ins.printHtmlId = 0
+    ins.templateHtmlId = 0
     ins.imageIds = '[]'
     ins.description = ''
     ins.result = ''
@@ -145,7 +145,7 @@ export class TicketRadiology extends BaseModel {
     if (a.customerId != b.customerId) return false
     if (a.radiologyId != b.radiologyId) return false
 
-    if (a.printHtmlId != b.printHtmlId) return false
+    if (a.templateHtmlId != b.templateHtmlId) return false
     if (a.customVariables != b.customVariables) return false
     if (a.customStyles != b.customStyles) return false
     if (a.description != b.description) return false

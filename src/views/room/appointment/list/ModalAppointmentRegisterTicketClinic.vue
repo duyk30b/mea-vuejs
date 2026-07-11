@@ -27,7 +27,7 @@ const openModal = async (appointmentProp: Appointment) => {
   appointment.value = Appointment.from(appointmentProp)
   receptionAt.value = Date.now()
 
-  const roomList = await RoomService.list({ filter: { roomType: RoomType.Ticket } })
+  const roomList = await RoomService.list({ filter: { roomType: RoomType.TicketClinic } })
   roomId.value = roomList[0].id
 }
 
@@ -85,7 +85,7 @@ defineExpose({ openModal })
           <InputSelectRoom
             label="Chọn phòng tiếp đón"
             v-model:roomId="roomId"
-            :roomType="RoomType.Ticket"
+            :roomType="RoomType.TicketClinic"
           />
         </div>
       </div>

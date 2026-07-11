@@ -66,7 +66,7 @@ defineExpose({ openModal })
           <tbody>
             <tr>
               <td>
-                <InputCheckbox v-model:value="settingDisplay.table.printHtml" label="Hiển thị mẫu in" />
+                <InputCheckbox v-model:value="settingDisplay.table.templateHtml" label="Hiển thị mẫu in" />
               </td>
             </tr>
           </tbody>

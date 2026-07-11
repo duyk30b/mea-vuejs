@@ -12,7 +12,7 @@ import { Customer } from '@/modules/customer/customer.model'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PositionType } from '@/modules/position'
 import { type Procedure } from '@/modules/procedure'
-import { Room, RoomService, RoomTicketStyle, RoomType } from '@/modules/room'
+import { Room, RoomService, RoomType } from '@/modules/room'
 import { Ticket, TicketChangeReceptionApi, TicketQueryApi, TicketStatus } from '@/modules/ticket'
 import type { TicketAttributeKeyGeneralType, TicketAttributeMap } from '@/modules/ticket-attribute'
 import { TicketProcedure } from '@/modules/ticket-procedure'
@@ -25,8 +25,6 @@ import InputSearchCustomer from '@/views/component/InputSearchCustomer.vue'
 import InputSearchProcedure from '@/views/component/InputSearchProcedure.vue'
 import InputSelectCustomerSource from '@/views/component/InputSelectCustomerSource.vue'
 import InputSelectRoom from '@/views/component/InputSelectRoom.vue'
-import DiagnosisObstetric from '@/views/room/room-ticket-clinic/detail/diagnosis/DiagnosisObstetric.vue'
-import DiagnosisVitalSigns from '@/views/room/room-ticket-clinic/detail/diagnosis/DiagnosisVitalSigns.vue'
 import TableTicketProcedureListRequest from '@/views/room/room-ticket-clinic/detail/procedure/TableTicketProcedureListDraft.vue'
 import TicketChangeTicketUserPosition from '@/views/room/room-user/TicketChangeTicketUserPosition.vue'
 import { nextTick, ref } from 'vue'
@@ -472,17 +470,6 @@ defineExpose({ openModal })
           />
         </div>
 
-        <div
-          v-if="
-            !ticketReception.id && currentRoom.roomStyle === RoomTicketStyle.TicketClinicObstetric
-          "
-          style="flex-basis: 90%; flex-grow: 1"
-          class="flex gap-4"
-        >
-          <DiagnosisObstetric :ticketAttributeMap="ticketAttributeMap" />
-          <DiagnosisVitalSigns :ticketAttributeMap="ticketAttributeMap" />
-        </div>
-
         <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
           <div>Thời gian tiếp đón</div>
           <div>
@@ -499,13 +486,8 @@ defineExpose({ openModal })
           <div>
             <InputSelectRoom
               v-model:roomId="ticketReception.roomId"
-              :roomType="RoomType.Ticket"
+              :roomType="RoomType.TicketClinic"
               :disabled="!!ticketPendingId || !ticketReception.isFirstReception"
-              :roomTicketStyle="[
-                RoomTicketStyle.TicketClinicGeneral,
-                RoomTicketStyle.TicketClinicObstetric,
-                RoomTicketStyle.TicketClinicEye,
-              ]"
               removeLabelWrapper
               autoSelectFirstValue
             />

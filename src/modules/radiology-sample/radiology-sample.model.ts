@@ -1,5 +1,5 @@
-import { PrintHtml } from '../print-html'
 import { Radiology } from '../radiology/radiology.model'
+import { TemplateHtml } from '../template-html'
 import { User } from '../user'
 
 export class RadiologySample {
@@ -9,14 +9,14 @@ export class RadiologySample {
 
   userId: number
   radiologyId: number
-  printHtmlId: number
+  templateHtmlId: number
 
   description: string
   result: string
   customVariables: string // Dạng Javascript
   customStyles: string // Dạng Style
 
-  printHtml?: PrintHtml
+  templateHtml?: TemplateHtml
   radiology?: Radiology
   user?: User
 
@@ -28,7 +28,7 @@ export class RadiologySample {
 
     ins.userId = 0
     ins.radiologyId = 0
-    ins.printHtmlId = 0
+    ins.templateHtmlId = 0
 
     ins.description = ''
     ins.result = ''
@@ -39,7 +39,7 @@ export class RadiologySample {
 
   static blank() {
     const ins = RadiologySample.init()
-    ins.printHtml = PrintHtml.init()
+    ins.templateHtml = TemplateHtml.init()
     ins.radiology = Radiology.init()
     return ins
   }
@@ -63,8 +63,8 @@ export class RadiologySample {
     if (Object.prototype.hasOwnProperty.call(source, 'radiology')) {
       target.radiology = target.radiology ? Radiology.basic(target.radiology) : target.radiology
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'printHtml')) {
-      target.printHtml = target.printHtml ? PrintHtml.basic(target.printHtml) : target.printHtml
+    if (Object.prototype.hasOwnProperty.call(source, 'templateHtml')) {
+      target.templateHtml = target.templateHtml ? TemplateHtml.basic(target.templateHtml) : target.templateHtml
     }
     if (Object.prototype.hasOwnProperty.call(source, 'user')) {
       target.user = target.user ? User.basic(target.user) : target.user
@@ -82,7 +82,7 @@ export class RadiologySample {
     if (a.priority != b.priority) return false
     if (a.userId != b.userId) return false
     if (a.radiologyId != b.radiologyId) return false
-    if (a.printHtmlId != b.printHtmlId) return false
+    if (a.templateHtmlId != b.templateHtmlId) return false
     if (a.description != b.description) return false
     if (a.result != b.result) return false
     if (a.customVariables != b.customVariables) return false

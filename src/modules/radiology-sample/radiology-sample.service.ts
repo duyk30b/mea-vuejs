@@ -1,9 +1,9 @@
 import { CollectionQuery } from '@/core/indexed-db/common/collection.query'
 import { ref } from 'vue'
 import { ESArray } from '../../utils'
-import { PrintHtml, PrintHtmlService } from '../print-html'
 import { Radiology } from '../radiology/radiology.model'
 import { RadiologyService } from '../radiology/radiology.service'
+import { TemplateHtml, TemplateHtmlService } from '../template-html'
 import { User, UserService } from '../user'
 import { RadiologySampleApi } from './radiology-sample.api'
 import type {
@@ -53,10 +53,10 @@ export class RadiologySampleService {
       })
     }
     if (query.relation) {
-      if (query.relation.printHtml) {
-        const printHtmlMap = await PrintHtmlService.getMap()
+      if (query.relation.templateHtml) {
+        const templateHtmlMap = await TemplateHtmlService.getMap()
         data.forEach((i) => {
-          i.printHtml = PrintHtml.from(printHtmlMap[i.printHtmlId])
+          i.templateHtml = TemplateHtml.from(templateHtmlMap[i.templateHtmlId])
         })
       }
     }
@@ -73,15 +73,15 @@ export class RadiologySampleService {
     try {
       const radiologySampleIdList = radiologySampleList.map((i) => i.id)
 
-      const [printHtmlMap, radiologyMap, userMap] = await Promise.all([
-        relation?.printHtml ? PrintHtmlService.getMap() : <Record<string, PrintHtml>>{},
+      const [templateHtmlMap, radiologyMap, userMap] = await Promise.all([
+        relation?.templateHtml ? TemplateHtmlService.getMap() : <Record<string, TemplateHtml>>{},
         relation?.radiology ? RadiologyService.getMap() : <Record<string, Radiology>>{},
         relation?.user ? UserService.getMap() : <Record<string, User>>{},
       ])
 
       radiologySampleList.forEach((radiologySample) => {
-        if (relation?.printHtml) {
-          radiologySample.printHtml = printHtmlMap[radiologySample.printHtmlId]
+        if (relation?.templateHtml) {
+          radiologySample.templateHtml = templateHtmlMap[radiologySample.templateHtmlId]
         }
         if (relation?.radiology) {
           radiologySample.radiology = radiologyMap[radiologySample.radiologyId]

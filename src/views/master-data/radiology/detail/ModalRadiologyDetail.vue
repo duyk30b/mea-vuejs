@@ -34,7 +34,7 @@ const openModal = async (radiologyId: number) => {
       relation: {
         discountList: true,
         positionList: true,
-        printHtml: true,
+        templateHtml: true,
         radiologyGroup: true,
       },
     },

@@ -9,8 +9,8 @@ import VueTinyMCE from '@/common/VueTinyMCE.vue'
 import { MeService } from '@/modules/_me/me.service'
 import { Image } from '@/modules/image/image.model'
 import { PositionType } from '@/modules/position'
-import { PrintHtml, PrintHtmlType } from '@/modules/print-html'
-import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
+import { TemplateHtml, TemplateHtmlType } from '@/modules/template-html'
+import { TemplateHtmlAction } from '@/modules/template-html/template-html.action'
 import { RadiologyService } from '@/modules/radiology'
 import { RadiologySample } from '@/modules/radiology-sample'
 import { TicketChangeRadiologyApi } from '@/modules/ticket'
@@ -18,7 +18,7 @@ import { TicketRadiology, TicketRadiologyStatus } from '@/modules/ticket-radiolo
 import { TicketUser } from '@/modules/ticket-user'
 import { ESImage, ESString } from '@/utils'
 import InputSearchRadiologySample from '@/views/component/InputSearchRadiologySample.vue'
-import VueSelectPrintHtml from '@/views/component/VueSelectPrintHtml.vue'
+import VueSelectTemplateHtml from '@/views/component/VueSelectTemplateHtml.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import TicketChangeTicketUserPosition from '../../room-user/TicketChangeTicketUserPosition.vue'
 import ModalSaveRadiologySample from '../modal/ModalSaveRadiologySample.vue'
@@ -132,7 +132,7 @@ const updateResult = async (options: { print: boolean }) => {
     if (options.print) {
       ticketRadiologyUpdate.radiology = ticketRadiology.value.radiology
       ticketRadiologyUpdate.ticket = ticketRadiology.value.ticket
-      await PrintHtmlAction.startPrintResultTicketRadiology({
+      await TemplateHtmlAction.startPrintTicketClinicRadiologyResult({
         ticketRadiologyData: ticketRadiologyUpdate,
         ticket: ticketRadiology.value.ticket!,
         customer: ticketRadiology.value.customer!,
@@ -149,7 +149,7 @@ const updateResult = async (options: { print: boolean }) => {
 
 const resetResult = () => {
   const radiologyDefault = radiologyMap.value[ticketRadiology.value.radiologyId]
-  ticketRadiology.value.printHtmlId = radiologyDefault.printHtmlId
+  ticketRadiology.value.templateHtmlId = radiologyDefault.templateHtmlId
   ticketRadiology.value.description = radiologyDefault.descriptionDefault || ''
   ticketRadiology.value.result = radiologyDefault.resultDefault || ''
   ticketRadiology.value.customStyles = radiologyDefault.customStyles || ''
@@ -169,7 +169,7 @@ const clickCancelResult = async () => {
           ticketId: ticketRadiology.value.ticketId,
           ticketRadiologyId: ticketRadiology.value.id,
           body: {
-            printHtmlId: radiologyDefault?.printHtmlId || 0,
+            templateHtmlId: radiologyDefault?.templateHtmlId || 0,
             description: radiologyDefault?.descriptionDefault || '',
             result: radiologyDefault?.resultDefault || '',
             customStyles: radiologyDefault?.customStyles || '',
@@ -191,7 +191,7 @@ const clickCancelResult = async () => {
 const clickOpenModalSaveRadiologySample = () => {
   const radiologySampleDto = RadiologySample.blank()
   radiologySampleDto.radiologyId = ticketRadiology.value.radiologyId
-  radiologySampleDto.printHtmlId = ticketRadiology.value.printHtmlId
+  radiologySampleDto.templateHtmlId = ticketRadiology.value.templateHtmlId
 
   radiologySampleDto.description = ticketRadiology.value.description
   radiologySampleDto.result = ticketRadiology.value.result
@@ -207,14 +207,14 @@ const clickOpenModalSaveRadiologySample = () => {
 
 const selectRadiologySample = (radiologySampleData: RadiologySample | undefined) => {
   if (!radiologySampleData?.id) return
-  ticketRadiology.value.printHtmlId = radiologySampleData.printHtmlId
+  ticketRadiology.value.templateHtmlId = radiologySampleData.templateHtmlId
   ticketRadiology.value.description = radiologySampleData.description
   ticketRadiology.value.result = radiologySampleData.result
   ticketRadiology.value.customStyles = radiologySampleData.customStyles
   ticketRadiology.value.customVariables = radiologySampleData.customVariables
 }
 
-const selectPrintHtml = (printHtml: PrintHtml | undefined) => {}
+const selectTemplateHtml = (templateHtml: TemplateHtml | undefined) => {}
 
 const logicFilterRadiologySample = (item: ItemOption, text: string) => {
   const radiologySampleItem = item.data as RadiologySample | undefined
@@ -227,7 +227,7 @@ const logicFilterRadiologySample = (item: ItemOption, text: string) => {
 }
 
 const startPrintDemo = async () => {
-  await PrintHtmlAction.startPrintResultTicketRadiology({
+  await TemplateHtmlAction.startPrintTicketClinicRadiologyResult({
     customer: ticketRadiology.value.customer!,
     ticket: ticketRadiology.value.ticket!,
     ticketRadiologyData: ticketRadiology.value,
@@ -286,10 +286,10 @@ const handleFixTicketUserResultList = (tuListData: TicketUser[]) => {
             <span>Chọn mẫu in</span>
             <a @click="startPrintDemo">In kết quả</a>
           </div>
-          <VueSelectPrintHtml
-            v-model:printHtmlId="ticketRadiology.printHtmlId"
-            :printHtmlType="PrintHtmlType.RadiologyResult"
-            @selectPrintHtml="selectPrintHtml"
+          <VueSelectTemplateHtml
+            v-model:templateHtmlId="ticketRadiology.templateHtmlId"
+            :templateHtmlType="TemplateHtmlType.TicketClinicRadiologyResult"
+            @selectTemplateHtml="selectTemplateHtml"
             removeLabelWrapper
           />
         </div>

@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { onBeforeMount, ref } from 'vue'
-import { IconApartment, IconForm } from '../../../common/icon-antd'
-import VueButton from '../../../common/VueButton.vue'
-import VueTag from '../../../common/VueTag.vue'
-import { UserApi, UserService, type User } from '../../../modules/user'
-import ModalAccountUpsert from './ModalAccountUpsert.vue'
-import VuePagination from '../../../common/VuePagination.vue'
-import { InputSelect } from '../../../common/vue-form'
+import { IconApartment, IconForm } from '@/common/icon-antd'
+import { InputSelect } from '@/common/vue-form'
+import VueButton from '@/common/VueButton.vue'
+import VuePagination from '@/common/VuePagination.vue'
+import VueTag from '@/common/VueTag.vue'
 import { CONFIG } from '@/config'
+import { UserApi, UserService, type User } from '@/modules/user'
+import { BugDevelopment } from '@/views/component'
+import { onBeforeMount, ref } from 'vue'
+import ModalAccountUpsert from './ModalAccountUpsert.vue'
 
 const modalAccountUpsert = ref<InstanceType<typeof ModalAccountUpsert>>()
 
@@ -108,8 +109,8 @@ const deviceLogout = async (userId: number, clientId: string) => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(user, index) in userList" :key="user.id">
-            <td v-if="CONFIG.MODE === 'development'" style="color: violet" class="text-center">
-              {{ user.id }}
+            <td class="text-center" v-if="CONFIG.MODE === 'development'">
+              <BugDevelopment :data="user" />
             </td>
             <td class="text-center">{{ index + 1 }}</td>
             <td>{{ user.username }}</td>

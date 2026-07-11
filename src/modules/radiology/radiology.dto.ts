@@ -6,7 +6,7 @@ export class RadiologyGetQuery {
   limit?: number
   relation?: {
     radiologyGroup?: boolean
-    printHtml?: boolean
+    templateHtml?: boolean
     positionList?: boolean
     discountList?: boolean
     ticketUserRequestList?: boolean

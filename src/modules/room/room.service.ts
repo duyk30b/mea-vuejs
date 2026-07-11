@@ -160,6 +160,12 @@ export class RoomService {
     return room
   }
 
+  static async updateRoomSetting(id: number, roomSetting: string) {
+    const room = await RoomApi.updateRoomSetting(id, roomSetting)
+    RoomService.loadedAll = false
+    return room
+  }
+
   static async destroyOne(id: number) {
     const response = await RoomApi.destroyOne(id)
     if (response.success) {

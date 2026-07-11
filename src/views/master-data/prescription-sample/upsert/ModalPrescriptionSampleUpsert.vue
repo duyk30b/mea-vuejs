@@ -33,7 +33,7 @@ const emit = defineEmits<{
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
-const prescriptionSampleRoot = ref<PrescriptionSample>(PrescriptionSample.blank())
+const prescriptionSampleOrigin = ref<PrescriptionSample>(PrescriptionSample.blank())
 const prescriptionSample = ref<PrescriptionSample>(PrescriptionSample.blank())
 const prescriptionSampleItem = ref<PrescriptionSampleItem>(PrescriptionSampleItem.blank())
 
@@ -43,29 +43,42 @@ const saveLoading = ref(false)
 const openModal = async (prescriptionSampleId?: string) => {
   showModal.value = true
 
-  if (!prescriptionSampleId) {
-    prescriptionSampleRoot.value = PrescriptionSample.blank()
-    prescriptionSampleRoot.value.userId = MeService.user.value?.id || 0
+  if (prescriptionSampleId) {
+    prescriptionSampleOrigin.value = await PrescriptionSampleService.detail(
+      prescriptionSampleId,
+      { relation: { prescriptionSampleItemList: { product: true } } },
+      { query: false, refetch: false },
+    )
+  } else {
+    prescriptionSampleOrigin.value = PrescriptionSample.blank()
+    prescriptionSampleOrigin.value.userId = MeService.user.value?.id || 0
     const prescriptionSampleAll = await PrescriptionSampleService.getAll()
     prescriptionSample.value.priority = prescriptionSampleAll.length + 1
-  } else {
-    prescriptionSampleRoot.value = await PrescriptionSampleService.detail(prescriptionSampleId, {
-      relation: { prescriptionSampleItemList: { product: true } },
-    })
   }
-  prescriptionSample.value = PrescriptionSample.from(prescriptionSampleRoot.value)
+  prescriptionSample.value = PrescriptionSample.from(prescriptionSampleOrigin.value)
 }
 
 const closeModal = () => {
   showModal.value = false
-  prescriptionSampleRoot.value = PrescriptionSample.blank()
+  prescriptionSampleOrigin.value = PrescriptionSample.blank()
   prescriptionSample.value = PrescriptionSample.blank()
 }
 
 const disabledButtonSave = computed(() => {
   if (!prescriptionSample.value.name) return true
   if (!prescriptionSample.value.prescriptionSampleItemList.length) return true
-  return PrescriptionSample.equal(prescriptionSample.value, prescriptionSampleRoot.value)
+  if (!PrescriptionSample.equal(prescriptionSample.value, prescriptionSampleOrigin.value)) {
+    return false
+  }
+  if (
+    !PrescriptionSampleItem.equalList(
+      prescriptionSample.value.prescriptionSampleItemList,
+      prescriptionSampleOrigin.value.prescriptionSampleItemList,
+    )
+  ) {
+    return false
+  }
+  return true
 })
 
 const selectProduct = (productSelected?: Product) => {

@@ -13,7 +13,7 @@ import { PaymentMoneyStatus } from '@/modules/enum'
 import { Laboratory, LaboratoryService } from '@/modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '@/modules/laboratory-group'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
+import { TemplateHtmlAction } from '@/modules/template-html/template-html.action'
 import { Room, roomLaboratory, RoomService, RoomType } from '@/modules/room'
 import {
   TicketLaboratoryGroup,
@@ -104,7 +104,7 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
     ticketLaboratoryGroupList.value = paginationResponse.ticketLaboratoryGroupList
     total.value = paginationResponse.total
   } catch (error) {
-    console.log('🚀 ~ file: TicketClinicList.vue:84 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ file: RoomLaboratory.vue:84 ~ startFetchData ~ error:', error)
   } finally {
     dataLoading.value = false
   }
@@ -224,13 +224,13 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
       i.laboratory = laboratoryMap.value[i.laboratoryId] || Laboratory.blank()
     })
 
-    await PrintHtmlAction.startPrintResultTicketLaboratory({
+    await TemplateHtmlAction.startPrintTicketClinicLaboratoryResult({
       ticketLaboratoryGroup: ticketLaboratoryGroupData,
       customer: ticketLaboratoryGroupData.customer!,
       ticket: ticketLaboratoryGroupData.ticket!,
     })
   } catch (error) {
-    console.log('🚀 ~ file: TicketClinicLaboratory.vue:137 ~ startPrint ~ error:', error)
+    console.log('🚀 ~ file: RoomLaboratory.vue:137 ~ startPrint ~ error:', error)
   }
 }
 </script>

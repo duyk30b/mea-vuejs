@@ -24,6 +24,7 @@ import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '@/views/product/upsert/ModalProductUpsert.vue'
 import { onMounted, ref } from 'vue'
 import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
+import { useTicketOrderDetailStore } from '@/store/ticket-order-detail.store'
 
 const inputOptionsProduct = ref<InstanceType<typeof InputOptions>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
@@ -32,6 +33,7 @@ const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const { userPermission } = MeService
+const ticketOrderDetailStore = useTicketOrderDetailStore()
 
 const product = ref(Product.blank())
 const productList = ref<Product[]>([])
@@ -117,7 +119,12 @@ const selectProduct = async (productProp?: Product) => {
   tpItem.productId = productProp.id
   tpItem.product = Product.from(productProp)
 
-  tpItem.pickupStrategy = MeService.getPickupStrategy(productProp).order
+  tpItem.pickupStrategy =
+    productProp.warehouseIds === '[]'
+      ? PickupStrategy.NoImpact
+      : MeService.settingMap.value.SCREEN_INVOICE_UPSERT.pickupStrategy ||
+        MeService.settingMapRoot.value.SCREEN_INVOICE_UPSERT.pickupStrategy ||
+        PickupStrategy.RequireBatchSelection
 
   tpItem.deliveryStatus = DeliveryStatus.Pending
   tpItem.unitRate = productProp.unitDefaultRate

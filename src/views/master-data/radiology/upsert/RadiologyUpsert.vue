@@ -17,13 +17,13 @@ import {
   PositionService,
   PositionType
 } from '@/modules/position'
-import { PrintHtml, PrintHtmlAction, PrintHtmlCompile, PrintHtmlType } from '@/modules/print-html'
+import { TemplateHtml, TemplateHtmlAction, TemplateHtmlCompile, TemplateHtmlType } from '@/modules/template-html'
 import { Radiology, RadiologyApi, RadiologyService } from '@/modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '@/modules/radiology-group'
 import { Ticket } from '@/modules/ticket'
 import { TicketRadiology } from '@/modules/ticket-radiology'
 import { ESDom } from '@/utils'
-import VueSelectPrintHtml from '@/views/component/VueSelectPrintHtml.vue'
+import VueSelectTemplateHtml from '@/views/component/VueSelectTemplateHtml.vue'
 import PositionTableAction from '@/views/master-data/position/common/PositionTableAction.vue'
 import { computed, nextTick, onBeforeMount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -60,20 +60,20 @@ let systemVarLog = {}
 const activeTab = ref(TABS_KEY.BASIC)
 const saveLoading = ref(false)
 
-const printHtmlHeader = ref(PrintHtml.blank())
-const printHtmlFooter = ref(PrintHtml.blank())
+const templateHtmlHeader = ref(TemplateHtml.blank())
+const templateHtmlFooter = ref(TemplateHtml.blank())
 
 onBeforeMount(async () => {
   const promiseInit = await Promise.all([RadiologyGroupService.list({})])
   radiologyGroupAll.value = promiseInit[0]
 
-  printHtmlHeader.value = await PrintHtmlAction.getPrintHtmlByType({
+  templateHtmlHeader.value = await TemplateHtmlAction.getTemplateHtmlByType({
     oid: organization.value.id,
-    type: PrintHtmlType._HEADER,
+    templateHtmlType: TemplateHtmlType._HEADER,
   })
-  printHtmlFooter.value = await PrintHtmlAction.getPrintHtmlByType({
+  templateHtmlFooter.value = await TemplateHtmlAction.getTemplateHtmlByType({
     oid: organization.value.id,
-    type: PrintHtmlType._FOOTER,
+    templateHtmlType: TemplateHtmlType._FOOTER,
   })
 })
 
@@ -81,7 +81,7 @@ onMounted(async () => {
   const radiologyId = Number(route.params.id)
   if (radiologyId) {
     radiologyOrigin = await RadiologyApi.detail(radiologyId, {
-      relation: { printHtml: true, positionList: true, discountList: true },
+      relation: { templateHtml: true, positionList: true, discountList: true },
     })
     radiologyOrigin.radiologyGroup = await RadiologyGroupService.detail(
       radiologyOrigin.radiologyGroupId,
@@ -173,18 +173,18 @@ const handleSave = async () => {
   }
 }
 
-const selectPrintHtml = async (printHtmlProp?: PrintHtml) => {
-  let printHtmlData: PrintHtml
-  if (printHtmlProp?.id) {
-    printHtmlData = PrintHtml.from(printHtmlProp)
+const selectTemplateHtml = async (templateHtmlProp?: TemplateHtml) => {
+  let templateHtmlData: TemplateHtml
+  if (templateHtmlProp?.id) {
+    templateHtmlData = TemplateHtml.from(templateHtmlProp)
   } else {
-    printHtmlData = await PrintHtmlAction.getPrintHtmlByType({
+    templateHtmlData = await TemplateHtmlAction.getTemplateHtmlByType({
       oid: organization.value.id,
-      type: PrintHtmlType.RadiologyResult,
+      templateHtmlType: TemplateHtmlType.TicketClinicRadiologyResult,
     })
   }
 
-  radiology.value.printHtml = printHtmlData
+  radiology.value.templateHtml = templateHtmlData
   updatePreview()
 }
 
@@ -200,8 +200,8 @@ const updatePreview = async () => {
   const doc = iframe.value?.contentDocument || iframe.value?.contentWindow?.document
   if (!doc) return
 
-  const printHtml = radiology.value.printHtml
-  if (!printHtml?.html) {
+  const templateHtml = radiology.value.templateHtml
+  if (!templateHtml?.htmlPrint) {
     return
   }
   const ticketRadiologyData = TicketRadiology.blank()
@@ -217,7 +217,7 @@ const updatePreview = async () => {
     return image
   })
 
-  const printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
+  const templateHtmlCompiled = TemplateHtmlCompile.compilePageHtml({
     data: {
       organization: organization.value,
       me: user.value!,
@@ -226,30 +226,30 @@ const updatePreview = async () => {
       ticketRadiology: ticketRadiologyData,
     },
     template: {
-      _header: printHtmlHeader.value.html,
-      _footer: printHtmlFooter.value.html,
-      _wrapper: printHtml.html,
+      _header: templateHtmlHeader.value.htmlPrint,
+      _footer: templateHtmlFooter.value.htmlPrint,
+      _wrapper: templateHtml.htmlPrint,
       _content: radiology.value.descriptionDefault || '',
     },
     variablesString: [
-      printHtmlHeader.value.initVariable,
-      printHtmlFooter.value.initVariable,
-      printHtml.initVariable,
+      templateHtmlHeader.value.initVariable,
+      templateHtmlFooter.value.initVariable,
+      templateHtml.initVariable,
       radiology.value.customVariables,
     ],
   })
-  systemVarLog = printHtmlCompiled?._SYSTEM_VARIABLE || {}
+  systemVarLog = templateHtmlCompiled?._SYSTEM_VARIABLE || {}
 
-  if (!printHtmlCompiled || !printHtmlCompiled.htmlString) {
+  if (!templateHtmlCompiled || !templateHtmlCompiled.htmlString) {
     return
   }
 
   ESDom.writeWindow(doc, {
-    html: printHtmlCompiled?.htmlString || '',
+    html: templateHtmlCompiled?.htmlString || '',
     cssList: [
-      printHtmlHeader.value.css,
-      printHtmlFooter.value.css,
-      printHtml.css,
+      templateHtmlHeader.value.cssPrint,
+      templateHtmlFooter.value.cssPrint,
+      templateHtml.cssPrint,
       radiology.value.customStyles,
     ],
   })
@@ -260,7 +260,7 @@ const handleUpdateTabShow = () => {
 }
 
 const handleModalSelectRadiologyExampleSuccess = (radiologyProp: Radiology) => {
-  radiology.value.printHtmlId = radiologyProp.printHtmlId
+  radiology.value.templateHtmlId = radiologyProp.templateHtmlId
   radiology.value.descriptionDefault = radiologyProp.descriptionDefault
   radiology.value.resultDefault = radiologyProp.resultDefault
   radiology.value.customStyles = radiologyProp.customStyles
@@ -296,8 +296,8 @@ const handleClickDelete = async () => {
 
 const startTestPrint = async () => {
   try {
-    const printHtml = radiology.value.printHtml
-    if (!printHtml?.html) {
+    const templateHtml = radiology.value.templateHtml
+    if (!templateHtml?.htmlPrint) {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
@@ -312,7 +312,7 @@ const startTestPrint = async () => {
       return image
     })
 
-    const printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
+    const templateHtmlCompiled = TemplateHtmlCompile.compilePageHtml({
       data: {
         organization: organization.value,
         me: user.value!,
@@ -321,30 +321,30 @@ const startTestPrint = async () => {
         ticketRadiology: ticketRadiologyData,
       },
       template: {
-        _header: printHtmlHeader.value.html,
-        _footer: printHtmlFooter.value.html,
+        _header: templateHtmlHeader.value.htmlPrint,
+        _footer: templateHtmlFooter.value.htmlPrint,
         _content: radiology.value.descriptionDefault || '',
-        _wrapper: printHtml.html,
+        _wrapper: templateHtml.htmlPrint,
       },
       variablesString: [
-        printHtmlHeader.value.initVariable,
-        printHtmlFooter.value.initVariable,
-        printHtml.initVariable,
+        templateHtmlHeader.value.initVariable,
+        templateHtmlFooter.value.initVariable,
+        templateHtml.initVariable,
         radiology.value.customVariables,
       ],
     })
-    systemVarLog = printHtmlCompiled?._SYSTEM_VARIABLE || {}
+    systemVarLog = templateHtmlCompiled?._SYSTEM_VARIABLE || {}
 
-    if (!printHtmlCompiled || !printHtmlCompiled.htmlString) {
+    if (!templateHtmlCompiled || !templateHtmlCompiled.htmlString) {
       return
     }
 
     await ESDom.startPrint('iframe-print', {
-      html: printHtmlCompiled?.htmlString || '',
+      html: templateHtmlCompiled?.htmlString || '',
       cssList: [
-        printHtmlHeader.value.css,
-        printHtmlFooter.value.css,
-        printHtml.css,
+        templateHtmlHeader.value.cssPrint,
+        templateHtmlFooter.value.cssPrint,
+        templateHtml.cssPrint,
         radiology.value.customStyles,
       ],
     })
@@ -447,10 +447,10 @@ const startCleanHtml = () => {
           <div class="mt-4 flex flex-wrap gap-4">
             <div style="flex-basis: 500px; flex-grow: 1; min-height: 800px" class="flex flex-col">
               <div>
-                <VueSelectPrintHtml
-                  v-model:printHtmlId="radiology.printHtmlId"
-                  :printHtmlType="PrintHtmlType.RadiologyResult"
-                  @selectPrintHtml="(v) => selectPrintHtml(v)"
+                <VueSelectTemplateHtml
+                  v-model:templateHtmlId="radiology.templateHtmlId"
+                  :templateHtmlType="TemplateHtmlType.TicketClinicRadiologyResult"
+                  @selectTemplateHtml="(v) => selectTemplateHtml(v)"
                 />
               </div>
               <div class="mt-4">
@@ -491,9 +491,9 @@ const startCleanHtml = () => {
                     <div style="height: 150px; border: 1px solid #cdcdcd">
                       <MonacoEditor
                         :value="
-                          (printHtmlHeader?.initVariable || '') +
-                          (printHtmlFooter?.initVariable || '') +
-                          (radiology.printHtml?.initVariable || '')
+                          (templateHtmlHeader?.initVariable || '') +
+                          (templateHtmlFooter?.initVariable || '') +
+                          (radiology.templateHtml?.initVariable || '')
                         "
                         language="javascript"
                         readOnly

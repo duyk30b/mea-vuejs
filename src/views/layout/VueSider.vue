@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IconDoorOpen } from '@/common/icon-google'
-import { RoomType, RoomService, RoomTicketStyle } from '@/modules/room'
+import { RoomType, RoomService } from '@/modules/room'
 import { onMounted, ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import {
@@ -82,11 +82,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
 
     <template v-for="room in roomList" :key="room.id">
       <a-menu-item
-        v-if="
-          roomIdMap[room.id] &&
-          room.roomType === RoomType.Ticket &&
-          [RoomTicketStyle.TicketOrder].includes(room.roomStyle)
-        "
+        v-if="roomIdMap[room.id] && room.roomType === RoomType.TicketOrder"
         :key="'RoomTicketOrder' + '_' + room.id"
       >
         <template #icon><IconShop /></template>
@@ -99,15 +95,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
     </template>
     <template v-for="room in roomList" :key="room.id">
       <a-menu-item
-        v-if="
-          roomIdMap[room.id] &&
-          room.roomType === RoomType.Ticket &&
-          [
-            RoomTicketStyle.TicketClinicGeneral,
-            RoomTicketStyle.TicketClinicObstetric,
-            RoomTicketStyle.TicketClinicEye,
-          ].includes(room.roomStyle)
-        "
+        v-if="roomIdMap[room.id] && room.roomType === RoomType.TicketClinic"
         :key="'RoomTicketClinic' + '_' + room.id"
       >
         <template #icon><IconApartment /></template>

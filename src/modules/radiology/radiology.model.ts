@@ -1,7 +1,7 @@
 import { Discount } from '../discount'
 import { Position } from '../position'
-import { PrintHtml } from '../print-html'
 import { RadiologyGroup } from '../radiology-group'
+import { TemplateHtml } from '../template-html'
 import { TicketUser } from '../ticket-user'
 
 export class Radiology {
@@ -10,7 +10,7 @@ export class Radiology {
   name: string
 
   radiologyGroupId: number
-  printHtmlId: number
+  templateHtmlId: number
 
   costPrice: number
   price: number
@@ -24,7 +24,7 @@ export class Radiology {
   deletedAt: number
 
   radiologyGroup?: RadiologyGroup
-  printHtml?: PrintHtml
+  templateHtml?: TemplateHtml
 
   positionRequestListCommon: Position[]
   positionRequestList: Position[]
@@ -56,7 +56,7 @@ export class Radiology {
     ins.radiologyCode = ''
 
     ins.radiologyGroupId = 0
-    ins.printHtmlId = 0
+    ins.templateHtmlId = 0
 
     ins.costPrice = 0
     ins.price = 0
@@ -70,7 +70,7 @@ export class Radiology {
 
   static blank() {
     const ins = Radiology.init()
-    ins.printHtml = PrintHtml.init()
+    ins.templateHtml = TemplateHtml.init()
     ins.positionRequestList = []
     ins.positionRequestListCommon = []
     ins.positionResultList = []
@@ -101,8 +101,8 @@ export class Radiology {
         ? RadiologyGroup.basic(target.radiologyGroup)
         : target.radiologyGroup
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'printHtml')) {
-      target.printHtml = target.printHtml ? PrintHtml.basic(target.printHtml) : target.printHtml
+    if (Object.prototype.hasOwnProperty.call(source, 'templateHtml')) {
+      target.templateHtml = target.templateHtml ? TemplateHtml.basic(target.templateHtml) : target.templateHtml
     }
     if (target.positionRequestList) {
       target.positionRequestList = Position.basicList(target.positionRequestList)
@@ -140,7 +140,7 @@ export class Radiology {
     if (a.radiologyCode != b.radiologyCode) return false
     if (a.name != b.name) return false
     if (a.radiologyGroupId != b.radiologyGroupId) return false
-    if (a.printHtmlId != b.printHtmlId) return false
+    if (a.templateHtmlId != b.templateHtmlId) return false
     if (a.costPrice != b.costPrice) return false
     if (a.price != b.price) return false
     if (a.requestNoteDefault != b.requestNoteDefault) return false

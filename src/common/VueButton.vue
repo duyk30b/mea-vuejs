@@ -111,26 +111,26 @@ const props = withDefaults(
         shape-rendering: optimizespeed; // bật thì đậm hơn
       }
     }
-    &.icon-close {
-      svg {
-        // shape-rendering: optimizespeed; // tắt thì đậm hơn, thế mới hay
-      }
-    }
-    &.icon-print {
-      svg {
-        // shape-rendering: optimizespeed; // bật màu sáng hơn nhưng thanh mảnh hơn
-      }
-    }
+    // &.icon-close {
+    //   svg {
+    //     shape-rendering: optimizespeed; // tắt thì đậm hơn, thế mới hay
+    //   }
+    // }
+    // &.icon-print {
+    //   svg {
+    //     shape-rendering: optimizespeed; // bật màu sáng hơn nhưng thanh mảnh hơn
+    //   }
+    // }
     &.icon-save {
       svg {
         shape-rendering: optimizespeed; // bật màu sáng hơn nhưng thanh mảnh hơn
       }
     }
-    &.icon-trash {
-      svg {
-        // shape-rendering: optimizespeed; // thanh mảnh trông rất xấu
-      }
-    }
+    // &.icon-trash {
+    //   svg {
+    //     shape-rendering: optimizespeed; // thanh mảnh trông rất xấu
+    //   }
+    // }
   }
 
   &:focus {

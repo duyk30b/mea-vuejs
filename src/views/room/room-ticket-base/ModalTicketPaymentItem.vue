@@ -17,7 +17,7 @@ import {
   PaymentVoucherType,
 } from '@/modules/payment'
 import { PaymentTicketItem, TicketItemType } from '@/modules/payment-ticket-item'
-import { PrintHtmlAction } from '@/modules/print-html'
+import { TemplateHtmlAction } from '@/modules/template-html'
 import { ticketRoomRef } from '@/modules/room'
 import { Ticket, TicketMoneyApi, TicketService, type PaymentTicketItemBody } from '@/modules/ticket'
 import type { TicketLaboratory } from '@/modules/ticket-laboratory'
@@ -692,7 +692,7 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
 
     if (options?.print) {
       const paymentPrint = await Payment.refreshData(paymentCreated)
-      await PrintHtmlAction.startPrintCustomerPayment({
+      await TemplateHtmlAction.startPrintTicketClinicCustomerPayment({
         customer: ticket.value.customer!,
         payment: paymentPrint,
       })
@@ -921,12 +921,12 @@ const startPrint = async () => {
 
     const paymentPrint = await Payment.refreshData(paymentTemp)
     if ([PaymentActionType.PaymentMoney].includes(paymentActionType.value)) {
-      await PrintHtmlAction.startPrintCustomerPayment({
+      await TemplateHtmlAction.startPrintTicketClinicCustomerPayment({
         customer: ticket.value.customer!,
         payment: paymentPrint,
       })
     } else if ([PaymentActionType.RefundMoney].includes(paymentActionType.value)) {
-      await PrintHtmlAction.startPrintCustomerRefund({
+      await TemplateHtmlAction.startPrintTicketClinicCustomerRefund({
         customer: ticket.value.customer!,
         payment: paymentPrint,
       })

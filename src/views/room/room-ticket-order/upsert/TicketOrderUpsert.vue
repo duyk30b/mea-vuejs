@@ -34,6 +34,7 @@ import {
 } from './ticket-order-upsert.ref'
 import { TicketOrderApi } from '@/modules/ticket/api/ticket-order.api'
 import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
+import { useTicketOrderDetailStore } from '@/store/ticket-order-detail.store'
 
 const TABS_KEY = {
   PRODUCT: 'PRODUCT',
@@ -55,6 +56,7 @@ const settingStore = useSettingStore()
 const { userPermission, organizationPermission } = MeService
 const { formatMoney } = settingStore
 
+const ticketOrderDetailStore = useTicketOrderDetailStore()
 let defaultTabStart = localStorage.getItem('TICKET_ORDER_UPSERT_TAB_START') || TABS_KEY.PRODUCT
 if (![TABS_KEY.PRODUCT, TABS_KEY.PROCEDURE].includes(defaultTabStart)) {
   defaultTabStart = TABS_KEY.PRODUCT
@@ -74,6 +76,8 @@ onMounted(async () => {
   try {
     const ticketId = route.params.ticketId as string
     const roomId = Number(route.params.roomId)
+    await ticketOrderDetailStore.fetchRoom(roomId)
+
     const customerId = Number(route.query.customer_id)
     let customerDefault = Customer.blank()
     if (route.query.mode) {
@@ -629,7 +633,8 @@ const handleChangeTabs = (activeKey: any) => {
                       textAlign="right"
                       style="width: 100%"
                       @update:value="
-                        (v) => (ticketOrderUpsertRef.paidTotal = ticketOrderUpsertRef.totalMoney - v)
+                        (v) =>
+                          (ticketOrderUpsertRef.paidTotal = ticketOrderUpsertRef.totalMoney - v)
                       "
                     />
                   </td>

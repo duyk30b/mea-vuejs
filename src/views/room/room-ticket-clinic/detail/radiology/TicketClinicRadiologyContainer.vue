@@ -11,7 +11,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
+import { TemplateHtmlAction } from '@/modules/template-html'
 import { Radiology, RadiologyService } from '@/modules/radiology'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeRadiologyApi, TicketStatus } from '@/modules/ticket'
@@ -99,7 +99,7 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
     relation: { radiologyGroup: true },
   })
 
-  await PrintHtmlAction.startPrintResultTicketRadiology({
+  await TemplateHtmlAction.startPrintTicketClinicRadiologyResult({
     ticketRadiologyData,
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
@@ -121,7 +121,7 @@ const openModalResult = (data: { ticketRadiology: TicketRadiology; noEdit?: bool
 
 const startPrintParaClinicalRequest = async () => {
   await ticketRoomRef.value.refreshRelation()
-  await PrintHtmlAction.startPrintParaClinicalRequest({
+  await TemplateHtmlAction.startPrintTicketClinicParaClinicalRequest({
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
   })

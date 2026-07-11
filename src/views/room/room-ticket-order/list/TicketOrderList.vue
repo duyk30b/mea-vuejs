@@ -105,7 +105,7 @@ watch(
     if (!currentRoom.value) {
       currentRoom.value = Room.blank()
       currentRoom.value.isCommon = 1
-      currentRoom.value.roomType = RoomType.Ticket
+      currentRoom.value.roomType = RoomType.TicketOrder
     }
     // startFetchData()
     roomTicketMapRoomId.value[roomId] = {

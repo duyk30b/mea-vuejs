@@ -1,6 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionEnum, ConditionString } from '../_base/base-condition'
-import type { RoomTicketStyle, RoomType } from './room.model'
+import type { RoomType } from './room.model'
 
 export class RoomGetQuery {
   page?: number
@@ -11,8 +11,7 @@ export class RoomGetQuery {
 
   filter?: {
     name?: ConditionString
-    roomType?: RoomType
-    roomStyle?: RoomTicketStyle | ConditionEnum<RoomTicketStyle>
+    roomType?: RoomType | ConditionEnum<RoomType>
     showMenu?: 1 | 0
     isCommon?: 1 | 0
   }

@@ -27,6 +27,7 @@ import ModalCustomerDetail from '../detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../upsert/ModalCustomerUpsert.vue'
 import ModalCustomerListSettingScreen from './ModalCustomerListSettingScreen.vue'
 import ModalUploadCustomer from './ModalUploadCustomer.vue'
+import { BugDevelopment } from '@/views/component'
 
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
@@ -444,7 +445,9 @@ const handleModalUploadCustomerSuccess = async () => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(customer, index) in customerList" :key="index">
-            <td v-if="CONFIG.MODE === 'development'" class="text-center">{{ customer.id }}</td>
+            <td class="text-center" v-if="CONFIG.MODE === 'development'">
+              <BugDevelopment :data="customer" />
+            </td>
             <td class="text-center">{{ customer.customerCode }}</td>
             <td>
               <div>

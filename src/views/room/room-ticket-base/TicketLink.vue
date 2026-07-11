@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RoomService, RoomTicketStyle } from '@/modules/room'
+import { RoomService, RoomType } from '@/modules/room'
 import { Ticket } from '@/modules/ticket'
 import { useRouter } from 'vue-router'
 
@@ -37,7 +37,7 @@ const openLinkBlankTicketClinicDetail = async (ticket: Ticket) => {
     T{{ ticketId.slice(0, 8) }}
   </span>
   <template v-else-if="props.target === '_self'">
-    <span v-if="roomMap[ticket.roomId]?.roomStyle === RoomTicketStyle.TicketOrder">
+    <span v-if="roomMap[ticket.roomId]?.roomType === RoomType.TicketOrder">
       <router-link
         :to="{
           name: 'TicketOrderDetailContainer',
@@ -59,7 +59,7 @@ const openLinkBlankTicketClinicDetail = async (ticket: Ticket) => {
     </span>
   </template>
   <template v-else-if="props.target === '_blank'">
-    <span v-if="roomMap[ticket.roomId]?.roomStyle === RoomTicketStyle.TicketOrder">
+    <span v-if="roomMap[ticket.roomId]?.roomType === RoomType.TicketOrder">
       <a @click="openLinkBlankTicketOrderDetail(ticket)">BH_{{ ticket.id.slice(-10) }}</a>
     </span>
     <span v-else>

@@ -64,7 +64,7 @@ const startFetchData = async (options?: { refetch?: boolean }) => {
         relation: {
           radiologyGroup: false,
           discountList: true,
-          printHtml: settingStore.SCREEN_RADIOLOGY_LIST.table.printHtml,
+          templateHtml: settingStore.SCREEN_RADIOLOGY_LIST.table.templateHtml,
         },
         filter: {
           radiologyGroupId: radiologyGroupId.value ? radiologyGroupId.value : undefined,
@@ -283,7 +283,7 @@ const handleModalUploadRadiologySuccess = async () => {
               </div>
             </th>
             <th>Nhóm</th>
-            <th v-if="settingStore.SCREEN_RADIOLOGY_LIST.table.printHtml">Mẫu in</th>
+            <th v-if="settingStore.SCREEN_RADIOLOGY_LIST.table.templateHtml">Mẫu in</th>
             <th>Giá vốn</th>
             <th class="cursor-pointer" @click="changeSort('price')">
               <div class="flex items-center gap-1 justify-center">
@@ -331,8 +331,8 @@ const handleModalUploadRadiologySuccess = async () => {
               </div>
             </td>
             <td class="text-center">{{ radiologyGroupMap[radiology.radiologyGroupId]?.name }}</td>
-            <td v-if="settingStore.SCREEN_RADIOLOGY_LIST.table.printHtml">
-              {{ radiology.printHtml?.name }}
+            <td v-if="settingStore.SCREEN_RADIOLOGY_LIST.table.templateHtml">
+              {{ radiology.templateHtml?.name }}
             </td>
             <td class="text-right">{{ formatMoney(radiology.costPrice) }}</td>
             <td class="text-right">{{ formatMoney(radiology.price) }}</td>

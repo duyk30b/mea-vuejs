@@ -211,7 +211,7 @@ const handleClickDestroy = async (obj: { ticketId: string; ticketReceptionId: st
       <div style="flex: 1; flex-basis: 150px">
         <InputSelectRoom
           v-model:roomId="filter.roomId"
-          :roomType="RoomType.Ticket"
+          :roomType="RoomType.TicketClinic"
           @update:roomId="startFilter"
         />
       </div>

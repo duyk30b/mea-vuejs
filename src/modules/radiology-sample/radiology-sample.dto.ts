@@ -6,7 +6,7 @@ export class RadiologySampleGetQuery {
   limit?: number
   relation?: {
     radiology?: boolean
-    printHtml?: boolean
+    templateHtml?: boolean
     user?: boolean
   }
 
@@ -14,7 +14,7 @@ export class RadiologySampleGetQuery {
     name?: ConditionString
     radiologyId?: number | ConditionNumber
     userId?: number | ConditionNumber
-    printHtmlId?: number
+    templateHtmlId?: number
   }
 
   sort?: {

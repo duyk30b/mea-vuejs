@@ -18,6 +18,7 @@ import { useSettingStore } from './setting.store'
 import { SettingKey } from './store.variable'
 import { UserRoomService } from '../user-room'
 import type { Product } from '../product'
+import type { ROOM_SETTING_DEFAULT } from '../room'
 
 export class MeService {
   static user = ref(LocalStorageService.getRefreshToken() ? User.blank() : null)
@@ -159,47 +160,6 @@ export class MeService {
       splitRule.splitBatchByCostPrice = productSettingRoot.splitBatchByCostPrice
     }
     return splitRule
-  }
-
-  static getPickupStrategy(productProp: Product) {
-    const pickupStrategyMap = {
-      order: PickupStrategy.NoImpact,
-      consumable: PickupStrategy.NoImpact,
-      prescription: PickupStrategy.NoImpact,
-    }
-
-    if (productProp.warehouseIds !== '[]') {
-      pickupStrategyMap.order = MeService.settingMap.value.SCREEN_INVOICE_UPSERT.pickupStrategy
-      if (pickupStrategyMap.order === PickupStrategy.Inherit) {
-        pickupStrategyMap.order =
-          MeService.settingMapRoot.value.SCREEN_INVOICE_UPSERT.pickupStrategy
-        if (pickupStrategyMap.order === PickupStrategy.Inherit) {
-          pickupStrategyMap.order = PickupStrategy.AutoWithFIFO
-        }
-      }
-
-      pickupStrategyMap.consumable =
-        MeService.settingMap.value.TICKET_CLINIC_DETAIL.consumable.pickupStrategy
-      if (pickupStrategyMap.consumable === PickupStrategy.Inherit) {
-        pickupStrategyMap.consumable =
-          MeService.settingMapRoot.value.TICKET_CLINIC_DETAIL.consumable.pickupStrategy
-        if (pickupStrategyMap.consumable === PickupStrategy.Inherit) {
-          pickupStrategyMap.consumable = PickupStrategy.AutoWithFIFO
-        }
-      }
-
-      pickupStrategyMap.prescription =
-        MeService.settingMap.value.TICKET_CLINIC_DETAIL.prescriptions.pickupStrategy
-      if (pickupStrategyMap.prescription === PickupStrategy.Inherit) {
-        pickupStrategyMap.prescription =
-          MeService.settingMapRoot.value.TICKET_CLINIC_DETAIL.prescriptions.pickupStrategy
-        if (pickupStrategyMap.prescription === PickupStrategy.Inherit) {
-          pickupStrategyMap.prescription = PickupStrategy.AutoWithFIFO
-        }
-      }
-    }
-
-    return pickupStrategyMap
   }
 
   static async reloadRoomId(options?: { refetch?: boolean }) {

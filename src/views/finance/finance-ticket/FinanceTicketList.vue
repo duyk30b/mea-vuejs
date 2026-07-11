@@ -160,7 +160,6 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
   <ModalTicketPayment ref="modalTicketPayment" />
   <ModalTicketPaymentItem ref="modalTicketPaymentItem" />
   <ModalTicketPaymentHistory ref="modalTicketPaymentHistory" />
-  <ModalRefundTicketItem ref="modalRefundTicketItem" />
 
   <div class="mx-4 mt-4 gap-4 flex items-center justify-between">
     <div class="flex items-center gap-4">

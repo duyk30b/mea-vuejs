@@ -38,9 +38,7 @@ export const SETTING_DEFAULT = {
   ],
   PRODUCT_ROUTE: <string[]>['Uống', 'Bôi', 'Ngậm', 'Tiêm', 'Xịt'],
   PRODUCT_HINT_USAGE: <string[]>[
-    'Uống 2 lần/ngày sau ăn, sáng 1 viên, chiều 1 viên',
-    'Uống 1 viên khi sốt, sau 4h có thể uống tiếp',
-    'Bôi dưới da 3 lần/ngày',
+
   ],
 
   SCREEN_PRODUCT_LIST: {
@@ -72,7 +70,7 @@ export const SETTING_DEFAULT = {
 
   SCREEN_LABORATORY_LIST: {},
   SCREEN_RADIOLOGY_LIST: {
-    table: { printHtml: false },
+    table: { templateHtml: false },
     SORT: {},
   },
 
@@ -265,26 +263,6 @@ export const SETTING_DEFAULT = {
     note: true,
     paymentList: false,
     buttonPayment: false,
-  },
-  TICKET_CLINIC_DETAIL: {
-    other: {
-      hideMoneyTitle: 0,
-    },
-    diagnosis: { icd10: 0 },
-    procedure: {},
-    regimen: { isEffectTotalMoney: 1 },
-    consumable: {
-      warehouseIdList: [0],
-      searchIncludeZeroQuantity: 1,
-      pickupStrategy: PickupStrategy.Inherit,
-    },
-    prescriptions: {
-      warehouseIdList: [0],
-      searchIncludeZeroQuantity: 1,
-      pickupStrategy: PickupStrategy.Inherit,
-    },
-    laboratory: {},
-    radiology: {},
   },
 
   TICKET_STATISTIC: {
