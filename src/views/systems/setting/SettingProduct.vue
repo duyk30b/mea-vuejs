@@ -1,19 +1,25 @@
 <script setup lang="ts">
-import { onUnmounted, ref } from 'vue'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputCheckbox, InputSelect } from '../../../common/vue-form'
-import VueButton from '../../../common/VueButton.vue'
-import { MeService } from '../../../modules/_me/me.service'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { SettingKey } from '../../../modules/_me/store.variable'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputCheckbox, InputRadio, InputSelect, type InputSelectOption } from '@/common/vue-form'
+import type { InputRadioOptionType } from '@/common/vue-form/InputRadio.vue'
+import VueButton from '@/common/VueButton.vue'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { SettingKey } from '@/modules/_me/store.variable'
+import { OrganizationService } from '@/modules/organization'
 import {
-  PickupStrategy,
+  ProductType,
+  ProductTypeText,
   SplitBatchByCostPrice,
+  SplitBatchByCostPriceText,
   SplitBatchByDistributor,
+  SplitBatchByDistributorText,
   SplitBatchByExpiryDate,
+  SplitBatchByExpiryDateText,
   SplitBatchByWarehouse,
-} from '../../../modules/enum'
-import { OrganizationService } from '../../../modules/organization'
+  SplitBatchByWarehouseText,
+} from '@/modules/product'
+import { ESTypescript } from '@/utils'
+import { onUnmounted, ref } from 'vue'
 
 const settingStore = useSettingStore()
 const saveLoading = ref(false)
@@ -28,51 +34,37 @@ const unsubscribe = settingStore.$subscribe((mutation, state) => {
 
 onUnmounted(() => unsubscribe())
 
-const splitBatchByWarehouseOptions = [
-  { value: SplitBatchByWarehouse.Inherit, label: '--- Mặc định theo hệ thống ---' },
-  { value: SplitBatchByWarehouse.Override, label: 'Không phân biệt giữa các lô' },
-  { value: SplitBatchByWarehouse.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
-]
-splitBatchByWarehouseOptions.forEach((i) => {
-  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByWarehouse) {
-    i.label = '(Hệ thống) - ' + i.label
-  }
+const productTypeOptions = ESTypescript.keysEnum(ProductType).map((key) => {
+  return {
+    key: ProductType[key],
+    label: ProductTypeText[ProductType[key]],
+  } satisfies InputRadioOptionType
+})
+const splitBatchByWarehouseOptions = ESTypescript.keysEnum(SplitBatchByWarehouse).map((key) => {
+  return {
+    value: SplitBatchByWarehouse[key],
+    label: SplitBatchByWarehouseText[SplitBatchByWarehouse[key]],
+  } satisfies InputSelectOption<any>
 })
 
-const splitBatchByDistributorOptions = [
-  { value: SplitBatchByDistributor.Inherit, label: '--- Mặc định theo hệ thống ---' },
-  { value: SplitBatchByDistributor.Override, label: 'Không phân biệt giữa các lô' },
-  { value: SplitBatchByDistributor.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
-]
-splitBatchByDistributorOptions.forEach((i) => {
-  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByDistributor) {
-    i.label = '(Hệ thống) - ' + i.label
-  }
+const splitBatchByDistributorOptions = ESTypescript.keysEnum(SplitBatchByDistributor).map((key) => {
+  return {
+    value: SplitBatchByDistributor[key],
+    label: SplitBatchByDistributorText[SplitBatchByDistributor[key]],
+  } satisfies InputSelectOption<any>
+})
+const splitBatchByExpiryDateOptions = ESTypescript.keysEnum(SplitBatchByExpiryDate).map((key) => {
+  return {
+    value: SplitBatchByExpiryDate[key],
+    label: SplitBatchByExpiryDateText[SplitBatchByExpiryDate[key]],
+  } satisfies InputSelectOption<any>
 })
 
-const splitBatchByExpiryDateOptions = [
-  { value: SplitBatchByExpiryDate.Inherit, label: '--- Mặc định theo hệ thống ---' },
-  { value: SplitBatchByExpiryDate.Override, label: 'Không phân biệt giữa các lô' },
-  { value: SplitBatchByExpiryDate.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
-]
-splitBatchByExpiryDateOptions.forEach((i) => {
-  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByExpiryDate) {
-    i.label = '(Hệ thống) - ' + i.label
-  }
-})
-
-const splitBatchByCostPriceOptions = [
-  { value: SplitBatchByCostPrice.Inherit, label: '--- Mặc định theo hệ thống ---' },
-  {
-    value: SplitBatchByCostPrice.OverrideAndMAC,
-    label: 'Ghi đè giá nhập cũ, giá vốn sử dụng công thức tính bình quân gia quyền',
-  },
-  { value: SplitBatchByCostPrice.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
-]
-splitBatchByCostPriceOptions.forEach((i) => {
-  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByCostPrice) {
-    i.label = '(Hệ thống) - ' + i.label
-  }
+const splitBatchByCostPriceOptions = ESTypescript.keysEnum(SplitBatchByCostPrice).map((key) => {
+  return {
+    value: SplitBatchByCostPrice[key],
+    label: SplitBatchByCostPriceText[SplitBatchByCostPrice[key]],
+  } satisfies InputSelectOption<any>
 })
 
 const saveBatchSetting = async () => {
@@ -120,7 +112,18 @@ const saveBatchSetting = async () => {
               <tr>
                 <td colspan="2">
                   <div class="mt-1 font-medium">
-                    2. Cài đặt đối với sản phẩm chia nhiều lô hàng, HSD
+                    2. Khi tạo sản phẩm mới, các cài đặt mặc định sẽ được áp dụng:
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="width: 200px">Loại sản phẩm</td>
+                <td>
+                  <div class="">
+                    <InputRadio
+                      v-model:value="productSetting.productType"
+                      :options="productTypeOptions"
+                    />
                   </div>
                 </td>
               </tr>

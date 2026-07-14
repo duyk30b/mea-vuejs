@@ -6,7 +6,7 @@ import { useSettingStore } from '@/modules/_me/setting.store'
 import {
   StatisticTicketApi,
   StatisticTicketQuery,
-  type StatisticTicketQueryCustomerResponseType,
+  type StatisticTicketQueryCustomerGroupResponseType,
 } from '@/modules/statistics'
 import { TicketStatus } from '@/modules/ticket'
 import { ESTimer } from '@/utils'
@@ -56,7 +56,7 @@ const typeBestSelling = ref<'topCountInvoice' | 'topTotalMoney' | 'topProfit' | 
   'topTotalMoney',
 )
 
-const statisticData = ref<StatisticTicketQueryCustomerResponseType[]>([])
+const statisticData = ref<StatisticTicketQueryCustomerGroupResponseType[]>([])
 const fromTime = ref<number>(ESTimer.startOfMonth(new Date()).getTime())
 const toTime = ref<number>(ESTimer.endOfMonth(new Date()).getTime())
 const page = ref(1)
@@ -68,7 +68,7 @@ const startFetchStatisticTicketGroupByCustomer = async (options: {
 }) => {
   const { sortStatistic } = options
 
-  const fetchResponse = await StatisticTicketApi.groupByCustomer({
+  const fetchResponse = await StatisticTicketApi.groupByCustomerGroup({
     filter: {
       createdAt:
         fromTime.value || toTime.value
@@ -88,7 +88,7 @@ const startFetchStatisticTicketGroupByCustomer = async (options: {
   barData.labels.splice(
     0,
     statisticData.value.length,
-    ...statisticData.value.map((i) => `${i.customer?.fullName} (${i.countTicket} đơn)`),
+    ...statisticData.value.map((i) => `${i.customerGroup?.name} (${i.countTicket} đơn)`),
   )
   barData.datasets = [
     {
@@ -222,7 +222,7 @@ onBeforeMount(async () => await startFetchData())
           <tr>
             <th v-if="CONFIG.MODE === 'development'"></th>
             <th>#</th>
-            <th>Khách hàng</th>
+            <th>Nhóm khách hàng</th>
             <th>Lượt mua</th>
             <th>Tổng tiền</th>
             <th>Nợ trong kỳ</th>
@@ -235,7 +235,7 @@ onBeforeMount(async () => await startFetchData())
               <BugDevelopment :data="item" />
             </td>
             <td class="text-center">{{ (page - 1) * limit + index + 1 }}</td>
-            <td>{{ item.customer?.fullName }}</td>
+            <td>{{ item.customerGroup?.name }}</td>
             <td class="text-center">{{ item.countTicket }}</td>
             <td class="text-right">{{ formatMoney(item.sumTotalMoney) }}</td>
             <td class="text-right">{{ formatMoney(item.sumDebtTotal) }}</td>

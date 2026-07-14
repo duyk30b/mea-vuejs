@@ -130,10 +130,7 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
                 - HSD {{ ESTimer.timeToText(purchaseOrderItem.expiryDate) }}
               </div>
             </div>
-            <div
-              v-if="settingStore.SCREEN_PURCHASE_ORDER_UPSERT.purchaseOrderItemsTable.warehouse"
-              style="font-size: 0.8rem"
-            >
+            <div v-if="purchaseOrderItem.warehouseId" style="font-size: 0.8rem">
               {{ warehouseMap[purchaseOrderItem.warehouseId]?.name }}
             </div>
           </td>
@@ -171,9 +168,6 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
           <th>#</th>
           <th>Mã SP</th>
           <th>Tên Sản phẩm</th>
-          <th v-if="settingStore.SCREEN_PURCHASE_ORDER_UPSERT.purchaseOrderItemsTable.warehouse">
-            Nhập kho
-          </th>
           <th style="min-width: 150px">S.Lượng</th>
           <th v-if="settingStore.SCREEN_PURCHASE_ORDER_UPSERT.purchaseOrderItemsTable.unit">
             Đ.Vị
@@ -262,10 +256,10 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
                   - HSD {{ ESTimer.timeToText(purchaseOrderItem.expiryDate) }}
                 </div>
               </div>
+              <div v-if="purchaseOrderItem.warehouseId" style="font-size: 0.8rem">
+                {{ warehouseMap[purchaseOrderItem.warehouseId]?.name }}
+              </div>
             </div>
-          </td>
-          <td v-if="settingStore.SCREEN_PURCHASE_ORDER_UPSERT.purchaseOrderItemsTable.warehouse">
-            {{ warehouseMap[purchaseOrderItem.warehouseId]?.name }}
           </td>
           <td style="width: 150px">
             <InputNumber
@@ -307,9 +301,6 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
         </tr>
         <tr>
           <td v-if="CONFIG.MODE === 'development'"></td>
-          <td
-            v-if="settingStore.SCREEN_PURCHASE_ORDER_UPSERT.purchaseOrderItemsTable.warehouse"
-          ></td>
           <td
             v-if="settingStore.SCREEN_PURCHASE_ORDER_UPSERT.purchaseOrderItemsTable.unit"
             class="text-center"

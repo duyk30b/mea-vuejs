@@ -18,10 +18,15 @@ export const roomRouter: RouteRecordRaw = {
       meta: { title: 'Hẹn khám' },
     },
     {
-      path: 'reception-list',
-      name: 'ReceptionList',
-      component: () => import('../views/room/reception/list/TicketReceptionList.vue'),
-      meta: { title: 'Tiếp đón' },
+      path: 'room-reception-list/:roomId',
+      name: 'RoomTicketReception',
+      component: () => import('../views/room/room-ticket-reception/list/TicketReceptionList.vue'),
+      meta: {
+        title: 'Tiếp đón',
+        menuKey: (route: RouteLocationNormalizedLoaded, params: { roomId: any }) => {
+          return route.name?.toString() + '_' + params?.roomId
+        },
+      },
     },
     {
       path: 'room-ticket-order/:roomId',
@@ -81,14 +86,14 @@ export const roomRouter: RouteRecordRaw = {
           component: () =>
             import('../views/room/room-ticket-clinic/detail/TicketClinicDetailContainer.vue'),
           meta: { title: 'Khám bệnh' },
-          redirect: () => ({ name: 'TicketClinicDiagnosis' }),
+          redirect: () => ({ name: 'TicketClinicDiagnosisContainer' }),
           children: [
             {
               path: 'diagnosis',
-              name: 'TicketClinicDiagnosis',
+              name: 'TicketClinicDiagnosisContainer',
               component: () =>
                 import(
-                  '../views/room/room-ticket-clinic/detail/diagnosis/TicketClinicDiagnosis.vue'
+                  '../views/room/room-ticket-clinic/detail/diagnosis/TicketClinicDiagnosisContainer.vue'
                 ),
               meta: { keepAlive: true, title: 'Khám' },
             },

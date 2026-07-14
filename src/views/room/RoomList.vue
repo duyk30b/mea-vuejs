@@ -53,6 +53,23 @@ onMounted(async () => {
             <div class="card-description"></div>
           </div>
         </div>
+      </template>
+      <template v-for="room in roomList" :key="room.id">
+        <div
+          v-if="roomIdMap[room.id] && room.roomType === RoomType.TicketReception"
+          class="card"
+          @click="router.push({ name: 'RoomTicketReception', params: { roomId: room.id } })"
+        >
+          <div class="card-icon">
+            <IconDoorOpen />
+          </div>
+          <div class="card-content">
+            <div class="card-title">{{ room.name }}</div>
+            <div class="card-description"></div>
+          </div>
+        </div>
+      </template>
+      <template v-for="room in roomList" :key="room.id">
         <div
           v-if="roomIdMap[room.id] && room.roomType === RoomType.TicketClinic"
           class="card"

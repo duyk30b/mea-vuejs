@@ -6,8 +6,10 @@ import {
   InputHint,
   InputOptions,
   InputRadio,
+  InputSelect,
   InputText,
   VueSelect,
+  type InputSelectOption,
 } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { MeService } from '@/modules/_me/me.service'
@@ -15,13 +17,16 @@ import { useSettingStore } from '@/modules/_me/setting.store'
 import { Address, AddressService } from '@/modules/address'
 import { Appointment, AppointmentApi, AppointmentStatus } from '@/modules/appointment'
 import { Customer, CustomerService } from '@/modules/customer'
-import { CustomerSource, CustomerSourceService } from '@/modules/customer-source'
+import { CustomerSource, CustomerSourceService } from '@/modules/customer_source/index.ts'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { ESString } from '@/utils'
 import InputSearchCustomer from '@/views/component/InputSearchCustomer.vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ModalAppointmentUpsertSetting from './ModalAppointmentUpsertSetting.vue'
+import { CustomerGroupService, type CustomerGroup } from '@/modules/customer_group'
+import InputSelectCustomerGroup from '@/views/component/InputSelectCustomerGroup.vue'
+import InputSelectCustomerSource from '@/views/component/InputSelectCustomerSource.vue'
 
 const modalAppointmentUpsertSetting = ref<InstanceType<typeof HTMLFormElement>>()
 const appointmentRegisterForm = ref<InstanceType<typeof HTMLFormElement>>()
@@ -41,7 +46,6 @@ const showModal = ref(false)
 const saveLoading = ref(false)
 
 const customerOptions = ref<{ value: number; text: string; data: Customer }[]>([])
-const customerSourceAll = ref<CustomerSource[]>([])
 
 const appointment = ref<Appointment>(Appointment.blank())
 
@@ -60,9 +64,6 @@ const firstLoadAction = async () => {
   firstLoad = false
 
   await Promise.all([CustomerService.refreshDB(), AddressService.fetchAll()])
-  if (settingStore.APPOINTMENT_UPSERT.customerSource) {
-    customerSourceAll.value = await CustomerSourceService.list({})
-  }
 }
 
 const openModalForCreate = async () => {
@@ -287,21 +288,19 @@ defineExpose({ openModalForCreate, openModalForUpdate })
           v-if="settingStore.APPOINTMENT_UPSERT.customerSource"
           style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
         >
-          <div>Nguồn khách hàng</div>
-          <div>
-            <VueSelect
-              v-model:value="appointment.customerSourceId"
-              :options="customerSourceAll.map((i) => ({ text: i.name, value: i.id }))"
-              :add-other="!customerSourceAll.length"
-            >
-              <template #addOther>
-                <div class="flex flex-wrap items-center gap-2" style="font-style: italic">
-                  <span>Chưa có dữ liệu phù hợp.</span>
-                  <a @click="openBlankCustomerSourceList">Quản lý danh sách nguồn khách hàng</a>
-                </div>
-              </template>
-            </VueSelect>
-          </div>
+          <InputSelectCustomerSource
+            v-model:customerSourceId="currentCustomer.customerSourceId"
+            :disabled="!!currentCustomer.id"
+          ></InputSelectCustomerSource>
+        </div>
+        <div
+          v-if="settingStore.APPOINTMENT_UPSERT.customerGroup"
+          style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
+        >
+          <InputSelectCustomerGroup
+            v-model:customerGroupId="currentCustomer.customerGroupId"
+            :disabled="!!currentCustomer.id"
+          ></InputSelectCustomerGroup>
         </div>
 
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">

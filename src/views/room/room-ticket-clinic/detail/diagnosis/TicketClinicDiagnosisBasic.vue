@@ -8,72 +8,56 @@ import { CustomerService } from '@/modules/customer'
 import { ICD, ICDService } from '@/modules/icd'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { ticketRoomRef } from '@/modules/room'
-import { TemplateHtml, TemplateHtmlAction, TemplateHtmlService } from '@/modules/template-html'
+import { TemplateHtmlAction } from '@/modules/template-html'
 import { TicketChangeAttributeApi } from '@/modules/ticket'
-import {
-  TicketAttributeKeyGeneralList,
-  type TicketAttributeKeyGeneralType,
-  type TicketAttributeKeyType,
-} from '@/modules/ticket-attribute'
 import { useTicketClinicDetailStore } from '@/store/ticket-clinic-detail.store'
 import { ESImage } from '@/utils'
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import DiagnosisVitalSigns from './DiagnosisVitalSigns.vue'
+import { computed, onBeforeMount, ref, watch } from 'vue'
 
 const ticketClinicDetailStore = useTicketClinicDetailStore()
 const { userPermission, organization, user } = MeService
 
-const templateHtmlMap = ref<{ [id: number]: TemplateHtml }>({})
-const templateHtmlIdList = ref<number[]>([])
-
-const templateHtmlIdCurrent = ref<number>(0)
 const note = ref<string>('')
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadCloudinary>>()
 
-const ticketAttributeOriginMap: { [P in TicketAttributeKeyGeneralType]?: any } = {}
-const ticketAttributeMap = ref<{ [P in TicketAttributeKeyType]?: any }>({
-  healthHistory: '',
-  summary: '',
-})
+const ticketAttributeKeyList = [
+  'reason',
+  'healthHistory',
+  'summary',
+
+  'pulse',
+  'bloodPressure',
+  'temperature',
+  'respiratoryRate',
+  'spO2',
+  'height',
+  'weight',
+
+  'icd10Name',
+  'icd10Code',
+] as const
+type TicketAttributeKeyType = (typeof ticketAttributeKeyList)[number]
+type TicketAttributeMap = {
+  [P in TicketAttributeKeyType]?: any
+}
+
+const ticketAttributeOriginMap: TicketAttributeMap = {}
+const ticketAttributeMap = ref<TicketAttributeMap>({})
 
 const icdOptions = ref<ItemOption[]>([])
-
+const hasChangeAttribute = ref(false)
 const saveLoading = ref(false)
 const hasChangeImage = ref(false)
 const loadingImage = ref(false)
 
-const selectTemplateHtml = (templateHtmlId: number) => {
-  templateHtmlIdCurrent.value = templateHtmlId
-
-  nextTick(() => {
-    eval(templateHtmlMap.value[templateHtmlIdCurrent.value]?.jsInput || '')
-    document.querySelectorAll('input[data-field]').forEach((el: Element) => {
-      const field = el.getAttribute('data-field') as TicketAttributeKeyType
-      if (!field) return
-      ;(el as HTMLInputElement).value = ticketAttributeMap.value[field] || ''
-
-      el.addEventListener('input', (e) => {
-        const target = e.target as HTMLInputElement
-        // const field = target.dataset.field as TicketAttributeKeyType
-        ticketAttributeMap.value[field] = target.value
-      })
-    })
-  })
-}
-
-onMounted(async () => {
+onBeforeMount(async () => {
   if (ticketClinicDetailStore.roomRef.roomSettingObj.diagnosis.icd10) {
-    await ICDService.fetchAll()
+    ICDService.fetchAll()
+      .then(() => {})
+      .catch((error) => {
+        console.log('🚀 ~ file: TicketClinicDiagnosis.vue:90 ~ ICDService.fetchAll ~ error:', error)
+      })
   }
-  templateHtmlIdList.value =
-    ticketClinicDetailStore.roomRef?.roomSettingObj?.diagnosis?.templateHtmlIdList || []
-  const templateHtmlList = await TemplateHtmlService.list({
-    filter: { id: { IN: templateHtmlIdList.value } },
-  })
-
-  templateHtmlIdList.value.forEach((i) => {
-    templateHtmlMap.value[i] = templateHtmlList.find((t) => t.id === i) || TemplateHtml.blank()
-  })
 })
 
 watch(
@@ -84,21 +68,37 @@ watch(
   { immediate: true, deep: true },
 )
 
-watch(
-  () => ticketRoomRef.value.ticketAttributeList,
-  (newValue, oldValue) => {
-    if (!newValue) {
-      return (ticketAttributeMap.value = { healthHistory: '', summary: '' })
+const checkHasChangeAttribute = () => {
+  let hasChange = false
+  for (const key of ticketAttributeKeyList) {
+    if (ticketAttributeOriginMap[key] !== ticketAttributeMap.value[key]) {
+      hasChange = true
+      break
     }
-    newValue.forEach((i) => {
-      // if (!TicketAttributeKeyList.includes(i.key as any)) return
-      const k = i.key as unknown as TicketAttributeKeyGeneralType
-      if (i.value === ticketAttributeOriginMap[k]) return
-      ticketAttributeOriginMap[k] = i.value
-      ticketAttributeMap.value[k] = i.value
+  }
+  hasChangeAttribute.value = hasChange
+}
+
+watch(
+  () => ticketRoomRef.value.ticketAttributeMap,
+  (newValue, oldValue) => {
+    ticketAttributeKeyList.forEach((k) => {
+      const value = newValue[k]
+      if (ticketAttributeOriginMap[k] === value) return
+      ticketAttributeOriginMap[k] = value
+      ticketAttributeMap.value[k] = value
     })
+    checkHasChangeAttribute()
   },
   { immediate: true, deep: true },
+)
+
+watch(
+  () => ticketAttributeMap.value,
+  (newValue, oldValue) => {
+    checkHasChangeAttribute()
+  },
+  { deep: true },
 )
 
 watch(
@@ -118,80 +118,25 @@ watch(
 )
 
 const hasChangeCustomer = computed(() => {
-  const customerHealthHistory = ticketRoomRef.value.customer?.healthHistory || ''
-  const hasChange = customerHealthHistory != ticketAttributeMap.value.healthHistory
-  return hasChange
-})
-
-const hasChangeAttribute = computed(() => {
-  let hasChange = false
-  Object.entries(ticketAttributeMap.value).forEach(([key, value]) => {
-    const k = key as unknown as TicketAttributeKeyType
-    const rootValue = ticketRoomRef.value.ticketAttributeMap[k] || ''
-    if (rootValue != value) {
-      hasChange = true
-    }
-  })
-  return hasChange
+  return ticketRoomRef.value.customer?.healthHistory != ticketAttributeMap.value.healthHistory
 })
 
 const hasChangeData = computed(() => {
-  if (note.value != ticketRoomRef.value.note) return true
-  if (hasChangeImage.value) return true
-  if (hasChangeAttribute.value) return true
-  if (hasChangeCustomer.value) return true
+  if (note.value != ticketRoomRef.value.note) {
+    return true
+  }
+  if (hasChangeImage.value) {
+    return true
+  }
+  if (hasChangeAttribute.value) {
+    return true
+  }
+  if (hasChangeCustomer.value) {
+    return true
+  }
 
   return false
 })
-
-const saveTicketDiagnosis = async () => {
-  try {
-    saveLoading.value = true
-    const imgData = imageUploadMultipleRef.value?.getData() || {
-      filesPosition: [],
-      imageIdListKeep: [],
-      files: [],
-      imageUrls: [],
-      imageIdWaitList: [],
-    }
-
-    let ticketAttributeChangeList = undefined
-    if (hasChangeAttribute.value) {
-      ticketAttributeChangeList = Object.entries(ticketAttributeMap.value)
-        .map(([key, value]) => ({ key, value }))
-        .filter((i) => !!i.value)
-    }
-
-    await Promise.all([
-      TicketChangeAttributeApi.updateDiagnosis({
-        ticketId: ticketRoomRef.value.id,
-        note: note.value,
-        imagesChange: hasChangeImage.value
-          ? {
-              files: imgData.files,
-              imageIdWaitList: imgData.imageIdWaitList,
-              externalUrlList: imgData.imageUrls,
-            }
-          : undefined,
-        ticketAttributeChangeList,
-        ticketAttributeKeyList: TicketAttributeKeyGeneralList as any,
-      }),
-      hasChangeCustomer.value
-        ? CustomerService.updateOne(ticketRoomRef.value.customerId, {
-            healthHistory: ticketAttributeMap.value.healthHistory,
-          })
-        : undefined,
-    ])
-  } catch (error) {
-    console.log('🚀 ~ file: TicketClinicDiagnosisGeneral.vue:137 ~:', error)
-  } finally {
-    saveLoading.value = false
-  }
-}
-
-const getDataTicketDiagnosis = () => {
-  return { ticketAttributeMap: ticketAttributeMap.value }
-}
 
 const searchingICD = async (text: string) => {
   if (!text) {
@@ -216,44 +161,60 @@ const updateTextICD = (text: string) => {
   }
 }
 
+const saveTicketDiagnosis = async () => {
+  try {
+    saveLoading.value = true
+    const imgData = imageUploadMultipleRef.value?.getData() || {
+      filesPosition: [],
+      imageIdListKeep: [],
+      files: [],
+      imageUrls: [],
+      imageIdWaitList: [],
+    }
+
+    let ticketAttributeChangeList = undefined
+    if (hasChangeAttribute.value) {
+      ticketAttributeChangeList = ticketAttributeKeyList.map((key) => ({
+        key,
+        value: ticketAttributeMap.value[key] || '',
+      }))
+    }
+
+    await Promise.all([
+      TicketChangeAttributeApi.updateDiagnosis({
+        ticketId: ticketRoomRef.value.id,
+        note: note.value !== ticketRoomRef.value.note ? note.value : undefined,
+        imagesChange: hasChangeImage.value
+          ? {
+              files: imgData.files,
+              imageIdWaitList: imgData.imageIdWaitList,
+              externalUrlList: imgData.imageUrls,
+            }
+          : undefined,
+        ticketAttributeChangeList,
+      }),
+      hasChangeCustomer.value
+        ? CustomerService.updateOne(ticketRoomRef.value.customerId, {
+            healthHistory: ticketAttributeMap.value.healthHistory,
+          })
+        : undefined,
+    ])
+  } catch (error) {
+    console.log('🚀 ~ file: TicketClinicDiagnosisGeneral.vue:137 ~:', error)
+  } finally {
+    saveLoading.value = false
+  }
+}
+
 const startPrintTicketClinicDiagnosis = async () => {
   await TemplateHtmlAction.startPrintTicketClinicDiagnosis({
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
   })
 }
-
-const startPrintTicketClinicDocumentExtra = async () => {
-  await TemplateHtmlAction.startPrintTicketClinicDocumentExtra({
-    ticket: ticketRoomRef.value,
-    customer: ticketRoomRef.value.customer!,
-    templateHtmlId: templateHtmlIdCurrent.value,
-  })
-}
-
-defineExpose({ getDataTicketDiagnosis })
 </script>
 <template>
-  <div class="mt-2 flex gap-2 flex-wrap">
-    <a
-      class="diagnosis_menu"
-      :class="templateHtmlIdCurrent == 0 ? 'active' : ''"
-      @click="() => selectTemplateHtml(0)"
-    >
-      Cơ bản
-    </a>
-    <a
-      class="diagnosis_menu"
-      :class="templateHtmlIdCurrent == templateHtmlId ? 'active' : ''"
-      v-for="templateHtmlId in templateHtmlIdList"
-      :key="templateHtmlId"
-      @click="() => selectTemplateHtml(templateHtmlId)"
-    >
-      {{ templateHtmlMap[templateHtmlId]?.name }}
-    </a>
-  </div>
-
-  <div v-if="!templateHtmlIdCurrent" class="mt-2">
+  <div class="mt-2">
     <div>
       <div>Lý do khám</div>
       <div>
@@ -274,7 +235,53 @@ defineExpose({ getDataTicketDiagnosis })
         </div>
       </div>
       <div style="flex-grow: 1; flex-basis: 200px">
-        <DiagnosisVitalSigns :ticketAttributeMap="ticketAttributeMap" />
+        <div>Chỉ số sinh tồn</div>
+        <div class="grow pb-4 pt-2" style="border: 1px solid #d1d5db">
+          <table class="w-full table-vital-signs">
+            <tbody>
+              <tr>
+                <td class="title-vital-signs">Mạch</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.pulse" type="number" />
+                </td>
+                <td class="unit-vital-signs">l/p</td>
+              </tr>
+              <tr>
+                <td class="title-vital-signs">Huyết áp</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.bloodPressure" />
+                </td>
+                <td class="unit-vital-signs">mmHg</td>
+              </tr>
+              <tr>
+                <td class="title-vital-signs">Nhiệt độ</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.temperature" />
+                </td>
+                <td class="unit-vital-signs">°C</td>
+              </tr>
+              <tr>
+                <td class="title-vital-signs">Chiều cao</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input type="number" v-model="ticketAttributeMap.height" />
+                </td>
+                <td class="unit-vital-signs">cm</td>
+              </tr>
+              <tr>
+                <td class="title-vital-signs">Cân nặng</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input type="number" v-model="ticketAttributeMap.weight" />
+                </td>
+                <td class="unit-vital-signs">kg</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
     <!-- <pre>{{ JSON.stringify(ticketRoomRef?.imageDiagnosisList, null, 4) }}</pre> -->
@@ -336,31 +343,6 @@ defineExpose({ getDataTicketDiagnosis })
       </VueButton>
     </div>
   </div>
-  <div v-else class="mt-2">
-    <div v-html="templateHtmlMap[templateHtmlIdCurrent]?.htmlInput"></div>
-    <div class="mt-4 flex justify-between gap-4">
-      <div>
-        <VueButton
-          v-if="templateHtmlMap[templateHtmlIdCurrent]?.htmlPrint"
-          color="blue"
-          icon="print"
-          @click="startPrintTicketClinicDocumentExtra"
-        >
-          In phiếu {{ templateHtmlMap[templateHtmlIdCurrent]?.name }}
-        </VueButton>
-      </div>
-      <VueButton
-        v-if="ticketRoomRef.id && userPermission[PermissionId.TICKET_CHANGE_ATTRIBUTE]"
-        color="blue"
-        :disabled="!hasChangeData || loadingImage"
-        :loading="saveLoading"
-        icon="save"
-        @click="saveTicketDiagnosis"
-      >
-        Lưu lại
-      </VueButton>
-    </div>
-  </div>
 </template>
 
 <style scoped lang="scss">
@@ -374,6 +356,35 @@ defineExpose({ getDataTicketDiagnosis })
   &.active {
     background-color: #1890ff;
     color: white;
+  }
+}
+
+.table-vital-signs {
+  td.title-vital-signs {
+    // font-size: 13px;
+    padding: 4px 4px 4px 8px;
+    white-space: nowrap;
+  }
+  td.unit-vital-signs {
+    // font-size: 13px;
+    padding: 4px 8px 4px 8px;
+    white-space: nowrap;
+  }
+  td.input-vital-signs {
+    padding-left: 8px;
+  }
+  input {
+    padding-left: 0.5rem;
+    text-align: left;
+    font-style: italic;
+    width: 100%;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px solid #cdcdcd;
+    &:focus {
+      outline: none;
+    }
   }
 }
 </style>

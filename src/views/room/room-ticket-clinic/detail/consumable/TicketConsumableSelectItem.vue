@@ -6,15 +6,9 @@ import { InputNumber, InputOptions, VueSelect } from '@/common/vue-form'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Batch, BatchService } from '@/modules/batch'
-import {
-  DeliveryStatus,
-  DiscountType,
-  PaymentMoneyStatus,
-  PickupStrategy,
-  ProductType,
-} from '@/modules/enum'
+import { DeliveryStatus, DiscountType, PickupStrategy } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Product, ProductService } from '@/modules/product'
+import { Product, ProductService, ProductType } from '@/modules/product'
 import { ticketRoomRef } from '@/modules/room'
 import { TicketStatus } from '@/modules/ticket'
 import { TicketProduct, TicketProductType } from '@/modules/ticket-product'

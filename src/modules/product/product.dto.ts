@@ -1,6 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionNumber, ConditionString } from '../_base/base-condition'
-import type { ProductType } from '../enum'
+import type { ProductType } from './product.model'
 
 export class ProductFilterQuery {
   id?: number | ConditionNumber
@@ -47,6 +47,6 @@ export class ProductGetQuery {
   }
 }
 
-export class ProductPaginationQuery extends ProductGetQuery {}
-export class ProductListQuery extends OmitClass(ProductGetQuery, ['page']) {}
-export class ProductDetailQuery extends PickClass(ProductGetQuery, ['relation', 'filter']) {}
+export class ProductPaginationQuery extends ProductGetQuery { }
+export class ProductListQuery extends OmitClass(ProductGetQuery, ['page']) { }
+export class ProductDetailQuery extends PickClass(ProductGetQuery, ['relation', 'filter']) { }

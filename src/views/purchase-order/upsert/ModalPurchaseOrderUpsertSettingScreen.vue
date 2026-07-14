@@ -118,15 +118,6 @@ defineExpose({ openModal })
                     <tr>
                       <td>
                         <InputCheckbox
-                          v-model:checked="settingDisplay.purchaseOrderItemsSelect.warehouse"
-                        >
-                          Hiển thị chọn kho
-                        </InputCheckbox>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <InputCheckbox
                           v-model:checked="
                             settingDisplay.purchaseOrderItemsSelect.lotNumberAndExpiryDate
                           "
@@ -180,15 +171,6 @@ defineExpose({ openModal })
                           v-model:checked="settingDisplay.purchaseOrderItemsTable.unit"
                         >
                           Hiển thị đơn vị
-                        </InputCheckbox>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <InputCheckbox
-                          v-model:checked="settingDisplay.purchaseOrderItemsTable.warehouse"
-                        >
-                          Hiển thị kho được nhập
                         </InputCheckbox>
                       </td>
                     </tr>

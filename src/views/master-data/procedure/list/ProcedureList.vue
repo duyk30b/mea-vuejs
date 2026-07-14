@@ -13,9 +13,9 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { FileProcedureApi } from '@/modules/file-excel/file-procedure.api'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Procedure, ProcedureService, ProcedureType, ProcedureTypeText } from '@/modules/procedure'
+import { Procedure, ProcedureService, ProcedureTypeText } from '@/modules/procedure'
 import { ProcedureGroup, ProcedureGroupService } from '@/modules/procedure-group'
-import { arrayToKeyValue } from '@/utils'
+import { ESArray } from '@/utils'
 import { computed, onBeforeMount, ref } from 'vue'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalProcedureDetail from '../detail/ModalProcedureDetail.vue'
@@ -50,7 +50,7 @@ const isActive = ref<1 | 0 | ''>(1)
 const sortColumn = ref<'id' | 'code' | 'name' | 'price' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
-const procedureGroupMap = computed(() => arrayToKeyValue(procedureGroupAll.value, 'id'))
+const procedureGroupMap = computed(() => ESArray.arrayToKeyValue(procedureGroupAll.value, 'id'))
 
 const startFetchData = async (options?: { refetch?: boolean }) => {
   try {

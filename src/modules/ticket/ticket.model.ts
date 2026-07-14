@@ -2,7 +2,7 @@ import { ESArray, ESTimer } from '../../utils'
 import { Appointment } from '../appointment'
 import { Batch } from '../batch'
 import { Customer } from '../customer'
-import { CustomerSource } from '../customer-source'
+import { CustomerSource } from '../customer_source'
 import { DeliveryStatus, DiscountType } from '../enum'
 import { Expense } from '../expense'
 import { Image } from '../image/image.model'
@@ -10,8 +10,7 @@ import { Payment } from '../payment'
 import { PositionType } from '../position'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
-import { Surcharge } from '../surcharge'
-import { TicketAttribute, type TicketAttributeMap } from '../ticket-attribute'
+import { TicketAttribute } from '../ticket-attribute'
 import { TicketBatch } from '../ticket-batch'
 import { TicketExpense } from '../ticket-expense/ticket-expense.model'
 import {
@@ -22,7 +21,6 @@ import {
 } from '../ticket-laboratory'
 import { TicketProcedureService } from '../ticket-procedure'
 import { TicketProcedure, TicketProcedureType } from '../ticket-procedure/ticket-procedure.model'
-import { TicketProductService } from '../ticket-product'
 import { TicketProduct, TicketProductType } from '../ticket-product/ticket-product.model'
 import { TicketRadiology, TicketRadiologyService } from '../ticket-radiology'
 import type { TicketReception } from '../ticket-reception'
@@ -46,7 +44,7 @@ export class Ticket {
   id: string
   customerId: number
   roomId: number
-  customerSourceId: number
+  isFirstVisit: number
 
   isPaymentEachItem: number
   status: TicketStatus
@@ -123,7 +121,7 @@ export class Ticket {
   imageDiagnosisList: Image[]
 
   ticketPaymentDetail: TicketPaymentDetail
-  ticketAttributeMap: TicketAttributeMap // chỉ convert tại front-end
+  ticketAttributeMap: Record<string, any> // chỉ convert tại front-end
 
   get itemsCostAmountExpected() {
     let itemsCostAmount = 0
@@ -141,6 +139,7 @@ export class Ticket {
     const ins = new Ticket()
     ins.id = ''
     ins.roomId = 0
+    ins.isFirstVisit = 0
     ins.status = TicketStatus.Draft
     ins.itemsCostAmount = 0
     ins.procedureMoney = 0
@@ -213,7 +212,7 @@ export class Ticket {
   }
 
   refreshTicketAttribute() {
-    const ticketAttributeMap: TicketAttributeMap = {}
+    const ticketAttributeMap: Record<string, any> = {}
     this.ticketAttributeList?.forEach((i) => {
       ticketAttributeMap[i.key] = i.value
     })
@@ -494,7 +493,7 @@ export class Ticket {
     if (a.id != b.id) return false
     if (a.customerId != b.customerId) return false
     if (a.roomId != b.roomId) return false
-    if (a.customerSourceId != b.customerSourceId) return false
+    if (a.isFirstVisit != b.isFirstVisit) return false
     if (a.status != b.status) return false
     if (a.deliveryStatus != b.deliveryStatus) return false
 

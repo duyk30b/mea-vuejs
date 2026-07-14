@@ -18,14 +18,13 @@ import { useSettingStore } from '@/modules/_me/setting.store.ts'
 import { Batch, BatchService } from '@/modules/batch'
 import { Distributor, DistributorService } from '@/modules/distributor'
 import { PermissionId } from '@/modules/permission/permission.enum.ts'
-import { Product, ProductService } from '@/modules/product'
+import { Product, ProductService, ProductType, SplitBatchByWarehouse } from '@/modules/product'
 import { PurchaseOrderItem } from '@/modules/purchase-order-item'
 import { Warehouse, WarehouseService } from '@/modules/warehouse'
 import { arrayToKeyValue, timeToText } from '@/utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
 import { purchaseOrder, warehouseId } from './purchase-order-upsert.store'
-import { ProductType } from '@/modules/enum.ts'
 import { CONFIG } from '@/config'
 import { BugDevelopment } from '@/views/component'
 
@@ -341,7 +340,11 @@ const clear = () => {
       </div>
 
       <div
-        v-if="settingStore.SCREEN_PURCHASE_ORDER_UPSERT.purchaseOrderItemsSelect.warehouse"
+        v-if="
+          purchaseOrderItem.product?.productType === ProductType.SplitBatch &&
+          purchaseOrderItem.product?.splitBatchByWarehouse ===
+            SplitBatchByWarehouse.SplitOnDifferent
+        "
         style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
       >
         <div>Nhập vào kho hàng</div>

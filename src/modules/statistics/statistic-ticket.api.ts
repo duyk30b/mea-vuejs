@@ -3,9 +3,9 @@ import { OmitClass } from '@/utils'
 import type { FullResponse } from '../_base/base-dto'
 import { Customer } from '../customer'
 import { TicketGetQuery, type TicketFilterQuery } from '../ticket'
+import { CustomerGroup } from '../customer_group'
 
 export type StatisticTicketResponseType = {
-  customerId: number
   countTicket: number
   sumItemsCostAmount: number
   sumExpense: number
@@ -14,7 +14,16 @@ export type StatisticTicketResponseType = {
   sumProfit: number
   sumPaidTotal: number
   sumDebtTotal: number
-  customer?: Customer
+}
+
+export type StatisticTicketQueryCustomerResponseType = StatisticTicketResponseType & {
+  customerId: number
+  customer: Customer
+}
+
+export type StatisticTicketQueryCustomerGroupResponseType = StatisticTicketResponseType & {
+  customerGroupId: string
+  customerGroup: CustomerGroup
 }
 
 export type StatisticTicketQueryTimeResponseType = {
@@ -55,14 +64,14 @@ export class StatisticTicketQuery extends OmitClass(TicketGetQuery, ['sort']) {
 export class StatisticTicketApi {
   static async groupByCustomer(options: StatisticTicketQuery) {
     const params = StatisticTicketQuery.toQueryString(options)
-    const response = await AxiosInstance.get('statistic/ticket/group-by-customer', {
+    const response = await AxiosInstance.get('statistic/ticket/group_by_customer', {
       params,
     })
-    const { data } = response.data as FullResponse<{ dataStatistic: any[] }>
+    const { data } = response.data as FullResponse<{ statisticData: any[] }>
 
     return {
-      dataStatistic: data.dataStatistic.map((i: any) => {
-        const item: StatisticTicketResponseType = {
+      statisticData: data.statisticData.map((i: any) => {
+        const item: StatisticTicketQueryCustomerResponseType = {
           customerId: i.customerId as number,
           countTicket: i.countTicket as number,
           sumItemsCostAmount: i.sumItemsCostAmount as number,
@@ -79,6 +88,32 @@ export class StatisticTicketApi {
     }
   }
 
+  static async groupByCustomerGroup(options: StatisticTicketQuery) {
+    const params = StatisticTicketQuery.toQueryString(options)
+    const response = await AxiosInstance.get('statistic/ticket/group_by_customer_group', {
+      params,
+    })
+    const { data } = response.data as FullResponse<{ statisticData: any[] }>
+
+    return {
+      statisticData: data.statisticData.map((i: any) => {
+        const item: StatisticTicketQueryCustomerGroupResponseType = {
+          customerGroupId: i.customerGroupId as string,
+          countTicket: i.countTicket as number,
+          sumItemsCostAmount: i.sumItemsCostAmount as number,
+          sumExpense: i.sumExpense as number,
+          sumSurcharge: i.sumSurcharge as number,
+          sumTotalMoney: i.sumTotalMoney as number,
+          sumProfit: i.sumProfit as number,
+          sumPaidTotal: i.sumPaidTotal as number,
+          sumDebtTotal: i.sumDebtTotal as number,
+          customerGroup: CustomerGroup.from(i.customerGroup || CustomerGroup.from({ id: i.customerGroupId, name: 'Chưa phân nhóm', updatedAt: 0 })),
+        }
+        return item
+      }),
+    }
+  }
+
   static async groupByTime(options: {
     filter: TicketFilterQuery
     fromTime: string
@@ -86,7 +121,7 @@ export class StatisticTicketApi {
     groupTimeType: 'date' | 'month'
   }) {
     const filter = TicketGetQuery.toQuery(options)
-    const response = await AxiosInstance.get('/statistic/ticket/group-by-time', {
+    const response = await AxiosInstance.get('/statistic/ticket/group_by_time', {
       params: {
         filter: JSON.stringify(options.filter),
         fromTime: options.fromTime,

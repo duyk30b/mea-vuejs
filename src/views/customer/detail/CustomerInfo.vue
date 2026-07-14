@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer } from '@/modules/customer'
-import { CustomerSource, CustomerSourceService } from '@/modules/customer-source'
+import { CustomerGroupService, type CustomerGroup } from '@/modules/customer_group'
+import { CustomerSource, CustomerSourceService } from '@/modules/customer_source'
 import { ESString, ESTimer, formatPhone } from '@/utils'
 import { onMounted, ref } from 'vue'
 
@@ -13,9 +14,11 @@ const settingStore = useSettingStore()
 const { formatMoney } = settingStore
 
 const customerSourceMap = ref<Record<string, CustomerSource>>({})
+const customerGroupMap = ref<Record<string, CustomerGroup>>({})
 
 onMounted(async () => {
   customerSourceMap.value = await CustomerSourceService.getMap()
+  customerGroupMap.value = await CustomerGroupService.getMap()
 })
 </script>
 
@@ -73,6 +76,12 @@ onMounted(async () => {
         <div style="width: 100px; flex-shrink: 0">Liên hệ khác</div>
         <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
           {{ customer.relative }}
+        </div>
+      </div>
+      <div class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">Nhóm KH</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
+          {{ customerGroupMap[customer.customerGroupId]?.name }}
         </div>
       </div>
       <div class="my-2 flex gap-4">

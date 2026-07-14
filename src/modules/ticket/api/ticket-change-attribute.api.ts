@@ -1,23 +1,23 @@
-import { AxiosInstance } from '../../../core/axios.instance'
+import { AxiosInstance } from '@/core/axios.instance'
 import type { FullResponse } from '../../_base/base-dto'
 
 export class TicketChangeAttributeApi {
   static async updateDiagnosis(options: {
     ticketId: string
-    note: string
+    note?: string
     imagesChange?: {
       files: File[]
       imageIdWaitList: number[]
       externalUrlList: string[]
     }
     ticketAttributeChangeList?: { key: string; value: any }[]
-    ticketAttributeKeyList: string[]
   }) {
     const { ticketId, imagesChange, ticketAttributeChangeList } = options
 
     const formData = new FormData()
-    formData.append('ticketAttributeKeyList', JSON.stringify(options.ticketAttributeKeyList))
-    formData.append('note', options.note)
+    if (options.note != null) {
+      formData.append('note', options.note)
+    }
 
     if (imagesChange) {
       // imagesChange.files.forEach((file) => formData.append('files', file))
@@ -28,12 +28,7 @@ export class TicketChangeAttributeApi {
       formData.append('imagesChange', imagesChangeStr)
     }
     if (ticketAttributeChangeList) {
-      const ticketAttributeChangeListStr = JSON.stringify(
-        ticketAttributeChangeList.map((i) => {
-          return { key: i.key, value: i.value }
-        }),
-      )
-      formData.append('ticketAttributeChangeList', ticketAttributeChangeListStr)
+      formData.append('ticketAttributeChangeList', JSON.stringify(ticketAttributeChangeList))
     }
 
     const response = await AxiosInstance.post(
@@ -59,7 +54,7 @@ export class TicketChangeAttributeApi {
         ticketAttributeList: ticketAttributeList.map((i) => {
           return {
             key: i.key,
-            value: i.value != null ? i.value : '',
+            value: i.value || '',
           }
         }),
       },

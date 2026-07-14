@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { InputSelect, type InputSelectOption } from '@/common/vue-form'
 import { CONFIG } from '@/config'
-import { CustomerSourceService, type CustomerSource } from '@/modules/customer-source'
+import { CustomerSourceService, type CustomerSource } from '@/modules/customer_source'
 import { onMounted, ref } from 'vue'
 
 const emit = defineEmits<{
@@ -39,6 +39,7 @@ onMounted(async () => {
   customerSourceOptions.value = customerSourceAll.map((i) => {
     return { value: i.id, label: i.name, data: i }
   })
+  customerSourceOptions.value.unshift({ value: 0, label: '-- Chọn --' })
 })
 </script>
 <template>

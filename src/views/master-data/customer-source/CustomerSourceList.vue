@@ -5,11 +5,17 @@ import { IconDelete, IconEditSquare } from '@/common/icon-google'
 import { InputSelect } from '@/common/vue-form'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { MeService } from '@/modules/_me/me.service'
-import { CustomerSource, CustomerSourceApi, CustomerSourceService } from '@/modules/customer-source'
+import {
+  CustomerSource,
+  CustomerSourceApi,
+  CustomerSourceService,
+} from '@/modules/customer_source/index.ts'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { onBeforeMount, ref } from 'vue'
 import { Breadcrumb } from '../../component'
 import ModalCustomerSourceUpsert from './ModalCustomerSourceUpsert.vue'
+import { CONFIG } from '@/config'
+import BugDevelopment from '@/views/component/BugDevelopment.vue'
 
 const modalCustomerSourceUpsert = ref<InstanceType<typeof ModalCustomerSourceUpsert>>()
 
@@ -110,6 +116,7 @@ const handleClickDeleteCustomerSource = async (id: number, name: string) => {
       <table>
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE == 'development'"></th>
             <th style="width: 100px">ID</th>
             <th>Tên</th>
             <th style="width: 100px"></th>
@@ -134,7 +141,10 @@ const handleClickDeleteCustomerSource = async (id: number, name: string) => {
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="customerSource in customerSourceList" :key="customerSource.id">
-            <td class="text-center">TS{{ customerSource.id }}</td>
+            <td v-if="CONFIG.MODE === 'development'" style="width: 50px" class="text-center">
+              <BugDevelopment :data="customerSource" />
+            </td>
+            <td class="text-center">CS{{ customerSource.id }}</td>
             <td>{{ customerSource.name }}</td>
             <td v-if="userPermission[PermissionId.MASTER_DATA_WAREHOUSE]">
               <div class="flex justify-between">

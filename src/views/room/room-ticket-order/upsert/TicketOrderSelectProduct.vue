@@ -13,18 +13,18 @@ import {
 import { MeService } from '@/modules/_me/me.service.ts'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Batch, BatchService } from '@/modules/batch'
-import { DeliveryStatus, DiscountType, PickupStrategy, ProductType } from '@/modules/enum'
+import { DeliveryStatus, DiscountType, PickupStrategy } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Product, ProductService } from '@/modules/product'
+import { Product, ProductService, ProductType } from '@/modules/product'
 import { TicketProduct } from '@/modules/ticket-product'
 import type { Warehouse } from '@/modules/warehouse'
 import { WarehouseService } from '@/modules/warehouse/warehouse.service'
+import { useTicketOrderDetailStore } from '@/store/ticket-order-detail.store'
 import { customFilter, ESTimer } from '@/utils'
 import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '@/views/product/upsert/ModalProductUpsert.vue'
 import { onMounted, ref } from 'vue'
 import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
-import { useTicketOrderDetailStore } from '@/store/ticket-order-detail.store'
 
 const inputOptionsProduct = ref<InstanceType<typeof InputOptions>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()

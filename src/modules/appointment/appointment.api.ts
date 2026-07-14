@@ -2,10 +2,10 @@ import { AxiosInstance } from '../../core/axios.instance'
 import type { FullResponse } from '../_base/base-dto'
 import type { Customer } from '../customer'
 import {
-    AppointmentDetailQuery,
-    AppointmentGetQuery,
-    AppointmentListQuery,
-    type AppointmentPaginationQuery,
+  AppointmentDetailQuery,
+  AppointmentGetQuery,
+  AppointmentListQuery,
+  type AppointmentPaginationQuery,
 } from './appointment.dto'
 import { Appointment } from './appointment.model'
 
@@ -43,17 +43,17 @@ export class AppointmentApi {
     const { appointment, newCustomer } = body
     const response = await AxiosInstance.post('/appointment/create', {
       customerId: appointment.customerId,
-      status: appointment.status,
       customer:
         newCustomer && newCustomer.id === 0
           ? {
-            fullName: newCustomer.fullName,
             customerCode: newCustomer.customerCode,
+            customerGroupId: newCustomer.customerGroupId || '0',
+            customerSourceId: newCustomer.customerSourceId || 0,
+            fullName: newCustomer.fullName,
             citizenIdCard: newCustomer.citizenIdCard || '',
             phone: newCustomer.phone,
             facebook: newCustomer.facebook || '',
             zalo: newCustomer.zalo || '',
-            customerSourceId: newCustomer.customerSourceId || 0,
             birthday: newCustomer.birthday,
             yearOfBirth: newCustomer.yearOfBirth,
             gender: newCustomer.gender,
@@ -66,10 +66,10 @@ export class AppointmentApi {
             isActive: newCustomer.isActive,
           }
           : undefined,
-      fromTicketId: appointment.fromTicketId,
+      status: appointment.status,
       registeredAt: appointment.registeredAt,
       reason: appointment.reason,
-      customerSourceId: appointment.customerSourceId,
+      fromTicketId: appointment.fromTicketId,
     })
     const { data } = response.data as FullResponse<{ appointment: any }>
     return Appointment.from(data.appointment)
@@ -77,11 +77,10 @@ export class AppointmentApi {
 
   static async updateOne(appointmentId: string, body: { appointment: Appointment }) {
     const response = await AxiosInstance.post(`/appointment/update/${appointmentId}`, {
+      status: body.appointment.status,
       registeredAt: body.appointment.registeredAt,
       reason: body.appointment.reason,
-      customerSourceId: body.appointment.customerSourceId,
       cancelReason: body.appointment.cancelReason,
-      status: body.appointment.status,
     })
     const { data } = response.data as FullResponse<{ appointment: any }>
     return Appointment.from(data.appointment)

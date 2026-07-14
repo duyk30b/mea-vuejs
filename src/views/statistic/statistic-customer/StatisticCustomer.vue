@@ -4,10 +4,12 @@ import Breadcrumb from '@/views/component/Breadcrumb.vue'
 import { ref } from 'vue'
 import TopCustomerBestTicket from './TopCustomerBestTicket.vue'
 import TopCustomerDebt from './TopCustomerDebt.vue'
+import TopCustomerGroupBestTicket from './TopCustomerGroupBestTicket.vue'
 
 const TABS_KEY = {
   DEBT: 'DEBT',
-  TICKET: 'TICKET',
+  TICKET_CUSTOMER: 'TICKET',
+  TICKET_CUSTOMER_GROUP: 'TICKET_CUSTOMER_GROUP',
 }
 
 const activeTab = ref<any>(TABS_KEY.DEBT)
@@ -25,14 +27,18 @@ const activeTab = ref<any>(TABS_KEY.DEBT)
     <VueTabs v-model:tabShow="activeTab">
       <template #menu>
         <VueTabMenu :tabKey="TABS_KEY.DEBT">Báo cáo nợ</VueTabMenu>
-        <VueTabMenu :tabKey="TABS_KEY.TICKET">Báo cáo mua hàng</VueTabMenu>
+        <VueTabMenu :tabKey="TABS_KEY.TICKET_CUSTOMER">Báo cáo mua hàng</VueTabMenu>
+        <VueTabMenu :tabKey="TABS_KEY.TICKET_CUSTOMER_GROUP">Báo cáo nhóm KH</VueTabMenu>
       </template>
       <template #panel>
         <VueTabPanel :tabKey="TABS_KEY.DEBT">
           <TopCustomerDebt :limit="20" />
         </VueTabPanel>
-        <VueTabPanel :tabKey="TABS_KEY.TICKET">
+        <VueTabPanel :tabKey="TABS_KEY.TICKET_CUSTOMER">
           <TopCustomerBestTicket />
+        </VueTabPanel>
+        <VueTabPanel :tabKey="TABS_KEY.TICKET_CUSTOMER_GROUP">
+          <TopCustomerGroupBestTicket />
         </VueTabPanel>
       </template>
     </VueTabs>

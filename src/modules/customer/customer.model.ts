@@ -1,8 +1,11 @@
+import type { CustomerGroup } from '../customer_group'
 import type { EGender } from '../enum'
 
 export class Customer {
   id: number
   customerCode: string
+  customerGroupId: string
+  isHasTicket: number
   fullName: string
   citizenIdCard: string
   customerSourceId: number
@@ -22,6 +25,7 @@ export class Customer {
   isActive: 1 | 0 // Trạng thái
   updatedAt: number
 
+  customerGroup?: CustomerGroup
   get getAge() {
     const nowYear = new Date().getFullYear()
     if (this.yearOfBirth) {
@@ -37,8 +41,10 @@ export class Customer {
   static init(): Customer {
     const ins = new Customer()
     ins.id = 0
+    ins.customerGroupId = ''
     ins.isActive = 1
     ins.customerSourceId = 0
+    ins.isHasTicket = 0
     ins.debt = 0
     return ins
   }

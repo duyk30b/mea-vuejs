@@ -8,7 +8,7 @@ import {
   CustomerSource,
   CustomerSourceApi,
   CustomerSourceService,
-} from '../../../modules/customer-source'
+} from '../../../modules/customer_source/index.ts'
 
 const emit = defineEmits<{
   (e: 'success', value: CustomerSource, type: 'CREATE' | 'UPDATE' | 'DELETE'): void

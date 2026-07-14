@@ -44,6 +44,8 @@ export class TicketChangeReceptionApi {
         !obj.customerId && obj.customer
           ? {
             customerCode: obj.customer.customerCode || '',
+            customerSourceId: obj.customer.customerSourceId || 0,
+            customerGroupId: obj.customer.customerGroupId || '0',
             fullName: obj.customer.fullName,
             citizenIdCard: obj.customer.citizenIdCard || '',
             phone: obj.customer.phone,
@@ -57,14 +59,12 @@ export class TicketChangeReceptionApi {
             addressStreet: obj.customer.addressStreet,
             relative: obj.customer.relative,
             healthHistory: obj.customer.healthHistory,
-            customerSourceId: obj.customer.customerSourceId || 0,
             note: obj.customer.note,
             isActive: obj.customer.isActive,
           }
           : undefined,
       ticketReceptionAdd: {
         roomId: obj.ticketReception.roomId || 0,
-        customerSourceId: obj.ticketReception.customerSourceId || 0,
         receptionAt: obj.ticketReception.receptionAt,
         reason: obj.ticketReception.reason,
       },
@@ -129,7 +129,6 @@ export class TicketChangeReceptionApi {
       {
         ticketReceptionUpdate: {
           roomId: ticketReception.roomId,
-          customerSourceId: ticketReception.customerSourceId || 0,
           receptionAt: ticketReception.receptionAt,
           reason: ticketReception.reason,
         },

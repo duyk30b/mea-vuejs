@@ -459,14 +459,14 @@ const handleChangeTabs = (activeKey: any) => {
               )
             </span>
             <a
-              v-if="customer.id && userPermission[PermissionId.CUSTOMER_UPDATE]"
+              v-if="customer.id && userPermission[PermissionId.CUSTOMER_CRUD]"
               @click="modalCustomerUpsert?.openModal(customer)"
             >
               Sửa thông tin KH
             </a>
             <div style="margin-left: auto">
               <a
-                v-if="!customer.id && userPermission[PermissionId.CUSTOMER_CREATE]"
+                v-if="!customer.id && userPermission[PermissionId.CUSTOMER_CRUD]"
                 @click="modalCustomerUpsert?.openModal()"
               >
                 Thêm KH mới

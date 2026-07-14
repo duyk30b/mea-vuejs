@@ -75,9 +75,7 @@ const handleUpdateText = (v: string) => {
 
 const handleUpsertCustomer = (customerData?: Customer) => {
   if (customerData) {
-    customerOptions.value = [
-      { value: customerData.id, text: customerData.fullName, data: customerData },
-    ]
+    emit('selectCustomer', customerData)
   }
 }
 
@@ -122,7 +120,7 @@ const logicFilter = (item: ItemOption<Customer>, text: string) => {
         <b style="color: var(--text-green)">{{ formatMoney(-customerCurrent!.debt) }}</b>
       </span>
       <a
-        v-if="editCustomer && userPermission[PermissionId.CUSTOMER_UPDATE]"
+        v-if="editCustomer && userPermission[PermissionId.CUSTOMER_CRUD]"
         @click="modalCustomerUpsert?.openModal(customerCurrent!)"
       >
         - Sửa thông tin KH

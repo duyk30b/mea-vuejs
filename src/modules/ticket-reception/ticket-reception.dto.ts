@@ -8,14 +8,12 @@ export class TicketReceptionGetQuery {
     ticket?: boolean
     room?: boolean
     customer?: boolean
-    customerSource?: boolean
   }
 
   filter?: {
     ticketId?: number
     roomId?: number
     customerId?: number
-    customerSourceId?: number
     receptionAt?: number | ConditionNumber
   }
 

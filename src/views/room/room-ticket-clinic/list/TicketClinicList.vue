@@ -28,7 +28,7 @@ import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProc
 import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
 import { onBeforeMount, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import ModalReceptionCreate from '../../reception/create/ModalReceptionCreate.vue'
+import ModalReceptionCreate from '../../room-ticket-reception/create/ModalReceptionCreate.vue'
 import ModalTicketPayment from '../../room-ticket-base/ModalTicketPayment.vue'
 import TicketLink from '../../room-ticket-base/TicketLink.vue'
 import { fromTime, toTime } from '../../room-ticket-base/room-ticket.ref'
@@ -358,6 +358,10 @@ const clickCloseTicket = (ticket: Ticket) => {
               { value: TicketStatus.Executing, text: 'Đang điều trị' },
               { value: TicketStatus.Debt, text: 'Nợ' },
               { value: TicketStatus.Completed, text: 'Hoàn thành' },
+              {
+                value: { IN: [TicketStatus.Debt, TicketStatus.Completed] },
+                text: 'Hoàn thành + Nợ',
+              },
             ]"
             @update:value="startFilter"
           />

@@ -46,7 +46,7 @@ import ModalTicketPaymentHistory from '../../room-ticket-base/ModalTicketPayment
 import ModalTicketReturnProduct from '../../room-ticket-base/ModalTicketReturnProduct.vue'
 import ModalTicketClinicHistory from '../history/ModalTicketClinicHistory.vue'
 import TicketClinicConsumableContainer from './consumable/TicketClinicConsumableContainer.vue'
-import TicketClinicDiagnosis from './diagnosis/TicketClinicDiagnosis.vue'
+import TicketClinicDiagnosisContainer from './diagnosis/TicketClinicDiagnosisContainer.vue'
 import TicketClinicLaboratoryContainer from './laboratory/TicketClinicLaboratoryContainer.vue'
 import ModalRoomSetting from './modal/ModalRoomSetting.vue'
 import TicketClinicPrescriptionContainer from './prescription/TicketClinicPrescriptionContainer.vue'
@@ -800,9 +800,9 @@ const startPrintTicketClinicAllMoney = async () => {
     <VueTabs :tabShow="String(route.name)" @update:tabShow="handleChangeTabs">
       <template #menu>
         <VueTabMenu
-          :tabKey="TicketClinicDiagnosis.__name!"
+          :tabKey="TicketClinicDiagnosisContainer.__name!"
           style="padding: 6px 12px"
-          @active="router.push({ name: TicketClinicDiagnosis.__name })"
+          @active="router.push({ name: TicketClinicDiagnosisContainer.__name })"
         >
           <IconStethoscope />
           Khám
@@ -881,7 +881,7 @@ const startPrintTicketClinicAllMoney = async () => {
       <KeepAlive
         :include="
           [
-            TicketClinicDiagnosis.__name,
+            TicketClinicDiagnosisContainer.__name,
             TicketClinicProcedureContainer.__name,
             TicketClinicConsumableContainer.__name,
             TicketClinicLaboratoryContainer.__name,

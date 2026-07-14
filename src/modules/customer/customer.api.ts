@@ -45,6 +45,8 @@ export class CustomerApi {
   static async createOne(customer: Customer) {
     const response = await AxiosInstance.post('/customer/create', {
       customerCode: customer.customerCode || '',
+      customerSourceId: customer.customerSourceId || 0,
+      customerGroupId: customer.customerGroupId || '0',
       fullName: customer.fullName,
       phone: customer.phone,
       citizenIdCard: customer.citizenIdCard || '',
@@ -59,7 +61,6 @@ export class CustomerApi {
       relative: customer.relative, // người thân
       healthHistory: customer.healthHistory, // Tiền sử bệnh
       note: customer.note,
-      customerSourceId: customer.customerSourceId || 0,
       isActive: customer.isActive, // Trạng thái
     })
     const { data } = response.data as FullResponse<{ customer: any }>
@@ -69,6 +70,10 @@ export class CustomerApi {
   static async updateOne(id: number, customer: Partial<Customer>) {
     const response = await AxiosInstance.post(`/customer/update/${id}`, {
       customerCode: customer.customerCode,
+      customerSourceId:
+        customer.customerSourceId !== undefined ? customer.customerSourceId || 0 : undefined,
+      customerGroupId:
+        customer.customerGroupId !== undefined ? customer.customerGroupId || '0' : undefined,
       fullName: customer.fullName !== undefined ? customer.fullName : undefined,
       citizenIdCard: customer.citizenIdCard !== undefined ? customer.citizenIdCard : undefined,
       phone: customer.phone !== undefined ? customer.phone : undefined,
@@ -84,8 +89,7 @@ export class CustomerApi {
       relative: customer.relative !== undefined ? customer.relative : undefined, // người thân
       healthHistory: customer.healthHistory !== undefined ? customer.healthHistory : undefined, // Tiền sử bệnh
       note: customer.note !== undefined ? customer.note : undefined,
-      customerSourceId:
-        customer.customerSourceId !== undefined ? customer.customerSourceId || 0 : undefined,
+
       isActive: customer.isActive !== undefined ? customer.isActive : undefined, // Trạng thái
     })
     const { data } = response.data as FullResponse<{ customer: any }>

@@ -1,6 +1,6 @@
 import { BaseModel } from '../_base/base.model'
 import { Customer } from '../customer'
-import { CustomerSource } from '../customer-source'
+import { CustomerSource } from '../customer_source'
 import { Ticket } from '../ticket'
 
 export class TicketReception extends BaseModel {
@@ -9,9 +9,8 @@ export class TicketReception extends BaseModel {
   ticketId: string
   roomId: number
   customerId: number
-  customerSourceId: number
 
-  isFirstReception: number
+  isMainReception: number
   receptionAt: number
   reason: string
 
@@ -27,9 +26,8 @@ export class TicketReception extends BaseModel {
     ins.ticketId = ''
     ins.roomId = 0
     ins.customerId = 0
-    ins.customerSourceId = 0
 
-    ins.isFirstReception = 1
+    ins.isMainReception = 1
     ins.reason = ''
 
     return ins
@@ -84,7 +82,6 @@ export class TicketReception extends BaseModel {
     if (a.ticketId != b.ticketId) return false
     if (a.roomId != b.roomId) return false
     if (a.customerId != b.customerId) return false
-    if (a.customerSourceId != b.customerSourceId) return false
 
     if (a.receptionAt != b.receptionAt) return false
     if (a.reason != b.reason) return false

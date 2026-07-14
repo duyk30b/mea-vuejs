@@ -1,5 +1,4 @@
 import { Customer } from '../customer'
-import { CustomerSource } from '../customer-source'
 import { Ticket } from '../ticket'
 
 export enum AppointmentStatus {
@@ -19,7 +18,6 @@ export const AppointmentStatusText = {
 export class Appointment {
   id: string
   customerId: number
-  customerSourceId: number
 
   status: AppointmentStatus
   registeredAt: number
@@ -31,7 +29,6 @@ export class Appointment {
   cancelReason: string // Lý do hủy
 
   customer?: Customer
-  customerSource?: CustomerSource
   toTicket?: Ticket
 
   static init(): Appointment {
@@ -39,7 +36,6 @@ export class Appointment {
     ins.id = ''
     ins.status = AppointmentStatus.Waiting
     ins.customerId = 0
-    ins.customerSourceId = 0
     return ins
   }
 
@@ -67,11 +63,6 @@ export class Appointment {
     const target = Appointment.basic(source)
     if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
       target.customer = source.customer ? Customer.basic(source.customer) : source.customer
-    }
-    if (Object.prototype.hasOwnProperty.call(source, 'customerSource')) {
-      target.customerSource = source.customerSource
-        ? CustomerSource.basic(source.customerSource)
-        : source.customerSource
     }
     if (Object.prototype.hasOwnProperty.call(source, 'toTicket')) {
       target.toTicket = source.toTicket ? Ticket.basic(source.toTicket) : source.toTicket

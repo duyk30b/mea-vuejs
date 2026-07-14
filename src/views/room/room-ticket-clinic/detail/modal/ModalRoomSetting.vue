@@ -46,9 +46,7 @@ const activeTab = ref(TABS_KEY.GENERAL)
 const openModal = async () => {
   showModal.value = true
 
-  roomSettingObj.value = JSON.parse(
-    JSON.stringify(ticketClinicDetailStore.roomRef.roomSettingObj),
-  )
+  roomSettingObj.value = JSON.parse(JSON.stringify(ticketClinicDetailStore.roomRef.roomSettingObj))
   activeTab.value = TABS_KEY.GENERAL
 
   WarehouseService.list({})
@@ -62,7 +60,7 @@ const openModal = async () => {
       console.log('🚀: ModalTicketClinicDetailSetting.vue:78 ~ WarehouseService.list ~ e:', e)
     })
   TemplateHtmlService.list({
-    filter: { templateHtmlType: TemplateHtmlType.TicketClinicDiagnosis },
+    filter: { templateHtmlType: TemplateHtmlType.TicketClinicDocumentExtra },
   })
     .then((result) => {
       templateHtmlOptions.value = result.map((i) => ({ value: i.id, label: i.name }))
@@ -235,7 +233,7 @@ defineExpose({ openModal })
                       </td>
                     </tr>
                     <tr>
-                      <td style="width: 30%">Danh sách template</td>
+                      <td style="width: 30%">Danh sách tài liệu bổ sung</td>
                       <td>
                         <div>
                           <a-select

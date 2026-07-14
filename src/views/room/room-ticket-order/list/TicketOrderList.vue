@@ -295,6 +295,10 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
               { text: 'Đang xử lý', value: TicketStatus.Executing },
               { text: 'Nợ', value: TicketStatus.Debt },
               { text: 'Hoàn thành', value: TicketStatus.Completed },
+              {
+                text: 'Hoàn thành + Nợ',
+                value: { IN: [TicketStatus.Debt, TicketStatus.Completed] },
+              },
               { text: 'Hủy', value: TicketStatus.Cancelled },
             ]"
             @update:value="() => startSearch()"

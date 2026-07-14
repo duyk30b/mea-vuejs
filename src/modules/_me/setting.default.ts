@@ -1,10 +1,11 @@
+import { PickupStrategy } from '../enum'
 import {
-  PickupStrategy,
+  ProductType,
   SplitBatchByCostPrice,
   SplitBatchByDistributor,
   SplitBatchByExpiryDate,
   SplitBatchByWarehouse,
-} from '../enum'
+} from '../product'
 
 export const SETTING_DEFAULT = {
   isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 900,
@@ -17,10 +18,11 @@ export const SETTING_DEFAULT = {
   },
   PRODUCT_SETTING: {
     allowNegativeQuantity: false,
-    splitBatchByWarehouse: SplitBatchByWarehouse.Inherit,
-    splitBatchByDistributor: SplitBatchByDistributor.Inherit,
-    splitBatchByExpiryDate: SplitBatchByExpiryDate.Inherit,
-    splitBatchByCostPrice: SplitBatchByCostPrice.Inherit,
+    productType: ProductType.Basic,
+    splitBatchByWarehouse: SplitBatchByWarehouse.Override,
+    splitBatchByDistributor: SplitBatchByDistributor.Override,
+    splitBatchByExpiryDate: SplitBatchByExpiryDate.Override,
+    splitBatchByCostPrice: SplitBatchByCostPrice.OverrideAndMAC,
   },
 
   PRODUCT_UNIT: <string[]>[
@@ -37,9 +39,7 @@ export const SETTING_DEFAULT = {
     'Hộp',
   ],
   PRODUCT_ROUTE: <string[]>['Uống', 'Bôi', 'Ngậm', 'Tiêm', 'Xịt'],
-  PRODUCT_HINT_USAGE: <string[]>[
-
-  ],
+  PRODUCT_HINT_USAGE: <string[]>[],
 
   SCREEN_PRODUCT_LIST: {
     zeroQuantity: false,
@@ -89,7 +89,6 @@ export const SETTING_DEFAULT = {
 
   SCREEN_CUSTOMER_LIST: {
     detail: true,
-    phone: true,
     citizenIdCard: false,
     gender: true,
     birthday: true,
@@ -108,7 +107,6 @@ export const SETTING_DEFAULT = {
     address: true,
     relative: false,
     note: false,
-    customerSource: false,
   },
 
   SCREEN_PURCHASE_ORDER_LIST: {
@@ -130,7 +128,6 @@ export const SETTING_DEFAULT = {
   },
   SCREEN_PURCHASE_ORDER_UPSERT: {
     purchaseOrderItemsSelect: {
-      warehouse: false,
       lotNumberAndExpiryDate: true,
     },
     purchaseOrderItemsTable: {
@@ -138,7 +135,6 @@ export const SETTING_DEFAULT = {
       substance: true,
       lotNumberAndExpiryDate: true,
       unit: true,
-      warehouse: false,
     },
     distributor: {
       idDefault: 0,
@@ -232,6 +228,7 @@ export const SETTING_DEFAULT = {
     relative: false,
     note: false,
     customerSource: false,
+    customerGroup: false,
   },
 
   RECEPTION_TICKET_LIST: {
@@ -245,6 +242,7 @@ export const SETTING_DEFAULT = {
     birthday: true,
     gender: true,
     address: true,
+    customerGroup: false,
     customerSource: false,
     roleIdList: [],
     requestProcedure: false,

@@ -66,6 +66,7 @@ export class CustomerService {
       filter: {
         isActive: filter?.isActive,
         debt: filter?.debt,
+        customerGroupId: filter?.customerGroupId,
         $OR: filter?.searchText
           ? [{ phone: { LIKE: filter?.searchText } }, { fullName: { LIKE: filter?.searchText } }]
           : undefined,

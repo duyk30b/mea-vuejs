@@ -70,14 +70,9 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <span><router-link :to="{ name: 'AppHome' }">Home</router-link></span>
     </a-menu-item>
 
-    <a-menu-item key="AppointmentList">
+    <a-menu-item key="AppointmentList" v-if="userPermission[PermissionId.APPOINTMENT_MENU]">
       <template #icon><IconCalendar /></template>
       <span><router-link :to="{ name: 'AppointmentList' }">Lịch hẹn</router-link></span>
-    </a-menu-item>
-
-    <a-menu-item key="ReceptionList">
-      <template #icon><IconDoorOpen /></template>
-      <span><router-link :to="{ name: 'ReceptionList' }">Tiếp đón</router-link></span>
     </a-menu-item>
 
     <template v-for="room in roomList" :key="room.id">
@@ -88,6 +83,20 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <template #icon><IconShop /></template>
         <span>
           <router-link :to="{ name: 'RoomTicketOrder', params: { roomId: room.id } }">
+            {{ room.name }}
+          </router-link>
+        </span>
+      </a-menu-item>
+    </template>
+
+    <template v-for="room in roomList" :key="room.id">
+      <a-menu-item
+        v-if="roomIdMap[room.id] && room.roomType === RoomType.TicketReception"
+        :key="'RoomTicketReception' + '_' + room.id"
+      >
+        <template #icon><IconDoorOpen /></template>
+        <span>
+          <router-link :to="{ name: 'RoomTicketReception', params: { roomId: room.id } }">
             {{ room.name }}
           </router-link>
         </span>

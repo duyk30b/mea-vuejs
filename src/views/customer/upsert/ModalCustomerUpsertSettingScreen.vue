@@ -116,13 +116,6 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td colspan="2">
-                <InputCheckbox v-model:value="settingDisplay.customerSource">
-                  Hiển thị điền nguồn khách hàng
-                </InputCheckbox>
-              </td>
-            </tr>
-            <tr>
-              <td colspan="2">
                 <InputCheckbox v-model:value="settingDisplay.note">
                   Hiển thị điền ghi chú
                 </InputCheckbox>

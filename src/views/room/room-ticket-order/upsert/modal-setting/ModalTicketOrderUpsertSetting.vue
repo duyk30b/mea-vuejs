@@ -147,7 +147,6 @@ defineExpose({ openModal })
                   <thead>
                     <tr>
                       <th colspan="2">Chọn sản phẩm</th>
-                      <th></th>
                     </tr>
                   </thead>
                   <tbody>

@@ -178,7 +178,7 @@ defineExpose({ openModal })
               )
             </span>
             <a
-              v-if="userPermission[PermissionId.CUSTOMER_UPDATE]"
+              v-if="userPermission[PermissionId.CUSTOMER_CRUD]"
               @click="modalDistributorUpsert?.openModal(distributor.id)"
             >
               Sửa thông tin NCC
@@ -186,7 +186,7 @@ defineExpose({ openModal })
           </template>
           <div style="margin-left: auto">
             <a
-              v-if="!distributor.id && userPermission[PermissionId.CUSTOMER_CREATE]"
+              v-if="!distributor.id && userPermission[PermissionId.CUSTOMER_CRUD]"
               @click="modalDistributorUpsert?.openModal()"
             >
               Thêm NCC mới

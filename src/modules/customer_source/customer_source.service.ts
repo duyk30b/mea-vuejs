@@ -1,18 +1,18 @@
 import { arrayToKeyValue } from '../../utils'
-import { CustomerSourceApi } from './customer-source.api'
+import { CustomerSourceApi } from './customer_source.api'
 import type {
   CustomerSourceGetQuery,
   CustomerSourceListQuery,
   CustomerSourcePaginationQuery,
-} from './customer-source.dto'
-import { CustomerSource } from './customer-source.model'
+} from './customer_source.dto'
+import { CustomerSource } from './customer_source.model'
 
 export class CustomerSourceService {
   static loadedAll: boolean = false
   static customerSourceAll: CustomerSource[]
 
   // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng refresh: true
-  static getAll = (() => {
+  static fetchAll = (() => {
     const start = async () => {
       try {
         CustomerSourceService.customerSourceAll = await CustomerSourceApi.list({})
@@ -21,8 +21,8 @@ export class CustomerSourceService {
       }
     }
     let fetching: any = null
-    return async (options: { refresh?: boolean } = {}) => {
-      if (!fetching || !CustomerSourceService.loadedAll || options.refresh) {
+    return async (options: { refetch?: boolean } = {}) => {
+      if (!fetching || !CustomerSourceService.loadedAll || options.refetch) {
         CustomerSourceService.loadedAll = true
         fetching = start()
       }
@@ -30,8 +30,13 @@ export class CustomerSourceService {
     }
   })()
 
-  static async getMap() {
-    await CustomerSourceService.getAll()
+  static async getAll(options?: { refetch: boolean }) {
+    await CustomerSourceService.fetchAll({ refetch: !!options?.refetch })
+    return CustomerSourceService.customerSourceAll
+  }
+
+  static async getMap(options?: { refetch: boolean }) {
+    await CustomerSourceService.fetchAll({ refetch: !!options?.refetch })
     return arrayToKeyValue(CustomerSourceService.customerSourceAll, 'id')
   }
 
@@ -70,11 +75,11 @@ export class CustomerSourceService {
     }
   }
 
-  static async list(options: CustomerSourceListQuery) {
-    await CustomerSourceService.getAll()
+  static async list(query: CustomerSourceListQuery, options?: { refetch: boolean }) {
+    await CustomerSourceService.getAll({ refetch: !!options?.refetch })
     const data = CustomerSourceService.executeQuery(
       CustomerSourceService.customerSourceAll,
-      options,
+      query,
     )
     return CustomerSource.fromList(data)
   }

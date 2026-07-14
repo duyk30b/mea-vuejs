@@ -13,6 +13,7 @@ import { OrganizationApi } from '../../modules/organization/organization.api'
 import { ESImage, customFilter } from '../../utils'
 import ModalChangeOrganizationEmail from './modal/ModalChangeOrganizationEmail.vue'
 import { Address, AddressService } from '@/modules/address'
+import { BugDevelopment } from '../component'
 
 const imageUploadSingleRef = ref<InstanceType<typeof ImageUploadSingleCloudinary>>()
 const modalChangeOrganizationEmail = ref<InstanceType<typeof ModalChangeOrganizationEmail>>()
@@ -132,9 +133,10 @@ const sendEmailVerify = async () => {
   />
   <div class="mx-4 mt-4">
     <div class="flex justify-between items-center">
-      <div class="font-medium" style="font-size: 1.2rem">
-        <IconSetting style="margin-right: 1rem" />
-        Thông tin cơ sở
+      <div class="font-medium flex gap-2 items-center" style="font-size: 1.2rem">
+        <IconSetting />
+        <span>Thông tin cơ sở</span>
+        <BugDevelopment :data="organization" />
       </div>
     </div>
   </div>

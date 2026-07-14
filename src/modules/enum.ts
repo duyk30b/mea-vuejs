@@ -25,43 +25,12 @@ export enum DiscountType {
   VND = 'VNĐ',
 }
 
-export type UnitType = { name: string; rate: number; default?: boolean }
-
-export enum ProductType {
-  Basic = 1,
-  SplitBatch = 2,
-}
-
 export enum PickupStrategy {
   Inherit = 0, // Dùng theo cấu hình mặc định hệ thống
   NoImpact = 1, // Không tác động đến kho
   RequireBatchSelection = 2, // Bắt buộc chọn lô
   AutoWithFIFO = 3, // Auto theo FIFO
   AutoWithExpiryDate = 4, // Auto ưu tiên hạn gần
-}
-
-export enum SplitBatchByWarehouse {
-  Inherit = 0,
-  Override = 1,
-  SplitOnDifferent = 2,
-}
-
-export enum SplitBatchByDistributor {
-  Inherit = 0,
-  Override = 1,
-  SplitOnDifferent = 2,
-}
-
-export enum SplitBatchByExpiryDate {
-  Inherit = 0,
-  Override = 1,
-  SplitOnDifferent = 2,
-}
-
-export enum SplitBatchByCostPrice {
-  Inherit = 0,
-  OverrideAndMAC = 1,
-  SplitOnDifferent = 2,
 }
 
 export enum DeliveryStatus {

@@ -11,6 +11,7 @@ export class CustomerGetQuery {
   filter?: {
     isActive?: 1 | 0
     searchText?: string
+    customerGroupId?: string
     debt?: ConditionNumber
     updatedAt?: ConditionDate
   }
@@ -18,6 +19,7 @@ export class CustomerGetQuery {
   sort?: {
     id?: 'ASC' | 'DESC'
     customerCode?: 'ASC' | 'DESC'
+    customerGroupId?: 'ASC' | 'DESC'
     debt?: 'ASC' | 'DESC'
     fullName?: 'ASC' | 'DESC'
   }
@@ -33,6 +35,6 @@ export class CustomerGetQuery {
   }
 }
 
-export class CustomerPaginationQuery extends CustomerGetQuery {}
-export class CustomerListQuery extends OmitClass(CustomerGetQuery, ['page']) {}
-export class CustomerDetailQuery extends PickClass(CustomerGetQuery, ['relation']) {}
+export class CustomerPaginationQuery extends CustomerGetQuery { }
+export class CustomerListQuery extends OmitClass(CustomerGetQuery, ['page']) { }
+export class CustomerDetailQuery extends PickClass(CustomerGetQuery, ['relation']) { }

@@ -159,7 +159,7 @@ defineExpose({ openModal })
               )
             </span>
             <a
-              v-if="userPermission[PermissionId.CUSTOMER_UPDATE]"
+              v-if="userPermission[PermissionId.CUSTOMER_CRUD]"
               @click="modalCustomerUpsert?.openModal(customer)"
             >
               Sửa thông tin KH
@@ -167,7 +167,7 @@ defineExpose({ openModal })
           </template>
           <div style="margin-left: auto">
             <a
-              v-if="!customer.id && userPermission[PermissionId.CUSTOMER_CREATE]"
+              v-if="!customer.id && userPermission[PermissionId.CUSTOMER_CRUD]"
               @click="modalCustomerUpsert?.openModal()"
             >
               Thêm KH mới

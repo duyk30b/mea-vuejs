@@ -820,6 +820,13 @@ const handleModalUploadProductSuccess = async () => {
                 >
                   {{ formatMoney(batch.unitCostPrice || 0) }}
                 </td>
+                <td
+                  v-if="settingStore.SYSTEM_SETTING.wholesalePrice && batchIndex == 0"
+                  :rowspan="product.batchList.length"
+                  class="text-right"
+                >
+                  {{ formatMoney(product.unitWholesalePrice || 0) }}
+                </td>
                 <td v-if="batchIndex == 0" :rowspan="product.batchList.length" class="text-right">
                   {{ formatMoney(product.unitRetailPrice) }}
                 </td>

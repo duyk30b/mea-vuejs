@@ -37,7 +37,6 @@
 </template>
 
 <script setup lang="ts">
-import { CONFIG } from '@/config'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 export type InputSelectOption<T> = {
@@ -95,6 +94,9 @@ const toggleDropdown = async () => {
   if (isOpen.value) {
     await nextTick()
     updateDropdownPosition()
+    requestAnimationFrame(() => {
+      updateDropdownPosition()
+    })
     highlightedIndex.value = props.options.findIndex((o) => o.value === props.value)
   }
 }
@@ -103,20 +105,31 @@ function updateDropdownPosition() {
   if (!wrapperRef.value) return
   const rect = wrapperRef.value.getBoundingClientRect()
 
-  const dropdownHeight = dropdownRef.value?.offsetHeight || 200
-  const spaceBelow = window.innerHeight - rect.bottom
-  const spaceAbove = rect.top
+  const maxDropdownHeight = Number.parseFloat(props.height || '200') || 200
+  const dropdownHeight = Math.min(
+    dropdownRef.value?.scrollHeight || dropdownRef.value?.offsetHeight || maxDropdownHeight,
+    maxDropdownHeight,
+  )
+  const viewportHeight = window.innerHeight
 
-  const showAbove = spaceBelow < dropdownHeight && spaceAbove > spaceBelow
-  dropdownDirection.value = showAbove ? 'up' : 'down'
+  const spaceBelow = viewportHeight - rect.bottom - 20
+  const spaceAbove = rect.top - 20
+
+  dropdownDirection.value = spaceBelow < dropdownHeight && spaceAbove > spaceBelow ? 'up' : 'down'
+
+  let topCalculator = 0
+  if (dropdownDirection.value === 'up') {
+    topCalculator = rect.top - dropdownHeight + window.scrollY
+  } else {
+    topCalculator = rect.bottom + window.scrollY
+  }
 
   dropdownStyle.value = {
     left: `${rect.left + window.scrollX}px`,
     width: `${rect.width}px`,
     maxHeight: props.height || '200px',
-    top: showAbove
-      ? `${rect.top + window.scrollY - dropdownHeight}px`
-      : `${rect.bottom + window.scrollY}px`,
+    top: `${topCalculator}px`,
+    transformOrigin: dropdownDirection.value === 'up' ? 'bottom' : 'top',
   }
 }
 
@@ -231,6 +244,7 @@ onBeforeUnmount(() => {
   border: 1px solid #ccc;
   background: white;
   z-index: 9999;
+  font-size: 16px;
   .input-select-option {
     padding: 5px 12px 5px 12px;
     cursor: pointer;

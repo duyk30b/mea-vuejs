@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { CONFIG } from '@/config'
-import { onBeforeMount, onMounted, ref } from 'vue'
+import { CustomerGroup, CustomerGroupService } from '@/modules/customer_group'
+import { BugDevelopment } from '@/views/component'
+import { computed, onBeforeMount, onMounted, reactive, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import VuePagination from '../../../common/VuePagination.vue'
 import VueTag from '../../../common/VueTag.vue'
@@ -20,38 +22,46 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer, CustomerService } from '../../../modules/customer'
 import { FileCustomerApi } from '../../../modules/file-excel/file-customer.api'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { ESString, ESTimer } from '../../../utils'
+import { ESArray, ESString, ESTimer } from '../../../utils'
 import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import ModalCustomerDetail from '../detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../upsert/ModalCustomerUpsert.vue'
+import ModalCustomerGroupManager from './ModalCustomerGroupManager.vue'
 import ModalCustomerListSettingScreen from './ModalCustomerListSettingScreen.vue'
 import ModalUploadCustomer from './ModalUploadCustomer.vue'
-import { BugDevelopment } from '@/views/component'
+import InputSelectCustomerGroup from '@/views/component/InputSelectCustomerGroup.vue'
+import { CustomerSourceService } from '@/modules/customer_source'
 
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
 const modalCustomerListSettingScreen = ref<InstanceType<typeof ModalCustomerListSettingScreen>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalUploadCustomer = ref<InstanceType<typeof ModalUploadCustomer>>()
+const modalCustomerGroupManager = ref<InstanceType<typeof ModalCustomerGroupManager>>()
 
 const settingStore = useSettingStore()
 const { userPermission } = MeService
 const { formatMoney, isMobile } = settingStore
 
 const customerList = ref<Customer[]>([])
-
+const customerGroupAll = ref<CustomerGroup[]>([])
 const dataLoading = ref(false)
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('CUSTOMER_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
-const searchText = ref('')
-const isActive = ref<1 | 0 | ''>(1)
+const filter = reactive({
+  searchText: '',
+  debt: '' as any,
+  customerGroupId: '',
+})
 
-const sortColumn = ref<'id' | 'customerCode' | 'fullName' | 'debt' | ''>('')
+const sortColumn = ref<'id' | 'customerCode' | 'customerGroupId' | 'fullName' | 'debt' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
+
+const customerGroupMap = computed(() => ESArray.arrayToKeyValue(customerGroupAll.value, 'id'))
 
 const startFetchData = async (options?: { refetch?: boolean }) => {
   try {
@@ -60,14 +70,16 @@ const startFetchData = async (options?: { refetch?: boolean }) => {
         page: page.value,
         limit: limit.value,
         filter: {
-          isActive: isActive.value !== '' ? isActive.value : undefined,
-          searchText: searchText.value ? searchText.value : undefined,
+          debt: filter.debt !== '' ? filter.debt : undefined,
+          searchText: filter.searchText ? filter.searchText : undefined,
+          customerGroupId: filter.customerGroupId ? filter.customerGroupId : undefined,
         },
         sort: sortValue.value
           ? {
               fullName: sortColumn.value === 'fullName' ? sortValue.value : undefined,
               id: sortColumn.value === 'id' ? sortValue.value : undefined,
               debt: sortColumn.value === 'debt' ? sortValue.value : undefined,
+              customerGroupId: sortColumn.value === 'customerGroupId' ? sortValue.value : undefined,
             }
           : { customerCode: 'ASC' },
       },
@@ -82,9 +94,15 @@ const startFetchData = async (options?: { refetch?: boolean }) => {
 }
 
 onBeforeMount(async () => {
-  dataLoading.value = true
-  await startFetchData()
-  dataLoading.value = false
+  try {
+    dataLoading.value = true
+    await startFetchData()
+    customerGroupAll.value = await CustomerGroupService.list({})
+  } catch (error) {
+    console.log('🚀 ~ file: CustomerList.vue:89 ~ onBeforeMount ~ error:', error)
+  } finally {
+    dataLoading.value = false
+  }
 })
 
 onMounted(async () => {
@@ -105,7 +123,9 @@ const startSearch = async () => {
   await startFetchData()
 }
 
-const changeSort = async (column: 'id' | 'customerCode' | 'fullName' | 'debt') => {
+const changeSort = async (
+  column: 'id' | 'customerCode' | 'customerGroupId' | 'fullName' | 'debt',
+) => {
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
     sortValue.value = ''
@@ -155,7 +175,15 @@ const downloadExcelCustomerList = async () => {
 }
 
 const handleModalUploadCustomerSuccess = async () => {
+  CustomerGroupService.list({}, { refetch: true }).then((res) => {
+    customerGroupAll.value = res
+  })
+  CustomerSourceService.list({}, { refetch: true }).then((res) => {})
   await startFetchData({ refetch: true })
+}
+
+const handleModalCustomerGroupManagerSuccess = async () => {
+  customerGroupAll.value = await CustomerGroupService.list({})
 }
 </script>
 
@@ -168,7 +196,10 @@ const handleModalUploadCustomerSuccess = async () => {
     ref="modalCustomerListSettingScreen"
   />
   <ModalUploadCustomer ref="modalUploadCustomer" @success="handleModalUploadCustomerSuccess" />
-
+  <ModalCustomerGroupManager
+    ref="modalCustomerGroupManager"
+    @success="handleModalCustomerGroupManagerSuccess"
+  />
   <div class="mx-4 mt-4 gap-4 flex items-center justify-between">
     <div class="flex items-center gap-4">
       <div class="hidden md:block">
@@ -176,7 +207,7 @@ const handleModalUploadCustomerSuccess = async () => {
       </div>
       <div class="">
         <VueButton
-          v-if="userPermission[PermissionId.CUSTOMER_CREATE]"
+          v-if="userPermission[PermissionId.CUSTOMER_CRUD]"
           color="blue"
           icon="plus"
           @click="modalCustomerUpsert?.openModal()"
@@ -204,6 +235,14 @@ const handleModalUploadCustomerSuccess = async () => {
           Download
         </VueButton>
       </div>
+      <VueButton
+        v-if="userPermission[PermissionId.CUSTOMER_CRUD]"
+        icon="send"
+        color="green"
+        @click="modalCustomerGroupManager?.openModal()"
+      >
+        Nhóm khách hàng
+      </VueButton>
       <VueDropdown v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]">
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">
@@ -222,19 +261,26 @@ const handleModalUploadCustomerSuccess = async () => {
       <div style="flex: 2; flex-basis: 500px">
         <div>Tìm kiếm</div>
         <div>
-          <InputText v-model:value="searchText" @update:value="startSearch" />
+          <InputText v-model:value="filter.searchText" @update:value="startSearch" />
         </div>
       </div>
 
+      <div style="flex: 1; flex-basis: 250px">
+        <InputSelectCustomerGroup
+          v-model:customerGroupId="filter.customerGroupId"
+          @selectCustomerGroup="startSearch"
+        />
+      </div>
+
       <div style="flex: 1; flex-basis: 300px">
-        <div>Chọn trạng thái</div>
+        <div>Trạng thái nợ</div>
         <div>
           <VueSelect
-            v-model:value="isActive"
+            v-model:value="filter.debt"
             :options="[
               { text: 'Tất cả', value: '' },
-              { text: 'Active', value: 1 },
-              { text: 'Inactive', value: 0 },
+              { text: 'Đang nợ', value: { GT: 0 } },
+              { text: 'Không nợ', value: { EQUAL: 0 } },
             ]"
             @update:value="(e) => startSearch()"
           />
@@ -247,7 +293,7 @@ const handleModalUploadCustomerSuccess = async () => {
         <thead>
           <tr>
             <th>Tên KH</th>
-            <th v-if="settingStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
+            <th>SĐT</th>
             <th class="cursor-pointer whitespace-nowrap" @click="changeSort('debt')">
               <div class="flex items-center gap-1 justify-center">
                 <span>Nợ</span>
@@ -286,8 +332,7 @@ const handleModalUploadCustomerSuccess = async () => {
             v-for="(customer, index) in customerList"
             :key="index"
             @dblclick="
-              userPermission[PermissionId.CUSTOMER_UPDATE] &&
-              modalCustomerUpsert?.openModal(customer)
+              userPermission[PermissionId.CUSTOMER_CRUD] && modalCustomerUpsert?.openModal(customer)
             "
           >
             <td style="border-right: none">
@@ -322,10 +367,7 @@ const handleModalUploadCustomerSuccess = async () => {
                 {{ customer.note }}
               </div>
             </td>
-            <td
-              v-if="settingStore.SCREEN_CUSTOMER_LIST.phone"
-              style="white-space: nowrap; border-left: none; border-right: none"
-            >
+            <td style="white-space: nowrap; border-left: none; border-right: none">
               <a :href="'tel:' + customer.phone">
                 {{ ESString.formatPhone(customer.phone || '') }}
               </a>
@@ -397,7 +439,21 @@ const handleModalUploadCustomerSuccess = async () => {
                 />
               </div>
             </th>
-            <th v-if="settingStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
+            <th class="cursor-pointer" @click="changeSort('customerGroupId')">
+              <div class="flex items-center gap-1 justify-center">
+                <span>Nhóm KH</span>
+                <IconSort v-if="sortColumn !== 'customerGroupId'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'customerGroupId' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'customerGroupId' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
+            </th>
+            <th>SĐT</th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.citizenIdCard">CCCD</th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.gender">Giới tính</th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.birthday">Ngày sinh</th>
@@ -418,7 +474,7 @@ const handleModalUploadCustomerSuccess = async () => {
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.isActive">Trạng thái</th>
             <th
               v-if="
-                userPermission[PermissionId.CUSTOMER_UPDATE] &&
+                userPermission[PermissionId.CUSTOMER_CRUD] &&
                 settingStore.SCREEN_CUSTOMER_LIST.action
               "
             >
@@ -470,7 +526,10 @@ const handleModalUploadCustomerSuccess = async () => {
                 {{ ESString.formatAddress(customer) }}
               </div>
             </td>
-            <td v-if="settingStore.SCREEN_CUSTOMER_LIST.phone" class="text-center">
+            <td class="">
+              <span>{{ customerGroupMap[customer.customerGroupId]?.name || '' }}</span>
+            </td>
+            <td class="text-center">
               <a :href="'tel:' + customer.phone">{{ customer.phone }}</a>
             </td>
             <td v-if="settingStore.SCREEN_CUSTOMER_LIST.citizenIdCard" class="text-center">
@@ -506,7 +565,7 @@ const handleModalUploadCustomerSuccess = async () => {
             </td>
             <td
               v-if="
-                userPermission[PermissionId.CUSTOMER_UPDATE] &&
+                userPermission[PermissionId.CUSTOMER_CRUD] &&
                 settingStore.SCREEN_CUSTOMER_LIST.action
               "
               class="text-center"

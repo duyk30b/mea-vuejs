@@ -11,6 +11,7 @@ import {
   InputSelect,
   InputText,
   VueSwitch,
+  type InputSelectOption,
 } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store.ts'
@@ -18,27 +19,34 @@ import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
 import { MeService } from '@/modules/_me/me.service.ts'
 import { useSettingStore } from '@/modules/_me/setting.store.ts'
 import { Discount, DiscountInteractType, DiscountService } from '@/modules/discount'
-import {
-  ProductType,
-  SplitBatchByCostPrice,
-  SplitBatchByDistributor,
-  SplitBatchByExpiryDate,
-  SplitBatchByWarehouse,
-  type UnitType,
-} from '@/modules/enum.ts'
 import { PermissionId } from '@/modules/permission/permission.enum.ts'
 import { Position, PositionService, PositionType } from '@/modules/position'
-import { Product, ProductService } from '@/modules/product'
+import {
+  Product,
+  ProductService,
+  ProductType,
+  ProductTypeText,
+  SplitBatchByCostPrice,
+  SplitBatchByCostPriceText,
+  SplitBatchByDistributor,
+  SplitBatchByDistributorText,
+  SplitBatchByExpiryDate,
+  SplitBatchByExpiryDateText,
+  SplitBatchByWarehouse,
+  SplitBatchByWarehouseText,
+  type UnitType,
+} from '@/modules/product'
 import { ProductGroupService } from '@/modules/product-group'
 import { Role, RoleService } from '@/modules/role'
 import type { Warehouse } from '@/modules/warehouse'
 import { WarehouseService } from '@/modules/warehouse/warehouse.service.ts'
-import { customFilter, ESTimer } from '@/utils'
+import { customFilter, ESTimer, ESTypescript } from '@/utils'
 import DiscountTableAction from '@/views/master-data/discount/common/DiscountTableAction.vue'
 import PositionTableAction from '@/views/master-data/position/common/PositionTableAction.vue'
 import { computed, onMounted, ref } from 'vue'
 import ModalDataProduct from '../list/ModalDataProduct.vue'
 import ModalProductUpsertSettingScreen from './ModalProductUpsertSettingScreen.vue'
+import type { InputRadioOptionType } from '@/common/vue-form/InputRadio.vue'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
@@ -113,51 +121,37 @@ onMounted(async () => {
   }
 })
 
-const splitBatchByWarehouseOptions = [
-  { value: SplitBatchByWarehouse.Inherit, label: '-' },
-  { value: SplitBatchByWarehouse.Override, label: 'Không phân biệt giữa các lô' },
-  { value: SplitBatchByWarehouse.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
-]
-splitBatchByWarehouseOptions.forEach((i) => {
-  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByWarehouse) {
-    i.label = '(Mặc định) - ' + i.label
-  }
+const productTypeOptions = ESTypescript.keysEnum(ProductType).map((key) => {
+  return {
+    key: ProductType[key],
+    label: ProductTypeText[ProductType[key]],
+  } satisfies InputRadioOptionType
+})
+const splitBatchByWarehouseOptions = ESTypescript.keysEnum(SplitBatchByWarehouse).map((key) => {
+  return {
+    value: SplitBatchByWarehouse[key],
+    label: SplitBatchByWarehouseText[SplitBatchByWarehouse[key]],
+  } satisfies InputSelectOption<any>
 })
 
-const splitBatchByDistributorOptions = [
-  { value: SplitBatchByDistributor.Inherit, label: '-' },
-  { value: SplitBatchByDistributor.Override, label: 'Không phân biệt giữa các lô' },
-  { value: SplitBatchByDistributor.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
-]
-splitBatchByDistributorOptions.forEach((i) => {
-  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByDistributor) {
-    i.label = '(Mặc định) - ' + i.label
-  }
+const splitBatchByDistributorOptions = ESTypescript.keysEnum(SplitBatchByDistributor).map((key) => {
+  return {
+    value: SplitBatchByDistributor[key],
+    label: SplitBatchByDistributorText[SplitBatchByDistributor[key]],
+  } satisfies InputSelectOption<any>
+})
+const splitBatchByExpiryDateOptions = ESTypescript.keysEnum(SplitBatchByExpiryDate).map((key) => {
+  return {
+    value: SplitBatchByExpiryDate[key],
+    label: SplitBatchByExpiryDateText[SplitBatchByExpiryDate[key]],
+  } satisfies InputSelectOption<any>
 })
 
-const splitBatchByExpiryDateOptions = [
-  { value: SplitBatchByExpiryDate.Inherit, label: '-' },
-  { value: SplitBatchByExpiryDate.Override, label: 'Không phân biệt giữa các lô' },
-  { value: SplitBatchByExpiryDate.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
-]
-splitBatchByExpiryDateOptions.forEach((i) => {
-  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByExpiryDate) {
-    i.label = '(Mặc định) - ' + i.label
-  }
-})
-
-const splitBatchByCostPriceOptions = [
-  { value: SplitBatchByCostPrice.Inherit, label: '-' },
-  {
-    value: SplitBatchByCostPrice.OverrideAndMAC,
-    label: 'Ghi đè giá nhập cũ, giá vốn sử dụng công thức tính bình quân gia quyền',
-  },
-  { value: SplitBatchByCostPrice.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
-]
-splitBatchByCostPriceOptions.forEach((i) => {
-  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByCostPrice) {
-    i.label = '(Mặc định) - ' + i.label
-  }
+const splitBatchByCostPriceOptions = ESTypescript.keysEnum(SplitBatchByCostPrice).map((key) => {
+  return {
+    value: SplitBatchByCostPrice[key],
+    label: SplitBatchByCostPriceText[SplitBatchByCostPrice[key]],
+  } satisfies InputSelectOption<any>
 })
 
 const openModal = async (productId?: number, options?: { hasInitQuantity?: boolean }) => {
@@ -168,6 +162,15 @@ const openModal = async (productId?: number, options?: { hasInitQuantity?: boole
     productOrigin = Product.blank()
     product.value = Product.blank()
     unit.value = [{ name: '', rate: 1, default: true }]
+    product.value.productType = MeService.settingMap.value.PRODUCT_SETTING.productType
+    product.value.splitBatchByWarehouse =
+      MeService.settingMap.value.PRODUCT_SETTING.splitBatchByWarehouse
+    product.value.splitBatchByDistributor =
+      MeService.settingMap.value.PRODUCT_SETTING.splitBatchByDistributor
+    product.value.splitBatchByExpiryDate =
+      MeService.settingMap.value.PRODUCT_SETTING.splitBatchByExpiryDate
+    product.value.splitBatchByCostPrice =
+      MeService.settingMap.value.PRODUCT_SETTING.splitBatchByCostPrice
   } else {
     try {
       productOrigin = await ProductService.detail(
@@ -704,13 +707,7 @@ defineExpose({ openModal })
                 <div style="flex-basis: 90%; flex-grow: 1">
                   <div class="italic font-bold">* Phân loại sản phẩm</div>
                   <div class="mt-2">
-                    <InputRadio
-                      v-model:value="product.productType"
-                      :options="[
-                        { key: ProductType.Basic, label: 'Sản phẩm thường' },
-                        { key: ProductType.SplitBatch, label: 'Sản phẩm có lô' },
-                      ]"
-                    />
+                    <InputRadio v-model:value="product.productType" :options="productTypeOptions" />
                   </div>
                 </div>
 

@@ -30,6 +30,7 @@ import TicketChangeTicketUserPosition from '@/views/room/room-user/TicketChangeT
 import { nextTick, ref } from 'vue'
 import TicketLink from '../../room-ticket-base/TicketLink.vue'
 import ModalReceptionCreateSetting from './ModalReceptionCreateSetting.vue'
+import InputSelectCustomerGroup from '@/views/component/InputSelectCustomerGroup.vue'
 
 const modalReceptionCreateSetting = ref<InstanceType<typeof ModalReceptionCreateSetting>>()
 const tableTicketProcedureListRequest = ref<InstanceType<typeof TableTicketProcedureListRequest>>()
@@ -132,8 +133,6 @@ const selectCustomer = async (customerSelect?: Customer) => {
   currentCustomer.value = Customer.from(customerSelect)
 
   try {
-    ticketReception.value.customerSourceId = customerSelect.customerSourceId
-
     const [appointmentList, ticketResponseList] = await Promise.all([
       AppointmentApi.list({
         filter: {
@@ -161,7 +160,7 @@ const selectCustomer = async (customerSelect?: Customer) => {
     })
     if (ticketPendingOptions.value.length) {
       ticketPendingId.value = ticketPendingOptions.value[0].id
-      ticketReception.value.isFirstReception = 0
+      ticketReception.value.isMainReception = 0
     }
 
     appointmentOptions.value = appointmentList.sort((a, b) => {
@@ -181,10 +180,8 @@ const handleChangeCheckboxAppointment = (e: Event, appointment: Appointment) => 
   if ((e.target as HTMLInputElement).checked) {
     fromAppointmentId.value = appointment.id
     ticketAttributeMap.value.reason = appointment.reason || ''
-    ticketReception.value.customerSourceId = appointment.customerSourceId
   } else {
     fromAppointmentId.value = ''
-    ticketReception.value.customerSourceId = 0
   }
 }
 
@@ -192,12 +189,10 @@ const handleChangeCheckboxTicketPending = (e: Event, ticket: Ticket) => {
   if ((e.target as HTMLInputElement).checked) {
     ticketPendingId.value = ticket.id
     ticketAttributeMap.value.reason = ticket.note || ''
-    ticketReception.value.customerSourceId = ticket.customerSourceId
-    ticketReception.value.isFirstReception = 0
+    ticketReception.value.isMainReception = 0
   } else {
     ticketPendingId.value = ''
-    ticketReception.value.customerSourceId = 0
-    ticketReception.value.isFirstReception = 1
+    ticketReception.value.isMainReception = 1
   }
 }
 
@@ -412,6 +407,26 @@ defineExpose({ openModal })
               </div>
             </div>
           </template>
+
+          <div
+            v-if="settingStore.TICKET_CLINIC_CREATE.customerGroup"
+            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+          >
+            <InputSelectCustomerGroup
+              :disabled="!!currentCustomer!.id"
+              v-model:customerGroupId="currentCustomer!.customerGroupId"
+            />
+          </div>
+
+          <div
+            v-if="settingStore.TICKET_CLINIC_CREATE.customerSource"
+            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+          >
+            <InputSelectCustomerSource
+              :disabled="!!currentCustomer!.id"
+              v-model:customerSourceId="currentCustomer!.customerSourceId"
+            />
+          </div>
         </template>
 
         <div
@@ -460,16 +475,6 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div
-          v-if="settingStore.TICKET_CLINIC_CREATE.customerSource"
-          :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
-        >
-          <InputSelectCustomerSource
-            :disabled="!!ticketPendingId || !ticketReception.isFirstReception"
-            v-model:customerSourceId="ticketReception.customerSourceId"
-          />
-        </div>
-
         <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
           <div>Thời gian tiếp đón</div>
           <div>
@@ -487,7 +492,7 @@ defineExpose({ openModal })
             <InputSelectRoom
               v-model:roomId="ticketReception.roomId"
               :roomType="RoomType.TicketClinic"
-              :disabled="!!ticketPendingId || !ticketReception.isFirstReception"
+              :disabled="!!ticketPendingId || !ticketReception.isMainReception"
               removeLabelWrapper
               autoSelectFirstValue
             />

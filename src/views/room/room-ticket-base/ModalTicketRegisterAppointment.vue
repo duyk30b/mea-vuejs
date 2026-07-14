@@ -31,7 +31,6 @@ const closeModal = () => {
 
 const handleRegisterVisit = async () => {
   saveLoading.value = true
-  appointment.value.customerSourceId = 0
   try {
     if (!appointment.value.id) {
       ticketRoomRef.value.toAppointment = await AppointmentApi.createOne({

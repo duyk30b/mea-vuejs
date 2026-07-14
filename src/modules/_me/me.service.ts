@@ -1,24 +1,15 @@
 import { ref } from 'vue'
 import { LocalStorageService } from '../../core/local-storage.service'
 import { arrayToKeyValue, objectUpdatePropertyByObject } from '../../utils'
-import {
-  PickupStrategy,
-  SplitBatchByCostPrice,
-  SplitBatchByDistributor,
-  SplitBatchByExpiryDate,
-  SplitBatchByWarehouse,
-} from '../enum'
 import { Organization } from '../organization'
 import type { Permission } from '../permission/permission.model'
 import { SettingApi } from '../setting/setting.api'
 import { User } from '../user'
+import { UserRoomService } from '../user-room'
 import { MeApi } from './me.api'
 import { SETTING_DEFAULT } from './setting.default'
 import { useSettingStore } from './setting.store'
 import { SettingKey } from './store.variable'
-import { UserRoomService } from '../user-room'
-import type { Product } from '../product'
-import type { ROOM_SETTING_DEFAULT } from '../room'
 
 export class MeService {
   static user = ref(LocalStorageService.getRefreshToken() ? User.blank() : null)
@@ -139,28 +130,7 @@ export class MeService {
     MeService.reCalculatorSetting(MeService.settingMap.value, settingMap)
   }
 
-  static getProductSettingCommon() {
-    const splitRule = { ...MeService.settingMap.value.PRODUCT_SETTING }
 
-    const productSettingRoot = MeService.settingMapRoot.value.PRODUCT_SETTING
-
-    if (splitRule.splitBatchByWarehouse === SplitBatchByWarehouse.Inherit) {
-      splitRule.splitBatchByWarehouse = productSettingRoot.splitBatchByWarehouse
-    }
-
-    if (splitRule.splitBatchByDistributor === SplitBatchByDistributor.Inherit) {
-      splitRule.splitBatchByDistributor = productSettingRoot.splitBatchByDistributor
-    }
-
-    if (splitRule.splitBatchByExpiryDate === SplitBatchByExpiryDate.Inherit) {
-      splitRule.splitBatchByExpiryDate = productSettingRoot.splitBatchByExpiryDate
-    }
-
-    if (splitRule.splitBatchByCostPrice === SplitBatchByCostPrice.Inherit) {
-      splitRule.splitBatchByCostPrice = productSettingRoot.splitBatchByCostPrice
-    }
-    return splitRule
-  }
 
   static async reloadRoomId(options?: { refetch?: boolean }) {
     const userRoomAll = await UserRoomService.getAll({ refetch: options?.refetch })

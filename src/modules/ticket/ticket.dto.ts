@@ -44,7 +44,6 @@ export class TicketGetQuery {
     ticketUserList?: boolean
 
     toAppointment?: boolean
-    customerSource?: boolean
 
     imageList?: boolean
   }

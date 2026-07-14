@@ -1,23 +1,17 @@
 <script setup lang="ts">
 import { Address, AddressService } from '@/modules/address'
+import InputSelectCustomerGroup from '@/views/component/InputSelectCustomerGroup.vue'
+import InputSelectCustomerSource from '@/views/component/InputSelectCustomerSource.vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconSetting } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import {
-  InputDate,
-  InputOptions,
-  InputRadio,
-  InputText,
-  VueSelect,
-  VueSwitch,
-} from '../../../common/vue-form'
+import { InputDate, InputOptions, InputRadio, InputText, VueSwitch } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { CustomerService } from '../../../modules/customer'
-import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
 import { Customer } from '../../../modules/customer/customer.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import ModalCustomerUpsertSettingScreen from './ModalCustomerUpsertSettingScreen.vue'
@@ -37,17 +31,12 @@ const showModal = ref(false)
 const customer = ref<Customer>(Customer.blank())
 const saveLoading = ref(false)
 
-const customerSourceAll = ref<CustomerSource[]>([])
-
 const currentAddress = ref<Address>(Address.blank())
 const addressOptions = ref<{ value: number; text: string; data: Address }[]>([])
 
 const openModal = async (instance?: Customer) => {
   showModal.value = true
   customer.value = instance ? Customer.from(instance) : Customer.blank()
-  if (settingStore.SCREEN_CUSTOMER_UPSERT.customerSource) {
-    customerSourceAll.value = await CustomerSourceService.list({})
-  }
 
   const findAddress = await AddressService.findBy({
     province: customer.value?.addressProvince || '',
@@ -149,7 +138,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal">
+  <VueModal v-model:show="showModal" style="margin-top: 300px">
     <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
@@ -280,6 +269,12 @@ defineExpose({ openModal })
           </div>
         </template>
 
+        <div style="flex-basis: 45%; flex-grow: 1; min-width: 300px">
+          <InputSelectCustomerSource v-model:customerSourceId="customer.customerSourceId" />
+        </div>
+        <div style="flex-basis: 45%; flex-grow: 1; min-width: 300px">
+          <InputSelectCustomerGroup v-model:customerGroupId="customer.customerGroupId" />
+        </div>
         <div
           v-if="settingStore.SCREEN_CUSTOMER_UPSERT.relative"
           style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
@@ -292,20 +287,6 @@ defineExpose({ openModal })
             />
           </div>
         </div>
-
-        <div
-          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.customerSource"
-          style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
-        >
-          <div>Nguồn khách hàng</div>
-          <div>
-            <VueSelect
-              v-model:value="customer.customerSourceId"
-              :options="customerSourceAll.map((i) => ({ text: i.name, value: i.id }))"
-            ></VueSelect>
-          </div>
-        </div>
-
         <div
           v-if="settingStore.SCREEN_CUSTOMER_UPSERT.note"
           style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
@@ -330,7 +311,7 @@ defineExpose({ openModal })
       <div class="p-4 mt-2">
         <div class="flex gap-4">
           <VueButton
-            v-if="userPermission[PermissionId.CUSTOMER_DELETE] && customer.id"
+            v-if="userPermission[PermissionId.CUSTOMER_CRUD] && customer.id"
             color="red"
             @click="clickDelete"
           >

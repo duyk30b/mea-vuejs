@@ -7,7 +7,6 @@ export class AppointmentGetQuery {
   limit?: number
   relation?: {
     customer?: boolean
-    customerSource?: boolean
     toTicket?: boolean
   }
 
