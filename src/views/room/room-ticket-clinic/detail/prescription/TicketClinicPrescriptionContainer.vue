@@ -509,9 +509,12 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
               </a>
               <a
                 v-else-if="
-                  [PaymentMoneyStatus.PendingPayment, PaymentMoneyStatus.TicketPaid].includes(
-                    tpItem.paymentMoneyStatus,
-                  ) && userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
+                  [
+                    PaymentMoneyStatus.NoEffect,
+                    PaymentMoneyStatus.PendingPayment,
+                    PaymentMoneyStatus.TicketPaid,
+                  ].includes(tpItem.paymentMoneyStatus) &&
+                  userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
                 "
                 style="color: var(--text-orange)"
                 @click="modalTicketPrescriptionUpdate?.openModal(tpItem)"
@@ -525,9 +528,12 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
               </a>
               <a
                 v-else-if="
-                  [PaymentMoneyStatus.PendingPayment, PaymentMoneyStatus.TicketPaid].includes(
-                    tpItem.paymentMoneyStatus,
-                  ) && userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
+                  [
+                    PaymentMoneyStatus.NoEffect,
+                    PaymentMoneyStatus.PendingPayment,
+                    PaymentMoneyStatus.TicketPaid,
+                  ].includes(tpItem.paymentMoneyStatus) &&
+                  userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
                 "
                 style="color: var(--text-red)"
                 @click="clickDestroyTicketProduct(tpItem)"

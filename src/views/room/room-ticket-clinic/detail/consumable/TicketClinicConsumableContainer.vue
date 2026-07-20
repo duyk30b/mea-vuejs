@@ -289,9 +289,12 @@ const startPrint = async () => {
               </a>
               <a
                 v-else-if="
-                  [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                    tpItem.paymentMoneyStatus,
-                  ) && userPermission[PermissionId.TICKET_CHANGE_PRODUCT_CONSUMABLE]
+                  [
+                    PaymentMoneyStatus.NoEffect,
+                    PaymentMoneyStatus.TicketPaid,
+                    PaymentMoneyStatus.PendingPayment,
+                  ].includes(tpItem.paymentMoneyStatus) &&
+                  userPermission[PermissionId.TICKET_CHANGE_PRODUCT_CONSUMABLE]
                 "
                 class="text-orange-500"
                 @click="modalTicketClinicConsumableUpdate?.openModal(tpItem)"
@@ -305,9 +308,12 @@ const startPrint = async () => {
               </a>
               <a
                 v-else-if="
-                  [PaymentMoneyStatus.PendingPayment, PaymentMoneyStatus.TicketPaid].includes(
-                    tpItem.paymentMoneyStatus,
-                  ) && userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
+                  [
+                    PaymentMoneyStatus.NoEffect,
+                    PaymentMoneyStatus.PendingPayment,
+                    PaymentMoneyStatus.TicketPaid,
+                  ].includes(tpItem.paymentMoneyStatus) &&
+                  userPermission[PermissionId.TICKET_CHANGE_PRODUCT_CONSUMABLE]
                 "
                 style="color: var(--text-red)"
                 @click="clickDestroyTicketProduct(tpItem)"

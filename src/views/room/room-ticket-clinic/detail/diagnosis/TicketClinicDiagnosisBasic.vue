@@ -84,7 +84,9 @@ watch(
   (newValue, oldValue) => {
     ticketAttributeKeyList.forEach((k) => {
       const value = newValue[k]
-      if (ticketAttributeOriginMap[k] === value) return
+      if (ticketAttributeOriginMap[k] === value) {
+        return
+      }
       ticketAttributeOriginMap[k] = value
       ticketAttributeMap.value[k] = value
     })
@@ -118,7 +120,9 @@ watch(
 )
 
 const hasChangeCustomer = computed(() => {
-  return ticketRoomRef.value.customer?.healthHistory != ticketAttributeMap.value.healthHistory
+  const healthHistoryRoot = ticketRoomRef.value.customer?.healthHistory || ''
+  const healthHistoryCurrent = ticketAttributeMap.value.healthHistory || ''
+  return healthHistoryRoot != healthHistoryCurrent
 })
 
 const hasChangeData = computed(() => {
