@@ -16,10 +16,9 @@ import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { PaymentMoneyStatus } from '@/modules/enum'
+import { TicketItemPaymentType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { ticketRoomRef } from '@/modules/room'
-import { TicketChangeProcedureApi, TicketStatus } from '@/modules/ticket'
+import { TicketChangeProcedureApi } from '@/modules/ticket'
 import {
   TicketProcedure,
   TicketProcedureService,
@@ -34,7 +33,7 @@ import {
   TicketRegimenStatus,
 } from '@/modules/ticket-regimen'
 import { ESTimer } from '@/utils'
-import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import TicketItemPaymentTypeTooltip from '@/views/room/room-ticket-base/TicketItemPaymentTypeTooltip.vue'
 import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import ModalProcessTicketProcedure from '@/views/room/room-ticket-clinic/detail/procedure/ModalProcessTicketProcedure.vue'
@@ -50,6 +49,8 @@ import TicketRegimenStatusTooltip from './TicketRegimenStatusTooltip.vue'
 import TicketProcedureStatusTooltip from './TicketProcedureStatusTooltip.vue'
 import { IconEditSquare } from '@/common/icon-google'
 import { VueTooltip } from '@/common/popover'
+import { ticketRef } from '@/store/room.store'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
@@ -70,7 +71,7 @@ const ticketProcedureNormalList = ref<TicketProcedure[]>([])
 const ticketRegimenList = ref<TicketRegimen[]>([])
 
 watch(
-  () => ticketRoomRef.value.ticketProcedureNormalList!,
+  () => ticketRef.value.ticketProcedureNormalList!,
   (newValue: TicketProcedure[]) => {
     ticketProcedureNormalList.value = TicketProcedure.fromList(newValue || [])
   },
@@ -78,7 +79,7 @@ watch(
 )
 
 watch(
-  () => ticketRoomRef.value.ticketRegimenList!,
+  () => ticketRef.value.ticketRegimenList!,
   (newValue: TicketRegimen[]) => {
     ticketRegimenList.value = TicketRegimen.fromList(newValue || [])
   },
@@ -88,12 +89,12 @@ watch(
 onMounted(async () => {
   try {
     await Promise.all([
-      TicketProductService.refreshRelation(ticketRoomRef.value.ticketProductList || []),
-      TicketProcedureService.refreshRelation(ticketRoomRef.value.ticketProcedureList || []),
-      TicketRegimenService.refreshRelation(ticketRoomRef.value.ticketRegimenList || []),
-      TicketRegimenService.refreshRelationItem(ticketRoomRef.value.ticketRegimenItemList || []),
+      TicketProductService.refreshRelation(ticketRef.value.ticketProductList || []),
+      TicketProcedureService.refreshRelation(ticketRef.value.ticketProcedureList || []),
+      TicketRegimenService.refreshRelation(ticketRef.value.ticketRegimenList || []),
+      TicketRegimenService.refreshRelationItem(ticketRef.value.ticketRegimenItemList || []),
     ])
-    ticketRoomRef.value.refreshTicketProcedureAndRegimen()
+    ticketRef.value.refreshTicketProcedureAndRegimen()
   } catch (error: any) {
     console.log('🚀 ~ TicketClinicProcedureContainer.vue:84 ~ error:', error)
     AlertStore.add({ type: 'error', message: error.message })
@@ -117,7 +118,7 @@ const clickDestroyTicketProcedure = async (ticketProcedureId: string) => {
     onOk: async () => {
       try {
         await TicketChangeProcedureApi.destroyTicketProcedure({
-          ticketId: ticketRoomRef.value.id,
+          ticketId: ticketRef.value.id,
           ticketProcedureId,
         })
         ticketProcedureNormalList.value = ticketProcedureNormalList.value.filter((i) => {
@@ -136,8 +137,6 @@ const clickDestroyTicketRegimen = async (ticketRegimenId: string) => {
   if (
     trCurrent.paid != 0 ||
     trCurrent.paidItem != 0 ||
-    trCurrent.debt != 0 ||
-    trCurrent.debtItem != 0 ||
     trCurrent.moneyAmountUsed != 0
   ) {
     return AlertStore.addError('Liệu trình có tiền không thể xóa')
@@ -158,7 +157,7 @@ const clickDestroyTicketRegimen = async (ticketRegimenId: string) => {
     onOk: async () => {
       try {
         await TicketChangeProcedureApi.destroyTicketRegimen({
-          ticketId: ticketRoomRef.value.id,
+          ticketId: ticketRef.value.id,
           ticketRegimenId,
         })
         ticketRegimenList.value = ticketRegimenList.value.filter((i) => i.id !== ticketRegimenId)
@@ -170,9 +169,9 @@ const clickDestroyTicketRegimen = async (ticketRegimenId: string) => {
 }
 
 const totalMoney = computed(() => {
-  return (ticketRoomRef.value.ticketProcedureList || []).reduce((acc, item) => {
+  return (ticketRef.value.ticketProcedureList || []).reduce((acc, item) => {
     const money =
-      item.paymentMoneyStatus !== PaymentMoneyStatus.NoEffect ? item.actualPrice * item.quantity : 0
+      item.ticketItemPaymentType !== TicketItemPaymentType.NoEffect ? item.actualPrice * item.quantity : 0
     return acc + money
   }, 0)
   // ticketProcedureNormalList.value.reduce((acc, i) => acc + i.actualPrice * i.quantity, 0) +
@@ -228,7 +227,7 @@ const totalMoney = computed(() => {
                 </VueTooltip>
               </td>
               <td>
-                <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />
+                <TicketItemPaymentTypeTooltip :ticketItemPaymentType="tp.ticketItemPaymentType" />
               </td>
 
               <td>
@@ -295,9 +294,9 @@ const totalMoney = computed(() => {
                   </div>
                   <a
                     v-if="
-                      ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                      [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                        tp.paymentMoneyStatus,
+                      ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status) &&
+                      [TicketItemPaymentType.TicketPaid, TicketItemPaymentType.PendingPayment].includes(
+                        tp.ticketItemPaymentType,
                       ) &&
                       userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
                     "
@@ -368,9 +367,9 @@ const totalMoney = computed(() => {
               <td class="text-center">
                 <div
                   v-if="
-                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                    [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                      tp.paymentMoneyStatus,
+                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status) &&
+                    [TicketItemPaymentType.TicketPaid, TicketItemPaymentType.PendingPayment].includes(
+                      tp.ticketItemPaymentType,
                     ) &&
                     [
                       TicketProcedureStatus.NoEffect,
@@ -432,12 +431,10 @@ const totalMoney = computed(() => {
                       <a
                         v-if="
                           ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                            ticketRoomRef.status,
+                            ticketRef.status,
                           ) &&
                           !tr.paid &&
                           !tr.paidItem &&
-                          !tr.debt &&
-                          !tr.debtItem &&
                           userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
                         "
                         @click="modalTicketRegimenUpdateMoney?.openModal({ ticketRegimen: tr })"
@@ -447,7 +444,7 @@ const totalMoney = computed(() => {
                       </a>
                     </div>
                   </div>
-                  <div v-if="ticketRoomRef.isPaymentEachItem" class="text-right">
+                  <div v-if="ticketRef.isPaymentEachItem" class="text-right">
                     <div>Đã thanh toán</div>
                     <div class="text-lg" style="font-weight: bold; color: var(--text-green)">
                       {{ formatMoney(tr.paidItem) }}
@@ -516,7 +513,7 @@ const totalMoney = computed(() => {
               <td class="text-center">
                 <a
                   v-if="
-                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status) &&
                     [TicketRegimenStatus.Pending].includes(tr.status) &&
                     userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
                   "
@@ -542,7 +539,7 @@ const totalMoney = computed(() => {
                   </VueTooltip>
                 </td>
                 <td>
-                  <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />
+                  <TicketItemPaymentTypeTooltip :ticketItemPaymentType="tp.ticketItemPaymentType" />
                 </td>
                 <!-- <td class="text-center">
                   <TicketProcedureStatusTooltip :status="tp.status" />
@@ -617,7 +614,7 @@ const totalMoney = computed(() => {
                   </div>
                 </td>
                 <td class="text-right">
-                  <span v-if="tp.paymentMoneyStatus !== PaymentMoneyStatus.NoEffect">
+                  <span v-if="tp.ticketItemPaymentType !== TicketItemPaymentType.NoEffect">
                     {{ formatMoney(tp.actualPrice) }}
                   </span>
                 </td>
@@ -676,7 +673,7 @@ const totalMoney = computed(() => {
                 <td class="text-center">
                   <div
                     v-if="
-                      ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                      ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status) &&
                       [
                         TicketProcedureStatus.NoEffect,
                         TicketProcedureStatus.NoAction,

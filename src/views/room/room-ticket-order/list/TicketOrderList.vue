@@ -11,8 +11,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer, CustomerService } from '@/modules/customer'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Room, RoomType, RoomService, roomTicketMapRoomId } from '@/modules/room'
-import { TicketStatus } from '@/modules/ticket'
+import { Room, RoomType, RoomService } from '@/modules/room'
 import { TicketQueryApi } from '@/modules/ticket/api/ticket-query.api'
 import { ESString, ESTimer } from '@/utils'
 import Breadcrumb from '@/views/component/Breadcrumb.vue'
@@ -24,6 +23,8 @@ import { ETicketOrderUpsertMode } from '../upsert/ticket-order-upsert.ref'
 import ModalTicketOrderListSetting from './ModalTicketOrderListSetting.vue'
 import TicketLink from '../../room-ticket-base/TicketLink.vue'
 import { VueTooltip } from '@/common/popover'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
+import { roomTicketData } from '@/store/room.store'
 
 const modalTicketOrderListSetting = ref<InstanceType<typeof ModalTicketOrderListSetting>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -86,7 +87,7 @@ const startFetchData = async () => {
         : { receptionAt: 'DESC' },
     })
 
-    roomTicketMapRoomId.value[currentRoom.value.id].paginationData = paginationResult.ticketList
+    roomTicketData.value[currentRoom.value.id].paginationData = paginationResult.ticketList
     total.value = paginationResult.total
   } catch (error) {
     console.log('🚀 ~ file: InvoiceList.vue:50 ~ error:', error)
@@ -101,14 +102,11 @@ watch(
   async (newValue) => {
     const roomId = Number(newValue) || 0
     await RoomService.getMap()
-    currentRoom.value = roomMap.value[roomId]
-    if (!currentRoom.value) {
-      currentRoom.value = Room.blank()
-      currentRoom.value.isCommon = 1
-      currentRoom.value.roomType = RoomType.TicketOrder
-    }
+    currentRoom.value = Room.from(roomMap.value[roomId] || Room.blank())
     // startFetchData()
-    roomTicketMapRoomId.value[roomId] = {
+    roomTicketData.value[roomId] = {
+      roomId,
+      room: Room.from(roomMap.value[roomId] || Room.blank()),
       paginationData: [],
       paginationTime: new Date().toISOString(),
     }
@@ -117,7 +115,7 @@ watch(
 )
 
 watch(
-  () => roomTicketMapRoomId.value,
+  () => roomTicketData.value,
   async (newValue) => {
     const roomId = currentRoom.value.id
     if (newValue[roomId].paginationTime !== currentRefreshTime) {
@@ -291,7 +289,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             :options="[
               { text: 'Tất cả', value: null },
               { text: 'Nháp', value: TicketStatus.Draft },
-              { text: 'Đặt hàng', value: TicketStatus.Deposited },
+              { text: 'Đặt hàng', value: TicketStatus.Schedule },
               { text: 'Đang xử lý', value: TicketStatus.Executing },
               { text: 'Nợ', value: TicketStatus.Debt },
               { text: 'Hoàn thành', value: TicketStatus.Completed },
@@ -331,11 +329,11 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           </tr>
         </tbody>
         <tbody v-else>
-          <tr v-if="roomTicketMapRoomId[currentRoom.id]?.paginationData?.length === 0">
+          <tr v-if="roomTicketData[currentRoom.id]?.paginationData?.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr
-            v-for="ticket in roomTicketMapRoomId[currentRoom.id]?.paginationData || []"
+            v-for="ticket in roomTicketData[currentRoom.id]?.paginationData || []"
             :key="ticket.id"
             @dblclick="
               router.push({
@@ -422,11 +420,11 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           </tr>
         </tbody>
         <tbody v-if="!dataLoading">
-          <tr v-if="roomTicketMapRoomId[currentRoom.id]?.paginationData?.length === 0">
+          <tr v-if="roomTicketData[currentRoom.id]?.paginationData?.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr
-            v-for="ticket in roomTicketMapRoomId[currentRoom.id]?.paginationData || []"
+            v-for="ticket in roomTicketData[currentRoom.id]?.paginationData || []"
             :key="ticket.id"
           >
             <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">

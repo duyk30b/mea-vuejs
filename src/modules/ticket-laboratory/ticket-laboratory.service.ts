@@ -1,6 +1,6 @@
 import { LaboratoryService } from '../laboratory'
 import { LaboratoryGroupService } from '../laboratory-group'
-import { RoomService } from '../room'
+import { RoomService } from '../room/room.service'
 import type { TicketLaboratoryGroup } from './ticket-laboratory-group.model'
 import type { TicketLaboratoryResult } from './ticket-laboratory-result.model'
 import type { TicketLaboratory } from './ticket-laboratory.model'

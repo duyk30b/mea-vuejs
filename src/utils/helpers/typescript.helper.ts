@@ -4,13 +4,13 @@ export class ESTypescript {
   }
 
   static valuesEnum = <T extends Record<string, string | number>>(e: T): T[keyof T][] => {
-    return keysEnum(e).map((key) => e[key])
+    return ESTypescript.keysEnum(e).map((key) => e[key])
   }
 
   static objectEnum = <T extends Record<string, string | number>>(
     e: T,
   ): { [K in keyof T]: T[K] } => {
-    return keysEnum(e).reduce(
+    return ESTypescript.keysEnum(e).reduce(
       (acc, key) => {
         acc[key] = e[key]
         return acc
@@ -30,12 +30,12 @@ export const PickClass = <T, K extends keyof T>(
   keys: K[],
 ): new () => Pick<T, (typeof keys)[number]> => Class
 
-export const keysEnum = <T extends Record<string, string | number>>(e: T): (keyof T)[] => {
-  return Object.keys(e).filter((key) => isNaN(Number(key))) as (keyof T)[]
-}
-
 export type Impossible<K extends keyof any> = {
   [P in K]: never
+}
+
+export type ClassProperties<T> = {
+  [K in keyof T as T[K] extends (...args: any[]) => any ? never : K]: T[K]
 }
 
 export type NoExtra<T, U extends T = T> = U & Impossible<Exclude<keyof U, keyof T>>

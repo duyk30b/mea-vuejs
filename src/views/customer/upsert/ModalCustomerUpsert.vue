@@ -1,19 +1,19 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import { IconClose, IconSetting } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputDate, InputOptions, InputRadio, InputText, VueSwitch } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
 import { Address, AddressService } from '@/modules/address'
+import { CustomerService } from '@/modules/customer'
+import { Customer } from '@/modules/customer/customer.model'
+import { PermissionId } from '@/modules/permission/permission.enum'
 import InputSelectCustomerGroup from '@/views/component/InputSelectCustomerGroup.vue'
 import InputSelectCustomerSource from '@/views/component/InputSelectCustomerSource.vue'
 import { ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconSetting } from '../../../common/icon-antd'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputDate, InputOptions, InputRadio, InputText, VueSwitch } from '../../../common/vue-form'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { MeService } from '../../../modules/_me/me.service'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { CustomerService } from '../../../modules/customer'
-import { Customer } from '../../../modules/customer/customer.model'
-import { PermissionId } from '../../../modules/permission/permission.enum'
 import ModalCustomerUpsertSettingScreen from './ModalCustomerUpsertSettingScreen.vue'
 
 const modalCustomerUpsertSettingScreen =
@@ -138,7 +138,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="margin-top: 300px">
+  <VueModal v-model:show="showModal" style="margin-top: 50px">
     <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">

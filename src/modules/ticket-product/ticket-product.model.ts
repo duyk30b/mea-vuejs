@@ -1,8 +1,8 @@
-import { ESArray } from '@/utils'
+import { ESArray, type ClassProperties } from '@/utils'
 import { BaseModel } from '../_base/base.model'
 import { Batch } from '../batch'
 import type { Customer } from '../customer'
-import { DeliveryStatus, DiscountType, PaymentMoneyStatus, PickupStrategy } from '../enum'
+import { DeliveryStatus, DiscountType, TicketItemPaymentType, PickupStrategy } from '../enum'
 import { Product } from '../product'
 import { TicketBatch } from '../ticket-batch'
 import type { Ticket } from '../ticket/ticket.model'
@@ -15,30 +15,32 @@ export enum TicketProductType {
 export class TicketProduct extends BaseModel {
   id: string
   priority: number
-  ticketId: string
+
   customerId: number
+  ticketId: string
+  warehouseIds: string
   productId: number
   batchId: number
-  warehouseIds: string
   ticketProcedureId: string
 
   type: TicketProductType
   pickupStrategy: PickupStrategy
-  deliveryStatus: DeliveryStatus
-  paymentMoneyStatus: PaymentMoneyStatus
-  paid: number
-  debt: number
+  ticketItemPaymentType: TicketItemPaymentType
 
-  unitQuantity: number
-  unitQuantityPrescription: number
-  printPrescription: number
   unitRate: number
+  printPrescription: number
+
+  quantity: number
+  quantityPrescription: number
+  quantityCompleted: number
   costAmount: number // không thể có costPrice, vì có thể bao gồm nhiều lô với vốn khác nhau
   unitExpectedPrice: number
   unitDiscountMoney: number
-  discountPercent: number
   discountType: DiscountType
+  discountPercent: number
   unitActualPrice: number
+
+  paid: number
 
   createdAt: number
   hintUsage: string | null
@@ -54,12 +56,16 @@ export class TicketProduct extends BaseModel {
     return this.product?.getUnitNameByRate(this.unitRate) || ''
   }
 
-  get quantity() {
-    return this.unitQuantity * this.unitRate
+  get unitQuantity() {
+    return this.quantity / this.unitRate
   }
 
-  get quantityPrescription() {
-    return this.unitQuantityPrescription * this.unitRate
+  set unitQuantity(value: number) {
+    this.quantity = value * this.unitRate
+  }
+
+  get unitQuantityPrescription() {
+    return this.quantityPrescription / this.unitRate
   }
 
   get expectedPrice() {
@@ -74,15 +80,20 @@ export class TicketProduct extends BaseModel {
     return Math.round(this.unitDiscountMoney / this.unitRate)
   }
 
+  get deliveryStatusFix() {
+    if (this.quantity === 0 && this.quantityCompleted === 0) return DeliveryStatus.Empty
+    if (this.quantityCompleted === 0 && this.quantityCompleted < this.quantity)
+      return DeliveryStatus.Pending
+    if (this.quantity > 0 && this.quantityCompleted < this.quantity) return DeliveryStatus.Partial
+    if (this.quantity === this.quantityCompleted) return DeliveryStatus.Delivered
+    else return DeliveryStatus.Cancelled
+  }
+
   public changeUnitRate(unitRate: number) {
     const oldUnitRate = this.unitRate
     this.unitExpectedPrice = Math.round((this.unitExpectedPrice * unitRate) / oldUnitRate)
     this.unitDiscountMoney = Math.round((this.unitDiscountMoney * unitRate) / oldUnitRate)
     this.unitActualPrice = Math.round((this.unitActualPrice * unitRate) / oldUnitRate)
-    this.unitQuantity = Math.round((this.unitQuantity * oldUnitRate) / unitRate)
-    this.unitQuantityPrescription = Math.round(
-      (this.unitQuantityPrescription * oldUnitRate) / unitRate,
-    )
     this.unitRate = unitRate
   }
 
@@ -139,13 +150,11 @@ export class TicketProduct extends BaseModel {
 
     ins.type = TicketProductType.Prescription
     ins.pickupStrategy = PickupStrategy.AutoWithFIFO
-    ins.deliveryStatus = DeliveryStatus.Pending
-    ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
+    ins.ticketItemPaymentType = TicketItemPaymentType.TicketPaid
     ins.paid = 0
-    ins.debt = 0
 
-    ins.unitQuantity = 0
-    ins.unitQuantityPrescription = 0
+    ins.quantity = 0
+    ins.quantityPrescription = 0
     ins.printPrescription = 1
     ins.unitRate = 1
     ins.costAmount = 0
@@ -166,7 +175,7 @@ export class TicketProduct extends BaseModel {
     return ins
   }
 
-  static basic(source: TicketProduct) {
+  static basic(source: ClassProperties<TicketProduct>) {
     const target = new TicketProduct()
     Object.keys(target).forEach((key) => {
       const value = target[key as keyof typeof target]
@@ -183,7 +192,7 @@ export class TicketProduct extends BaseModel {
     return sources.map((i) => TicketProduct.basic(i))
   }
 
-  static from(source: TicketProduct) {
+  static from(source: ClassProperties<TicketProduct>) {
     const target = TicketProduct.basic(source)
     if (Object.prototype.hasOwnProperty.call(source, 'product')) {
       target.product = source.product ? Product.basic(source.product) : source.product
@@ -231,13 +240,12 @@ export class TicketProduct extends BaseModel {
 
     if (a.type != b.type) return false
     if (a.pickupStrategy != b.pickupStrategy) return false
-    if (a.deliveryStatus != b.deliveryStatus) return false
-    if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
+    if (a.ticketItemPaymentType != b.ticketItemPaymentType) return false
     if (a.paid != b.paid) return false
-    if (a.debt != b.debt) return false
 
-    if (a.unitQuantity != b.unitQuantity) return false
-    if (a.unitQuantityPrescription != b.unitQuantityPrescription) return false
+    if (a.quantity != b.quantity) return false
+    if (a.quantityPrescription != b.quantityPrescription) return false
+    if (a.quantityCompleted != b.quantityCompleted) return false
     if (a.printPrescription != b.printPrescription) return false
     if (a.unitRate != b.unitRate) return false
     if (a.costAmount != b.costAmount) return false

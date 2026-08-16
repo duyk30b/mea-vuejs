@@ -9,7 +9,6 @@ import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { Customer } from '@/modules/customer'
-import { Payment } from '@/modules/payment'
 import {
   TemplateHtml,
   TemplateHtmlAction,
@@ -27,6 +26,10 @@ import { useRoute, useRouter } from 'vue-router'
 import ModalSelectPaymentExample from './ModalSelectPaymentExample.vue'
 import ModalSelectTemplateHtmlExample from './ModalSelectTemplateHtmlExample.vue'
 import ModalSelectTicketExample from './ModalSelectTicketExample.vue'
+import { Payment } from '@/modules/payment/payment.model'
+import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
+import { BugDevelopment } from '@/views/component'
+import { PaymentTicketItemType } from '@/modules/payment_ticket'
 
 const TABS_KEY = {
   PRINT: 'PRINT',
@@ -123,7 +126,6 @@ const startCompilePrint = () => {
     me: user.value!,
     ticket: ticketDemo.value,
     customer: customerDemo.value!,
-    payment: paymentDemo.value,
     ...data,
   }
 
@@ -149,9 +151,20 @@ const startCompilePrint = () => {
       },
       variablesString: [templateHtmlHeader.value.initVariable, templateHtml.value.initVariable],
     })
-  } else if (templateHtml.value.templateHtmlType === TemplateHtmlType.TicketClinicCustomerPayment) {
+  } else if (
+    [
+      TemplateHtmlType.PaymentDistributorPayment,
+      TemplateHtmlType.PaymentDistributorRefund,
+      TemplateHtmlType.PaymentCustomerPayment,
+      TemplateHtmlType.PaymentCustomerRefund,
+    ].includes(templateHtml.value.templateHtmlType)
+  ) {
     templateHtmlCompiled = TemplateHtmlCompile.compilePageHtml({
-      data: dataCompile,
+      data: {
+        ...dataCompile,
+        payment: paymentDemo.value,
+        PaymentTicketItemType,
+      },
       template: {
         _header: templateHtmlHeader.value.htmlPrint,
         _footer: templateHtmlFooter.value.htmlPrint,
@@ -222,8 +235,7 @@ const handleModalSelectTicketDemoSuccess = async (ticketDemoId: string) => {
       const ticketResponse = await TicketService.detail(ticketDemoId, {
         relation: {
           customer: true,
-          paymentList: false,
-
+          paymentTicketList: { payment: true },
           ticketAttributeList: true,
           ticketRegimenList: true,
           ticketRegimenItemList: true,
@@ -252,7 +264,7 @@ const handleModalSelectTicketDemoSuccess = async (ticketDemoId: string) => {
 const handleModalSelectPaymentDemoSuccess = async (paymentData: Payment) => {
   paymentDemo.value = Payment.from(paymentData)
   customerDemo.value = paymentDemo.value.customer!
-  await Payment.refreshData(paymentDemo.value)
+  await PaymentTicketService.refreshRelation(paymentDemo.value.paymentTicketList)
   updatePreviewPrint()
 }
 
@@ -452,7 +464,7 @@ const handleSave = async () => {
               display: grid;
               grid-template-areas: 'html viewer' 'css viewer' 'initVariableHeader viewer' 'initVariable getDataExample';
               grid-template-columns: repeat(2, 1fr);
-              grid-template-rows: 500px 300px 200px 200px;
+              grid-template-rows: 500px 300px 200px 400px;
               gap: 16px;
             "
           >
@@ -482,22 +494,15 @@ const handleSave = async () => {
                 <div
                   v-if="
                     [
-                      TemplateHtmlType.TicketClinicCustomerPayment,
-                      TemplateHtmlType.TicketClinicCustomerRefund,
+                      TemplateHtmlType.PaymentDistributorPayment,
+                      TemplateHtmlType.PaymentDistributorRefund,
+                      TemplateHtmlType.PaymentCustomerPayment,
+                      TemplateHtmlType.PaymentCustomerRefund,
                     ].includes(templateHtml.templateHtmlType)
                   "
                   class="flex gap-2 items-baseline"
                 >
-                  <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-                    <template #trigger>
-                      <IconBug
-                        style="color: violet; cursor: pointer"
-                        width="1.2em"
-                        height="1.2em"
-                      />
-                    </template>
-                    <pre>{{ JSON.stringify(paymentDemo, null, 4) }}</pre>
-                  </VueTooltip>
+                  <BugDevelopment :data="paymentDemo" v-if="CONFIG.MODE === 'development'" />
                   <a @click="modalSelectPaymentExample?.openModal()">Chọn mẫu thanh toán thử</a>
                 </div>
                 <div v-else class="flex gap-2 items-baseline">

@@ -13,10 +13,13 @@ import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer, CustomerApi, CustomerService } from '@/modules/customer'
 import { DeliveryStatus, DiscountType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Ticket, TicketService, TicketStatus } from '@/modules/ticket'
+import { Ticket, TicketService } from '@/modules/ticket'
 import { TicketExpense } from '@/modules/ticket-expense/ticket-expense.model'
 import { TicketSurcharge } from '@/modules/ticket-surcharge/ticket-surcharge.model'
+import { TicketOrderApi } from '@/modules/ticket/api/ticket-order.api'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 import { ESString, ESTimer } from '@/utils'
+import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '@/views/customer/upsert/ModalCustomerUpsert.vue'
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
@@ -32,9 +35,6 @@ import {
   ETicketOrderUpsertMode,
   ticketOrderUpsertRef,
 } from './ticket-order-upsert.ref'
-import { TicketOrderApi } from '@/modules/ticket/api/ticket-order.api'
-import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
-import { useTicketOrderDetailStore } from '@/store/ticket-order-detail.store'
 
 const TABS_KEY = {
   PRODUCT: 'PRODUCT',
@@ -56,7 +56,6 @@ const settingStore = useSettingStore()
 const { userPermission, organizationPermission } = MeService
 const { formatMoney } = settingStore
 
-const ticketOrderDetailStore = useTicketOrderDetailStore()
 let defaultTabStart = localStorage.getItem('TICKET_ORDER_UPSERT_TAB_START') || TABS_KEY.PRODUCT
 if (![TABS_KEY.PRODUCT, TABS_KEY.PROCEDURE].includes(defaultTabStart)) {
   defaultTabStart = TABS_KEY.PRODUCT
@@ -76,7 +75,6 @@ onMounted(async () => {
   try {
     const ticketId = route.params.ticketId as string
     const roomId = Number(route.params.roomId)
-    await ticketOrderDetailStore.fetchRoom(roomId)
 
     const customerId = Number(route.query.customer_id)
     let customerDefault = Customer.blank()
@@ -742,7 +740,7 @@ const handleChangeTabs = (activeKey: any) => {
         <template v-if="[ETicketOrderUpsertMode.UPDATE].includes(mode)">
           <div
             v-if="
-              [TicketStatus.Deposited].includes(ticketOrderUpsertRef.status) &&
+              [TicketStatus.Schedule].includes(ticketOrderUpsertRef.status) &&
               userPermission[PermissionId.TICKET_DRAFT_CRUD]
             "
             class="mt-4 w-full flex flex-col px-1"
@@ -755,7 +753,7 @@ const handleChangeTabs = (activeKey: any) => {
               icon="save"
               @click="saveInvoice(ETicketOrderSave.UPDATE_DEPOSITED)"
             >
-              Cập nhật đơn tạm ứng
+              Cập nhật đơn đặt hàng
             </VueButton>
           </div>
           <div

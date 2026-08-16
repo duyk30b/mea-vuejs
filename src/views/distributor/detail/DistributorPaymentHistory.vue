@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { IconBug } from '@/common/icon-antd'
-import { VueTooltip } from '@/common/popover'
 import VuePagination from '@/common/VuePagination.vue'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { Payment, PaymentActionTypeText, PaymentApi, PaymentPersonType } from '@/modules/payment'
+import { PaymentApi } from '@/modules/payment/payment.api'
+import type { Payment } from '@/modules/payment/payment.model'
+import { PaymentActionTypeText, PaymentPersonType } from '@/modules/payment/payment.type'
+import { WalletService } from '@/modules/wallet'
 import { ESTimer } from '@/utils'
-import LinkAndStatusPurchaseOrder from '@/views/purchase-order/LinkAndStatusPurchaseOrder.vue'
+import { BugDevelopment } from '@/views/component'
+import PurchaseOrderLink from '@/views/purchase-order/PurchaseOrderLink.vue'
+import PurchaseOrderStatusTag from '@/views/purchase-order/PurchaseOrderStatusTag.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -22,6 +25,8 @@ const { formatMoney, isMobile } = settingStore
 const { userPermission } = MeService
 
 const paymentList = ref<Payment[]>([])
+const walletMap = WalletService.walletMap
+
 const page = ref(1)
 const limit = ref(10)
 const total = ref(0)
@@ -29,20 +34,22 @@ const total = ref(0)
 const startFetchData = async () => {
   try {
     const paginationResponse = await PaymentApi.pagination({
-      relation: { purchaseOrder: true, wallet: true },
+      relation: {
+        distributor: false,
+        wallet: false,
+        paymentPurchaseOrderList: { purchaseOrder: true },
+      },
       page: page.value,
       limit: limit.value,
       filter: {
-        personId: props.distributorId,
         personType: PaymentPersonType.Distributor,
+        personId: props.distributorId,
       },
       sort: { id: 'DESC' },
     })
     paymentList.value = paginationResponse.paymentList
     total.value = paginationResponse.total
-  } catch (error) {
-    console.log('🚀 ~ file: PaymentsHistory.vue:33 ~ error:', error)
-  }
+  } catch (error) {}
 }
 
 watch(
@@ -80,9 +87,19 @@ defineExpose({ startFetchData })
         </tr>
         <tr v-for="(payment, index) in paymentList" :key="index">
           <td>
-            <LinkAndStatusPurchaseOrder :purchaseOrder="payment.purchaseOrder!" :status="false" />
             <div style="white-space: nowrap">
               {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
+            </div>
+            <div
+              v-for="(paymentPurchaseOrder, index) in payment.paymentPurchaseOrderList"
+              :key="index"
+              class="flex gap-1 flex-wrap"
+            >
+              <PurchaseOrderLink
+                :purchaseOrder="paymentPurchaseOrder.purchaseOrder!"
+                :purchaseOrderId="paymentPurchaseOrder.purchaseOrderId"
+              />
+              <PurchaseOrderStatusTag :purchaseOrder="paymentPurchaseOrder.purchaseOrder!" />
             </div>
             <div v-if="payment.note">{{ payment.note }}</div>
           </td>
@@ -110,6 +127,7 @@ defineExpose({ startFetchData })
       <thead>
         <tr>
           <th v-if="CONFIG.MODE === 'development'"></th>
+          <th>Thời gian</th>
           <th>Phiếu nhập</th>
           <th>Ví Thanh Toán</th>
           <th>Note</th>
@@ -123,30 +141,29 @@ defineExpose({ startFetchData })
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
         <tr v-for="payment in paymentList" :key="payment.id">
-          <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-            <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-              <template #trigger>
-                <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-              </template>
-              <pre>{{ JSON.stringify(payment, null, 4) }}</pre>
-            </VueTooltip>
+          <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+            <BugDevelopment :data="payment" />
           </td>
-          <td>
-            <LinkAndStatusPurchaseOrder
-              :purchaseOrder="payment.purchaseOrder!"
-              :purchaseOrderId="payment.voucherId"
-              :status="false"
-            />
+          <td class="text-center">
             <div style="white-space: nowrap">
               {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
           </td>
-          <td class="text-center">
-            <div>{{ payment.wallet?.name }}</div>
-            <div>
-              {{ formatMoney(payment.walletOpenMoney) }} ➞
-              {{ formatMoney(payment.walletCloseMoney) }}
+          <td>
+            <div
+              v-for="(paymentPurchaseOrder, index) in payment.paymentPurchaseOrderList"
+              :key="index"
+              class="flex gap-1 flex-wrap"
+            >
+              <PurchaseOrderLink
+                :purchaseOrder="paymentPurchaseOrder.purchaseOrder!"
+                :purchaseOrderId="paymentPurchaseOrder.purchaseOrderId"
+              />
+              <PurchaseOrderStatusTag :purchaseOrder="paymentPurchaseOrder.purchaseOrder!" />
             </div>
+          </td>
+          <td class="text-left">
+            {{ walletMap[payment.walletId]?.name }}
           </td>
           <td>
             <div>{{ PaymentActionTypeText[payment.paymentActionType] }}</div>

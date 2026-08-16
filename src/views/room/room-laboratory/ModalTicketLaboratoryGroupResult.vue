@@ -14,7 +14,7 @@ import {
   TicketLaboratoryResult,
   TicketLaboratoryService,
 } from '@/modules/ticket-laboratory'
-import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import TicketItemPaymentTypeTooltip from '@/views/room/room-ticket-base/TicketItemPaymentTypeTooltip.vue'
 import { computed, ref } from 'vue'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
@@ -229,7 +229,9 @@ defineExpose({ openModal })
                 >
                   <td class="text-center">{{ index + 1 }}</td>
                   <td>
-                    <PaymentMoneyStatusTooltip :paymentMoneyStatus="tlItem.paymentMoneyStatus" />
+                    <TicketItemPaymentTypeTooltip
+                      :ticketItemPaymentType="tlItem.ticketItemPaymentType"
+                    />
                   </td>
                   <td>{{ laboratoryParent?.name }}</td>
                   <td>

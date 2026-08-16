@@ -8,14 +8,13 @@ import VueButton from '@/common/VueButton.vue'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
+import { DiscountType, TicketItemPaymentType } from '@/modules/enum'
 import { Laboratory, LaboratoryService, LaboratoryValueType } from '@/modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '@/modules/laboratory-group'
 import { LaboratorySample, LaboratorySampleService } from '@/modules/laboratory-sample'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { TemplateHtmlAction } from '@/modules/template-html'
-import { ticketRoomRef } from '@/modules/room'
-import { TicketChangeLaboratoryApi, TicketStatus } from '@/modules/ticket'
+import { TicketChangeLaboratoryApi } from '@/modules/ticket'
 import {
   TicketLaboratory,
   TicketLaboratoryGroup,
@@ -23,13 +22,15 @@ import {
   TicketLaboratoryStatus,
 } from '@/modules/ticket-laboratory'
 import { ESArray, ESString } from '@/utils'
-import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import TicketItemPaymentTypeTooltip from '@/views/room/room-ticket-base/TicketItemPaymentTypeTooltip.vue'
 import ModalTicketLaboratoryResult from '@/views/room/room-laboratory/ModalTicketLaboratoryGroupResult.vue'
 import TicketLaboratoryStatusTooltip from '@/views/room/room-laboratory/TicketLaboratoryStatusTooltip.vue'
 import { computed, onMounted, ref } from 'vue'
 import ModalTicketLaboratoryUpdateMoney from './ModalTicketLaboratoryUpdateMoney.vue'
 import { VueTooltip } from '@/common/popover'
 import { VueTag } from '@/common'
+import { ticketRef } from '@/store/room.store'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 
 const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
@@ -97,11 +98,11 @@ onMounted(async () => {
       LaboratorySampleService.list({}),
       LaboratoryGroupService.getMap(),
       LaboratoryService.getMap(),
-      TicketLaboratoryService.refreshRelationGroup(ticketRoomRef.value.ticketLaboratoryGroupList),
-      TicketLaboratoryService.refreshRelation(ticketRoomRef.value.ticketLaboratoryList),
-      TicketLaboratoryService.refreshRelationResult(ticketRoomRef.value.ticketLaboratoryResultList),
+      TicketLaboratoryService.refreshRelationGroup(ticketRef.value.ticketLaboratoryGroupList),
+      TicketLaboratoryService.refreshRelation(ticketRef.value.ticketLaboratoryList),
+      TicketLaboratoryService.refreshRelationResult(ticketRef.value.ticketLaboratoryResultList),
     ])
-    ticketRoomRef.value.refreshTicketLaboratory()
+    ticketRef.value.refreshTicketLaboratory()
 
     laboratoryGroupAll.forEach((g) => {
       laboratoryOptions.value = []
@@ -195,7 +196,7 @@ const reloadCheckboxLaboratory = async (checked: boolean, laboratory: Laboratory
 }
 
 const handleChangeCheckboxLaboratory = async (checked: boolean, laboratory: Laboratory) => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return AlertStore.addWarning('Phiếu đã kết thúc không thể chỉ định')
   }
   createdAt.value = Date.now()
@@ -207,7 +208,7 @@ const handleChangeCheckboxLaboratorySample = async (
   checked: boolean,
   laboratorySample: LaboratorySample,
 ) => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return AlertStore.addWarning('Phiếu đã kết thúc không thể chỉ định')
   }
   createdAt.value = Date.now()
@@ -226,7 +227,7 @@ const handleChangeCheckboxLaboratorySample = async (
 }
 
 const disabledButtonSaveLaboratorySelect = computed(() => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return true
   }
 
@@ -315,7 +316,7 @@ const startAddTicketLaboratoryGroup = async () => {
     }
 
     await TicketChangeLaboratoryApi.addTicketLaboratoryGroup({
-      ticketId: ticketRoomRef.value.id,
+      ticketId: ticketRef.value.id,
       ticketLaboratoryGroupAddList,
     })
     clear()
@@ -372,7 +373,7 @@ const startUpdateTicketLaboratoryGroup = async () => {
     }
 
     await TicketChangeLaboratoryApi.updateTicketLaboratoryGroup({
-      ticketId: ticketRoomRef.value.id,
+      ticketId: ticketRef.value.id,
       ticketLaboratoryGroupUpdate,
     })
     clear()
@@ -382,7 +383,7 @@ const startUpdateTicketLaboratoryGroup = async () => {
 }
 
 const clickEditLaboratoryGroup = (tlgEditId: string) => {
-  const tlgFind = ticketRoomRef.value.ticketLaboratoryGroupList?.find((i) => {
+  const tlgFind = ticketRef.value.ticketLaboratoryGroupList?.find((i) => {
     return i.id === tlgEditId
   })
   if (!tlgFind) return
@@ -411,8 +412,8 @@ const clickEditLaboratoryGroup = (tlgEditId: string) => {
 
 const clickDestroyTlg = async (tlgData: TicketLaboratoryGroup) => {
   if (
-    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-      tlgData.paymentMoneyStatus,
+    [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+      tlgData.ticketItemPaymentType,
     )
   ) {
     return ModalStore.alert({
@@ -436,7 +437,7 @@ const clickDestroyTlg = async (tlgData: TicketLaboratoryGroup) => {
     onOk: async () => {
       try {
         await TicketChangeLaboratoryApi.destroyTicketLaboratoryGroup({
-          ticketId: ticketRoomRef.value.id,
+          ticketId: ticketRef.value.id,
           ticketLaboratoryGroupId: tlgData.id,
         })
       } catch (error) {
@@ -448,8 +449,8 @@ const clickDestroyTlg = async (tlgData: TicketLaboratoryGroup) => {
 
 const clickDestroyTicketLaboratory = async (ticketLaboratoryData: TicketLaboratory) => {
   if (
-    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-      ticketLaboratoryData.paymentMoneyStatus,
+    [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+      ticketLaboratoryData.ticketItemPaymentType,
     )
   ) {
     return ModalStore.alert({
@@ -473,7 +474,7 @@ const clickDestroyTicketLaboratory = async (ticketLaboratoryData: TicketLaborato
     onOk: async () => {
       try {
         await TicketChangeLaboratoryApi.destroyTicketLaboratory({
-          ticketId: ticketRoomRef.value.id,
+          ticketId: ticketRef.value.id,
           ticketLaboratoryId: ticketLaboratoryData.id,
         })
       } catch (error) {
@@ -485,17 +486,17 @@ const clickDestroyTicketLaboratory = async (ticketLaboratoryData: TicketLaborato
 
 const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
   await TemplateHtmlAction.startPrintTicketClinicLaboratoryResult({
-    ticket: ticketRoomRef.value,
-    customer: ticketRoomRef.value.customer!,
+    ticket: ticketRef.value,
+    customer: ticketRef.value.customer!,
     ticketLaboratoryGroup: tlgData,
   })
 }
 
 const startPrintParaClinicalRequest = async () => {
-  await ticketRoomRef.value.refreshRelation()
+  await ticketRef.value.refreshRelation()
   await TemplateHtmlAction.startPrintTicketClinicParaClinicalRequest({
-    ticket: ticketRoomRef.value,
-    customer: ticketRoomRef.value.customer!,
+    ticket: ticketRef.value,
+    customer: ticketRef.value.customer!,
   })
 }
 </script>
@@ -555,7 +556,7 @@ const startPrintParaClinicalRequest = async () => {
                         !!laboratorySampleIdCheckbox[laboratorySample.id]?.indeterminate
                       "
                       :disabled="
-                        [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status)
+                        [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status)
                       "
                     />
                   </td>
@@ -577,7 +578,7 @@ const startPrintParaClinicalRequest = async () => {
                       :checked="!!laboratoryIdCheckbox[laboratory.id]"
                       style="cursor: pointer"
                       :disabled="
-                        [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status)
+                        [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status)
                       "
                     />
                   </td>
@@ -606,7 +607,7 @@ const startPrintParaClinicalRequest = async () => {
                       type="checkbox"
                       :checked="!!laboratoryIdCheckbox[laboratory.id]"
                       :disabled="
-                        [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status)
+                        [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status)
                       "
                     />
                   </td>
@@ -705,7 +706,7 @@ const startPrintParaClinicalRequest = async () => {
             <th v-if="CONFIG.MODE === 'development'"></th>
             <th>#</th>
             <th
-              v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"
+              v-if="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development'"
               style="width: 32px"
             ></th>
             <th style="width: 32px"></th>
@@ -718,10 +719,10 @@ const startPrintParaClinicalRequest = async () => {
           </tr>
         </thead>
         <tbody>
-          <tr v-if="ticketRoomRef.ticketLaboratoryGroupList!.length === 0">
+          <tr v-if="ticketRef.ticketLaboratoryGroupList!.length === 0">
             <td colspan="20" class="text-center">Chưa có phiếu xét nghiệm nào</td>
           </tr>
-          <template v-for="tlg in ticketRoomRef.ticketLaboratoryGroupList" :key="tlg.id">
+          <template v-for="tlg in ticketRef.ticketLaboratoryGroupList" :key="tlg.id">
             <tr>
               <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
                 <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
@@ -732,7 +733,7 @@ const startPrintParaClinicalRequest = async () => {
                 </VueTooltip>
               </td>
               <td
-                :colspan="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development' ? 4 : 3"
+                :colspan="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development' ? 4 : 3"
                 class=""
               >
                 <div class="flex items-center gap-2">
@@ -754,9 +755,9 @@ const startPrintParaClinicalRequest = async () => {
                 <div class="flex justify-end items-center gap-4">
                   <VueButton
                     v-if="
-                      ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                      [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                        tlg.paymentMoneyStatus,
+                      ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status) &&
+                      [TicketItemPaymentType.TicketPaid, TicketItemPaymentType.PendingPayment].includes(
+                        tlg.ticketItemPaymentType,
                       ) &&
                       userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
                     "
@@ -779,8 +780,8 @@ const startPrintParaClinicalRequest = async () => {
                   v-if="
                     tlg.id &&
                     tlg.status === TicketLaboratoryStatus.Pending &&
-                    [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                      tlg.paymentMoneyStatus,
+                    [TicketItemPaymentType.TicketPaid, TicketItemPaymentType.PendingPayment].includes(
+                      tlg.ticketItemPaymentType,
                     ) &&
                     userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
                   "
@@ -812,10 +813,10 @@ const startPrintParaClinicalRequest = async () => {
                 </td>
                 <td class="text-center">{{ index + 1 }}</td>
                 <td
-                  v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"
+                  v-if="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development'"
                   class="text-center"
                 >
-                  <PaymentMoneyStatusTooltip :paymentMoneyStatus="tlItem.paymentMoneyStatus" />
+                  <TicketItemPaymentTypeTooltip :ticketItemPaymentType="tlItem.ticketItemPaymentType" />
                 </td>
                 <td class="text-center">
                   <TicketLaboratoryStatusTooltip :status="tlItem.status" />
@@ -851,10 +852,10 @@ const startPrintParaClinicalRequest = async () => {
                     <a
                       v-if="
                         ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                          ticketRoomRef.status,
+                          ticketRef.status,
                         ) &&
-                        [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                          tlItem.paymentMoneyStatus,
+                        [TicketItemPaymentType.TicketPaid, TicketItemPaymentType.PendingPayment].includes(
+                          tlItem.ticketItemPaymentType,
                         ) &&
                         userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
                       "
@@ -872,8 +873,8 @@ const startPrintParaClinicalRequest = async () => {
                   <a
                     v-else-if="
                       tlItem.status === TicketLaboratoryStatus.Pending &&
-                      [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                        tlItem.paymentMoneyStatus,
+                      [TicketItemPaymentType.TicketPaid, TicketItemPaymentType.PendingPayment].includes(
+                        tlItem.ticketItemPaymentType,
                       ) &&
                       userPermission[PermissionId.TICKET_CHANGE_LABORATORY_REQUEST]
                     "
@@ -904,7 +905,7 @@ const startPrintParaClinicalRequest = async () => {
                   </VueTooltip>
                 </td>
                 <td></td>
-                <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+                <td v-if="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
                 <td></td>
                 <td>{{ laboratoryChild?.name }}</td>
                 <td class="text-center">
@@ -925,13 +926,13 @@ const startPrintParaClinicalRequest = async () => {
 
           <tr>
             <td v-if="CONFIG.MODE === 'development'"></td>
-            <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+            <td v-if="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
             <td :colspan="6" class="text-right">
               <b>Tổng tiền</b>
             </td>
             <td class="text-right">
               <b>
-                {{ formatMoney(ticketRoomRef.laboratoryMoney) }}
+                {{ formatMoney(ticketRef.laboratoryMoney) }}
               </b>
             </td>
             <td></td>

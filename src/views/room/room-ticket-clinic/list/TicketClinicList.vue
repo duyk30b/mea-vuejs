@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
 import VuePagination from '@/common/VuePagination.vue'
-import { IconBug, IconFileSearch, IconMore, IconRight, IconSetting } from '@/common/icon-antd'
-import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
+import { IconFileSearch, IconMore, IconRight, IconSetting } from '@/common/icon-antd'
 import { IconEditSquare } from '@/common/icon-google'
 import VueDropdown from '@/common/popover/VueDropdown.vue'
-import { InputCheckbox, InputDate, InputSelect, VueSelect } from '@/common/vue-form'
+import { InputDate, InputSelect, VueSelect } from '@/common/vue-form'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
@@ -15,29 +14,29 @@ import { DeliveryStatus, PaymentViewType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PositionType } from '@/modules/position'
 import { RoleService } from '@/modules/role'
-import { Room, RoomService, roomTicketMapRoomId, RoomType } from '@/modules/room'
-import { Ticket, TicketActionApi, TicketQueryApi, TicketStatus } from '@/modules/ticket'
+import { Room, RoomService, RoomType } from '@/modules/room'
+import { Ticket, TicketActionApi, TicketQueryApi } from '@/modules/ticket'
+import { TicketRegimenService } from '@/modules/ticket-regimen'
 import { TicketUser } from '@/modules/ticket-user'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 import { UserService } from '@/modules/user'
+import { roomTicketData } from '@/store/room.store'
 import { ESString, ESTimer } from '@/utils'
+import { BugDevelopment } from '@/views/component'
 import Breadcrumb from '@/views/component/Breadcrumb.vue'
 import InputSearchCustomer from '@/views/component/InputSearchCustomer.vue'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
-import ModalTicketChangeAllMoney from '@/views/finance/finance-ticket/modal/ModalTicketChangeAllMoney.vue'
+import ModalTicketChangeAllMoney from '@/views/room/room-ticket-base/ModalTicketChangeAllMoney.vue'
 import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
 import { onBeforeMount, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import ModalReceptionCreate from '../../room-ticket-reception/create/ModalReceptionCreate.vue'
 import ModalTicketPayment from '../../room-ticket-base/ModalTicketPayment.vue'
 import TicketLink from '../../room-ticket-base/TicketLink.vue'
 import { fromTime, toTime } from '../../room-ticket-base/room-ticket.ref'
+import ModalReceptionCreate from '../../room-ticket-reception/create/ModalReceptionCreate.vue'
 import ModalTicketClinicListSetting from './ModalTicketClinicListSetting.vue'
-import { PaymentService } from '@/modules/payment'
-import { RegimenService } from '@/modules/regimen'
-import { TicketRegimen, TicketRegimenService } from '@/modules/ticket-regimen'
-import { VueTooltip } from '@/common/popover'
-import { BugDevelopment } from '@/views/component'
+import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalReceptionCreate = ref<InstanceType<typeof ModalReceptionCreate>>()
@@ -88,7 +87,9 @@ const startFetchData = async () => {
       relation: {
         customer: true,
         // ticketAttributeList: true,
-        paymentList: !!settingStore.TICKET_CLINIC_LIST.paymentList,
+        paymentTicketList: settingStore.TICKET_CLINIC_LIST.paymentTicketList
+          ? { payment: true }
+          : undefined,
         ticketReceptionList: true,
         ticketUserList: settingStore.TICKET_CLINIC_LIST.roleIdList.length ? true : undefined,
         ticketRegimenList: settingStore.TICKET_CLINIC_LIST.regimen,
@@ -126,13 +127,13 @@ const startFetchData = async () => {
         tr.customer = Customer.from(ticketItem.customer)
       })
       await Promise.all([
-        PaymentService.refreshRelation(ticketItem.paymentList),
+        PaymentTicketService.refreshRelation(ticketItem.paymentTicketList),
         TicketRegimenService.refreshRelation(ticketItem.ticketRegimenList),
       ])
       ticketItem.refreshTreeData()
     }
 
-    roomTicketMapRoomId.value[currentRoom.value.id].paginationData = paginationResult.ticketList
+    roomTicketData.value[currentRoom.value.id].paginationData = paginationResult.ticketList
     total.value = paginationResult.total
   } catch (error) {
     console.log('🚀 ~ file: TicketClinicList.vue:84 ~ startFetchData ~ error:', error)
@@ -148,14 +149,11 @@ watch(
   async (newValue) => {
     const roomId = Number(newValue) || 0
     await RoomService.getMap()
-    currentRoom.value = roomMap.value[roomId]
-    if (!currentRoom.value) {
-      currentRoom.value = Room.blank()
-      currentRoom.value.isCommon = 1
-      currentRoom.value.roomType = RoomType.TicketClinic
-    }
+    currentRoom.value = Room.from(roomMap.value[roomId])
     // startFetchData()
-    roomTicketMapRoomId.value[roomId] = {
+    roomTicketData.value[roomId] = {
+      roomId: roomId,
+      room: Room.from(roomMap.value[roomId]),
       paginationData: [],
       paginationTime: new Date().toISOString(),
     }
@@ -164,7 +162,7 @@ watch(
 )
 
 watch(
-  () => roomTicketMapRoomId.value,
+  () => roomTicketData.value,
   async (newValue) => {
     const roomId = currentRoom.value.id
     if (newValue[roomId].paginationTime !== currentRefreshTime) {
@@ -253,10 +251,13 @@ const clickCloseTicket = (ticket: Ticket) => {
     })
   }
 
-  if (ticket.debtTotal) {
+  if (ticket.paidTotal + ticket.debtTotal < ticket.totalMoney) {
     return ModalStore.confirm({
       title: 'Đóng phiếu khám khi khách hàng chưa thanh toán đủ ?',
-      content: ['- Vẫn đóng phiếu khám.', `- Ghi nợ khách hàng: ${formatMoney(ticket.debtTotal)}.`],
+      content: [
+        '- Vẫn đóng phiếu khám.',
+        `- Ghi nợ khách hàng: ${formatMoney(ticket.totalMoney - ticket.paidTotal - ticket.debtTotal)}.`,
+      ],
       okText: 'Xác nhận Đóng phiếu',
       async onOk() {
         await startCloseTicket(ticket.id)
@@ -354,7 +355,6 @@ const clickCloseTicket = (ticket: Ticket) => {
               { value: null, text: 'Tất cả' },
               { value: TicketStatus.Schedule, text: 'Hẹn khám' },
               { value: TicketStatus.Draft, text: 'Chờ khám' },
-              { value: TicketStatus.Deposited, text: 'Tạm ứng' },
               { value: TicketStatus.Executing, text: 'Đang điều trị' },
               { value: TicketStatus.Debt, text: 'Nợ' },
               { value: TicketStatus.Completed, text: 'Hoàn thành' },
@@ -416,11 +416,11 @@ const clickCloseTicket = (ticket: Ticket) => {
           </tr>
         </tbody>
         <tbody v-else>
-          <tr v-if="roomTicketMapRoomId[currentRoom.id]?.paginationData?.length === 0">
+          <tr v-if="roomTicketData[currentRoom.id]?.paginationData?.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr
-            v-for="(ticket, index) in roomTicketMapRoomId[currentRoom.id]?.paginationData || []"
+            v-for="(ticket, index) in roomTicketData[currentRoom.id]?.paginationData || []"
             :key="index"
           >
             <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
@@ -450,12 +450,9 @@ const clickCloseTicket = (ticket: Ticket) => {
                   </span>
                   <a
                     v-if="
-                      [
-                        TicketStatus.Schedule,
-                        TicketStatus.Draft,
-                        TicketStatus.Deposited,
-                        TicketStatus.Executing,
-                      ].includes(ticket.status)
+                      [TicketStatus.Draft, TicketStatus.Schedule, TicketStatus.Executing].includes(
+                        ticket.status,
+                      )
                     "
                     style="color: #eca52b"
                     class="text-xl"
@@ -545,12 +542,9 @@ const clickCloseTicket = (ticket: Ticket) => {
               >
                 <VueButton
                   v-if="
-                    [
-                      TicketStatus.Schedule,
-                      TicketStatus.Draft,
-                      TicketStatus.Deposited,
-                      TicketStatus.Executing,
-                    ].includes(ticket.status) && userPermission[PermissionId.TICKET_PAYMENT_MONEY]
+                    [TicketStatus.Draft, TicketStatus.Schedule, TicketStatus.Executing].includes(
+                      ticket.status,
+                    ) && userPermission[PermissionId.TICKET_PAYMENT_MONEY]
                   "
                   size="small"
                   icon="dollar"
@@ -581,9 +575,12 @@ const clickCloseTicket = (ticket: Ticket) => {
                   <span>Trả nợ</span>
                 </VueButton>
               </div>
-              <div v-if="settingStore.TICKET_CLINIC_LIST.paymentList">
-                <div v-for="payment in ticket.paymentList" :key="payment.id">
-                  {{ payment.wallet?.name }}: {{ formatMoney(payment.paidTotal) }}
+              <div v-if="settingStore.TICKET_CLINIC_LIST.paymentTicketList">
+                <div v-for="paymentTicket in ticket.paymentTicketList" :key="paymentTicket.id">
+                  <template v-if="paymentTicket.payment">
+                    {{ paymentTicket.payment.wallet?.name }}:
+                    {{ formatMoney(paymentTicket.paidMoney) }}
+                  </template>
                 </div>
               </div>
               <div v-else>

@@ -9,19 +9,18 @@ import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
+import { DiscountType, TicketItemPaymentType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { TemplateHtmlAction } from '@/modules/template-html'
 import { Radiology, RadiologyService } from '@/modules/radiology'
-import { ticketRoomRef } from '@/modules/room'
-import { TicketChangeRadiologyApi, TicketStatus } from '@/modules/ticket'
+import { TicketChangeRadiologyApi } from '@/modules/ticket'
 import {
   TicketRadiology,
   TicketRadiologyService,
   TicketRadiologyStatus,
 } from '@/modules/ticket-radiology'
 import IndexAndSort from '@/views/component/IndexAndSort.vue'
-import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import TicketItemPaymentTypeTooltip from '@/views/room/room-ticket-base/TicketItemPaymentTypeTooltip.vue'
 import ModalRadiologyDetail from '@/views/master-data/radiology/detail/ModalRadiologyDetail.vue'
 import ModalTicketRadiologyResult from '@/views/room/room-radiology/ModalTicketRadiologyResult.vue'
 import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadiologyStatusTooltip.vue'
@@ -29,6 +28,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import ModalTicketRadiologyUpdate from './ModalTicketRadiologyUpdate.vue'
 import TicketRadiologySelectItem from './TicketRadiologySelectItem.vue'
 import { TicketLaboratoryService } from '@/modules/ticket-laboratory'
+import { ticketRef } from '@/store/room.store'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalTicketRadiologyUpdate = ref<InstanceType<typeof ModalTicketRadiologyUpdate>>()
@@ -44,7 +45,7 @@ const { formatMoney } = settingStore
 const ticketRadiologyList = ref<TicketRadiology[]>([])
 
 watch(
-  () => ticketRoomRef.value.ticketRadiologyList!,
+  () => ticketRef.value.ticketRadiologyList!,
   (newValue: TicketRadiology[]) => {
     ticketRadiologyList.value = TicketRadiology.fromList(newValue || [])
   },
@@ -52,8 +53,8 @@ watch(
 )
 
 const hasChangePriority = computed(() => {
-  for (let index = 0; index < (ticketRoomRef.value.ticketRadiologyList || []).length; index++) {
-    const tpRoot = ticketRoomRef.value.ticketRadiologyList![index]
+  for (let index = 0; index < (ticketRef.value.ticketRadiologyList || []).length; index++) {
+    const tpRoot = ticketRef.value.ticketRadiologyList![index]
     if (tpRoot.priority !== ticketRadiologyList.value[index].priority) {
       return true
     }
@@ -65,9 +66,9 @@ onMounted(async () => {
   try {
     const radiologyAll = await RadiologyService.list({})
     await Promise.all([
-      TicketRadiologyService.refreshRelation(ticketRoomRef.value.ticketRadiologyList),
+      TicketRadiologyService.refreshRelation(ticketRef.value.ticketRadiologyList),
     ])
-    ticketRoomRef.value.refreshTicketRadiology()
+    ticketRef.value.refreshTicketRadiology()
     radiologyOptions.value = radiologyAll.map((i) => ({ value: i.id, text: i.name, data: i }))
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
@@ -83,7 +84,7 @@ const changeItemPosition = (index: number, count: number) => {
 const savePriorityTicketRadiology = async () => {
   try {
     await TicketChangeRadiologyApi.updatePriorityTicketRadiology({
-      ticketId: ticketRoomRef.value.id,
+      ticketId: ticketRef.value.id,
       ticketRadiologyList: ticketRadiologyList.value,
     })
   } catch (error) {
@@ -93,16 +94,16 @@ const savePriorityTicketRadiology = async () => {
 
 const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
   const ticketRadiologyData = TicketRadiology.from(ticketRadiologySelect)
-  ticketRadiologyData.customer = ticketRoomRef.value.customer
-  ticketRadiologyData.ticket = ticketRoomRef.value
+  ticketRadiologyData.customer = ticketRef.value.customer
+  ticketRadiologyData.ticket = ticketRef.value
   ticketRadiologyData.radiology = await RadiologyService.detail(ticketRadiologyData.radiologyId, {
     relation: { radiologyGroup: true },
   })
 
   await TemplateHtmlAction.startPrintTicketClinicRadiologyResult({
     ticketRadiologyData,
-    ticket: ticketRoomRef.value,
-    customer: ticketRoomRef.value.customer!,
+    ticket: ticketRef.value,
+    customer: ticketRef.value.customer!,
   })
 }
 
@@ -111,8 +112,8 @@ const handleAddTicketRadiologyList = (value: TicketRadiology[]) => {
 }
 
 const openModalResult = (data: { ticketRadiology: TicketRadiology; noEdit?: boolean }) => {
-  data.ticketRadiology.customer = ticketRoomRef.value.customer
-  data.ticketRadiology.ticket = ticketRoomRef.value
+  data.ticketRadiology.customer = ticketRef.value.customer
+  data.ticketRadiology.ticket = ticketRef.value
   modalTicketRadiologyResult.value?.openModalByData({
     ticketRadiology: data.ticketRadiology,
     noEdit: data.noEdit,
@@ -120,16 +121,16 @@ const openModalResult = (data: { ticketRadiology: TicketRadiology; noEdit?: bool
 }
 
 const startPrintParaClinicalRequest = async () => {
-  await ticketRoomRef.value.refreshRelation()
+  await ticketRef.value.refreshRelation()
   await TemplateHtmlAction.startPrintTicketClinicParaClinicalRequest({
-    ticket: ticketRoomRef.value,
-    customer: ticketRoomRef.value.customer!,
+    ticket: ticketRef.value,
+    customer: ticketRef.value.customer!,
   })
 }
 
 const clickDestroyTicketRadiology = async (tp: TicketRadiology) => {
   if (
-    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(tp.paymentMoneyStatus)
+    [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(tp.ticketItemPaymentType)
   ) {
     return ModalStore.alert({
       title: 'Không thể xóa phiếu chỉ định CĐHA ?',
@@ -216,7 +217,7 @@ const clickDestroyTicketRadiology = async (tp: TicketRadiology) => {
                 @clickDown="changeItemPosition(index, 1)"
               />
             </td>
-            <td><PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" /></td>
+            <td><TicketItemPaymentTypeTooltip :ticketItemPaymentType="tp.ticketItemPaymentType" /></td>
             <td class="text-center">
               <TicketRadiologyStatusTooltip :status="tp.status" />
             </td>
@@ -251,9 +252,9 @@ const clickDestroyTicketRadiology = async (tp: TicketRadiology) => {
                 </div>
                 <a
                   v-if="
-                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                    [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                      tp.paymentMoneyStatus,
+                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status) &&
+                    [TicketItemPaymentType.TicketPaid, TicketItemPaymentType.PendingPayment].includes(
+                      tp.ticketItemPaymentType,
                     ) &&
                     userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_REQUEST]
                   "
@@ -290,7 +291,7 @@ const clickDestroyTicketRadiology = async (tp: TicketRadiology) => {
               <td class="text-center">
                 <a
                   v-if="
-                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status) &&
                     userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_RESULT]
                   "
                   class="text-orange-500"
@@ -305,10 +306,10 @@ const clickDestroyTicketRadiology = async (tp: TicketRadiology) => {
               <td class="text-center">
                 <a
                   v-if="
-                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                    ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status) &&
                     tp.status === TicketRadiologyStatus.Pending &&
-                    [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                      tp.paymentMoneyStatus,
+                    [TicketItemPaymentType.TicketPaid, TicketItemPaymentType.PendingPayment].includes(
+                      tp.ticketItemPaymentType,
                     ) &&
                     userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_REQUEST]
                   "
@@ -347,7 +348,7 @@ const clickDestroyTicketRadiology = async (tp: TicketRadiology) => {
     <VueButton
       v-if="
         userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_REQUEST] &&
-        ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+        ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status) &&
         hasChangePriority
       "
       color="blue"

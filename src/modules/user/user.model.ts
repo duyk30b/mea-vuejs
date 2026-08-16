@@ -1,10 +1,10 @@
 import type { EGender } from '../enum'
 import { Image } from '../image/image.model'
-import { Organization } from '../organization'
+import { Organization } from '../organization/organization.model'
 import { Role } from '../role/role.model'
-import { Room } from '../room'
+import { Room } from '../room/room.model'
 import { UserRole } from '../user-role/user-role.model'
-import { UserRoom } from '../user-room'
+import { UserRoom } from '../user-room/user-room.model'
 import Device from './device.model'
 
 export class User {

@@ -3,6 +3,7 @@ import { ESDom } from '../../utils'
 import { MeService } from '../_me/me.service'
 import type { Customer } from '../customer'
 import type { Payment } from '../payment/payment.model'
+import { MoneyDirection, PaymentPersonType } from '../payment/payment.type'
 import { PrintSettingService } from '../print-setting'
 import type { PurchaseOrder } from '../purchase-order'
 import type { Ticket } from '../ticket'
@@ -11,6 +12,7 @@ import type { TicketRadiology } from '../ticket-radiology'
 import { TemplateHtmlCompile } from './template-html.compiled'
 import { TemplateHtml, TemplateHtmlType } from './template-html.model'
 import { TemplateHtmlService } from './template-html.service'
+import { PaymentTicketItemType } from '../payment_ticket'
 
 export class TemplateHtmlAction {
   static async getTemplateHtmlByType(options: {
@@ -184,10 +186,7 @@ export class TemplateHtmlAction {
     })
   }
 
-  static async startPrintTicketClinicDiagnosis(data: {
-    ticket: Ticket
-    customer: Customer
-  }) {
+  static async startPrintTicketClinicDiagnosis(data: { ticket: Ticket; customer: Customer }) {
     await TemplateHtmlAction.startPrintCommon({
       data,
       templateHtmlType: TemplateHtmlType.TicketClinicDiagnosis,
@@ -226,7 +225,10 @@ export class TemplateHtmlAction {
     })
   }
 
-  static async startPrintTicketClinicParaClinicalRequest(data: { ticket: Ticket; customer: Customer }) {
+  static async startPrintTicketClinicParaClinicalRequest(data: {
+    ticket: Ticket
+    customer: Customer
+  }) {
     await TemplateHtmlAction.startPrintCommon({
       data,
       templateHtmlType: TemplateHtmlType.TicketClinicParaClinicalRequest,
@@ -374,17 +376,41 @@ export class TemplateHtmlAction {
     })
   }
 
-  static async startPrintTicketClinicCustomerPayment(data: { customer: Customer; payment: Payment }) {
-    await TemplateHtmlAction.startPrintCommon({
-      data,
-      templateHtmlType: TemplateHtmlType.TicketClinicCustomerPayment,
-    })
-  }
+  static async startPrintPayment(dataProp: { payment: Payment }) {
+    const { payment } = dataProp
+    const data = {
+      payment,
+      PaymentTicketItemType,
+    }
 
-  static async startPrintTicketClinicCustomerRefund(data: { customer: Customer; payment: Payment }) {
-    await TemplateHtmlAction.startPrintCommon({
-      data,
-      templateHtmlType: TemplateHtmlType.TicketClinicCustomerRefund,
-    })
+    if (payment.personType === PaymentPersonType.Distributor) {
+      if (payment.moneyDirection === MoneyDirection.In) {
+        await TemplateHtmlAction.startPrintCommon({
+          data,
+          templateHtmlType: TemplateHtmlType.PaymentDistributorRefund,
+        })
+      }
+      if (payment.moneyDirection === MoneyDirection.Out) {
+        await TemplateHtmlAction.startPrintCommon({
+          data,
+          templateHtmlType: TemplateHtmlType.PaymentDistributorPayment,
+        })
+      }
+    }
+
+    if (payment.personType === PaymentPersonType.Customer) {
+      if (payment.moneyDirection === MoneyDirection.In) {
+        await TemplateHtmlAction.startPrintCommon({
+          data,
+          templateHtmlType: TemplateHtmlType.PaymentCustomerPayment,
+        })
+      }
+      if (payment.moneyDirection === MoneyDirection.Out) {
+        await TemplateHtmlAction.startPrintCommon({
+          data,
+          templateHtmlType: TemplateHtmlType.PaymentCustomerRefund,
+        })
+      }
+    }
   }
 }

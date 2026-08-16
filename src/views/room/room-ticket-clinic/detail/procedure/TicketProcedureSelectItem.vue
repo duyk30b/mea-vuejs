@@ -8,13 +8,14 @@ import { useSettingStore } from '@/modules/_me/setting.store'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { Procedure, ProcedureService } from '@/modules/procedure'
 import { Regimen, RegimenService } from '@/modules/regimen'
-import { ticketRoomRef } from '@/modules/room'
-import { TicketChangeProcedureApi, TicketStatus } from '@/modules/ticket'
+import { TicketChangeProcedureApi } from '@/modules/ticket'
 import { TicketProcedure } from '@/modules/ticket-procedure'
 import { TicketRegimen } from '@/modules/ticket-regimen'
 import { ESArray, ESFunction, ESString } from '@/utils'
 import TableTicketProcedureListRequest from '@/views/room/room-ticket-clinic/detail/procedure/TableTicketProcedureListDraft.vue'
 import { computed, onMounted, ref } from 'vue'
+import { ticketRef } from '@/store/room.store'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 
 const tableTicketProcedureListRequest = ref<InstanceType<typeof TableTicketProcedureListRequest>>()
 
@@ -51,7 +52,7 @@ onMounted(async () => {
 })
 
 const priorityStart = computed(() => {
-  const priorityList = (ticketRoomRef.value.ticketProcedureList || []).map((i) => i.priority)
+  const priorityList = (ticketRef.value.ticketProcedureList || []).map((i) => i.priority)
   return Math.max(0, ...priorityList)
 })
 
@@ -76,7 +77,7 @@ const startFilter = (text: string) => {
 }
 
 const handleChangeCheckboxProcedure = async (checked: boolean, procedureData: Procedure) => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return AlertStore.addWarning('Phiếu đã kết thúc không thể chỉ định')
   }
   procedureIdCheckbox.value[procedureData.id] = checked
@@ -103,7 +104,7 @@ const handleChangeCheckboxProcedure = async (checked: boolean, procedureData: Pr
 }
 
 const handleChangeCheckboxRegimen = async (checked: boolean, regimenData: Regimen) => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return AlertStore.addWarning('Phiếu đã kết thúc không thể chỉ định')
   }
   regimenIdCheckbox.value[regimenData.id] = checked
@@ -158,7 +159,7 @@ const handleSave = async () => {
   try {
     saveLoading.value = true
     await TicketChangeProcedureApi.addTicketProcedureList({
-      ticketId: ticketRoomRef.value.id,
+      ticketId: ticketRef.value.id,
       ticketRegimenWrapList: ticketRegimenListDraft.value.map((i) => {
         return {
           ticketRegimenAdd: i,
@@ -217,7 +218,7 @@ const handleSave = async () => {
                     :checked="!!regimenIdCheckbox[regimen.id]"
                     style="cursor: pointer"
                     :disabled="
-                      [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status)
+                      [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status)
                     "
                   />
                 </td>
@@ -261,7 +262,7 @@ const handleSave = async () => {
                     :checked="!!procedureIdCheckbox[procedure.id]"
                     style="cursor: pointer"
                     :disabled="
-                      [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status)
+                      [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status)
                     "
                   />
                 </td>
@@ -297,7 +298,7 @@ const handleSave = async () => {
       <div class="my-3 flex justify-center">
         <VueButton
           :disabled="
-            [TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.status) ||
+            [TicketStatus.Completed, TicketStatus.Debt].includes(ticketRef.status) ||
             !userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
           "
           color="blue"

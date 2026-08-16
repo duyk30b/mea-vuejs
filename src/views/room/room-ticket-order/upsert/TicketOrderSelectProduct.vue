@@ -13,13 +13,12 @@ import {
 import { MeService } from '@/modules/_me/me.service.ts'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Batch, BatchService } from '@/modules/batch'
-import { DeliveryStatus, DiscountType, PickupStrategy } from '@/modules/enum'
+import { DiscountType, PickupStrategy } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { Product, ProductService, ProductType } from '@/modules/product'
 import { TicketProduct } from '@/modules/ticket-product'
 import type { Warehouse } from '@/modules/warehouse'
 import { WarehouseService } from '@/modules/warehouse/warehouse.service'
-import { useTicketOrderDetailStore } from '@/store/ticket-order-detail.store'
 import { customFilter, ESTimer } from '@/utils'
 import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '@/views/product/upsert/ModalProductUpsert.vue'
@@ -33,7 +32,6 @@ const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const { userPermission } = MeService
-const ticketOrderDetailStore = useTicketOrderDetailStore()
 
 const product = ref(Product.blank())
 const productList = ref<Product[]>([])
@@ -126,9 +124,8 @@ const selectProduct = async (productProp?: Product) => {
         MeService.settingMapRoot.value.SCREEN_INVOICE_UPSERT.pickupStrategy ||
         PickupStrategy.RequireBatchSelection
 
-  tpItem.deliveryStatus = DeliveryStatus.Pending
   tpItem.unitRate = productProp.unitDefaultRate
-  tpItem.unitQuantity = 0
+  tpItem.quantity = 0
 
   tpItem.unitExpectedPrice = productProp.retailPrice * productProp.unitDefaultRate
   tpItem.discountType = DiscountType.Percent
@@ -313,12 +310,7 @@ const addTicketProduct = () => {
       return i.productId === product!.id
     })
     if (exist) {
-      exist.unitQuantity += Number(
-        (
-          (ticketProduct.value.unitQuantity * ticketProduct.value.unitRate) /
-          exist.unitRate
-        ).toFixed(3),
-      )
+      exist.quantity += ticketProduct.value.quantity
     } else {
       ticketOrderUpsertRef.value.ticketProductList?.push(ticketProduct.value)
     }

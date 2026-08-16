@@ -5,7 +5,7 @@ import { InputMoney, InputNumber, VueSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
+import { DiscountType, TicketItemPaymentType } from '@/modules/enum'
 import { PositionType } from '@/modules/position'
 import { TicketChangeRadiologyApi } from '@/modules/ticket'
 import { TicketRadiology } from '@/modules/ticket-radiology'
@@ -86,8 +86,8 @@ const closeModal = () => {
 
 const clickDestroy = async () => {
   if (
-    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-      ticketRadiologyOrigin.value.paymentMoneyStatus,
+    [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+      ticketRadiologyOrigin.value.ticketItemPaymentType,
     )
   ) {
     return ModalStore.alert({

@@ -21,9 +21,9 @@ export class TicketChangeProductApi {
           pickupStrategy: i.pickupStrategy,
 
           unitRate: i.unitRate,
-          unitQuantityPrescription: i.unitQuantityPrescription,
           printPrescription: i.printPrescription,
-          unitQuantity: i.unitQuantity,
+          quantityPrescription: i.quantityPrescription,
+          quantity: i.quantity,
           unitExpectedPrice: i.unitExpectedPrice,
           unitDiscountMoney: i.unitDiscountMoney,
           discountPercent: i.discountPercent,
@@ -54,9 +54,9 @@ export class TicketChangeProductApi {
           pickupStrategy: i.pickupStrategy,
 
           unitRate: i.unitRate,
-          unitQuantityPrescription: i.unitQuantityPrescription,
           printPrescription: i.printPrescription,
-          unitQuantity: i.unitQuantity,
+          quantityPrescription: i.quantityPrescription,
+          quantity: i.quantity,
           unitExpectedPrice: i.unitExpectedPrice,
           unitDiscountMoney: i.unitDiscountMoney,
           discountPercent: i.discountPercent,

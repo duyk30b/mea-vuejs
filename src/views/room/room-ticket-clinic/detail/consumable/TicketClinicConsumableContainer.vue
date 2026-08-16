@@ -5,15 +5,13 @@ import { IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import { IconDelete, IconEditSquare } from '@/common/icon-google'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DeliveryStatus, PaymentMoneyStatus } from '@/modules/enum'
+import { DeliveryStatus, TicketItemPaymentType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import type { Product } from '@/modules/product'
-import { ticketRoomRef } from '@/modules/room'
-import { TicketStatus } from '@/modules/ticket'
 import { TicketProduct, TicketProductService } from '@/modules/ticket-product'
 import { TicketUser } from '@/modules/ticket-user'
 import { TicketChangeProductApi } from '@/modules/ticket/api/ticket-change-product.api'
-import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import TicketItemPaymentTypeTooltip from '@/views/room/room-ticket-base/TicketItemPaymentTypeTooltip.vue'
 import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import TicketDeliveryStatusTooltip from '@/views/room/room-ticket-base/TicketDeliveryStatusTooltip.vue'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -23,6 +21,8 @@ import { CONFIG } from '@/config'
 import { BugDevelopment } from '@/views/component'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { TemplateHtmlAction } from '@/modules/template-html'
+import { roomRef, ticketRef } from '@/store/room.store'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 
 const modalTicketClinicConsumableUpdate =
   ref<InstanceType<typeof ModalTicketClinicConsumableUpdate>>()
@@ -38,7 +38,7 @@ let ticketUserListOrigin: TicketUser[] = []
 const ticketUserList = ref<TicketUser[]>([])
 
 watch(
-  () => ticketRoomRef.value.ticketProductConsumableList,
+  () => ticketRef.value.ticketProductConsumableList,
   (newValue, oldValue) => {
     ticketProductConsumableList.value = TicketProduct.fromList(newValue || [])
   },
@@ -46,17 +46,13 @@ watch(
 )
 
 onMounted(async () => {
-  TicketProductService.refreshRelation(ticketRoomRef.value.ticketProductList)
-  await ticketRoomRef.value.refreshTicketProduct()
+  TicketProductService.refreshRelation(ticketRef.value.ticketProductList)
+  await ticketRef.value.refreshTicketProduct()
 })
 
 const hasChangePriority = computed(() => {
-  for (
-    let index = 0;
-    index < (ticketRoomRef.value.ticketProductConsumableList || []).length;
-    index++
-  ) {
-    const tpRoot = ticketRoomRef.value.ticketProductConsumableList![index]
+  for (let index = 0; index < (ticketRef.value.ticketProductConsumableList || []).length; index++) {
+    const tpRoot = ticketRef.value.ticketProductConsumableList![index]
     if (tpRoot.priority !== ticketProductConsumableList.value[index].priority) {
       return true
     }
@@ -83,7 +79,7 @@ const hasChangeData = computed(() => {
 })
 
 const disabledButton = computed(() => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return true
   }
   return !hasChangeData.value
@@ -98,7 +94,7 @@ const changeItemPosition = (index: number, count: number) => {
 const savePriorityTicketProductConsumable = async () => {
   try {
     await TicketChangeProductApi.updatePriorityTicketProductConsumable({
-      ticketId: ticketRoomRef.value.id,
+      ticketId: ticketRef.value.id,
       ticketProductList: ticketProductConsumableList.value,
     })
   } catch (e: any) {
@@ -121,7 +117,7 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
   try {
     ticketProductConsumableList.value = [...tpListOrigin, ...ticketProductAddList]
     await TicketChangeProductApi.addTicketProductConsumableList({
-      ticketId: ticketRoomRef.value.id,
+      ticketId: ticketRef.value.id,
       ticketProductList: ticketProductAddList,
     })
   } catch (error) {
@@ -131,7 +127,7 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
 }
 
 const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
-  if (ticketProductProp.deliveryStatus === DeliveryStatus.Delivered) {
+  if (ticketProductProp.quantityCompleted > 0) {
     return ModalStore.alert({
       title: 'Không thể xóa vật tư ?',
       content: [
@@ -141,8 +137,8 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
     })
   }
   if (
-    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-      ticketProductProp.paymentMoneyStatus,
+    [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+      ticketProductProp.ticketItemPaymentType,
     )
   ) {
     return ModalStore.alert({
@@ -150,7 +146,7 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
       content: ['- Vật tư đã được thanh toán sẽ không thể xóa'],
     })
   }
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return ModalStore.alert({
       title: 'Không thể xóa vật tư ?',
       content: [
@@ -168,7 +164,7 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
     onOk: async () => {
       try {
         await TicketChangeProductApi.destroyTicketProductConsumable({
-          ticketId: ticketRoomRef.value.id,
+          ticketId: ticketRef.value.id,
           ticketProductId: ticketProductProp.id,
         })
       } catch (error) {
@@ -180,8 +176,8 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
 
 const startPrint = async () => {
   await TemplateHtmlAction.startPrintTicketClinicConsumable({
-    ticket: ticketRoomRef.value,
-    customer: ticketRoomRef.value.customer!,
+    ticket: ticketRef.value,
+    customer: ticketRef.value.customer!,
   })
 }
 </script>
@@ -229,7 +225,7 @@ const startPrint = async () => {
                     margin-bottom: -0.5rem;
                   "
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
-                  :disabled="index === 0 || tpItem.deliveryStatus === DeliveryStatus.Delivered"
+                  :disabled="index === 0 || tpItem.quantityCompleted > 0"
                   @click="changeItemPosition(index, -1)"
                 >
                   <IconSortUp style="opacity: 0.6" />
@@ -246,8 +242,7 @@ const startPrint = async () => {
                   "
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
                   :disabled="
-                    index === ticketProductConsumableList.length - 1 ||
-                    tpItem.deliveryStatus === DeliveryStatus.Delivered
+                    index === ticketProductConsumableList.length - 1 || tpItem.quantityCompleted > 0
                   "
                   @click="changeItemPosition(index, 1)"
                 >
@@ -255,9 +250,11 @@ const startPrint = async () => {
                 </button>
               </div>
             </td>
-            <td><PaymentMoneyStatusTooltip :paymentMoneyStatus="tpItem.paymentMoneyStatus" /></td>
+            <td>
+              <TicketItemPaymentTypeTooltip :ticketItemPaymentType="tpItem.ticketItemPaymentType" />
+            </td>
             <td class="text-center">
-              <TicketDeliveryStatusTooltip :deliveryStatus="tpItem.deliveryStatus" />
+              <TicketDeliveryStatusTooltip :deliveryStatus="tpItem.deliveryStatusFix" />
             </td>
             <td>
               <div style="font-weight: 500">
@@ -289,9 +286,12 @@ const startPrint = async () => {
               </a>
               <a
                 v-else-if="
-                  [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                    tpItem.paymentMoneyStatus,
-                  ) && userPermission[PermissionId.TICKET_CHANGE_PRODUCT_CONSUMABLE]
+                  [
+                    TicketItemPaymentType.NoEffect,
+                    TicketItemPaymentType.TicketPaid,
+                    TicketItemPaymentType.PendingPayment,
+                  ].includes(tpItem.ticketItemPaymentType) &&
+                  userPermission[PermissionId.TICKET_CHANGE_PRODUCT_CONSUMABLE]
                 "
                 class="text-orange-500"
                 @click="modalTicketClinicConsumableUpdate?.openModal(tpItem)"
@@ -305,9 +305,12 @@ const startPrint = async () => {
               </a>
               <a
                 v-else-if="
-                  [PaymentMoneyStatus.PendingPayment, PaymentMoneyStatus.TicketPaid].includes(
-                    tpItem.paymentMoneyStatus,
-                  ) && userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
+                  [
+                    TicketItemPaymentType.NoEffect,
+                    TicketItemPaymentType.PendingPayment,
+                    TicketItemPaymentType.TicketPaid,
+                  ].includes(tpItem.ticketItemPaymentType) &&
+                  userPermission[PermissionId.TICKET_CHANGE_PRODUCT_CONSUMABLE]
                 "
                 style="color: var(--text-red)"
                 @click="clickDestroyTicketProduct(tpItem)"

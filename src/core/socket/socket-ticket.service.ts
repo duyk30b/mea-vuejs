@@ -1,12 +1,6 @@
 import { Image } from '@/modules/image/image.model'
-import {
-  roomDeliveryPagination,
-  roomFinancePagination,
-  roomLaboratory,
-  roomRadiology,
-  roomTicketMapRoomId,
-  ticketRoomRef,
-} from '@/modules/room/room.ref'
+import { PaymentTicket } from '@/modules/payment_ticket'
+import { Room } from '@/modules/room'
 import { Ticket } from '@/modules/ticket'
 import { TicketAttribute } from '@/modules/ticket-attribute'
 import { TicketBatch } from '@/modules/ticket-batch'
@@ -27,18 +21,25 @@ import { TicketRegimen, TicketRegimenItem, TicketRegimenService } from '@/module
 import { TicketSurcharge, TicketSurchargeService } from '@/modules/ticket-surcharge'
 import { TicketUser, TicketUserService } from '@/modules/ticket-user'
 import { TicketPaymentDetail } from '@/modules/ticket/ticket-payment-detail.model'
+import { roomLaboratory, roomRadiology, roomTicketData, ticketRef } from '@/store/room.store'
 
 export class SocketTicketService {
-  static async listenSocketRoomTicketPaginationChange(data: { roomId: number }) {
+  static async listenSocketTicketPaginationChange(data: { roomId: number }) {
     const { roomId } = data
-    roomTicketMapRoomId.value[roomId] ||= { paginationData: [], paginationTime: '' }
-    roomTicketMapRoomId.value[roomId].paginationTime = new Date().toISOString()
+    roomTicketData.value[roomId] ||= {
+      roomId,
+      room: Room.blank(),
+      paginationTime: '',
+      paginationData: [],
+    }
+    roomTicketData.value[roomId].paginationTime = new Date().toISOString()
   }
 
   static async listenSocketTicketChange(data: {
     ticketId: string
     ticketModified?: Ticket
     ticketPaymentDetailModified?: TicketPaymentDetail
+    paymentTicketCreatedList?: PaymentTicket[]
     imageList?: { destroyedList?: Image[]; upsertedList?: Image[] }
     ticketAttribute?: { destroyedList?: TicketAttribute[]; upsertedList?: TicketAttribute[] }
     ticketUser?: { destroyedList?: TicketUser[]; upsertedList?: TicketUser[] }
@@ -73,7 +74,12 @@ export class SocketTicketService {
       roomLaboratoryIdRefresh[i.roomId] = true
     })
     Object.keys(roomLaboratoryIdRefresh).forEach((id) => {
-      roomLaboratory.value[id] = new Date().toISOString()
+      roomLaboratory.value[id] ||= {
+        roomId: Number(id),
+        room: Room.blank(),
+        paginationTime: '',
+      }
+      roomLaboratory.value[id].paginationTime = new Date().toISOString()
     })
 
     // Refresh cho phòng CĐHA
@@ -85,16 +91,19 @@ export class SocketTicketService {
       roomRadiologyIdRefresh[i.roomId] = true
     })
     Object.keys(roomRadiologyIdRefresh).forEach((id) => {
-      roomRadiology.value[id] = new Date().toISOString()
+      roomRadiology.value[id] ||= {
+        roomId: Number(id),
+        room: Room.blank(),
+        paginationTime: '',
+      }
+      roomRadiology.value[id].paginationTime = new Date().toISOString()
     })
 
     const ticketActionList: Ticket[] = [
-      ticketRoomRef.value,
-      ...Object.values(roomTicketMapRoomId.value)
+      ticketRef.value,
+      ...Object.values(roomTicketData.value)
         .map((i) => i.paginationData)
         .flat(),
-      ...roomFinancePagination.value,
-      ...roomDeliveryPagination.value,
     ]
 
     for (let i = 0; i < ticketActionList.length; i++) {
@@ -109,6 +118,13 @@ export class SocketTicketService {
         ticketAction.ticketPaymentDetail = TicketPaymentDetail.from(
           data.ticketPaymentDetailModified,
         )
+      }
+
+      if (data.paymentTicketCreatedList?.length) {
+        data.paymentTicketCreatedList.forEach((i) => {
+          const temp = PaymentTicket.from(i)
+          ticketAction.paymentTicketList?.push(temp)
+        })
       }
 
       if (data.imageList && ticketAction.imageList) {

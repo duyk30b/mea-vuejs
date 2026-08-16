@@ -27,14 +27,11 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer } from '@/modules/customer'
 import { DeliveryStatus, PaymentViewType, PickupStrategy } from '@/modules/enum'
-import { PaymentActionType } from '@/modules/payment'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { ticketRoomRef } from '@/modules/room'
-import { Ticket, TicketActionApi, TicketService, TicketStatus } from '@/modules/ticket'
+import { Ticket, TicketActionApi, TicketMoneyApi, TicketService } from '@/modules/ticket'
 import { TicketProcedureStatus } from '@/modules/ticket-procedure'
 import { TicketRadiologyStatus } from '@/modules/ticket-radiology'
 import { TicketUserService } from '@/modules/ticket-user'
-import { useTicketClinicDetailStore } from '@/store/ticket-clinic-detail.store'
 import { ESString } from '@/utils'
 import { BugDevelopment } from '@/views/component'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
@@ -55,6 +52,10 @@ import TicketClinicRadiologyContainer from './radiology/TicketClinicRadiologyCon
 import TicketClinicSummaryContainer from './summary/TicketClinicSummaryContainer.vue'
 import TicketClinicUserContainer from './user/TicketClinicUserContainer.vue'
 import { TemplateHtmlAction } from '@/modules/template-html'
+import { roomRef, ticketRef } from '@/store/room.store'
+import { TicketActionType, TicketStatus } from '@/modules/ticket/ticket.type'
+import { RoomService } from '@/modules/room'
+import { PaymentActionType } from '@/modules/payment/payment.type'
 
 const modalRoomSetting = ref<InstanceType<typeof ModalRoomSetting>>()
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
@@ -67,7 +68,6 @@ const modalTicketPaymentHistory = ref<InstanceType<typeof ModalTicketPaymentHist
 const route = useRoute()
 const router = useRouter()
 const settingStore = useSettingStore()
-const ticketClinicDetailStore = useTicketClinicDetailStore()
 const { userPermission, organizationPermission } = MeService
 const { formatMoney } = settingStore
 
@@ -79,7 +79,7 @@ watch(
   () => route.params.roomId,
   async (newValue) => {
     const roomId = Number(newValue) || 0
-    await ticketClinicDetailStore.fetchRoom(roomId)
+    roomRef.value = await RoomService.detail(roomId)
     startFetchData()
   },
   { immediate: true },
@@ -93,14 +93,14 @@ onBeforeMount(async () => {
 })
 
 onUnmounted(async () => {
-  ticketRoomRef.value = Ticket.blank()
+  ticketRef.value = Ticket.blank()
   ticketLoaded.value = false
 })
 
 const startFetchData = async (ticketId?: string) => {
   if (!ticketId) {
-    ticketRoomRef.value = Ticket.blank()
-    ticketRoomRef.value.customer = Customer.init()
+    ticketRef.value = Ticket.blank()
+    ticketRef.value.customer = Customer.init()
     return
   }
 
@@ -109,7 +109,7 @@ const startFetchData = async (ticketId?: string) => {
       relation: {
         customer: true,
         ticketPaymentDetail: true,
-        paymentList: false, // query khi bật modal thanh toán
+        paymentTicketList: undefined, // query khi bật modal thanh toán
 
         ticketAttributeList: true,
         ticketProductList: { batch: true, product: true },
@@ -144,7 +144,7 @@ const startFetchData = async (ticketId?: string) => {
       ]
       ticketData.ticketAttributeMap = { healthHistory }
     }
-    ticketRoomRef.value = ticketData
+    ticketRef.value = ticketData
     await TicketUserService.refreshRelation(ticketData.ticketUserList || [])
     ticketData.refreshTreeData()
   } catch (error) {
@@ -155,16 +155,16 @@ const startFetchData = async (ticketId?: string) => {
 const handleChangeTabs = (activeKey: any) => {}
 
 const startExecuting = async () => {
-  const response = await TicketActionApi.startExecuting({ ticketId: ticketRoomRef.value.id })
-  Object.assign(ticketRoomRef.value.id, response.ticketModified)
+  const response = await TicketActionApi.startExecuting({ ticketId: ticketRef.value.id })
+  Object.assign(ticketRef.value.id, response.ticketModified)
 }
 
 const startCloseTicket = async () => {
-  await TicketActionApi.close({ ticketId: ticketRoomRef.value.id })
+  await TicketActionApi.close({ ticketId: ticketRef.value.id })
 }
 
 const clickCloseTicket = () => {
-  if (ticketRoomRef.value.deliveryStatus === DeliveryStatus.Pending) {
+  if (ticketRef.value.deliveryStatus === DeliveryStatus.Pending) {
     return ModalStore.alert({
       title: 'Thuốc vẫn chưa xuất hết ?',
       content: [
@@ -174,7 +174,7 @@ const clickCloseTicket = () => {
     })
   }
 
-  const ticketProcedurePending = (ticketRoomRef.value.ticketProcedureList || []).find((i) => {
+  const ticketProcedurePending = (ticketRef.value.ticketProcedureList || []).find((i) => {
     return i.status == TicketProcedureStatus.Pending
   })
   if (ticketProcedurePending) {
@@ -184,7 +184,7 @@ const clickCloseTicket = () => {
     })
   }
   // if (
-  //   (ticketRoomRef.value.ticketRadiologyList || []).find(
+  //   (ticketRef.value.ticketRadiologyList || []).find(
   //     (i) => i.status == TicketRadiologyStatus.Pending,
   //   )
   // ) {
@@ -194,7 +194,7 @@ const clickCloseTicket = () => {
   //   })
   // }
   // if (
-  //   (ticketRoomRef.value.ticketLaboratoryList || []).find(
+  //   (ticketRef.value.ticketLaboratoryList || []).find(
   //     (i) => i.status === TicketLaboratoryStatus.Pending
   //   )
   // ) {
@@ -203,23 +203,20 @@ const clickCloseTicket = () => {
   //     content: 'Cần trả kết quả xét nghiệm trước khi đóng phiếu khám',
   //   })
   // }
-  if (ticketRoomRef.value.paidTotal > ticketRoomRef.value.totalMoney) {
+  if (ticketRef.value.paidTotal > ticketRef.value.totalMoney) {
     return ModalStore.alert({
       title: 'Khách hàng còn thừa tiền tạm ứng',
       content: 'Cần hoàn trả tiền thừa trước khi đóng hồ sơ',
     })
   }
-  if (ticketRoomRef.value.isPaymentEachItem) {
-    if (
-      ticketRoomRef.value.paidTotal + ticketRoomRef.value.debtTotal <
-      ticketRoomRef.value.totalMoney
-    ) {
+  if (ticketRef.value.isPaymentEachItem) {
+    if (ticketRef.value.paidTotal + ticketRef.value.debtTotal < ticketRef.value.totalMoney) {
       return ModalStore.alert({
         title: 'Khách hàng chưa thanh toán đủ',
         content: 'Nếu vẫn muốn kết thúc phiếu, cần ghi nợ những dịch vụ chưa thanh toán',
       })
     }
-    if (ticketRoomRef.value.ticketPaymentDetail.paidWait > 0) {
+    if (ticketRef.value.ticketPaymentDetail.paidWait > 0) {
       return ModalStore.alert({
         title: 'Không thể đóng phiếu khi vẫn còn tiền thừa trong ví tạm',
         content: 'Bắt buộc phải thanh toán hết tiền từ ví tạm vào các dịch vụ chưa thanh toán',
@@ -227,11 +224,8 @@ const clickCloseTicket = () => {
     }
   }
 
-  if (
-    ticketRoomRef.value.paidTotal + ticketRoomRef.value.debtTotal <
-    ticketRoomRef.value.totalMoney
-  ) {
-    if (ticketRoomRef.value.isPaymentEachItem) {
+  if (ticketRef.value.paidTotal + ticketRef.value.debtTotal < ticketRef.value.totalMoney) {
+    if (ticketRef.value.isPaymentEachItem) {
       return ModalStore.alert({
         title: 'Khách hàng chưa thanh toán đủ',
         content: 'Nếu vẫn muốn kết thúc phiếu, cần ghi nợ những dịch vụ chưa thanh toán',
@@ -240,8 +234,14 @@ const clickCloseTicket = () => {
       return ModalStore.confirm({
         title: 'Đóng phiếu khám khi khách hàng chưa thanh toán đủ ?',
         content: [
-          '- Vẫn đóng phiếu khám.',
-          `- Ghi nợ khách hàng: ${formatMoney(ticketRoomRef.value.totalMoney - ticketRoomRef.value.paidTotal)}.`,
+          `- Hiện tại, phiếu khám cần thanh toán tổng là: ${formatMoney(ticketRef.value.totalMoney)}.`,
+          ticketRef.value.paidTotal
+            ? `- Phiếu khám đã thanh toán: ${formatMoney(ticketRef.value.paidTotal)}.`
+            : '',
+          ticketRef.value.debtTotal
+            ? `- Phiếu khám đang ghi nợ: ${formatMoney(ticketRef.value.debtTotal)}.`
+            : '',
+          `===> Xác nhận Ghi nợ khách hàng: ${formatMoney(ticketRef.value.totalMoney - ticketRef.value.paidTotal - ticketRef.value.debtTotal)}.`,
         ],
         okText: 'Xác nhận Đóng phiếu',
         async onOk() {
@@ -256,11 +256,11 @@ const clickCloseTicket = () => {
 
 const disableSendProduct = computed(() => {
   // chỉ được phép khi ở trạng thái đang khám (Executing)
-  if (ticketRoomRef.value.status !== TicketStatus.Executing) {
+  if (ticketRef.value.status !== TicketStatus.Executing) {
     return true
   }
   // chỉ được phép khi có hàng chưa gửi (Pending)
-  if (ticketRoomRef.value.deliveryStatus !== DeliveryStatus.Pending) {
+  if (ticketRef.value.deliveryStatus !== DeliveryStatus.Pending) {
     return true
   }
 
@@ -273,10 +273,10 @@ const validateQuantity = () => {
   }
 
   const ticketProductUnsentList = [
-    ...(ticketRoomRef.value.ticketProductConsumableList || []),
-    ...(ticketRoomRef.value.ticketProductPrescriptionList || []),
+    ...(ticketRef.value.ticketProductConsumableList || []),
+    ...(ticketRef.value.ticketProductPrescriptionList || []),
   ].filter((i) => {
-    return i.deliveryStatus === DeliveryStatus.Pending
+    return i.quantityCompleted === 0
   })
 
   for (let i = 0; i < ticketProductUnsentList.length; i++) {
@@ -317,18 +317,8 @@ const startSendProduct = async () => {
   sendProductLoading.value = true
   try {
     if (!validateQuantity()) return
-
-    const ticketProductUnsentList = [
-      ...(ticketRoomRef.value.ticketProductList || []),
-      ...(ticketRoomRef.value.ticketProductConsumableList || []),
-      ...(ticketRoomRef.value.ticketProductPrescriptionList || []),
-    ].filter((i) => {
-      return i.deliveryStatus === DeliveryStatus.Pending
-    })
-
-    await TicketActionApi.sendProduct({
-      ticketId: ticketRoomRef.value.id,
-      ticketProductIdList: ticketProductUnsentList.map((i) => i.id),
+    await TicketActionApi.shipProductAll({
+      ticketId: ticketRef.value.id,
     })
   } catch (error) {
     console.log('🚀 ~ TicketClinicSummary.vue:184 ~ startSendProduct ~ error:', error)
@@ -338,7 +328,7 @@ const startSendProduct = async () => {
 }
 
 const startReopenVisit = async () => {
-  await TicketActionApi.reopen({ ticketId: ticketRoomRef.value.id })
+  await TicketActionApi.reopen({ ticketId: ticketRef.value.id })
 }
 
 const clickReopenTicket = () => {
@@ -352,21 +342,21 @@ const clickReopenTicket = () => {
 }
 
 const clickDestroyTicket = () => {
-  if ([TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.value.status)) {
+  if ([TicketStatus.Completed, TicketStatus.Debt].includes(ticketRef.value.status)) {
     return ModalStore.alert({
       title: 'Phiếu khám đã đóng',
       content: ['- Bắt buộc MỞ LẠI hồ sơ trước khi HỦY phiếu khám'],
     })
   }
 
-  if (ticketRoomRef.value.deliveryStatus === DeliveryStatus.Delivered) {
+  if (ticketRef.value.deliveryStatus === DeliveryStatus.Delivered) {
     return ModalStore.alert({
       title: 'Đã xuất thuốc - vật tư',
       content: ['- Bắt buộc HOÀN TRẢ thuốc và vật tư trước khi HỦY phiếu khám'],
     })
   }
 
-  const ticketRadiologyComplete = (ticketRoomRef.value.ticketRadiologyList || []).find((i) => {
+  const ticketRadiologyComplete = (ticketRef.value.ticketRadiologyList || []).find((i) => {
     return i.status == TicketRadiologyStatus.Completed
   })
   if (ticketRadiologyComplete) {
@@ -376,7 +366,7 @@ const clickDestroyTicket = () => {
     })
   }
 
-  const ticketProcedureComplete = (ticketRoomRef.value.ticketProcedureList || []).find((i) => {
+  const ticketProcedureComplete = (ticketRef.value.ticketProcedureList || []).find((i) => {
     return i.status == TicketProcedureStatus.Completed
   })
   if (ticketProcedureComplete) {
@@ -386,7 +376,7 @@ const clickDestroyTicket = () => {
     })
   }
 
-  if (ticketRoomRef.value.paidTotal > 0) {
+  if (ticketRef.value.paidTotal > 0) {
     return ModalStore.alert({
       title: 'Khách hàng còn tiền tạm ứng',
       content: 'Cần HOÀN TRẢ tất cả tiền đã thanh toán trước khi HỦY phiếu khám',
@@ -398,83 +388,112 @@ const clickDestroyTicket = () => {
     content: ['- Phiếu khám khi đã xóa không thể phục hồi lại được.', `- Vẫn hủy phiếu khám.`],
     okText: 'Xác nhận XÓA phiếu',
     async onOk() {
-      await TicketActionApi.destroy(ticketRoomRef.value.id)
+      await TicketActionApi.destroy(ticketRef.value.id)
       router.push({ name: 'RoomTicketClinic', params: { roomId: route.params.roomId } })
     },
   })
 }
 
-const clickRefundOverpaid = () => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+const clickCancelDebt = async () => {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
+    return ModalStore.alert({
+      title: 'Trạng thái hồ sơ không hợp lệ ?',
+      content: 'Cần mở lại hồ sơ trước khi hủy nợ',
+    })
+  }
+
+  try {
+    const result = await TicketMoneyApi.changeDebt({
+      customerId: ticketRef.value.customerId,
+      paymentActionType: PaymentActionType.RefundDebt,
+      walletId: '',
+      note: '',
+      changeDebtListBody: [
+        {
+          ticketActionType: TicketActionType.RefundDebt,
+          ticketId: ticketRef.value.id,
+          paid: 0,
+          debt: -ticketRef.value.debtTotal,
+        },
+      ],
+    })
+  } catch (error) {
+    console.log('🚀 ~ TicketClinicDetailContainer.vue:426 ~ cancelDebt ~ error:', error)
+  } finally {
+  }
+}
+
+const clickRefundMoney = () => {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return ModalStore.alert({
       title: 'Trạng thái hồ sơ không hợp lệ ?',
       content: 'Cần mở lại hồ sơ trước khi hoàn trả tiền',
     })
   } else {
     modalTicketPayment.value?.openModal({
-      ticket: ticketRoomRef.value,
+      ticket: ticketRef.value,
       paymentView: PaymentViewType.RefundOverpaid,
     })
   }
 }
 
 const clickRefundTicketItem = () => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return ModalStore.alert({
       title: 'Trạng thái hồ sơ không hợp lệ ?',
       content: 'Cần mở lại hồ sơ trước khi hoàn trả tiền',
     })
   } else {
     modalTicketPaymentItem.value?.openModalByTicket({
-      ticket: ticketRoomRef.value,
+      ticket: ticketRef.value,
       paymentActionType: PaymentActionType.RefundMoney,
     })
   }
 }
 
 const clickDebitTicketItem = () => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return ModalStore.alert({
       title: 'Trạng thái hồ sơ không hợp lệ ?',
       content: 'Cần mở lại hồ sơ trước khi thanh toán',
     })
   } else {
     modalTicketPaymentItem.value?.openModalByTicket({
-      ticket: ticketRoomRef.value,
+      ticket: ticketRef.value,
       paymentActionType: PaymentActionType.Debit,
     })
   }
 }
 
 const clickReturnProduct = () => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return ModalStore.alert({
       title: 'Trạng thái hồ sơ không hợp lệ ?',
       content: 'Cần mở lại hồ sơ trước khi hoàn trả thuốc - vật tư',
     })
   } else {
-    modalTicketReturnProduct.value?.openModal(ticketRoomRef.value)
+    modalTicketReturnProduct.value?.openModal(ticketRef.value)
   }
 }
 
 const startPrintTicketClinicDiagnosis = async () => {
   await TemplateHtmlAction.startPrintTicketClinicDiagnosis({
-    ticket: ticketRoomRef.value,
-    customer: ticketRoomRef.value.customer!,
+    ticket: ticketRef.value,
+    customer: ticketRef.value.customer!,
   })
 }
 
 const startPrintTicketClinicPrescription = async () => {
   await TemplateHtmlAction.startPrintTicketClinicPrescription({
-    ticket: ticketRoomRef.value,
-    customer: ticketRoomRef.value.customer!,
+    ticket: ticketRef.value,
+    customer: ticketRef.value.customer!,
   })
 }
 
 const startPrintTicketClinicAllMoney = async () => {
   await TemplateHtmlAction.startPrintTicketClinicAllMoney({
-    ticket: ticketRoomRef.value,
-    customer: ticketRoomRef.value.customer!,
+    ticket: ticketRef.value,
+    customer: ticketRef.value.customer!,
   })
 }
 </script>
@@ -495,57 +514,54 @@ const startPrintTicketClinicAllMoney = async () => {
       <div class="flex items-center gap-2 text-xl font-medium">
         <IconContacts />
         <span>
-          {{ ticketRoomRef.customer?.fullName }}
+          {{ ticketRef.customer?.fullName }}
         </span>
-        <span v-if="ticketRoomRef.customer!.id">
-          <a @click="modalCustomerDetail?.openModal(ticketRoomRef.customerId)">
+        <span v-if="ticketRef.customer!.id">
+          <a @click="modalCustomerDetail?.openModal(ticketRef.customerId)">
             <IconFileSearch />
           </a>
         </span>
-        <span v-if="ticketRoomRef.customer?.debt" style="color: var(--text-red)">
+        <span v-if="ticketRef.customer?.debt" style="color: var(--text-red)">
           (nợ:
-          <b>{{ formatMoney(ticketRoomRef.customer?.debt) }}</b>
+          <b>{{ formatMoney(ticketRef.customer?.debt) }}</b>
           )
         </span>
-        <VueButton
-          size="small"
-          @click="modalTicketClinicHistory?.openModal(ticketRoomRef.customer!)"
-        >
+        <VueButton size="small" @click="modalTicketClinicHistory?.openModal(ticketRef.customer!)">
           Lịch sử khám
         </VueButton>
       </div>
       <div class="flex items-center gap-2 flex-wrap" style="font-size: 0.9em; color: #555">
         <span>
-          {{ ESString.formatAddress(ticketRoomRef.customer!) }}
+          {{ ESString.formatAddress(ticketRef.customer!) }}
         </span>
-        <span v-if="ticketRoomRef.customer?.getAge">
-          {{ ticketRoomRef.customer?.getAge + ' Tuổi' }}
+        <span v-if="ticketRef.customer?.getAge">
+          {{ ticketRef.customer?.getAge + ' Tuổi' }}
         </span>
-        <div v-if="ticketRoomRef.customer?.phone" class="flex gap-2">
+        <div v-if="ticketRef.customer?.phone" class="flex gap-2">
           <span>SĐT:</span>
-          <a :href="'tel:' + ticketRoomRef.customer?.phone">
-            {{ ESString.formatPhone(ticketRoomRef.customer?.phone) }}
+          <a :href="'tel:' + ticketRef.customer?.phone">
+            {{ ESString.formatPhone(ticketRef.customer?.phone) }}
           </a>
         </div>
       </div>
     </div>
 
     <div
-      v-if="ticketClinicDetailStore.roomRef?.roomSettingObj?.general?.showMoneyTitle"
+      v-if="roomRef?.roomSettingObj?.general?.showMoneyTitle"
       class="ml-auto mx-8 flex flex-wrap items-center gap-8"
     >
       <div
-        v-if="ticketRoomRef.isPaymentEachItem && ticketRoomRef.ticketPaymentDetail.paidWait"
+        v-if="ticketRef.isPaymentEachItem && ticketRef.ticketPaymentDetail.paidWait"
         style="text-align: right"
       >
         <div style="font-weight: bold; color: #555">Ví (tiền chờ)</div>
         <div style="font-weight: bold; font-size: 1.2em; color: violet">
-          {{ formatMoney(ticketRoomRef.ticketPaymentDetail.paidWait) }}
+          {{ formatMoney(ticketRef.ticketPaymentDetail.paidWait) }}
         </div>
       </div>
       <div
         style="text-align: right; cursor: pointer"
-        @click="modalTicketPaymentHistory?.openModal({ ticket: ticketRoomRef, refetch: true })"
+        @click="modalTicketPaymentHistory?.openModal({ ticket: ticketRef, refetch: true })"
         class="hover:opacity-70"
       >
         <div style="font-weight: bold; color: #555">Đã thanh toán</div>
@@ -554,19 +570,19 @@ const startPrintTicketClinicAllMoney = async () => {
           class="flex items-center gap-1"
         >
           <IconExclamationCircle width="14" height="14" />
-          {{ formatMoney(ticketRoomRef.paidTotal) }}
+          {{ formatMoney(ticketRef.paidTotal) }}
         </div>
       </div>
-      <div v-if="ticketRoomRef.debtTotal" style="text-align: right">
+      <div v-if="ticketRef.debtTotal" style="text-align: right">
         <div style="font-weight: bold; color: #555">Ghi nợ</div>
         <div style="font-weight: bold; font-size: 1.2em; color: var(--text-red)">
-          {{ formatMoney(ticketRoomRef.debtTotal) }}
+          {{ formatMoney(ticketRef.debtTotal) }}
         </div>
       </div>
       <div style="text-align: right">
         <div style="font-weight: bold; color: #555">Tổng tiền</div>
         <div style="font-weight: bold; font-size: 1.2em; color: var(--text-green)">
-          {{ formatMoney(ticketRoomRef.totalMoney) }}
+          {{ formatMoney(ticketRef.totalMoney) }}
         </div>
       </div>
     </div>
@@ -574,11 +590,9 @@ const startPrintTicketClinicAllMoney = async () => {
     <div class="mr-2 flex flex-wrap items-center gap-4">
       <VueButton
         v-if="
-          [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Deposited].includes(
-            ticketRoomRef.status,
-          ) &&
+          [TicketStatus.Draft, TicketStatus.Schedule].includes(ticketRef.status) &&
           userPermission[PermissionId.TICKET_START_EXECUTING] &&
-          !!ticketRoomRef.id
+          !!ticketRef.id
         "
         color="blue"
         size="default"
@@ -589,13 +603,13 @@ const startPrintTicketClinicAllMoney = async () => {
         VÀO PHÒNG
       </VueButton>
       <VueButton
-        v-if="ticketRoomRef.isPaymentEachItem"
+        v-if="ticketRef.isPaymentEachItem"
         color="red"
         size="default"
         icon="dollar"
         @click="
           modalTicketPaymentItem?.openModalByTicket({
-            ticket: ticketRoomRef,
+            ticket: ticketRef,
             paymentActionType: PaymentActionType.PaymentMoney,
           })
         "
@@ -604,20 +618,17 @@ const startPrintTicketClinicAllMoney = async () => {
       </VueButton>
       <VueButton
         v-if="
-          !ticketRoomRef.isPaymentEachItem &&
-          [
-            TicketStatus.Schedule,
-            TicketStatus.Draft,
-            TicketStatus.Deposited,
-            TicketStatus.Executing,
-          ].includes(ticketRoomRef.status)
+          !ticketRef.isPaymentEachItem &&
+          [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Executing].includes(
+            ticketRef.status,
+          )
         "
         color="green"
         icon="dollar"
         size="default"
         @click="
           modalTicketPayment?.openModal({
-            ticket: ticketRoomRef,
+            ticket: ticketRef,
             paymentView: PaymentViewType.Prepayment,
           })
         "
@@ -625,15 +636,13 @@ const startPrintTicketClinicAllMoney = async () => {
         <span class="font-bold">THANH TOÁN</span>
       </VueButton>
       <VueButton
-        v-if="
-          !ticketRoomRef.isPaymentEachItem && [TicketStatus.Debt].includes(ticketRoomRef.status)
-        "
+        v-if="!ticketRef.isPaymentEachItem && [TicketStatus.Debt].includes(ticketRef.status)"
         color="green"
         icon="dollar"
         size="default"
         @click="
           modalTicketPayment?.openModal({
-            ticket: ticketRoomRef,
+            ticket: ticketRef,
             paymentView: PaymentViewType.PayDebt,
           })
         "
@@ -642,9 +651,9 @@ const startPrintTicketClinicAllMoney = async () => {
       </VueButton>
       <VueButton
         v-if="
-          ticketRoomRef.deliveryStatus !== DeliveryStatus.NoStock &&
-          userPermission[PermissionId.TICKET_CHANGE_PRODUCT_SEND_PRODUCT] &&
-          ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status)
+          ticketRef.deliveryStatus !== DeliveryStatus.Empty &&
+          userPermission[PermissionId.TICKET_CHANGE_PRODUCT_SHIP_PRODUCT] &&
+          ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status)
         "
         style="margin-left: auto"
         color="green"
@@ -654,13 +663,10 @@ const startPrintTicketClinicAllMoney = async () => {
         size="default"
         @click="startSendProduct"
       >
-        <span v-if="ticketRoomRef.deliveryStatus === DeliveryStatus.Pending" class="font-bold">
+        <span v-if="ticketRef.deliveryStatus === DeliveryStatus.Pending" class="font-bold">
           XUẤT HÀNG
         </span>
-        <span
-          v-else-if="ticketRoomRef.deliveryStatus === DeliveryStatus.Delivered"
-          class="font-bold"
-        >
+        <span v-else-if="ticketRef.deliveryStatus === DeliveryStatus.Delivered" class="font-bold">
           ĐÃ XUẤT HÀNG
         </span>
       </VueButton>
@@ -670,7 +676,7 @@ const startPrintTicketClinicAllMoney = async () => {
         icon="save"
         size="default"
         style="margin-left: -4px; margin-right: -4px"
-        :disabled="![TicketStatus.Executing].includes(ticketRoomRef.status)"
+        :disabled="![TicketStatus.Executing].includes(ticketRef.status)"
         @click="clickCloseTicket"
       >
         <span class="font-bold">KẾT THÚC</span>
@@ -683,10 +689,24 @@ const startPrintTicketClinicAllMoney = async () => {
         </template>
         <div class="vue-menu">
           <a
-            @click="clickRefundOverpaid"
+            @click="clickCancelDebt"
             v-if="
-              !ticketRoomRef.isPaymentEachItem &&
-              [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketRoomRef.status) &&
+              ticketRef.debtTotal &&
+              [TicketStatus.Executing].includes(ticketRef.status) &&
+              userPermission[PermissionId.TICKET_REFUND_MONEY]
+            "
+          >
+            <span class="text-red-500">
+              <IconDollar />
+            </span>
+            <span class="text-red-500 font-bold">HỦY NỢ</span>
+          </a>
+          <a
+            @click="clickRefundMoney"
+            v-if="
+              ticketRef.paidTotal &&
+              !ticketRef.isPaymentEachItem &&
+              [TicketStatus.Executing].includes(ticketRef.status) &&
               userPermission[PermissionId.TICKET_REFUND_MONEY]
             "
           >
@@ -698,8 +718,9 @@ const startPrintTicketClinicAllMoney = async () => {
           <a
             @click="clickRefundTicketItem"
             v-if="
-              ticketRoomRef.isPaymentEachItem &&
-              [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketRoomRef.status) &&
+              ticketRef.paidTotal &&
+              ticketRef.isPaymentEachItem &&
+              [TicketStatus.Executing].includes(ticketRef.status) &&
               userPermission[PermissionId.TICKET_REFUND_MONEY]
             "
           >
@@ -711,8 +732,8 @@ const startPrintTicketClinicAllMoney = async () => {
           <a
             @click="clickDebitTicketItem"
             v-if="
-              ticketRoomRef.isPaymentEachItem &&
-              [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketRoomRef.status) &&
+              ticketRef.isPaymentEachItem &&
+              [TicketStatus.Executing].includes(ticketRef.status) &&
               userPermission[PermissionId.TICKET_PAYMENT_MONEY]
             "
           >
@@ -732,7 +753,7 @@ const startPrintTicketClinicAllMoney = async () => {
           </a>
           <a
             v-if="
-              [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+              [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status) &&
               userPermission[PermissionId.TICKET_REOPEN]
             "
             @click="clickReopenTicket"
@@ -751,7 +772,7 @@ const startPrintTicketClinicAllMoney = async () => {
         </div>
       </VueDropdown>
       <div v-if="CONFIG.MODE === 'development'">
-        <BugDevelopment :data="ticketRoomRef" />
+        <BugDevelopment :data="ticketRef" />
       </div>
 
       <VueDropdown>
@@ -818,12 +839,12 @@ const startPrintTicketClinicAllMoney = async () => {
         <template
           v-if="
             [TicketStatus.Executing, TicketStatus.Debt, TicketStatus.Completed].includes(
-              ticketRoomRef.status,
+              ticketRef.status,
             )
           "
         >
           <VueTabMenu
-            v-if="ticketClinicDetailStore.roomRef?.roomSettingObj?.general?.showMenuConsumable"
+            v-if="roomRef?.roomSettingObj?.general?.showMenuConsumable"
             style="padding: 6px 12px"
             :tabKey="TicketClinicConsumableContainer.__name!"
             @active="router.push({ name: TicketClinicConsumableContainer.__name })"
@@ -832,7 +853,7 @@ const startPrintTicketClinicAllMoney = async () => {
             Vật tư
           </VueTabMenu>
           <VueTabMenu
-            v-if="ticketClinicDetailStore.roomRef?.roomSettingObj?.general?.showMenuLaboratory"
+            v-if="roomRef?.roomSettingObj?.general?.showMenuLaboratory"
             style="padding: 6px 12px"
             :tabKey="TicketClinicLaboratoryContainer.__name!"
             @active="router.push({ name: TicketClinicLaboratoryContainer.__name })"
@@ -841,7 +862,7 @@ const startPrintTicketClinicAllMoney = async () => {
             Xét nghiệm
           </VueTabMenu>
           <VueTabMenu
-            v-if="ticketClinicDetailStore.roomRef?.roomSettingObj?.general?.showMenuRadiology"
+            v-if="roomRef?.roomSettingObj?.general?.showMenuRadiology"
             style="padding: 6px 12px"
             :tabKey="TicketClinicRadiologyContainer.__name!"
             @active="router.push({ name: TicketClinicRadiologyContainer.__name })"
@@ -858,7 +879,7 @@ const startPrintTicketClinicAllMoney = async () => {
             Đơn thuốc
           </VueTabMenu>
           <VueTabMenu
-            v-if="ticketClinicDetailStore.roomRef?.roomSettingObj?.general?.showMenuUser"
+            v-if="roomRef?.roomSettingObj?.general?.showMenuUser"
             style="padding: 6px 12px"
             :tabKey="TicketClinicUserContainer.__name!"
             @active="router.push({ name: TicketClinicUserContainer.__name })"

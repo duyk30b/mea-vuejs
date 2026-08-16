@@ -1,72 +1,124 @@
-import { AxiosInstance } from '../../../core/axios.instance'
+import { AxiosInstance } from '@/core/axios.instance'
+import { PurchaseOrderItem } from '@/modules/purchase-order-item'
 import type { FullResponse } from '../../_base/base-dto'
-import { Distributor } from '../../distributor'
-import { Payment, PaymentActionType } from '../../payment'
 import { PurchaseOrder } from '../purchase-order.model'
+import { PurchaseOrderActionType } from '../purchase-order.type'
+import { PaymentActionType } from '@/modules/payment/payment.type'
 
 export class PurchaseOrderActionApi {
-  static async destroy(purchaseOrderId: string) {
-    const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/destroy`)
-    const { data } = response.data as FullResponse<{ purchaseOrderId: string }>
-    return data
-  }
-
-  static async sendProductAndPaymentAndClose(
-    purchaseOrderId: string,
-    body: {
-      walletId: string
-      paidTotal: number
-      debtTotal: number
-      note: string
-    },
-  ) {
+  static async receiveProductList(props: {
+    purchaseOrderId: string
+    body: { receiveList: { purchaseOrderItemId: string; quantityExecute: number }[] }
+  }) {
+    const { purchaseOrderId } = props
     const response = await AxiosInstance.post(
-      `/purchase-order/${purchaseOrderId}/send-product-and-payment-and-close`,
-      {
-        walletId: body.walletId,
-        paidTotal: body.paidTotal,
-        debtTotal: body.debtTotal, // để ghi nợ ở hành động close cũng được
-        paymentActionType: PaymentActionType.PaymentMoney,
-        note: body.note,
-      },
+      `/purchase-order/${purchaseOrderId}/receive-product-list`,
+      props.body,
     )
     const { data } = response.data as FullResponse<{
       purchaseOrderModified: any
-      distributorModified: any
-      paymentCreatedList: any[]
+      purchaseOrderItemModifiedAll: any[]
     }>
     return {
       purchaseOrderModified: PurchaseOrder.from(data.purchaseOrderModified || {}),
-      paymentCreatedList: Payment.fromList(data.paymentCreatedList),
-      distributorModified: data.distributorModified
-        ? Distributor.from(data.distributorModified)
-        : undefined,
+      purchaseOrderItemModifiedAll: PurchaseOrderItem.fromList(
+        data.purchaseOrderItemModifiedAll || [],
+      ),
     }
   }
 
-  static async sendProduct(options: { purchaseOrderId: string }) {
-    const { purchaseOrderId } = options
-    const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/send-product`)
+  static async receiveProductAll(props: { purchaseOrderId: string }) {
+    const { purchaseOrderId } = props
+    const response = await AxiosInstance.post(
+      `/purchase-order/${purchaseOrderId}/receive-product-all`,
+    )
     const { data } = response.data as FullResponse<{ purchaseOrderModified: any }>
     return {
       purchaseOrderModified: PurchaseOrder.from(data.purchaseOrderModified || {}),
     }
   }
 
-  static async close(options: { purchaseOrderId: string }) {
-    const { purchaseOrderId } = options
+  static async receiveProductAndPaymentAndClose(
+    purchaseOrderId: string,
+    body: {
+      walletId: string
+      paidTotal: number
+      note: string
+    },
+  ) {
+    const response = await AxiosInstance.post(
+      `/purchase-order/${purchaseOrderId}/receive-product-and-payment-and-close`,
+      {
+        walletId: body.walletId,
+        paidTotal: body.paidTotal,
+        paymentActionType: PaymentActionType.PaymentMoney,
+        purchaseOrderActionType: PurchaseOrderActionType.ReceiveProductAndPaymentAndClose,
+        note: body.note,
+      },
+    )
+    const { data } = response.data as FullResponse<{
+      purchaseOrderModified: any
+      purchaseOrderItemModifiedAll: any[]
+    }>
+    return {
+      purchaseOrderModified: PurchaseOrder.from(data.purchaseOrderModified || {}),
+      purchaseOrderItemModifiedAll: PurchaseOrderItem.fromList(
+        data.purchaseOrderItemModifiedAll || [],
+      ),
+    }
+  }
+
+  static async returnProductList(props: {
+    purchaseOrderId: string
+    body: { returnList: { purchaseOrderItemId: string; quantityExecute: number }[] }
+  }) {
+    const { purchaseOrderId } = props
+    const response = await AxiosInstance.post(
+      `/purchase-order/${purchaseOrderId}/return-product-list`,
+      props.body,
+    )
+    const { data } = response.data as FullResponse<{
+      purchaseOrderModified: any
+      purchaseOrderItemModifiedAll: any[]
+    }>
+    return {
+      purchaseOrderModified: PurchaseOrder.from(data.purchaseOrderModified || {}),
+      purchaseOrderItemModifiedAll: PurchaseOrderItem.fromList(
+        data.purchaseOrderItemModifiedAll || [],
+      ),
+    }
+  }
+
+  static async returnProductAll(props: { purchaseOrderId: string }) {
+    const { purchaseOrderId } = props
+    const response = await AxiosInstance.post(
+      `/purchase-order/${purchaseOrderId}/return-product-all`,
+    )
+    const { data } = response.data as FullResponse<{ purchaseOrderModified: any }>
+    return {
+      purchaseOrderModified: PurchaseOrder.from(data.purchaseOrderModified || {}),
+    }
+  }
+
+  static async close(props: { purchaseOrderId: string }) {
+    const { purchaseOrderId } = props
     const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/close`)
     const { data } = response.data as FullResponse<{
       purchaseOrderModified: any
-      paymentCreated: any
-      distributorModified: any
     }>
     return {
       purchaseOrderModified: PurchaseOrder.from(data.purchaseOrderModified),
-      paymentCreated: data.paymentCreated ? Payment.from(data.paymentCreated) : undefined,
-      distributorModified: data.distributorModified
-        ? Distributor.from(data.distributorModified)
-        : undefined,
+    }
+  }
+
+  static async reopen(props: { purchaseOrderId: string }) {
+    const { purchaseOrderId } = props
+    const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/reopen`)
+    const { data } = response.data as FullResponse<{
+      purchaseOrderModified: any
+    }>
+    return {
+      purchaseOrderModified: PurchaseOrder.from(data.purchaseOrderModified),
     }
   }
 
@@ -78,15 +130,16 @@ export class PurchaseOrderActionApi {
     })
     const { data } = response.data as FullResponse<{
       purchaseOrderModified: any
-      paymentCreated: any
       distributorModified: any
     }>
     return {
       purchaseOrderModified: PurchaseOrder.from(data.purchaseOrderModified),
-      paymentCreated: data.paymentCreated ? Payment.from(data.paymentCreated) : undefined,
-      distributorModified: data.distributorModified
-        ? Distributor.from(data.distributorModified)
-        : undefined,
     }
+  }
+
+  static async destroy(purchaseOrderId: string) {
+    const response = await AxiosInstance.post(`/purchase-order/${purchaseOrderId}/destroy`)
+    const { data } = response.data as FullResponse<{ purchaseOrderDestroyed: any }>
+    return data
   }
 }

@@ -10,9 +10,9 @@ import { ESTimer } from '@/utils'
 import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import { onMounted, ref } from 'vue'
 import ModalPurchaseOrderItemUpdate from './ModalPurchaseOrderItemUpdate.vue'
-import { purchaseOrder } from './purchase-order-upsert.store'
 import { CONFIG } from '@/config'
 import { BugDevelopment } from '@/views/component'
+import { purchaseOrderUpsertRef } from './purchase_order_upsert.ref'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalPurchaseOrderItemUpdate = ref<InstanceType<typeof ModalPurchaseOrderItemUpdate>>()
@@ -25,21 +25,21 @@ onMounted(async () => {
 })
 
 const changeItemPosition = (index: number, count: number) => {
-  const temp = purchaseOrder.value.purchaseOrderItemList![index]
-  purchaseOrder.value.purchaseOrderItemList![index] =
-    purchaseOrder.value.purchaseOrderItemList![index + count]
-  purchaseOrder.value.purchaseOrderItemList![index + count] = temp
+  const temp = purchaseOrderUpsertRef.value.purchaseOrderItemList![index]
+  purchaseOrderUpsertRef.value.purchaseOrderItemList![index] =
+    purchaseOrderUpsertRef.value.purchaseOrderItemList![index + count]
+  purchaseOrderUpsertRef.value.purchaseOrderItemList![index + count] = temp
 }
 
 const handleChangePurchaseOrderItemUnitQuantity = (unitQuantity: number, index: number) => {
-  purchaseOrder.value.purchaseOrderItemList![index].unitQuantity = unitQuantity
+  purchaseOrderUpsertRef.value.purchaseOrderItemList![index].unitQuantityFix = unitQuantity
 }
 
 const startRemovePurchaseOrderItem = (_localId: string) => {
-  const index = purchaseOrder.value.purchaseOrderItemList!.findIndex((i) => {
+  const index = purchaseOrderUpsertRef.value.purchaseOrderItemList!.findIndex((i) => {
     return i._localId === _localId
   })
-  purchaseOrder.value.purchaseOrderItemList!.splice(index, 1)
+  purchaseOrderUpsertRef.value.purchaseOrderItemList!.splice(index, 1)
 }
 </script>
 
@@ -59,11 +59,11 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
         </tr>
       </thead>
       <tbody>
-        <tr v-if="purchaseOrder.purchaseOrderItemList!.length === 0">
+        <tr v-if="purchaseOrderUpsertRef.purchaseOrderItemList!.length === 0">
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
         <tr
-          v-for="(purchaseOrderItem, index) in purchaseOrder.purchaseOrderItemList || []"
+          v-for="(purchaseOrderItem, index) in purchaseOrderUpsertRef.purchaseOrderItemList || []"
           :key="index"
         >
           <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
@@ -94,7 +94,7 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
                   margin-top: -0.5rem;
                 "
                 class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
-                :disabled="index === (purchaseOrder.purchaseOrderItemList?.length || 0) - 1"
+                :disabled="index === (purchaseOrderUpsertRef.purchaseOrderItemList?.length || 0) - 1"
                 @click="changeItemPosition(index, 1)"
               >
                 <IconSortDown style="opacity: 0.6" />
@@ -136,16 +136,16 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
           </td>
           <td style="width: 100px">
             <InputNumber
-              v-model:value="purchaseOrderItem.unitQuantity"
+              v-model:value="purchaseOrderItem.unitQuantityFix"
               controlVertical
-              :controlMinusDisable="purchaseOrderItem.unitQuantity === 0"
+              :controlMinusDisable="purchaseOrderItem.unitQuantityFix === 0"
             />
           </td>
           <td class="text-right whitespace-nowrap">
             {{ formatMoney(purchaseOrderItem.unitCostPrice) }}
           </td>
           <td class="text-right whitespace-nowrap">
-            {{ formatMoney(purchaseOrderItem.unitCostPrice * purchaseOrderItem.unitQuantity) }}
+            {{ formatMoney(purchaseOrderItem.unitCostPrice * purchaseOrderItem.unitQuantityFix) }}
           </td>
           <td class="text-center">
             <a
@@ -178,15 +178,15 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
         </tr>
       </thead>
       <tbody>
-        <tr v-if="purchaseOrder.purchaseOrderItemList!.length === 0">
+        <tr v-if="purchaseOrderUpsertRef.purchaseOrderItemList!.length === 0">
           <td colspan="20" class="text-center">Chưa có dữ liệu</td>
         </tr>
         <tr
-          v-for="(purchaseOrderItem, index) in purchaseOrder.purchaseOrderItemList"
+          v-for="(purchaseOrderItem, index) in purchaseOrderUpsertRef.purchaseOrderItemList"
           :key="purchaseOrderItem._localId"
         >
           <td v-if="CONFIG.MODE === 'development'" class="text-center">
-            <BugDevelopment :data="purchaseOrder" />
+            <BugDevelopment :data="purchaseOrderUpsertRef" />
           </td>
           <td>
             <div class="flex flex-col items-center">
@@ -216,7 +216,7 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
                   margin-top: -0.5rem;
                 "
                 class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
-                :disabled="index === (purchaseOrder.purchaseOrderItemList?.length || 0) - 1"
+                :disabled="index === (purchaseOrderUpsertRef.purchaseOrderItemList?.length || 0) - 1"
                 @click="changeItemPosition(index, 1)"
               >
                 <IconSortDown style="opacity: 0.6" />
@@ -263,10 +263,10 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
           </td>
           <td style="width: 150px">
             <InputNumber
-              v-model:value="purchaseOrderItem.unitQuantity"
+              v-model:value="purchaseOrderItem.unitQuantityFix"
               textAlign="right"
               controlHorizontal
-              :controlMinusDisable="purchaseOrderItem.unitQuantity === 0"
+              :controlMinusDisable="purchaseOrderItem.unitQuantityFix === 0"
             />
           </td>
           <td
@@ -279,7 +279,7 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
             {{ formatMoney(purchaseOrderItem.unitCostPrice) }}
           </td>
           <td class="text-right">
-            {{ formatMoney(purchaseOrderItem.unitCostPrice * purchaseOrderItem.unitQuantity) }}
+            {{ formatMoney(purchaseOrderItem.unitCostPrice * purchaseOrderItem.unitQuantityFix) }}
           </td>
           <td class="text-center">
             <a
@@ -307,7 +307,7 @@ const startRemovePurchaseOrderItem = (_localId: string) => {
           ></td>
           <td colspan="4" class="text-right">Tổng tiền hàng:</td>
           <td colspan="2" class="text-right">
-            {{ formatMoney(purchaseOrder.itemsActualMoney) }}
+            {{ formatMoney(purchaseOrderUpsertRef.itemsActualMoney) }}
           </td>
           <td colspan="2"></td>
         </tr>

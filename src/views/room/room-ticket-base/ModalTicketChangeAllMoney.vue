@@ -4,7 +4,7 @@ import { IconClose } from '@/common/icon-antd'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer } from '@/modules/customer'
-import { DeliveryStatus, DiscountType, PaymentMoneyStatus } from '@/modules/enum'
+import { DeliveryStatus, DiscountType, TicketItemPaymentType } from '@/modules/enum'
 import { Ticket, TicketActionApi, TicketService } from '@/modules/ticket'
 import type { TicketLaboratory } from '@/modules/ticket-laboratory'
 import type { TicketProcedure } from '@/modules/ticket-procedure'
@@ -14,7 +14,7 @@ import TicketLaboratoryStatusTooltip from '@/views/room/room-laboratory/TicketLa
 import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadiologyStatusTooltip.vue'
 import TicketDeliveryStatusTooltip from '@/views/room/room-ticket-base/TicketDeliveryStatusTooltip.vue'
 import { computed, ref } from 'vue'
-import PaymentMoneyStatusTooltip from '../../payment/PaymentMoneyStatusTooltip.vue'
+import TicketItemPaymentTypeTooltip from './TicketItemPaymentTypeTooltip.vue'
 
 let ticketOrigin = Ticket.blank()
 const ticket = ref<Ticket>(Ticket.blank())
@@ -106,8 +106,8 @@ const startChangeAllMoney = async () => {
       ticketProcedureList: (ticket.value.ticketProcedureNormalList || [])
         .filter(
           (i) =>
-            ![PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-              i.paymentMoneyStatus,
+            ![TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+              i.ticketItemPaymentType,
             ),
         )
         .map((i) => ({
@@ -124,9 +124,9 @@ const startChangeAllMoney = async () => {
       ]
         .filter(
           (i) =>
-            ![PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-              i.paymentMoneyStatus,
-            ) && i.deliveryStatus !== DeliveryStatus.Delivered,
+            ![TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+              i.ticketItemPaymentType,
+            ) && i.quantityCompleted === 0,
         )
         .map((i) => ({
           id: i.id,
@@ -139,8 +139,8 @@ const startChangeAllMoney = async () => {
       ticketLaboratoryList: (ticket.value.ticketLaboratoryList || [])
         .filter(
           (i) =>
-            ![PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-              i.paymentMoneyStatus,
+            ![TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+              i.ticketItemPaymentType,
             ),
         )
         .map((i) => ({
@@ -155,8 +155,8 @@ const startChangeAllMoney = async () => {
         (ticket.value.ticketRadiologyList || [])
           .filter(
             (i) =>
-              ![PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                i.paymentMoneyStatus,
+              ![TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+                i.ticketItemPaymentType,
               ),
           )
           .map((i) => ({
@@ -310,8 +310,8 @@ defineExpose({ openModal })
                   v-for="(ticketProcedure, index) in ticket.ticketProcedureNormalList"
                   :key="ticketProcedure.id"
                   :style="
-                    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                      ticketProcedure.paymentMoneyStatus,
+                    [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+                      ticketProcedure.ticketItemPaymentType,
                     )
                       ? 'font-style: italic; opacity: 0.7'
                       : ''
@@ -321,8 +321,8 @@ defineExpose({ openModal })
                     {{ index + 1 }}
                   </td>
                   <td>
-                    <PaymentMoneyStatusTooltip
-                      :paymentMoneyStatus="ticketProcedure.paymentMoneyStatus"
+                    <TicketItemPaymentTypeTooltip
+                      :ticketItemPaymentType="ticketProcedure.ticketItemPaymentType"
                     />
                   </td>
                   <td></td>
@@ -338,9 +338,10 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketProcedure.paymentMoneyStatus,
-                        )
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketProcedure.ticketItemPaymentType)
                       "
                     >
                       {{ ticketProcedure.discountPercent }}
@@ -360,9 +361,10 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketProcedure.paymentMoneyStatus,
-                        )
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketProcedure.ticketItemPaymentType)
                       "
                     >
                       {{ ticketProcedure.discountMoney }}
@@ -382,9 +384,10 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketProcedure.paymentMoneyStatus,
-                        )
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketProcedure.ticketItemPaymentType)
                       "
                     >
                       {{ ticketProcedure.actualPrice }}
@@ -403,9 +406,10 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketProcedure.paymentMoneyStatus,
-                        )
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketProcedure.ticketItemPaymentType)
                       "
                     >
                       {{ ticketProcedure.quantity }}
@@ -459,9 +463,9 @@ defineExpose({ openModal })
                   v-for="(ticketConsumable, index) in ticket.ticketProductConsumableList"
                   :key="ticketConsumable.id"
                   :style="
-                    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                      ticketConsumable.paymentMoneyStatus,
-                    ) || ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
+                    [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+                      ticketConsumable.ticketItemPaymentType,
+                    ) || ticketConsumable.quantityCompleted > 0
                       ? 'font-style: italic; opacity: 0.7'
                       : ''
                   "
@@ -470,13 +474,13 @@ defineExpose({ openModal })
                     {{ index + 1 }}
                   </td>
                   <td>
-                    <PaymentMoneyStatusTooltip
-                      :paymentMoneyStatus="ticketConsumable.paymentMoneyStatus"
+                    <TicketItemPaymentTypeTooltip
+                      :ticketItemPaymentType="ticketConsumable.ticketItemPaymentType"
                     />
                   </td>
                   <td class="text-center">
                     <TicketDeliveryStatusTooltip
-                      :deliveryStatus="ticketConsumable.deliveryStatus"
+                      :deliveryStatus="ticketConsumable.deliveryStatusFix"
                     />
                   </td>
                   <td colspan="3">
@@ -491,9 +495,11 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketConsumable.paymentMoneyStatus,
-                        ) || ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketConsumable.ticketItemPaymentType) ||
+                        ticketConsumable.quantityCompleted > 0
                       "
                     >
                       {{ ticketConsumable.discountPercent }}
@@ -517,9 +523,11 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketConsumable.paymentMoneyStatus,
-                        ) || ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketConsumable.ticketItemPaymentType) ||
+                        ticketConsumable.quantityCompleted > 0
                       "
                     >
                       {{ ticketConsumable.unitDiscountMoney }}
@@ -543,9 +551,11 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketConsumable.paymentMoneyStatus,
-                        ) || ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketConsumable.ticketItemPaymentType) ||
+                        ticketConsumable.quantityCompleted > 0
                       "
                     >
                       {{ ticketConsumable.unitActualPrice }}
@@ -565,9 +575,11 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketConsumable.paymentMoneyStatus,
-                        ) || ticketConsumable.deliveryStatus === DeliveryStatus.Delivered
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketConsumable.ticketItemPaymentType) ||
+                        ticketConsumable.quantityCompleted > 0
                       "
                     >
                       {{ ticketConsumable.unitQuantity }}
@@ -625,9 +637,9 @@ defineExpose({ openModal })
                   v-for="(ticketPrescription, index) in ticket.ticketProductPrescriptionList"
                   :key="ticketPrescription.id"
                   :style="
-                    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                      ticketPrescription.paymentMoneyStatus,
-                    ) || ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
+                    [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+                      ticketPrescription.ticketItemPaymentType,
+                    ) || ticketPrescription.quantityCompleted > 0
                       ? 'font-style: italic; opacity: 0.7'
                       : ''
                   "
@@ -636,13 +648,13 @@ defineExpose({ openModal })
                     {{ index + 1 }}
                   </td>
                   <td>
-                    <PaymentMoneyStatusTooltip
-                      :paymentMoneyStatus="ticketPrescription.paymentMoneyStatus"
+                    <TicketItemPaymentTypeTooltip
+                      :ticketItemPaymentType="ticketPrescription.ticketItemPaymentType"
                     />
                   </td>
                   <td class="text-center">
                     <TicketDeliveryStatusTooltip
-                      :deliveryStatus="ticketPrescription.deliveryStatus"
+                      :deliveryStatus="ticketPrescription.deliveryStatusFix"
                     />
                   </td>
                   <td colspan="3">
@@ -657,9 +669,11 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketPrescription.paymentMoneyStatus,
-                        ) || ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketPrescription.ticketItemPaymentType) ||
+                        ticketPrescription.quantityCompleted > 0
                       "
                     >
                       {{ ticketPrescription.discountPercent }}
@@ -683,9 +697,11 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketPrescription.paymentMoneyStatus,
-                        ) || ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketPrescription.ticketItemPaymentType) ||
+                        ticketPrescription.quantityCompleted > 0
                       "
                     >
                       {{ ticketPrescription.unitDiscountMoney }}
@@ -709,9 +725,11 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketPrescription.paymentMoneyStatus,
-                        ) || ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketPrescription.ticketItemPaymentType) ||
+                        ticketPrescription.quantityCompleted > 0
                       "
                     >
                       {{ ticketPrescription.unitActualPrice }}
@@ -735,9 +753,11 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketPrescription.paymentMoneyStatus,
-                        ) || ticketPrescription.deliveryStatus === DeliveryStatus.Delivered
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketPrescription.ticketItemPaymentType) ||
+                        ticketPrescription.quantityCompleted > 0
                       "
                     >
                       {{ ticketPrescription.unitQuantity }}
@@ -797,8 +817,8 @@ defineExpose({ openModal })
                   v-for="(ticketLaboratory, index) in ticket.ticketLaboratoryList"
                   :key="ticketLaboratory.id"
                   :style="
-                    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                      ticketLaboratory.paymentMoneyStatus,
+                    [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+                      ticketLaboratory.ticketItemPaymentType,
                     )
                       ? 'font-style: italic; opacity: 0.7'
                       : ''
@@ -808,8 +828,8 @@ defineExpose({ openModal })
                     {{ index + 1 }}
                   </td>
                   <td>
-                    <PaymentMoneyStatusTooltip
-                      :paymentMoneyStatus="ticketLaboratory.paymentMoneyStatus"
+                    <TicketItemPaymentTypeTooltip
+                      :ticketItemPaymentType="ticketLaboratory.ticketItemPaymentType"
                     />
                   </td>
                   <td class="text-center">
@@ -827,9 +847,10 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketLaboratory.paymentMoneyStatus,
-                        )
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketLaboratory.ticketItemPaymentType)
                       "
                     >
                       {{ ticketLaboratory.discountPercent }}
@@ -848,9 +869,10 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketLaboratory.paymentMoneyStatus,
-                        )
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketLaboratory.ticketItemPaymentType)
                       "
                     >
                       {{ ticketLaboratory.discountMoney }}
@@ -869,9 +891,10 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketLaboratory.paymentMoneyStatus,
-                        )
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketLaboratory.ticketItemPaymentType)
                       "
                     >
                       {{ ticketLaboratory.actualPrice }}
@@ -928,8 +951,8 @@ defineExpose({ openModal })
                   v-for="(ticketRadiology, index) in ticket.ticketRadiologyList"
                   :key="ticketRadiology.id"
                   :style="
-                    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                      ticketRadiology.paymentMoneyStatus,
+                    [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+                      ticketRadiology.ticketItemPaymentType,
                     )
                       ? 'font-style: italic; opacity: 0.7'
                       : ''
@@ -939,8 +962,8 @@ defineExpose({ openModal })
                     {{ index + 1 }}
                   </td>
                   <td>
-                    <PaymentMoneyStatusTooltip
-                      :paymentMoneyStatus="ticketRadiology.paymentMoneyStatus"
+                    <TicketItemPaymentTypeTooltip
+                      :ticketItemPaymentType="ticketRadiology.ticketItemPaymentType"
                     />
                   </td>
                   <td class="text-center">
@@ -958,9 +981,10 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketRadiology.paymentMoneyStatus,
-                        )
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketRadiology.ticketItemPaymentType)
                       "
                     >
                       {{ ticketRadiology.discountPercent }}
@@ -979,9 +1003,10 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketRadiology.paymentMoneyStatus,
-                        )
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketRadiology.ticketItemPaymentType)
                       "
                     >
                       {{ ticketRadiology.discountMoney }}
@@ -1000,9 +1025,10 @@ defineExpose({ openModal })
                   <td class="text-right">
                     <span
                       v-if="
-                        [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                          ticketRadiology.paymentMoneyStatus,
-                        )
+                        [
+                          TicketItemPaymentType.FullPaid,
+                          TicketItemPaymentType.PartialPaid,
+                        ].includes(ticketRadiology.ticketItemPaymentType)
                       "
                     >
                       {{ ticketRadiology.actualPrice }}

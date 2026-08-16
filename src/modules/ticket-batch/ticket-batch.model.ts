@@ -1,8 +1,6 @@
 import { Batch } from '../batch'
 import type { Customer } from '../customer'
-import { DeliveryStatus } from '../enum'
 import { Product } from '../product'
-import type { Ticket } from '../ticket/ticket.model'
 
 export class TicketBatch {
   id: string
@@ -12,14 +10,12 @@ export class TicketBatch {
   warehouseId: number
   productId: number
   batchId: number
-  deliveryStatus: DeliveryStatus
+  quantityCompleted: number
   unitRate: number
-  unitQuantity: number
   costAmount: number
   unitExpectedPrice: number
   unitActualPrice: number
 
-  ticket?: Ticket
   customer?: Customer
   product?: Product | null
   batch?: Batch | null
@@ -35,9 +31,8 @@ export class TicketBatch {
     ins.customerId = 0
     ins.productId = 0
     ins.batchId = 0
-    ins.deliveryStatus = DeliveryStatus.Pending
     ins.unitRate = 1
-    ins.unitQuantity = 0
+    ins.quantityCompleted = 0
     ins.unitExpectedPrice = 0
     ins.unitActualPrice = 0
     return ins
@@ -87,8 +82,7 @@ export class TicketBatch {
     if (a.ticketProductId != b.ticketProductId) return false
     if (a.productId != b.productId) return false
     if (a.batchId != b.batchId) return false
-    if (a.deliveryStatus != b.deliveryStatus) return false
-    if (a.unitQuantity != b.unitQuantity) return false
+    if (a.quantityCompleted != b.quantityCompleted) return false
     if (a.costAmount != b.costAmount) return false
     if (a.unitExpectedPrice != b.unitExpectedPrice) return false
     if (a.unitActualPrice != b.unitActualPrice) return false

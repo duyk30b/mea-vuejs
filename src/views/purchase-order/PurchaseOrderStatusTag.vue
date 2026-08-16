@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import VueTag from '../../common/VueTag.vue'
-import { PurchaseOrder, PurchaseOrderStatus } from '../../modules/purchase-order'
+import VueTag from '@/common/VueTag.vue'
+import { PurchaseOrder } from '@/modules/purchase-order'
+import {
+  PurchaseOrderStatus,
+  PurchaseOrderStatusText,
+} from '@/modules/purchase-order/purchase-order.type'
 
 const props = withDefaults(defineProps<{ purchaseOrder?: PurchaseOrder | undefined }>(), {
   purchaseOrder: undefined,
@@ -14,37 +18,37 @@ const props = withDefaults(defineProps<{ purchaseOrder?: PurchaseOrder | undefin
     color="orange"
     icon="exclamation"
   >
-    Nháp
+    {{ PurchaseOrderStatusText[purchaseOrder.status] }}
   </VueTag>
   <VueTag
-    v-else-if="purchaseOrder.status === PurchaseOrderStatus.Deposited"
+    v-else-if="purchaseOrder.status === PurchaseOrderStatus.Schedule"
     color="blue"
     icon="send"
   >
-    Đặt hàng
+    {{ PurchaseOrderStatusText[purchaseOrder.status] }}
   </VueTag>
   <VueTag
     v-else-if="purchaseOrder.status === PurchaseOrderStatus.Executing"
     color="cyan"
     icon="form"
   >
-    Đang xử lý
+    {{ PurchaseOrderStatusText[purchaseOrder.status] }}
   </VueTag>
   <VueTag v-else-if="purchaseOrder.status === PurchaseOrderStatus.Debt" color="red" icon="minus">
-    Nợ
+    {{ PurchaseOrderStatusText[purchaseOrder.status] }}
   </VueTag>
   <VueTag
     v-else-if="purchaseOrder.status === PurchaseOrderStatus.Completed"
     color="green"
     icon="check"
   >
-    Hoàn thành
+    {{ PurchaseOrderStatusText[purchaseOrder.status] }}
   </VueTag>
   <VueTag
     v-else-if="purchaseOrder.status === PurchaseOrderStatus.Cancelled"
     color="default"
     icon="stop"
   >
-    Hủy
+    {{ PurchaseOrderStatusText[purchaseOrder.status] }}
   </VueTag>
 </template>

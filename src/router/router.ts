@@ -87,22 +87,10 @@ const Router = createRouter({
           ],
         },
         {
-          path: 'finance',
-          name: 'Finance',
-          children: [
-            {
-              path: 'payment-list',
-              name: 'PaymentList',
-              component: () => import('../views/finance/payment/PaymentList.vue'),
-              meta: { title: 'Thu chi' },
-            },
-            {
-              path: 'finance-ticket-list',
-              name: 'FinanceTicketList',
-              component: () => import('../views/finance/finance-ticket/FinanceTicketList.vue'),
-              meta: { title: 'Phòng thu ngân' },
-            },
-          ],
+          path: 'payment-list',
+          name: 'PaymentList',
+          component: () => import('../views/finance/payment/PaymentList.vue'),
+          meta: { title: 'Thu chi' },
         },
         {
           path: 'systems',
@@ -141,7 +129,8 @@ const Router = createRouter({
                 {
                   path: 'list',
                   name: 'RootOrganizationList',
-                  component: () => import('../views/root/root-organization/RootOrganizationList.vue'),
+                  component: () =>
+                    import('../views/root/root-organization/RootOrganizationList.vue'),
                   meta: { title: 'Organization' },
                 },
               ],

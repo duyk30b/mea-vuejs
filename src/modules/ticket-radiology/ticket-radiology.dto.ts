@@ -1,6 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionEnum, ConditionNumber } from '../_base/base-condition'
-import type { PaymentMoneyStatus } from '../enum'
+import type { TicketItemPaymentType } from '../enum'
 import type { TicketRadiologyStatus } from './ticket-radiology.model'
 
 export class TicketRadiologyGetQuery {
@@ -17,7 +17,7 @@ export class TicketRadiologyGetQuery {
 
   filter?: {
     status?: TicketRadiologyStatus | ConditionEnum<TicketRadiologyStatus>
-    paymentMoneyStatus?: PaymentMoneyStatus | ConditionEnum<PaymentMoneyStatus>
+    ticketItemPaymentType?: TicketItemPaymentType | ConditionEnum<TicketItemPaymentType>
     radiologyId?: number
     roomId?: number | ConditionNumber
     customerId?: number

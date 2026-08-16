@@ -10,10 +10,10 @@ import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer, CustomerService } from '@/modules/customer'
-import { PaymentMoneyStatus } from '@/modules/enum'
+import { TicketItemPaymentType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { RadiologyService } from '@/modules/radiology'
-import { Room, roomRadiology, RoomService, RoomType } from '@/modules/room'
+import { Room, RoomService, RoomType } from '@/modules/room'
 import { TemplateHtmlAction } from '@/modules/template-html'
 import {
   TicketRadiology,
@@ -22,7 +22,7 @@ import {
 } from '@/modules/ticket-radiology'
 import { ESString, ESTimer } from '@/utils'
 import Breadcrumb from '@/views/component/Breadcrumb.vue'
-import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import TicketItemPaymentTypeTooltip from '@/views/room/room-ticket-base/TicketItemPaymentTypeTooltip.vue'
 import { onBeforeMount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fromTime, toTime } from '../../room-ticket-base/room-ticket.ref'
@@ -54,9 +54,9 @@ const page = ref(1)
 const limit = ref(Number(localStorage.getItem('TICKET_RADIOLOGY_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
-const paymentMoneyStatus = ref<PaymentMoneyStatus[]>([
-  PaymentMoneyStatus.FullPaid,
-  PaymentMoneyStatus.PartialPaid,
+const ticketItemPaymentType = ref<TicketItemPaymentType[]>([
+  TicketItemPaymentType.FullPaid,
+  TicketItemPaymentType.PartialPaid,
 ])
 
 const radiologyMap = RadiologyService.radiologyMap
@@ -82,8 +82,8 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
         roomId: currentRoom.value.isCommon ? undefined : currentRoom.value.id || 0,
         customerId: customerId.value ? customerId.value : undefined,
         status: status.value ? status.value : undefined,
-        paymentMoneyStatus: paymentMoneyStatus.value.length
-          ? { IN: paymentMoneyStatus.value }
+        ticketItemPaymentType: ticketItemPaymentType.value.length
+          ? { IN: ticketItemPaymentType.value }
           : undefined,
         createdAt:
           fromTime.value || toTime.value
@@ -135,17 +135,19 @@ watch(
 )
 
 let currentRefreshTime = new Date().toISOString()
-watch(
-  () => roomRadiology.value,
-  async (newValue) => {
-    const roomId = currentRoom.value.id
-    if (newValue[roomId] !== currentRefreshTime || currentRoom.value.isCommon) {
-      currentRefreshTime = newValue[roomId]
-      await startFetchData({ noLoading: true })
-    }
-  },
-  { deep: true },
-)
+
+// Nếu sử dụng lại file này cho nhiều phòng, thì khi refresh roomRadiology sẽ bị thay đổi, nên cần watch để refresh lại data
+// watch(
+//   () => roomRadiology.value,
+//   async (newValue) => {
+//     const roomId = currentRoom.value.id
+//     if (newValue[roomId] !== currentRefreshTime || currentRoom.value.isCommon) {
+//       currentRefreshTime = newValue[roomId]
+//       await startFetchData({ noLoading: true })
+//     }
+//   },
+//   { deep: true },
+// )
 
 const handleFocusFirstSearchCustomer = async () => {
   await CustomerService.refreshDB()
@@ -286,15 +288,15 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
         <div>Thanh toán</div>
         <div>
           <VueSelect
-            v-model:value="paymentMoneyStatus"
+            v-model:value="ticketItemPaymentType"
             :options="[
               { value: [], text: 'Tất cả' },
               {
-                value: [PaymentMoneyStatus.PendingPayment, PaymentMoneyStatus.PartialPaid],
+                value: [TicketItemPaymentType.PendingPayment, TicketItemPaymentType.PartialPaid],
                 text: 'Chờ thanh toán',
               },
               {
-                value: [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid],
+                value: [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid],
                 text: 'Đã thanh toán',
               },
             ]"
@@ -387,7 +389,7 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
               </div>
             </td>
             <td>
-              <PaymentMoneyStatusTooltip :paymentMoneyStatus="ticketRadiology.paymentMoneyStatus" />
+              <TicketItemPaymentTypeTooltip :ticketItemPaymentType="ticketRadiology.ticketItemPaymentType" />
             </td>
             <td>
               <div>

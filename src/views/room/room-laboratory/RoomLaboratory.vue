@@ -9,12 +9,12 @@ import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { CustomerService, type Customer } from '@/modules/customer'
-import { PaymentMoneyStatus } from '@/modules/enum'
+import { TicketItemPaymentType } from '@/modules/enum'
 import { Laboratory, LaboratoryService } from '@/modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '@/modules/laboratory-group'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { TemplateHtmlAction } from '@/modules/template-html/template-html.action'
-import { Room, roomLaboratory, RoomService, RoomType } from '@/modules/room'
+import { Room, RoomService, RoomType } from '@/modules/room'
 import {
   TicketLaboratoryGroup,
   TicketLaboratoryGroupApi,
@@ -22,7 +22,7 @@ import {
 } from '@/modules/ticket-laboratory'
 import { ESString, ESTimer } from '@/utils'
 import Breadcrumb from '@/views/component/Breadcrumb.vue'
-import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import TicketItemPaymentTypeTooltip from '@/views/room/room-ticket-base/TicketItemPaymentTypeTooltip.vue'
 import { onBeforeMount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fromTime, toTime } from '../room-ticket-base/room-ticket.ref'
@@ -46,9 +46,9 @@ const dataLoading = ref(false)
 
 const customerId = ref<number>()
 const status = ref<TicketLaboratoryStatus | null>(null)
-const paymentMoneyStatus = ref<PaymentMoneyStatus[]>([
-  PaymentMoneyStatus.FullPaid,
-  PaymentMoneyStatus.PartialPaid,
+const ticketItemPaymentType = ref<TicketItemPaymentType[]>([
+  TicketItemPaymentType.FullPaid,
+  TicketItemPaymentType.PartialPaid,
 ])
 
 const sortColumn = ref<'createdAt' | 'id' | ''>('')
@@ -82,8 +82,8 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
         customerId: customerId.value ? customerId.value : undefined,
         roomId: currentRoom.value.isCommon ? undefined : currentRoom.value.id || 0,
         status: status.value ? status.value : undefined,
-        paymentMoneyStatus: paymentMoneyStatus.value.length
-          ? { IN: paymentMoneyStatus.value }
+        ticketItemPaymentType: ticketItemPaymentType.value.length
+          ? { IN: ticketItemPaymentType.value }
           : undefined,
         createdAt:
           fromTime.value || toTime.value
@@ -139,17 +139,19 @@ onBeforeMount(async () => {
 })
 
 let currentRefreshTime = new Date().toISOString()
-watch(
-  () => roomLaboratory.value,
-  async (newValue) => {
-    const roomId = currentRoom.value.id
-    if (newValue[roomId] !== currentRefreshTime || currentRoom.value.isCommon) {
-      currentRefreshTime = newValue[roomId]
-      await startFetchData({ noLoading: true })
-    }
-  },
-  { deep: true },
-)
+
+// Nếu sử dụng lại file này thì cần dùng watch này để tự động refresh data khi có thay đổi từ các user khác, nhưng hiện tại chưa cần nên tạm comment lại
+// watch(
+//   () => roomLaboratory.value,
+//   async (newValue) => {
+//     const roomId = currentRoom.value.id
+//     if (newValue[roomId] !== currentRefreshTime || currentRoom.value.isCommon) {
+//       currentRefreshTime = newValue[roomId]
+//       await startFetchData({ noLoading: true })
+//     }
+//   },
+//   { deep: true },
+// )
 
 const handleFocusFirstSearchCustomer = async () => {
   await CustomerService.refreshDB()
@@ -304,15 +306,15 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
         <div>Thanh toán</div>
         <div>
           <VueSelect
-            v-model:value="paymentMoneyStatus"
+            v-model:value="ticketItemPaymentType"
             :options="[
               { value: [], text: 'Tất cả' },
               {
-                value: [PaymentMoneyStatus.PendingPayment, PaymentMoneyStatus.PartialPaid],
+                value: [TicketItemPaymentType.PendingPayment, TicketItemPaymentType.PartialPaid],
                 text: 'Chờ thanh toán',
               },
               {
-                value: [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid],
+                value: [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid],
                 text: 'Đã thanh toán',
               },
             ]"
@@ -399,7 +401,7 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
                 <TicketLink :ticketId="tlg.ticketId" :ticket="tlg.ticket" />
               </div>
             </td>
-            <td><PaymentMoneyStatusTooltip :paymentMoneyStatus="tlg.paymentMoneyStatus" /></td>
+            <td><TicketItemPaymentTypeTooltip :ticketItemPaymentType="tlg.ticketItemPaymentType" /></td>
             <td>
               <div>
                 {{ tlg.customer?.fullName }}

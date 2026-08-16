@@ -5,13 +5,11 @@ import { IconEditSquare } from '@/common/icon-google'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
+import { DiscountType, TicketItemPaymentType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { ticketRoomRef } from '@/modules/room'
-import { TicketStatus } from '@/modules/ticket'
 import { TicketProcedureService, TicketProcedureType } from '@/modules/ticket-procedure'
 import { TicketRegimenService } from '@/modules/ticket-regimen'
-import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import TicketItemPaymentTypeTooltip from '@/views/room/room-ticket-base/TicketItemPaymentTypeTooltip.vue'
 import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalRegimenDetail from '@/views/master-data/regimen/detail/ModalRegimenDetail.vue'
 import ModalTicketProcedureUpdate from '@/views/room/room-ticket-clinic/detail/procedure/ModalTicketProcedureUpdateMoney.vue'
@@ -19,6 +17,8 @@ import { computed, onMounted, ref } from 'vue'
 import TicketProcedureStatusTooltip from '../procedure/TicketProcedureStatusTooltip.vue'
 import TicketRegimenStatusTooltip from '../procedure/TicketRegimenStatusTooltip.vue'
 import { VueTooltip } from '@/common/popover'
+import { ticketRef } from '@/store/room.store'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 
 const modalRegimenDetail = ref<InstanceType<typeof ModalRegimenDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
@@ -31,18 +31,18 @@ const { userPermission } = MeService
 onMounted(async () => {
   try {
     await Promise.all([
-      TicketProcedureService.refreshRelation(ticketRoomRef.value.ticketProcedureList || []),
-      TicketRegimenService.refreshRelation(ticketRoomRef.value.ticketRegimenList || []),
-      TicketRegimenService.refreshRelationItem(ticketRoomRef.value.ticketRegimenItemList || []),
+      TicketProcedureService.refreshRelation(ticketRef.value.ticketProcedureList || []),
+      TicketRegimenService.refreshRelation(ticketRef.value.ticketRegimenList || []),
+      TicketRegimenService.refreshRelationItem(ticketRef.value.ticketRegimenItemList || []),
     ])
-    ticketRoomRef.value.refreshTicketProcedureAndRegimen()
+    ticketRef.value.refreshTicketProcedureAndRegimen()
   } catch (error: any) {
     console.log('🚀 ~ TicketClinicProcedureContainer.vue:84 ~ error:', error)
   }
 })
 
 const procedureDiscount = computed(() => {
-  return ticketRoomRef.value.ticketProcedureList?.reduce((acc, item) => {
+  return ticketRef.value.ticketProcedureList?.reduce((acc, item) => {
     return acc + item.discountMoney * item.quantity
   }, 0)
 })
@@ -53,13 +53,13 @@ const procedureDiscount = computed(() => {
   <ModalProcedureDetail ref="modalProcedureDetail" />
   <ModalTicketProcedureUpdate ref="modalTicketProcedureUpdate" />
   <template
-    v-if="ticketRoomRef.ticketProcedureList?.length || ticketRoomRef.ticketRegimenList?.length"
+    v-if="ticketRef.ticketProcedureList?.length || ticketRef.ticketRegimenList?.length"
   >
     <thead>
       <tr>
         <th v-if="CONFIG.MODE === 'development'"></th>
         <th>#</th>
-        <th v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></th>
+        <th v-if="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development'"></th>
         <th></th>
         <th colspan="1">DỊCH VỤ - THỦ THUẬT</th>
         <th></th>
@@ -73,7 +73,7 @@ const procedureDiscount = computed(() => {
     </thead>
     <tbody>
       <template
-        v-for="(ticketRegimen, trIndex) in ticketRoomRef.ticketRegimenList"
+        v-for="(ticketRegimen, trIndex) in ticketRef.ticketRegimenList"
         :key="ticketRegimen.id"
       >
         <tr>
@@ -88,7 +88,7 @@ const procedureDiscount = computed(() => {
           <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
             {{ trIndex + 1 }}
           </td>
-          <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+          <td v-if="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
           <td class="text-center">
             <TicketRegimenStatusTooltip :status="ticketRegimen.status" />
           </td>
@@ -115,7 +115,7 @@ const procedureDiscount = computed(() => {
                   <span>{{ formatMoney(ticketRegimen.actualPrice) }}</span>
                 </div>
               </div>
-              <div v-if="ticketRoomRef.isPaymentEachItem" class="text-right">
+              <div v-if="ticketRef.isPaymentEachItem" class="text-right">
                 <div>Đã thanh toán</div>
                 <div style="font-weight: bold; color: var(--text-green)">
                   {{ formatMoney(ticketRegimen.paid + ticketRegimen.paidItem) }}
@@ -136,7 +136,7 @@ const procedureDiscount = computed(() => {
             </VueTooltip>
           </td>
           <td></td>
-          <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+          <td v-if="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
           <td class="text-center"></td>
           <td colspan="3">
             <div class="flex gap-2">
@@ -179,7 +179,7 @@ const procedureDiscount = computed(() => {
       </template>
 
       <tr
-        v-for="(ticketProcedure, index) in ticketRoomRef.ticketProcedureNormalList"
+        v-for="(ticketProcedure, index) in ticketRef.ticketProcedureNormalList"
         :key="ticketProcedure.id"
       >
         <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
@@ -191,10 +191,10 @@ const procedureDiscount = computed(() => {
           </VueTooltip>
         </td>
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-          {{ index + (ticketRoomRef.ticketRegimenList?.length || 0) + 1 }}
+          {{ index + (ticketRef.ticketRegimenList?.length || 0) + 1 }}
         </td>
-        <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'">
-          <PaymentMoneyStatusTooltip :paymentMoneyStatus="ticketProcedure.paymentMoneyStatus" />
+        <td v-if="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development'">
+          <TicketItemPaymentTypeTooltip :ticketItemPaymentType="ticketProcedure.ticketItemPaymentType" />
         </td>
         <td class="text-center">
           <TicketProcedureStatusTooltip :status="ticketProcedure.status" />
@@ -243,9 +243,9 @@ const procedureDiscount = computed(() => {
         <td class="text-center">
           <a
             v-if="
-              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-              [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                ticketProcedure.paymentMoneyStatus,
+              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status) &&
+              [TicketItemPaymentType.TicketPaid, TicketItemPaymentType.PendingPayment].includes(
+                ticketProcedure.ticketItemPaymentType,
               ) &&
               userPermission[PermissionId.TICKET_CHANGE_PROCEDURE_REQUEST]
             "
@@ -262,7 +262,7 @@ const procedureDiscount = computed(() => {
       </tr>
       <tr>
         <td v-if="CONFIG.MODE === 'development'"></td>
-        <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+        <td v-if="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
         <td class="text-right" colspan="8">
           <div class="flex items-center justify-end gap-2">
             <span class="uppercase">Tiền dịch vụ</span>
@@ -272,7 +272,7 @@ const procedureDiscount = computed(() => {
           </div>
         </td>
         <td class="font-bold text-right whitespace-nowrap" colspan="1">
-          {{ formatMoney(ticketRoomRef.procedureMoney) }}
+          {{ formatMoney(ticketRef.procedureMoney) }}
         </td>
         <td></td>
       </tr>

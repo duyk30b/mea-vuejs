@@ -5,7 +5,7 @@ import {
   SplitBatchByDistributor,
   SplitBatchByExpiryDate,
   SplitBatchByWarehouse,
-} from '../product'
+} from '../product/product.type'
 
 export const SETTING_DEFAULT = {
   isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 900,
@@ -259,7 +259,7 @@ export const SETTING_DEFAULT = {
     roleIdList: [],
     phoneAndAddress: true,
     note: true,
-    paymentList: false,
+    paymentTicketList: false,
     buttonPayment: false,
   },
 

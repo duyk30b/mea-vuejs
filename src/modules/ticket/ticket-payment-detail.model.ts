@@ -19,9 +19,6 @@ export class TicketPaymentDetail {
     ins.paidItem = 0
     ins.paidSurcharge = 0
     ins.paidDiscount = 0
-    ins.debtItem = 0
-    ins.debtSurcharge = 0
-    ins.debtDiscount = 0
     return ins
   }
 

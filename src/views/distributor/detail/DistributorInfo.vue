@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Distributor } from '../../../modules/distributor'
-import { formatPhone } from '../../../utils'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Distributor } from '@/modules/distributor'
+import { formatPhone } from '@/utils'
 
 const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
   distributor: () => Distributor.blank(),

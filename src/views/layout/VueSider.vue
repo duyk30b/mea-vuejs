@@ -169,9 +169,6 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item v-if="userPermission[PermissionId.PURCHASE_ORDER_MENU]" key="PurchaseOrder">
         <router-link :to="{ name: 'PurchaseOrder' }">Nhập hàng</router-link>
       </a-menu-item>
-      <a-menu-item v-if="userPermission[PermissionId.PRODUCT_MENU]" key="DeliveryTicketList">
-        <router-link :to="{ name: 'DeliveryTicketList' }">Chờ xuất hàng</router-link>
-      </a-menu-item>
       <a-menu-item v-if="userPermission[PermissionId.DISTRIBUTOR_MENU]" key="Distributor">
         <router-link :to="{ name: 'Distributor' }">Nhà cung cấp</router-link>
       </a-menu-item>
@@ -187,18 +184,14 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <router-link :to="{ name: 'MasterData' }">Danh mục</router-link>
       </span>
     </a-menu-item>
-    <a-sub-menu v-if="userPermission[PermissionId.PAYMENT_MENU]" key="Finance">
+    <a-menu-item v-if="userPermission[PermissionId.PAYMENT_MENU]" key="PaymentList">
       <template #icon>
         <IconDollar />
       </template>
-      <template #title>Phòng tài chính</template>
-      <a-menu-item key="FinanceTicketList">
-        <router-link :to="{ name: 'FinanceTicketList' }">Chờ thanh toán</router-link>
-      </a-menu-item>
-      <a-menu-item v-if="userPermission[PermissionId.PAYMENT_MENU]" key="PaymentList">
-        <router-link :to="{ name: 'PaymentList' }">Danh sách thu chi</router-link>
-      </a-menu-item>
-    </a-sub-menu>
+      <span>
+        <router-link :to="{ name: 'PaymentList' }">Thu chi</router-link>
+      </span>
+    </a-menu-item>
     <a-sub-menu
       v-if="
         userPermission[PermissionId.STATISTIC_TICKET] ||

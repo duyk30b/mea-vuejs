@@ -1,20 +1,21 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { ConditionDate, ConditionEnum } from '../_base/base-condition'
-import type { PurchaseOrderStatus } from './purchase-order.model'
+import type { ConditionDate, ConditionEnum, ConditionNumber } from '../_base/base-condition'
+import type { PurchaseOrderStatus } from './purchase-order.type'
 
 export class PurchaseOrderGetQuery {
   page?: number
   limit?: number
   relation?: {
     distributor?: boolean
-    paymentList?: boolean
-    purchaseOrderItemList?: { product?: boolean; batch?: boolean } | false
+    paymentPurchaseOrderList?: { payment?: boolean }
+    purchaseOrderItemList?: { product?: boolean; batch?: boolean }
   }
 
   filter?: {
     distributorId?: number
     startedAt?: ConditionDate
     status?: PurchaseOrderStatus | ConditionEnum<PurchaseOrderStatus>
+    debt?: number | ConditionNumber
   }
 
   sort?: {

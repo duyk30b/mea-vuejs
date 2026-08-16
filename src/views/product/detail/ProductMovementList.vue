@@ -224,8 +224,9 @@ const openBlankStockCheckDetail = async (voucherId: string) => {
       <thead>
         <tr>
           <th v-if="CONFIG.MODE === 'development'"></th>
+          <th>Thời gian</th>
           <th>Loại</th>
-          <th>Tên</th>
+          <th>NCC/KH</th>
           <th>Phiếu</th>
           <th>Lô</th>
           <th>Nhập/Xuất</th>
@@ -250,6 +251,11 @@ const openBlankStockCheckDetail = async (voucherId: string) => {
               <pre>{{ JSON.stringify(productMovement, null, 4) }}</pre>
             </VueTooltip>
           </td>
+          <td class="text-center">
+            <div style="white-space: nowrap">
+              {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
+            </div>
+          </td>
           <template v-if="productMovement.movementType === MovementType.PurchaseOrder">
             <td>Nhập hàng</td>
             <td>
@@ -259,13 +265,10 @@ const openBlankStockCheckDetail = async (voucherId: string) => {
               </div>
             </td>
             <td>
-              <div>
-                <PurchaseOrderLink
-                  :purchaseOrder="productMovement.purchaseOrder!"
-                  :purchaseOrderId="productMovement.voucherId"
-                />
-              </div>
-              <div>{{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}</div>
+              <PurchaseOrderLink
+                :purchaseOrder="productMovement.purchaseOrder!"
+                :purchaseOrderId="productMovement.voucherId"
+              />
             </td>
           </template>
           <template v-if="productMovement.movementType === MovementType.Ticket">
@@ -283,7 +286,6 @@ const openBlankStockCheckDetail = async (voucherId: string) => {
                   :ticketId="productMovement.voucherId"
                 />
               </div>
-              <div>{{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}</div>
             </td>
           </template>
           <template v-if="productMovement.movementType === MovementType.UserChange">
@@ -291,11 +293,7 @@ const openBlankStockCheckDetail = async (voucherId: string) => {
             <td>
               <VueTag bg-color="violet">{{ productMovement.user?.fullName }}</VueTag>
             </td>
-            <td>
-              <div>
-                {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
-              </div>
-            </td>
+            <td></td>
           </template>
           <template v-if="productMovement.movementType === MovementType.StockCheck">
             <td>Kiểm hàng</td>
@@ -314,7 +312,6 @@ const openBlankStockCheckDetail = async (voucherId: string) => {
                   <StockCheckStatusTag :stockCheck="productMovement.stockCheck" />
                 </span>
               </div>
-              <div>{{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}</div>
             </td>
           </template>
           <template v-if="productMovement.movementType === MovementType.Excel">
@@ -322,12 +319,8 @@ const openBlankStockCheckDetail = async (voucherId: string) => {
             <td>
               <VueTag bg-color="#1890ff">{{ productMovement.user?.fullName }}</VueTag>
             </td>
-            <td>
-              <div>
-                {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
-              </div>
-            </td>
           </template>
+
           <td class="text-center">B{{ productMovement.batchId }}</td>
           <td class="text-center">
             {{ (productMovement.quantity > 0 ? '+' : '') + productMovement.quantity }}

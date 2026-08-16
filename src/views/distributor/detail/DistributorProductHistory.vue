@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import VuePagination from '@/common/VuePagination.vue'
+import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Distributor } from '@/modules/distributor'
 import { PurchaseOrderItem, PurchaseOrderItemApi } from '@/modules/purchase-order-item'
 import { ESTimer, formatPhone } from '@/utils'
+import { BugDevelopment } from '@/views/component'
+import PurchaseOrderLink from '@/views/purchase-order/PurchaseOrderLink.vue'
 import PurchaseOrderStatusTag from '@/views/purchase-order/PurchaseOrderStatusTag.vue'
 import { ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 
 const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
   distributor: () => Distributor.blank(),
 })
-
-const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -59,14 +59,6 @@ watch(
   },
   { immediate: true },
 )
-
-const openBlankPurchaseOrderDetail = (purchaseOrderId: string) => {
-  const route = router.resolve({
-    name: 'PurchaseOrderDetailContainer',
-    params: { id: purchaseOrderId },
-  })
-  window.open(route.href, '_blank')
-}
 </script>
 
 <template>
@@ -98,13 +90,12 @@ const openBlankPurchaseOrderDetail = (purchaseOrderId: string) => {
               <div class="font-medium">
                 {{ purchaseOrderItem.product!.brandName }}
               </div>
-              <div>
-                <a @click="openBlankPurchaseOrderDetail(purchaseOrderItem.purchaseOrderId)">
-                  NH{{ purchaseOrderItem.purchaseOrderId }}
-                </a>
-                <span class="ml-2">
-                  <PurchaseOrderStatusTag :purchaseOrder="purchaseOrderItem.purchaseOrder" />
-                </span>
+              <div class="flex flex-wrap gap-1 items-center">
+                <PurchaseOrderLink
+                  :purchaseOrder="purchaseOrderItem.purchaseOrder"
+                  :purchaseOrderId="purchaseOrderItem.purchaseOrderId"
+                />
+                <PurchaseOrderStatusTag :purchaseOrder="purchaseOrderItem.purchaseOrder" />
               </div>
               <div style="font-size: 0.8rem">
                 {{
@@ -113,7 +104,7 @@ const openBlankPurchaseOrderDetail = (purchaseOrderId: string) => {
               </div>
             </td>
             <td class="text-center">
-              {{ purchaseOrderItem.unitQuantity }}
+              {{ purchaseOrderItem.unitQuantityFix }}
             </td>
             <td class="text-right">
               <div style="white-space: nowrap">
@@ -128,7 +119,9 @@ const openBlankPurchaseOrderDetail = (purchaseOrderId: string) => {
       <table>
         <thead>
           <tr>
-            <th>HĐ</th>
+            <th v-if="CONFIG.MODE === 'development'"></th>
+            <th>Thời gian</th>
+            <th>Phiếu</th>
             <th>Sản phẩm</th>
             <th>Đơn vị</th>
             <th>S.Lượng</th>
@@ -140,19 +133,21 @@ const openBlankPurchaseOrderDetail = (purchaseOrderId: string) => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(purchaseOrderItem, index) in purchaseOrderItemList" :key="index">
+            <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+              <BugDevelopment :data="purchaseOrderItem" />
+            </td>
+            <td class="text-center">
+              {{
+                ESTimer.timeToText(purchaseOrderItem.purchaseOrder?.startedAt, 'hh:mm DD/MM/YYYY')
+              }}
+            </td>
             <td>
-              <div>
-                <a @click="openBlankPurchaseOrderDetail(purchaseOrderItem.purchaseOrderId)">
-                  NH{{ purchaseOrderItem.purchaseOrderId }}
-                </a>
-                <span class="ml-2">
-                  <PurchaseOrderStatusTag :purchaseOrder="purchaseOrderItem.purchaseOrder" />
-                </span>
-              </div>
-              <div style="font-size: 0.8rem">
-                {{
-                  ESTimer.timeToText(purchaseOrderItem.purchaseOrder?.startedAt, 'hh:mm DD/MM/YYYY')
-                }}
+              <div class="flex flex-wrap gap-1 items-center">
+                <PurchaseOrderLink
+                  :purchaseOrder="purchaseOrderItem.purchaseOrder"
+                  :purchaseOrderId="purchaseOrderItem.purchaseOrderId"
+                />
+                <PurchaseOrderStatusTag :purchaseOrder="purchaseOrderItem.purchaseOrder" />
               </div>
             </td>
             <td>
@@ -164,7 +159,7 @@ const openBlankPurchaseOrderDetail = (purchaseOrderId: string) => {
               {{ purchaseOrderItem.unitName }}
             </td>
             <td class="text-center">
-              {{ purchaseOrderItem.unitQuantity }}
+              {{ purchaseOrderItem.unitQuantityFix }}
             </td>
             <td class="text-right">
               <div style="white-space: nowrap">

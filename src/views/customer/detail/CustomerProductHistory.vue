@@ -31,7 +31,6 @@ const startFetchData = async () => {
       limit: limit.value,
       filter: {
         customerId: props.customerId!,
-        deliveryStatus: {},
       },
       relation: {
         product: true,

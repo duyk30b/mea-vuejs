@@ -13,10 +13,10 @@ import { Procedure, ProcedureService } from '@/modules/procedure'
 import { Product, ProductService } from '@/modules/product'
 import { Radiology, RadiologyService } from '@/modules/radiology'
 import { Role, RoleService } from '@/modules/role'
-import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeUserApi } from '@/modules/ticket'
 import { TicketUser } from '@/modules/ticket-user'
 import { User, UserService } from '@/modules/user'
+import { ticketRef } from '@/store/room.store'
 import { computed, onMounted, ref } from 'vue'
 
 const emit = defineEmits<{
@@ -143,7 +143,7 @@ const clickDestroy = async () => {
     onOk: async () => {
       try {
         await TicketChangeUserApi.destroyTicketUser({
-          ticketId: ticketRoomRef.value.id,
+          ticketId: ticketRef.value.id,
           ticketUserId: ticketUser.value.id,
         })
         emit('success', ticketUser.value, 'DESTROY')
@@ -159,7 +159,7 @@ const updateTicketUser = async () => {
   saveLoading.value = true
   try {
     await TicketChangeUserApi.updateTicketUserCommission({
-      ticketId: ticketRoomRef.value.id,
+      ticketId: ticketRef.value.id,
       ticketUserId: ticketUser.value.id,
       ticketUser: ticketUser.value,
     })

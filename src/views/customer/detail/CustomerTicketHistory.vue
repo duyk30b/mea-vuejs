@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import VuePagination from '@/common/VuePagination.vue'
+import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { Ticket, TicketQueryApi, TicketStatus } from '@/modules/ticket'
+import { Ticket, TicketQueryApi } from '@/modules/ticket'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 import { ESTimer } from '@/utils'
+import { BugDevelopment } from '@/views/component'
 import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
 import { ref, watch } from 'vue'
@@ -63,9 +66,11 @@ watch(
       <table>
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE === 'development'"></th>
+            <th>Thời gian</th>
             <th>Đơn hàng</th>
             <th>Ghi chú</th>
-            <th>Tiền</th>
+            <th>Tổng tiền</th>
           </tr>
         </thead>
         <tbody>
@@ -73,13 +78,16 @@ watch(
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="(ticket, index) in ticketList" :key="index">
+            <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+              <BugDevelopment :data="ticket" />
+            </td>
+            <td class="text-center">
+              {{ ESTimer.timeToText(ticket.createdAt, 'hh:mm DD/MM/YYYY') }}
+            </td>
             <td>
               <div class="flex gap-1 items-center">
                 <TicketLink :ticket="ticket!" :ticketId="ticket.id" target="_blank" />
                 <TicketStatusTag :ticket="ticket!" :ticketId="ticket.id" />
-              </div>
-              <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ ESTimer.timeToText(ticket.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td>
@@ -91,9 +99,6 @@ watch(
               </div>
               <div v-if="ticket.debtTotal" class="text-xs">
                 Nợ: {{ formatMoney(ticket.debtTotal) }}
-              </div>
-              <div v-if="ticket.status === TicketStatus.Deposited" class="text-xs">
-                Đã thanh toán: {{ formatMoney(ticket.paidTotal) }}
               </div>
             </td>
           </tr>

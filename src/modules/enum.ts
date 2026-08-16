@@ -34,21 +34,19 @@ export enum PickupStrategy {
 }
 
 export enum DeliveryStatus {
-  NoStock = 1,
+  Empty = 1, // không có hàng trong phiếu, không thể giao hàng
   Pending = 2,
-  Delivered = 3,
-  // Returned = 4,
-  // PartiallyReturned = 4,
-  // FullyReturned = 5,
+  Partial = 3,
+  Delivered = 4,
+  Cancelled = 5,
 }
 
 export const DeliveryStatusText = {
-  [DeliveryStatus.NoStock]: 'Không có hàng',
+  [DeliveryStatus.Empty]: 'Không có hàng',
   [DeliveryStatus.Pending]: 'Chưa gửi hàng',
+  [DeliveryStatus.Partial]: 'Gửi hàng một phần',
   [DeliveryStatus.Delivered]: 'Đã gửi hàng',
-  // Returned = 4,
-  // PartiallyReturned = 4,
-  // FullyReturned = 5,
+  [DeliveryStatus.Cancelled]: 'Đã hủy',
 }
 
 export enum PaymentViewType {
@@ -72,7 +70,7 @@ export enum AttributeLayoutType {
   InputAndLabelLeft = 'Input và Nhãn bên trái',
 }
 
-export enum PaymentMoneyStatus {
+export enum TicketItemPaymentType {
   NoEffect = -1, // không cần thanh toán, không cộng tiền (trường hợp vật tư tiêu hao của dịch vụ)
   TicketPaid = 1,
   PendingPayment = 2,
@@ -80,3 +78,4 @@ export enum PaymentMoneyStatus {
   FullPaid = 4,
   Debt = 5,
 }
+

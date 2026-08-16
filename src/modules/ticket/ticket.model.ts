@@ -6,8 +6,8 @@ import { CustomerSource } from '../customer_source'
 import { DeliveryStatus, DiscountType } from '../enum'
 import { Expense } from '../expense'
 import { Image } from '../image/image.model'
-import { Payment } from '../payment'
-import { PositionType } from '../position'
+import { PaymentTicket } from '../payment_ticket'
+import { PositionType } from '../position/position.type'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
 import { TicketAttribute } from '../ticket-attribute'
@@ -29,16 +29,7 @@ import { TicketSurchargeService } from '../ticket-surcharge'
 import { TicketSurcharge } from '../ticket-surcharge/ticket-surcharge.model'
 import { TicketUser, TicketUserService } from '../ticket-user'
 import type { TicketPaymentDetail } from './ticket-payment-detail.model'
-
-export enum TicketStatus {
-  Schedule = 1,
-  Draft = 2,
-  Deposited = 3,
-  Executing = 4,
-  Debt = 5,
-  Completed = 6,
-  Cancelled = 7,
-}
+import { TicketStatus } from './ticket.type'
 
 export class Ticket {
   id: string
@@ -49,6 +40,11 @@ export class Ticket {
   isPaymentEachItem: number
   status: TicketStatus
   deliveryStatus: DeliveryStatus
+
+  year: number
+  month: number
+  date: number
+  dailyIndex: number
 
   itemsCostAmount: number
   procedureMoney: number
@@ -74,11 +70,6 @@ export class Ticket {
 
   imageDiagnosisIds: string
 
-  year: number
-  month: number
-  date: number
-  dailyIndex: number
-
   note: string
 
   createdAt: number // Giờ đăng ký khám
@@ -86,7 +77,7 @@ export class Ticket {
   endedAt: number
 
   customer?: Customer
-  paymentList?: Payment[]
+  paymentTicketList?: PaymentTicket[]
   customerSource?: CustomerSource
   toAppointment?: Appointment
 
@@ -162,7 +153,7 @@ export class Ticket {
   static blank(): Ticket {
     const ins = Ticket.init()
     ins.customer = Customer.init() // Uncaught ReferenceError: Cannot access 'Customer' before initialization
-    ins.paymentList = []
+    ins.paymentTicketList = []
 
     ins.ticketReceptionList = []
 
@@ -415,8 +406,8 @@ export class Ticket {
         : target.toAppointment
     }
 
-    if (source.paymentList) {
-      target.paymentList = Payment.basicList(source.paymentList)
+    if (source.paymentTicketList) {
+      target.paymentTicketList = PaymentTicket.basicList(source.paymentTicketList)
     }
     if (source.ticketProductList) {
       target.ticketProductList = TicketProduct.basicList(source.ticketProductList)

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
 import {
+  IconBug,
   IconCloseCircle,
   IconCopy,
   IconDollar,
@@ -19,24 +20,26 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus, DeliveryStatusText, PaymentViewType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { TemplateHtmlAction } from '@/modules/template-html'
 import {
   PurchaseOrder,
   PurchaseOrderActionApi,
   PurchaseOrderQueryApi,
-  PurchaseOrderStatus,
 } from '@/modules/purchase-order'
+import { TemplateHtmlAction } from '@/modules/template-html'
+import { purchaseOrderDetailRef } from '@/store/purchase-order.store'
 import { timeToText } from '@/utils'
 import { onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDetail.vue'
 import PurchaseOrderStatusTag from '../PurchaseOrderStatusTag.vue'
-import { EPurchaseOrderUpsertMode } from '../upsert/purchase-order-upsert.store'
 import ModalPurchaseOrderDetailSettingScreen from './ModalPurchaseOrderDetailSettingScreen.vue'
 import ModalPurchaseOrderPayment from './ModalPurchaseOrderPayment.vue'
-import PurchaseOrderDetailTable from './PurchaseOrderDetailTable.vue'
-import { purchaseOrder } from './purchase-order-detail.ref'
 import ModalPurchaseOrderTerminal from './ModalPurchaseOrderTerminal.vue'
+import PurchaseOrderDetailTable from './PurchaseOrderDetailTable.vue'
+import { CONFIG } from '@/config'
+import { VueTooltip } from '@/common/popover'
+import { PurchaseOrderStatus } from '@/modules/purchase-order/purchase-order.type'
+import { EPurchaseOrderUpsertMode } from '../upsert/purchase_order_upsert.ref'
 
 const modalPurchaseOrderDetailSettingScreen =
   ref<InstanceType<typeof ModalPurchaseOrderDetailSettingScreen>>()
@@ -52,16 +55,15 @@ const { formatMoney } = settingStore
 const { userPermission } = MeService
 
 const saveLoading = ref(false)
-
 const loadingProcess = ref(false)
 
 const startFetchData = async (purchaseOrderId: string) => {
   try {
-    purchaseOrder.value = await PurchaseOrderQueryApi.detail(purchaseOrderId, {
+    purchaseOrderDetailRef.value = await PurchaseOrderQueryApi.detail(purchaseOrderId, {
       relation: {
         distributor: true,
         purchaseOrderItemList: { product: true, batch: true },
-        paymentList: true,
+        paymentPurchaseOrderList: { payment: true },
       },
     })
   } catch (error) {
@@ -77,13 +79,13 @@ onBeforeMount(async () => {
 })
 
 onUnmounted(() => {
-  purchaseOrder.value = PurchaseOrder.blank()
+  purchaseOrderDetailRef.value = PurchaseOrder.blank()
 })
 
 const startEdit = () => {
   router.push({
     name: 'PurchaseOrderUpsertContainer',
-    params: { id: purchaseOrder.value.id },
+    params: { id: purchaseOrderDetailRef.value.id },
     query: { mode: EPurchaseOrderUpsertMode.UPDATE },
   })
 }
@@ -91,20 +93,20 @@ const startEdit = () => {
 const startCopy = () => {
   router.push({
     name: 'PurchaseOrderUpsertContainer',
-    params: { id: purchaseOrder.value.id },
+    params: { id: purchaseOrderDetailRef.value.id },
     query: { mode: EPurchaseOrderUpsertMode.COPY },
   })
 }
 
-const sendProduct = async () => {
+const receiveProductAll = async () => {
   try {
     loadingProcess.value = true
-    const result = await PurchaseOrderActionApi.sendProduct({
-      purchaseOrderId: purchaseOrder.value.id!,
+    const result = await PurchaseOrderActionApi.receiveProductAll({
+      purchaseOrderId: purchaseOrderDetailRef.value.id!,
     })
-    Object.assign(purchaseOrder.value, result.purchaseOrderModified)
+    Object.assign(purchaseOrderDetailRef.value, result.purchaseOrderModified)
   } catch (error) {
-    console.log('🚀 ~ startShipAndPayment ~ error:', error)
+    console.log('🚀 ~ receiveProductAll ~ error:', error)
   } finally {
     loadingProcess.value = false
   }
@@ -113,11 +115,10 @@ const sendProduct = async () => {
 const close = async () => {
   try {
     loadingProcess.value = true
-    const result = await PurchaseOrderActionApi.close({ purchaseOrderId: purchaseOrder.value.id! })
-    Object.assign(purchaseOrder.value, result.purchaseOrderModified)
-    if (result.paymentCreated) {
-      purchaseOrder.value.paymentList?.push(result.paymentCreated)
-    }
+    const result = await PurchaseOrderActionApi.close({
+      purchaseOrderId: purchaseOrderDetailRef.value.id!,
+    })
+    Object.assign(purchaseOrderDetailRef.value, result.purchaseOrderModified)
   } catch (error) {
     console.log('🚀 ~ PurchaseOrderDetail.vue:124 ~ close ~ error:', error)
   } finally {
@@ -132,7 +133,7 @@ const clickDestroy = () => {
     async onOk() {
       try {
         loadingProcess.value = true
-        await PurchaseOrderActionApi.destroy(purchaseOrder.value.id!)
+        await PurchaseOrderActionApi.destroy(purchaseOrderDetailRef.value.id!)
         AlertStore.add({ type: 'success', message: 'Xóa phiếu thành công', time: 1000 })
         router.push({ name: 'PurchaseOrderList' })
       } catch (error) {
@@ -173,11 +174,19 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
         <IconGroup />
         Thông tin phiếu nhập hàng
         <span
-          v-if="purchaseOrder.status === PurchaseOrderStatus.Cancelled"
+          v-if="purchaseOrderDetailRef.status === PurchaseOrderStatus.Cancelled"
           style="color: var(--text-red)"
         >
           (Đơn đã bị hủy)
         </span>
+      </div>
+      <div v-if="CONFIG.MODE === 'development'">
+        <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
+          <template #trigger>
+            <IconBug style="color: violet; cursor: pointer" width="1.4em" height="1.4em" />
+          </template>
+          <pre>{{ JSON.stringify(purchaseOrderDetailRef, null, 4) }}</pre>
+        </VueTooltip>
       </div>
       <div>
         <VueButton
@@ -196,7 +205,7 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
       </div>
     </div>
 
-    <div class="mr-2 flex items-center gap-8">
+    <div class="mr-2 flex flex-wrap items-center gap-4">
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">
@@ -221,38 +230,49 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
         <tr>
           <td class="px-2 py-1 whitespace-nowrap" style="width: 120px">Nhà cung cấp</td>
           <td class="font-medium px-2 py-1">
-            {{ purchaseOrder.distributor?.fullName }}
-            <a class="ml-1" @click="openModalDistributorDetail(purchaseOrder.distributorId)">
-              <IconFileSearch />
-            </a>
+            <div class="flex flex-wrap gap-1">
+              <div>
+                <span>
+                  {{ purchaseOrderDetailRef.distributor?.fullName }}
+                </span>
+                <a class="ml-1" @click="openModalDistributorDetail(purchaseOrderDetailRef.distributorId)">
+                  <IconFileSearch />
+                </a>
+              </div>
+              <div v-if="purchaseOrderDetailRef.distributor?.debt" style="color: var(--text-red)">
+                (nợ:
+                <b>{{ formatMoney(purchaseOrderDetailRef.distributor?.debt) }}</b>
+                )
+              </div>
+            </div>
           </td>
         </tr>
         <tr>
           <td class="px-2 py-1 whitespace-nowrap">Mã phiếu</td>
-          <td class="px-2 py-1">NH{{ purchaseOrder.id }}</td>
+          <td class="px-2 py-1">NH{{ purchaseOrderDetailRef.id }}</td>
         </tr>
         <tr>
           <td class="px-2 py-1 whitespace-nowrap">T.Gian tạo</td>
           <td class="px-2 py-1">
-            {{ timeToText(purchaseOrder.startedAt, 'hh:mm DD/MM/YY') }}
+            {{ timeToText(purchaseOrderDetailRef.startedAt, 'hh:mm DD/MM/YY') }}
           </td>
         </tr>
         <tr>
           <td class="px-2 py-1 whitespace-nowrap align-top">Trạng thái</td>
           <td class="px-2 py-1">
             <div class="flex items-center gap-4">
-              <PurchaseOrderStatusTag :purchaseOrder="purchaseOrder" />
+              <PurchaseOrderStatusTag :purchaseOrder="purchaseOrderDetailRef" />
               <span
                 v-if="
                   ![
                     PurchaseOrderStatus.Debt,
                     PurchaseOrderStatus.Completed,
                     PurchaseOrderStatus.Cancelled,
-                  ].includes(purchaseOrder.status)
+                  ].includes(purchaseOrderDetailRef.status)
                 "
                 style="color: #555; font-style: italic"
               >
-                ({{ DeliveryStatusText[purchaseOrder.deliveryStatus] }})
+                ({{ DeliveryStatusText[purchaseOrderDetailRef.deliveryStatus] }})
               </span>
             </div>
           </td>
@@ -260,7 +280,7 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
         <tr>
           <td class="px-2 py-1 whitespace-nowrap">Ghi chú</td>
           <td class="px-2 py-1">
-            {{ purchaseOrder.note }}
+            {{ purchaseOrderDetailRef.note }}
           </td>
         </tr>
       </tbody>
@@ -275,9 +295,9 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
             userPermission[PermissionId.PURCHASE_ORDER_PAYMENT_MONEY] &&
             [
               PurchaseOrderStatus.Draft,
-              PurchaseOrderStatus.Deposited,
+              PurchaseOrderStatus.Schedule,
               PurchaseOrderStatus.Executing,
-            ].includes(purchaseOrder.status)
+            ].includes(purchaseOrderDetailRef.status)
           "
           color="green"
           icon="dollar"
@@ -285,7 +305,7 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
         >
           Tạm ứng
         </VueButton>
-        <VueButton icon="print" @click="startPrintPurchaseOrderDetail(purchaseOrder)">In</VueButton>
+        <VueButton icon="print" @click="startPrintPurchaseOrderDetail(purchaseOrderDetailRef)">In</VueButton>
       </div>
       <div class="flex items-center gap-2">
         <VueButton v-if="userPermission[PermissionId.PURCHASE_ORDER_DRAFT_CRUD]" @click="startCopy">
@@ -295,7 +315,7 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
         <VueButton
           v-if="
             userPermission[PermissionId.PURCHASE_ORDER_DRAFT_CRUD] &&
-            [PurchaseOrderStatus.Draft].includes(purchaseOrder.status)
+            [PurchaseOrderStatus.Draft].includes(purchaseOrderDetailRef.status)
           "
           color="blue"
           @click="startEdit"
@@ -306,7 +326,7 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
         <VueButton
           v-if="
             userPermission[PermissionId.PURCHASE_ORDER_DRAFT_CRUD] &&
-            [PurchaseOrderStatus.Deposited].includes(purchaseOrder.status)
+            [PurchaseOrderStatus.Schedule].includes(purchaseOrderDetailRef.status)
           "
           color="blue"
           @click="startEdit"
@@ -326,11 +346,11 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
               v-if="
                 userPermission[PermissionId.PURCHASE_ORDER_TERMINATE] &&
                 [
-                  PurchaseOrderStatus.Deposited,
+                  PurchaseOrderStatus.Schedule,
                   PurchaseOrderStatus.Executing,
                   PurchaseOrderStatus.Debt,
                   PurchaseOrderStatus.Completed,
-                ].includes(purchaseOrder.status)
+                ].includes(purchaseOrderDetailRef.status)
               "
               @click="modalPurchaseOrderTerminal?.openModal()"
             >
@@ -341,7 +361,7 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
               style="color: red"
               v-if="
                 userPermission[PermissionId.PURCHASE_ORDER_DRAFT_CRUD] &&
-                purchaseOrder.status === PurchaseOrderStatus.Draft
+                purchaseOrderDetailRef.status === PurchaseOrderStatus.Draft
               "
               @click="clickDestroy()"
             >
@@ -352,8 +372,8 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
               style="color: red"
               v-if="
                 userPermission[PermissionId.PURCHASE_ORDER_DRAFT_CRUD] &&
-                purchaseOrder.status === PurchaseOrderStatus.Deposited &&
-                purchaseOrder.paid === 0
+                purchaseOrderDetailRef.status === PurchaseOrderStatus.Schedule &&
+                purchaseOrderDetailRef.paid === 0
               "
               @click="clickDestroy()"
             >
@@ -365,7 +385,7 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
               style="color: red"
               v-if="
                 userPermission[PermissionId.PURCHASE_ORDER_CANCELLED_DESTROY] &&
-                purchaseOrder.status === PurchaseOrderStatus.Cancelled
+                purchaseOrderDetailRef.status === PurchaseOrderStatus.Cancelled
               "
               @click="clickDestroy()"
             >
@@ -384,10 +404,10 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
     </div>
 
     <div class="flex justify-center gap-4 my-4">
-      <template v-if="purchaseOrder.status === PurchaseOrderStatus.Draft">
+      <template v-if="purchaseOrderDetailRef.status === PurchaseOrderStatus.Draft">
         <VueButton
           v-if="
-            userPermission[PermissionId.PURCHASE_ORDER_SEND_PRODUCT] &&
+            userPermission[PermissionId.PURCHASE_ORDER_RECEIVE_PRODUCT] &&
             userPermission[PermissionId.PURCHASE_ORDER_PAYMENT_MONEY]
           "
           color="blue"
@@ -402,27 +422,27 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
 
       <template
         v-if="
-          [PurchaseOrderStatus.Deposited, PurchaseOrderStatus.Executing].includes(
-            purchaseOrder.status,
+          [PurchaseOrderStatus.Schedule, PurchaseOrderStatus.Executing].includes(
+            purchaseOrderDetailRef.status,
           )
         "
       >
         <VueButton
           v-if="
-            purchaseOrder.deliveryStatus === DeliveryStatus.Pending &&
-            userPermission[PermissionId.PURCHASE_ORDER_SEND_PRODUCT]
+            purchaseOrderDetailRef.deliveryStatus === DeliveryStatus.Pending &&
+            userPermission[PermissionId.PURCHASE_ORDER_RECEIVE_PRODUCT]
           "
           color="blue"
           :loading="loadingProcess"
           icon="send"
-          @click="sendProduct"
+          @click="receiveProductAll"
         >
           Nhập hàng
         </VueButton>
 
         <VueButton
           v-if="
-            purchaseOrder.paid > purchaseOrder.totalMoney &&
+            purchaseOrderDetailRef.paid > purchaseOrderDetailRef.totalMoney &&
             userPermission[PermissionId.PURCHASE_ORDER_REFUND_MONEY]
           "
           color="green"
@@ -434,8 +454,8 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
 
         <VueButton
           v-if="
-            purchaseOrder.deliveryStatus === DeliveryStatus.Delivered &&
-            purchaseOrder.paid <= purchaseOrder.totalMoney &&
+            purchaseOrderDetailRef.deliveryStatus === DeliveryStatus.Delivered &&
+            purchaseOrderDetailRef.paid <= purchaseOrderDetailRef.totalMoney &&
             userPermission[PermissionId.PURCHASE_ORDER_CLOSE]
           "
           color="blue"
@@ -443,12 +463,17 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderData: PurchaseOrder) =
           @click="close()"
         >
           <IconFileDone />
-          <span v-if="purchaseOrder.debt > 0">Đóng phiếu và Ghi nợ</span>
-          <span v-else>Kết thúc</span>
+          <span v-if="purchaseOrderDetailRef.paid === purchaseOrderDetailRef.totalMoney && purchaseOrderDetailRef.debt === 0">
+            Kết thúc
+          </span>
+          <span v-else-if="purchaseOrderDetailRef.paid + purchaseOrderDetailRef.debt < purchaseOrderDetailRef.totalMoney">
+            Đóng phiếu và Ghi nợ
+          </span>
+          <span v-else>Đóng phiếu</span>
         </VueButton>
       </template>
 
-      <template v-if="purchaseOrder.status === PurchaseOrderStatus.Debt">
+      <template v-if="purchaseOrderDetailRef.status === PurchaseOrderStatus.Debt">
         <VueButton
           v-if="userPermission[PermissionId.PURCHASE_ORDER_PAYMENT_MONEY]"
           color="blue"

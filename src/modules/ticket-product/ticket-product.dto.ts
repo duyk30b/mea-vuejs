@@ -1,6 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionEnum } from '../_base/base-condition'
-import type { DeliveryStatus, PaymentMoneyStatus } from '../enum'
+import type { DeliveryStatus, TicketItemPaymentType } from '../enum'
 
 export class TicketProductGetQuery {
   page: number
@@ -15,8 +15,7 @@ export class TicketProductGetQuery {
     ticketId?: string
     customerId?: number
     productId?: number
-    deliveryStatus?: DeliveryStatus | ConditionEnum<DeliveryStatus>
-    paymentMoneyStatus?: PaymentMoneyStatus | ConditionEnum<PaymentMoneyStatus>
+    ticketItemPaymentType?: TicketItemPaymentType | ConditionEnum<TicketItemPaymentType>
     createdAt?: ConditionDate
   }
 

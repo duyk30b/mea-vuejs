@@ -1,6 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionEnum, ConditionNumber } from '../_base/base-condition'
-import type { PaymentMoneyStatus } from '../enum'
+import type { TicketItemPaymentType } from '../enum'
 
 export class TicketRegimenGetQuery {
   page: number

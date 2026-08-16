@@ -3,7 +3,8 @@
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
 import VueModal from '@/common/vue-modal/VueModal.vue'
-import { PaymentApi, PaymentService, PaymentVoucherType } from '@/modules/payment'
+import { PaymentTicketApi } from '@/modules/payment_ticket/payment_ticket.api'
+import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
 import { Ticket } from '@/modules/ticket'
 import TicketPaymentList from '@/views/room/room-ticket-base/TicketPaymentList.vue'
 import { ref } from 'vue'
@@ -16,16 +17,24 @@ const openModal = async (options: { ticket: Ticket; refetch?: boolean }) => {
   showModal.value = true
   ticket.value = Ticket.from(options.ticket)
   if (options.refetch) {
-    const paymentList = await PaymentApi.list({
+    const paymentTicketList = await PaymentTicketApi.list({
       filter: {
-        voucherId: ticket.value.id,
-        voucherType: PaymentVoucherType.Ticket,
+        ticketId: ticket.value.id,
       },
-      relation: { paymentTicketItemList: true },
+      relation: {
+        payment: true,
+        // ticket: true,
+        // ticketRegimen: { regimen: false },
+        // ticketProcedure: { procedure: false },
+        // ticketProductConsumable: { product: false },
+        // ticketProductPrescription: { product: false },
+        // ticketLaboratoryGroup: { laboratoryGroup: false },
+        // ticketRadiology: { radiology: false },
+      },
       sort: { id: 'ASC' },
     })
-    await PaymentService.refreshRelation(paymentList)
-    ticket.value.paymentList = paymentList
+    await PaymentTicketService.refreshRelation(paymentTicketList)
+    ticket.value.paymentTicketList = paymentTicketList
   }
 }
 

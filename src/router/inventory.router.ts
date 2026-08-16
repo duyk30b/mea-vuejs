@@ -13,12 +13,6 @@ export const inventoryRouter: RouteRecordRaw = {
       meta: { title: 'Sản phẩm' },
     },
     {
-      path: 'delivery-ticket-list',
-      name: 'DeliveryTicketList',
-      component: () => import('../views/inventory/delivery/DeliveryTicketList.vue'),
-      meta: { title: 'Chờ xuất hàng' },
-    },
-    {
       path: 'purchase-order',
       name: 'PurchaseOrder',
       redirect: () => ({ name: 'PurchaseOrderList' }),

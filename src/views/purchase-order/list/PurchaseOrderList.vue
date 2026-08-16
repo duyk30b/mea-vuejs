@@ -1,28 +1,29 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import VuePagination from '@/common/VuePagination.vue'
+import { IconFileSearch, IconPrint, IconSetting } from '@/common/icon-antd'
+import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
+import { IconVisibility } from '@/common/icon-google'
+import VueDropdown from '@/common/popover/VueDropdown.vue'
+import { InputDate, InputSelect, VueSelect } from '@/common/vue-form'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { PurchaseOrder, PurchaseOrderQueryApi } from '@/modules/purchase-order'
 import { TemplateHtmlAction } from '@/modules/template-html'
-import { onBeforeMount, ref } from 'vue'
+import { timeToText } from '@/utils'
+import { onBeforeMount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import VueButton from '../../../common/VueButton.vue'
-import VuePagination from '../../../common/VuePagination.vue'
-import { IconFileSearch, IconPrint, IconSetting } from '../../../common/icon-antd'
-import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
-import { IconVisibility } from '../../../common/icon-google'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
-import { InputDate, InputSelect, VueSelect } from '../../../common/vue-form'
-import { MeService } from '../../../modules/_me/me.service'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import {
-  PurchaseOrder,
-  PurchaseOrderQueryApi,
-  PurchaseOrderStatus,
-} from '../../../modules/purchase-order'
-import { timeToText } from '../../../utils'
-import Breadcrumb from '../../component/Breadcrumb.vue'
-import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDetail.vue'
+import Breadcrumb from '@/views/component/Breadcrumb.vue'
+import ModalDistributorDetail from '@/views/distributor/detail/ModalDistributorDetail.vue'
 import PurchaseOrderStatusTag from '../PurchaseOrderStatusTag.vue'
-import { EPurchaseOrderUpsertMode } from '../upsert/purchase-order-upsert.store'
 import ModalPurchaseOrderListSetting from './ModalPurchaseOrderListSetting.vue'
+import {
+  PurchaseOrderStatus,
+  PurchaseOrderStatusText,
+} from '@/modules/purchase-order/purchase-order.type'
+import { EPurchaseOrderUpsertMode } from '../upsert/purchase_order_upsert.ref'
+import { purchaseOrderPaginationChange } from '@/store/purchase-order.store'
 
 const modalPurchaseOrderListSetting = ref<InstanceType<typeof ModalPurchaseOrderListSetting>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -56,7 +57,7 @@ const startFetchData = async () => {
         distributor: true,
         purchaseOrderItemList: settingStore.SCREEN_PURCHASE_ORDER_LIST.purchaseOrderItems
           ? { product: true, batch: false }
-          : false,
+          : undefined,
       },
       filter: {
         startedAt:
@@ -86,6 +87,27 @@ const startFetchData = async () => {
 onBeforeMount(async () => {
   await startFetchData()
 })
+
+watch(
+  () => purchaseOrderPaginationChange.time,
+  async () => {
+    await startFetchData()
+  },
+)
+
+watch(
+  () => purchaseOrderPaginationChange.purchaseOrderModified,
+  async (newValue) => {
+    if (newValue) {
+      const purchaseOrderIndex = purchaseOrderList.value.findIndex((p) => {
+        return p.id === newValue.id
+      })
+      if (purchaseOrderIndex !== -1) {
+        Object.assign(purchaseOrderList.value[purchaseOrderIndex], newValue)
+      }
+    }
+  },
+)
 
 const startSearch = async () => {
   page.value = 1
@@ -208,11 +230,10 @@ const startPrintPurchaseOrderDetail = async (purchaseOrderId: string) => {
             v-model:value="purchaseOrderStatus"
             :options="[
               { text: 'Tất cả', value: null },
-              { text: 'Nháp', value: PurchaseOrderStatus.Draft },
-              { text: 'Tạm ứng (Chờ nhập hàng)', value: PurchaseOrderStatus.Deposited },
-              { text: 'Nợ (Đã gửi hàng)', value: PurchaseOrderStatus.Debt },
-              { text: 'Hoàn thành', value: PurchaseOrderStatus.Completed },
-              { text: 'Hủy', value: PurchaseOrderStatus.Cancelled },
+              ...Object.keys(PurchaseOrderStatusText).map((key) => ({
+                text: (PurchaseOrderStatusText as any)[key],
+                value: Number(key),
+              })),
             ]"
             @update:value="startSearch"
           />

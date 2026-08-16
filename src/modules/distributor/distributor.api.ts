@@ -2,10 +2,10 @@ import { AxiosInstance } from '../../core/axios.instance'
 import type { FullResponse } from '../_base/base-dto'
 import { PurchaseOrder } from '../purchase-order'
 import {
-    DistributorDetailQuery,
-    DistributorGetQuery,
-    type DistributorListQuery,
-    type DistributorPaginationQuery,
+  DistributorDetailQuery,
+  DistributorGetQuery,
+  type DistributorListQuery,
+  type DistributorPaginationQuery,
 } from './distributor.dto'
 import { Distributor } from './distributor.model'
 
@@ -27,11 +27,8 @@ export class DistributorApi {
     const params = DistributorGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/distributor/list', { params })
-    const { data, time } = response.data as FullResponse
-    return {
-      time: new Date(time),
-      distributorList: Distributor.fromList(data.distributorList),
-    }
+    const { data, time } = response.data as FullResponse<{ distributorList: any[] }>
+    return Distributor.fromList(data.distributorList)
   }
 
   // static search = debounceAsync(async (text: string): Promise<Distributor[]> => {

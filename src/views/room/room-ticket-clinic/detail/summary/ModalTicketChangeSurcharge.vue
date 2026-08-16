@@ -4,13 +4,13 @@ import { IconClose, IconDelete } from '@/common/icon-antd'
 import { InputMoney } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { ticketRoomRef } from '@/modules/room'
 import { SurchargeService } from '@/modules/surcharge'
 import { TicketActionApi } from '@/modules/ticket'
 import { TicketSurcharge } from '@/modules/ticket-surcharge/ticket-surcharge.model'
 import InputSelectSurcharge from '@/views/component/InputSelectSurcharge.vue'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ticketRef } from '@/store/room.store'
 
 const router = useRouter()
 
@@ -34,7 +34,7 @@ const openModal = async () => {
   await SurchargeService.getAll()
 
   ticketSurchargeOriginList = TicketSurcharge.fromList(
-    ticketRoomRef.value.ticketSurchargeList || [],
+    ticketRef.value.ticketSurchargeList || [],
   )
   if (!ticketSurchargeOriginList.length) {
     ticketSurchargeOriginList.push(TicketSurcharge.blank())
@@ -71,7 +71,7 @@ const removeTicketSurcharge = (_localId: string) => {
 const changeSurcharge = async () => {
   saveLoading.value = true
   try {
-    await TicketActionApi.changeSurchargeList(ticketRoomRef.value.id, {
+    await TicketActionApi.changeSurchargeList(ticketRef.value.id, {
       ticketSurchargeBodyList: ticketSurchargeList.value,
     })
     closeModal()

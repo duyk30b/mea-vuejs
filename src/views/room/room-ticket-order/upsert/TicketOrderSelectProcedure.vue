@@ -4,7 +4,7 @@ import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions, VueSelect } from '@/common/vue-form'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
+import { DiscountType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { Procedure, ProcedureService, ProcedureType } from '@/modules/procedure'
 import { TicketProcedure, TicketProcedureStatus } from '@/modules/ticket-procedure'
@@ -12,7 +12,6 @@ import { ESString } from '@/utils'
 import ModalProcedureUpsert from '@/views/master-data/procedure/upsert/ModalProcedureUpsert.vue'
 import { ref } from 'vue'
 import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
-import TicketProcedureStatusTag from '../../room-ticket-clinic/detail/procedure/TicketProcedureStatusTag.vue'
 
 const inputOptionsProcedure = ref<InstanceType<typeof InputOptions>>()
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()

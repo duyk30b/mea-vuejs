@@ -1,28 +1,23 @@
 <script setup lang="ts">
-import { VueButton, VuePagination, VueTag } from '@/common'
-import { IconBug, IconFileSearch, IconPrint } from '@/common/icon-antd'
+import { VuePagination, VueTag } from '@/common'
+import { IconFileSearch, IconPrint } from '@/common/icon-antd'
 import { IconEditSquare } from '@/common/icon-google'
-import { VueTooltip } from '@/common/popover'
 import { InputDate, InputSelect, VueSelect } from '@/common/vue-form'
 import { CONFIG } from '@/config'
 import type { ConditionEnum } from '@/modules/_base/base-condition'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import type { Customer } from '@/modules/customer'
 import { PaymentApi } from '@/modules/payment/payment.api'
 import type { PaymentPaginationQuery } from '@/modules/payment/payment.dto'
+import { Payment } from '@/modules/payment/payment.model'
 import {
   MoneyDirection,
-  Payment,
-  PaymentActionType,
   PaymentActionTypeText,
   PaymentPersonType,
-  PaymentVoucherType,
-} from '@/modules/payment/payment.model'
-import { PermissionId } from '@/modules/permission/permission.enum'
+} from '@/modules/payment/payment.type'
 import { TemplateHtmlAction } from '@/modules/template-html'
 import { ESTimer } from '@/utils'
-import { Breadcrumb } from '@/views/component'
+import { Breadcrumb, BugDevelopment } from '@/views/component'
 import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
 import ModalDistributorDetail from '@/views/distributor/detail/ModalDistributorDetail.vue'
@@ -30,16 +25,10 @@ import PurchaseOrderLink from '@/views/purchase-order/PurchaseOrderLink.vue'
 import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 import { onBeforeMount, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import ModalCustomerPaymentMoneyIn from './ModalCustomerPaymentMoneyIn.vue'
-import ModalDistributorPaymentMoneyOut from './ModalDistributorPaymentMoneyOut.vue'
-import ModalOtherPaymentMoney from './ModalOtherPaymentMoney.vue'
 import ModalPaymentUpdateInfo from './ModalPaymentUpdateInfo.vue'
 
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
-const modalCustomerPaymentMoneyIn = ref<InstanceType<typeof ModalCustomerPaymentMoneyIn>>()
-const modalDistributorPaymentMoneyOut = ref<InstanceType<typeof ModalDistributorPaymentMoneyOut>>()
-const modalOtherPaymentMoney = ref<InstanceType<typeof ModalOtherPaymentMoney>>()
 const modalPaymentUpdateInfo = ref<InstanceType<typeof ModalPaymentUpdateInfo>>()
 
 const router = useRouter()
@@ -79,13 +68,12 @@ const startFetchData = async () => {
 
     const query: PaymentPaginationQuery = {
       relation: {
-        ticket: true,
-        purchaseOrder: true,
+        paymentTicketList: { ticket: true },
+        paymentPurchaseOrderList: { purchaseOrder: true },
         customer: true,
         distributor: true,
         cashier: true,
         wallet: true,
-        paymentTicketItemList: true,
       },
       filter: {
         createdAt:
@@ -156,32 +144,14 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const startPrintCustomerPayment = async (options: { customer: Customer; payment: Payment }) => {
-  const payment = options.payment
-  const paymentPrint = await Payment.refreshData(payment)
-  await TemplateHtmlAction.startPrintTicketClinicCustomerPayment({
-    customer: options.customer!,
-    payment: paymentPrint,
-  })
-}
-
-const startPrintCustomerRefund = async (options: { customer: Customer; payment: Payment }) => {
-  const payment = options.payment
-  const paymentPrint = await Payment.refreshData(payment)
-  await TemplateHtmlAction.startPrintTicketClinicCustomerRefund({
-    customer: options.customer!,
-    payment: paymentPrint,
+const startPrintPayment = async (options: { payment: Payment }) => {
+  await TemplateHtmlAction.startPrintPayment({
+    payment: options.payment,
   })
 }
 </script>
 
 <template>
-  <ModalCustomerPaymentMoneyIn ref="modalCustomerPaymentMoneyIn" @success="startFetchData" />
-  <ModalDistributorPaymentMoneyOut
-    ref="modalDistributorPaymentMoneyOut"
-    @success="startFetchData"
-  />
-  <ModalOtherPaymentMoney ref="modalOtherPaymentMoney" @success="startFetchData" />
   <ModalDistributorDetail ref="modalDistributorDetail" />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalPaymentUpdateInfo ref="modalPaymentUpdateInfo" @success="startFetchData" />
@@ -212,53 +182,6 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
             {{ formatMoney(st.sumPaidTotal) }}
           </div>
         </template>
-      </div>
-
-      <div class="ml-auto">
-        <div class="flex flex-wrap gap-2">
-          <div>
-            <VueButton
-              v-if="userPermission[PermissionId.PAYMENT_OTHER_CREATE_MONEY_IN]"
-              color="green"
-              icon="plus"
-              @click="modalOtherPaymentMoney?.openModal(MoneyDirection.In)"
-            >
-              Tạo phiếu thu
-            </VueButton>
-          </div>
-          <div>
-            <VueButton
-              v-if="userPermission[PermissionId.PAYMENT_OTHER_CREATE_MONEY_OUT]"
-              color="blue"
-              icon="plus"
-              @click="modalOtherPaymentMoney?.openModal(MoneyDirection.Out)"
-            >
-              Tạo phiếu chi
-            </VueButton>
-          </div>
-        </div>
-        <div class="mt-2 flex gap-2">
-          <!-- <div style="width: 220px">
-            <VueButton
-              v-if="userPermission[PermissionId.PAYMENT_DISTRIBUTOR_PAYMENT]"
-              color="blue"
-              icon="plus"
-              @click="modalDistributorPaymentMoneyOut?.openModal()"
-            >
-              Tạo phiếu chi N.Cung Cấp
-            </VueButton>
-          </div> -->
-          <!-- <div style="width: 220px">
-            <VueButton
-              v-if="userPermission[PermissionId.PAYMENT_CUSTOMER_PAYMENT]"
-              color="green"
-              icon="plus"
-              @click="modalCustomerPaymentMoneyIn?.openModal()"
-            >
-              Tạo phiếu thu Khách Hàng
-            </VueButton>
-          </div> -->
-        </div>
       </div>
     </div>
 
@@ -352,24 +275,26 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
           </tr>
           <tr v-for="(payment, index) in paymentList" :key="index">
             <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-              <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-                <template #trigger>
-                  <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-                </template>
-                <pre>{{ JSON.stringify(payment, null, 4) }}</pre>
-              </VueTooltip>
+              <BugDevelopment :data="payment" />
             </td>
             <td>
-              <div v-if="payment.voucherType === PaymentVoucherType.Ticket">
-                <TicketLink :ticket="payment.ticket!" :ticketId="payment.voucherId" />
-              </div>
-              <div v-if="payment.voucherType === PaymentVoucherType.PurchaseOrder">
-                <PurchaseOrderLink
-                  :purchaseOrder="payment.purchaseOrder"
-                  :purchaseOrderId="payment.voucherId"
+              <div v-if="payment.paymentTicketList.length">
+                <TicketLink
+                  v-for="(paymentTicket, index) in payment.paymentTicketList"
+                  :key="index"
+                  :ticket="paymentTicket.ticket!"
+                  :ticketId="paymentTicket.ticketId"
                 />
               </div>
-              <div style="font-size: 0.9em">
+              <div v-if="payment.paymentPurchaseOrderList.length">
+                <PurchaseOrderLink
+                  v-for="(paymentPurchaseOrder, index) in payment.paymentPurchaseOrderList"
+                  :key="index"
+                  :purchaseOrder="paymentPurchaseOrder.purchaseOrder!"
+                  :purchaseOrderId="paymentPurchaseOrder.purchaseOrderId"
+                />
+              </div>
+              <div style="font-size: 0.9em;">
                 <span style="white-space: nowrap">
                   {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
                 </span>
@@ -439,18 +364,8 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
             </td>
             <td class="text-center">
               <IconPrint
-                v-if="
-                  [PaymentActionType.PaymentMoney, PaymentActionType.PayDebt].includes(
-                    payment.paymentActionType,
-                  )
-                "
                 style="font-size: 18px; color: var(--text-blue); cursor: pointer"
-                @click="startPrintCustomerPayment({ payment, customer: payment.customer })"
-              />
-              <IconPrint
-                v-if="[PaymentActionType.RefundMoney].includes(payment.paymentActionType)"
-                style="font-size: 18px; color: var(--text-green); cursor: pointer"
-                @click="startPrintCustomerRefund({ payment, customer: payment.customer })"
+                @click="startPrintPayment({ payment })"
               />
             </td>
           </tr>

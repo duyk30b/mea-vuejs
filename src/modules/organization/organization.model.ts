@@ -1,5 +1,5 @@
 import { Image } from '../image/image.model'
-import { User } from '../user'
+import { User } from '../user/user.model'
 import { OrganizationPayment } from './organization-payment.model'
 
 export enum OrganizationStatus {

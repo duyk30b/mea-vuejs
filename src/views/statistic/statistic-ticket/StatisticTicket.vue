@@ -14,7 +14,6 @@ import {
   StatisticTicketApi,
   type StatisticTicketQueryTimeResponseType,
 } from '@/modules/statistics/statistic-ticket.api'
-import { TicketStatus } from '@/modules/ticket'
 import { ESTimer } from '@/utils'
 import InputSelectRoom from '@/views/component/InputSelectRoom.vue'
 import type { ChartData } from 'chart.js'
@@ -23,6 +22,7 @@ import { nextTick, onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { useRoute, useRouter } from 'vue-router'
 import ModalStatisticTicketSetting from './ModalStatisticTicketSetting.vue'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 
 const barOptions = {
   responsive: true,

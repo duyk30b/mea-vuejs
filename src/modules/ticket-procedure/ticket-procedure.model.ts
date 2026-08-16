@@ -1,6 +1,6 @@
 import { BaseModel } from '../_base/base.model'
 import { Customer } from '../customer'
-import { DiscountType, PaymentMoneyStatus } from '../enum'
+import { DiscountType, TicketItemPaymentType } from '../enum'
 import { Image } from '../image/image.model'
 import { Procedure } from '../procedure'
 import { TicketProduct } from '../ticket-product'
@@ -41,9 +41,8 @@ export class TicketProcedure extends BaseModel {
   actualPrice: number // Giá thực tế
 
   status: TicketProcedureStatus
-  paymentMoneyStatus: PaymentMoneyStatus
+  ticketItemPaymentType: TicketItemPaymentType
   paid: number
-  debt: number
 
   createdAt: number
   completedAt: number
@@ -82,10 +81,9 @@ export class TicketProcedure extends BaseModel {
     ins.discountPercent = 0
     ins.actualPrice = 0
 
-    ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
+    ins.ticketItemPaymentType = TicketItemPaymentType.TicketPaid
     ins.status = TicketProcedureStatus.NoAction
     ins.paid = 0
-    ins.debt = 0
 
     return ins
   }
@@ -165,9 +163,8 @@ export class TicketProcedure extends BaseModel {
     if (a.actualPrice != b.actualPrice) return false
 
     if (a.status != b.status) return false
-    if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
+    if (a.ticketItemPaymentType != b.ticketItemPaymentType) return false
     if (a.paid != b.paid) return false
-    if (a.debt != b.debt) return false
 
     if (a.createdAt != b.createdAt) return false
     if (a.completedAt != b.completedAt) return false

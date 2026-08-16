@@ -1,7 +1,7 @@
 import { Customer } from '../customer'
-import { PaymentMoneyStatus } from '../enum'
+import { TicketItemPaymentType } from '../enum'
 import { LaboratoryGroup } from '../laboratory-group'
-import { Room } from '../room'
+import { Room } from '../room/room.model'
 import { TicketUser } from '../ticket-user'
 import { Ticket } from '../ticket/ticket.model'
 import { TicketLaboratoryResult } from './ticket-laboratory-result.model'
@@ -15,7 +15,7 @@ export class TicketLaboratoryGroup {
   laboratoryGroupId: number
 
   status: TicketLaboratoryStatus
-  paymentMoneyStatus: PaymentMoneyStatus
+  ticketItemPaymentType: TicketItemPaymentType
   createdAt: number | null
   completedAt: number | null
   result: string
@@ -33,7 +33,7 @@ export class TicketLaboratoryGroup {
     const ins = new TicketLaboratoryGroup()
     ins.id = ''
     ins.laboratoryGroupId = 0
-    ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
+    ins.ticketItemPaymentType = TicketItemPaymentType.TicketPaid
     ins.result = ''
     return ins
   }
@@ -112,7 +112,7 @@ export class TicketLaboratoryGroup {
     if (a.laboratoryGroupId != b.laboratoryGroupId) return false
 
     if (a.status != b.status) return false
-    if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
+    if (a.ticketItemPaymentType != b.ticketItemPaymentType) return false
     if (a.createdAt != b.createdAt) return false
     if (a.completedAt != b.completedAt) return false
     if (a.result != b.result) return false

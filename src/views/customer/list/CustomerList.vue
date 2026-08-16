@@ -1,28 +1,24 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import VuePagination from '@/common/VuePagination.vue'
+import VueTag from '@/common/VueTag.vue'
+import { IconDownload, IconFileSearch, IconForm, IconSetting, IconUpload } from '@/common/icon-antd'
+import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
+import VueDropdown from '@/common/popover/VueDropdown.vue'
+import { InputSelect, InputText, VueSelect } from '@/common/vue-form'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { CONFIG } from '@/config'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Customer, CustomerService } from '@/modules/customer'
 import { CustomerGroup, CustomerGroupService } from '@/modules/customer_group'
+import { CustomerSourceService } from '@/modules/customer_source'
+import { FileCustomerApi } from '@/modules/file-excel/file-customer.api'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { ESArray, ESString, ESTimer } from '@/utils'
 import { BugDevelopment } from '@/views/component'
+import InputSelectCustomerGroup from '@/views/component/InputSelectCustomerGroup.vue'
 import { computed, onBeforeMount, onMounted, reactive, ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import VuePagination from '../../../common/VuePagination.vue'
-import VueTag from '../../../common/VueTag.vue'
-import {
-  IconDownload,
-  IconFileSearch,
-  IconForm,
-  IconSetting,
-  IconUpload,
-} from '../../../common/icon-antd'
-import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
-import { InputSelect, InputText, VueSelect } from '../../../common/vue-form'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { MeService } from '../../../modules/_me/me.service'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Customer, CustomerService } from '../../../modules/customer'
-import { FileCustomerApi } from '../../../modules/file-excel/file-customer.api'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { ESArray, ESString, ESTimer } from '../../../utils'
 import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import ModalCustomerDetail from '../detail/ModalCustomerDetail.vue'
@@ -30,8 +26,6 @@ import ModalCustomerUpsert from '../upsert/ModalCustomerUpsert.vue'
 import ModalCustomerGroupManager from './ModalCustomerGroupManager.vue'
 import ModalCustomerListSettingScreen from './ModalCustomerListSettingScreen.vue'
 import ModalUploadCustomer from './ModalUploadCustomer.vue'
-import InputSelectCustomerGroup from '@/views/component/InputSelectCustomerGroup.vue'
-import { CustomerSourceService } from '@/modules/customer_source'
 
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()

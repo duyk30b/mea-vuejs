@@ -6,7 +6,7 @@ import { InputDate, InputHint } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { Appointment, AppointmentApi } from '@/modules/appointment'
 import { customFilter } from '@/utils'
-import { ticketRoomRef } from '@/modules/room'
+import { ticketRef } from '@/store/room.store'
 
 const appointmentRegisterForm = ref<InstanceType<typeof HTMLFormElement>>()
 
@@ -33,11 +33,11 @@ const handleRegisterVisit = async () => {
   saveLoading.value = true
   try {
     if (!appointment.value.id) {
-      ticketRoomRef.value.toAppointment = await AppointmentApi.createOne({
+      ticketRef.value.toAppointment = await AppointmentApi.createOne({
         appointment: appointment.value,
       })
     } else {
-      ticketRoomRef.value.toAppointment = await AppointmentApi.updateOne(appointment.value.id, {
+      ticketRef.value.toAppointment = await AppointmentApi.updateOne(appointment.value.id, {
         appointment: appointment.value,
       })
     }

@@ -1,12 +1,13 @@
 import { ref } from 'vue'
 import { ESArray } from '../../utils'
+import { Role, RoleService } from '../role'
+import { Room } from '../room/room.model'
+import { RoomService } from '../room/room.service'
 import { UserRole, UserRoleService } from '../user-role'
+import { UserRoom, UserRoomService } from '../user-room'
 import { UserApi } from './user.api'
 import type { UserDetailQuery, UserGetQuery, UserListQuery, UserPaginationQuery } from './user.dto'
 import { User } from './user.model'
-import { UserRoom, UserRoomService } from '../user-room'
-import { Role, RoleService } from '../role'
-import { Room, RoomService } from '../room'
 
 export class UserService {
   static loadedAll: boolean = false

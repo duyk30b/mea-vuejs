@@ -1,6 +1,5 @@
 import { AxiosInstance } from '../../../core/axios.instance'
 import type { FullResponse } from '../../_base/base-dto'
-import { Payment } from '../../payment'
 import { TicketProduct } from '../../ticket-product'
 import { Ticket } from '../ticket.model'
 
@@ -30,7 +29,7 @@ export class TicketOrderApi {
         productId: i.productId,
         batchId: i.batchId,
         unitRate: i.unitRate,
-        unitQuantity: i.unitQuantity,
+        quantity: i.quantity,
         unitExpectedPrice: i.unitExpectedPrice,
         unitDiscountMoney: i.unitDiscountMoney,
         discountPercent: i.discountPercent,
@@ -129,28 +128,24 @@ export class TicketOrderApi {
     return data
   }
 
-  static async sendProductAndPaymentAndClose(
+  static async shipProductAndPaymentAndClose(
     ticketId: string,
     body: {
       paidAmount: number
-      customerId: number
       walletId: string
       note: string
-      ticketProductIdList: number[]
     },
   ) {
     const response = await AxiosInstance.post(
-      `/ticket/order/${ticketId}/send-product-and-payment-and-close`,
+      `/ticket/order/${ticketId}/ship-product-and-payment-and-close`,
       body,
     )
     const { data } = response.data as FullResponse<{
       ticketModified: any
-      paymentCreatedList: any[]
       ticketProductModifiedAll?: any[]
     }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
-      paymentCreatedList: Payment.fromList(data.paymentCreatedList),
       ticketProductModifiedAll: data.ticketProductModifiedAll
         ? TicketProduct.fromList(data.ticketProductModifiedAll)
         : undefined,

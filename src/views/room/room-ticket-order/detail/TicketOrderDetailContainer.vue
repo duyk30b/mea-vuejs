@@ -24,11 +24,13 @@ import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus, DeliveryStatusText, PaymentViewType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { TemplateHtmlAction, TemplateHtmlType } from '@/modules/template-html'
-import { Ticket, TicketActionApi, TicketService, TicketStatus } from '@/modules/ticket'
+import { Ticket, TicketActionApi, TicketMoneyApi, TicketService } from '@/modules/ticket'
 import { TicketProcedureService } from '@/modules/ticket-procedure'
-import { TicketProduct, TicketProductService } from '@/modules/ticket-product'
+import { TicketProductService } from '@/modules/ticket-product'
 import { TicketOrderApi } from '@/modules/ticket/api/ticket-order.api'
-import { timeToText } from '@/utils'
+import { TicketActionType, TicketStatus } from '@/modules/ticket/ticket.type'
+import { ticketRef } from '@/store/room.store.ts'
+import { ESTimer } from '@/utils'
 import { Breadcrumb } from '@/views/component'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
 import ModalTicketReturnProduct from '@/views/room/room-ticket-base/ModalTicketReturnProduct.vue'
@@ -40,7 +42,7 @@ import ModalTicketOrderDetailSetting from './ModalTicketOrderDetailSetting.vue'
 import ModalTicketOrderPayment from './ModalTicketOrderPayment.vue'
 import ModalTicketOrderTerminal from './ModalTicketOrderTerminal.vue'
 import TicketOrderDetailTable from './TicketOrderDetailTable.vue'
-import { ticketOrderDetailRef } from './ticket-order-detail.ref'
+import { PaymentActionType } from '@/modules/payment/payment.type'
 
 const modalTicketOrderDetailSetting = ref<InstanceType<typeof ModalTicketOrderDetailSetting>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
@@ -60,10 +62,10 @@ const loadingRefund = ref(false)
 
 const startFetchData = async (ticketId: string) => {
   try {
-    ticketOrderDetailRef.value = await TicketService.detail(ticketId, {
+    ticketRef.value = await TicketService.detail(ticketId, {
       relation: {
         customer: true,
-        paymentList: true,
+        paymentTicketList: { payment: true },
         // ticketAttributeList: true,
         ticketProductList: { batch: true, product: true },
         ticketProcedureList: true,
@@ -72,8 +74,8 @@ const startFetchData = async (ticketId: string) => {
       },
     })
     await Promise.all([
-      TicketProductService.refreshRelation(ticketOrderDetailRef.value.ticketProductList),
-      TicketProcedureService.refreshRelation(ticketOrderDetailRef.value.ticketProcedureList),
+      TicketProductService.refreshRelation(ticketRef.value.ticketProductList),
+      TicketProcedureService.refreshRelation(ticketRef.value.ticketProcedureList),
     ])
   } catch (error) {
     console.log('🚀 ~ TicketOrderDetailContainer.vue:81 ~ startFetchData ~ error:', error)
@@ -88,13 +90,13 @@ onBeforeMount(async () => {
 })
 
 onUnmounted(() => {
-  ticketOrderDetailRef.value = Ticket.blank()
+  ticketRef.value = Ticket.blank()
 })
 
 const startEdit = () => {
   router.push({
     name: 'TicketOrderUpsert',
-    params: { ticketId: ticketOrderDetailRef.value.id, roomId: ticketOrderDetailRef.value.roomId },
+    params: { ticketId: ticketRef.value.id, roomId: ticketRef.value.roomId },
     query: { mode: ETicketOrderUpsertMode.UPDATE },
   })
 }
@@ -102,25 +104,19 @@ const startEdit = () => {
 const startCopy = () => {
   router.push({
     name: 'TicketOrderUpsert',
-    params: { ticketId: ticketOrderDetailRef.value.id, roomId: ticketOrderDetailRef.value.roomId },
+    params: { ticketId: ticketRef.value.id, roomId: ticketRef.value.roomId },
     query: { mode: ETicketOrderUpsertMode.COPY },
   })
 }
 
-const sendProduct = async () => {
+const shipProductAll = async () => {
   try {
     loadingProcess.value = true
-    const response = await TicketActionApi.sendProduct({
-      ticketId: ticketOrderDetailRef.value.id!,
-      ticketProductIdList: (ticketOrderDetailRef.value.ticketProductList || []).map((i) => i.id),
+    const response = await TicketActionApi.shipProductAll({
+      ticketId: ticketRef.value.id!,
     })
-    Object.assign(ticketOrderDetailRef.value, response.ticketModified)
-    ticketOrderDetailRef.value.ticketProductList = TicketProduct.updateListByPartialList(
-      ticketOrderDetailRef.value.ticketProductList || [],
-      response.ticketProductModifiedAll,
-    )
   } catch (error) {
-    console.log('🚀 ~ TicketOrderDetailContainer.vue:125 ~ sendProduct ~ error:', error)
+    console.log('🚀 ~ TicketOrderDetailContainer.vue:125 ~ shipProductAll ~ error:', error)
   } finally {
     loadingProcess.value = false
   }
@@ -130,13 +126,8 @@ const close = async () => {
   try {
     loadingProcess.value = true
     const response = await TicketActionApi.close({
-      ticketId: ticketOrderDetailRef.value.id!,
+      ticketId: ticketRef.value.id!,
     })
-    Object.assign(ticketOrderDetailRef.value, response.ticketModified)
-    if (response.paymentCreated) {
-      ticketOrderDetailRef.value.paymentList ||= []
-      ticketOrderDetailRef.value.paymentList.push(response.paymentCreated)
-    }
   } catch (error) {
     console.log('🚀 ~ TicketOrderDetailContainer.vue:143 ~ close ~ error:', error)
   } finally {
@@ -145,13 +136,13 @@ const close = async () => {
 }
 
 const clickReturnProduct = () => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketOrderDetailRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return ModalStore.alert({
       title: 'Trạng thái đơn hàng không hợp lệ ?',
       content: 'Cần mở lại đơn hàng trước khi hoàn trả sản phẩm',
     })
   } else {
-    modalTicketReturnProduct.value?.openModal(ticketOrderDetailRef.value)
+    modalTicketReturnProduct.value?.openModal(ticketRef.value)
   }
 }
 
@@ -163,8 +154,7 @@ const clickReopen = () => {
       '- Đơn hàng đang thực hiện có thể tiếp tục các hành động: Thanh toán, Gửi hàng, Hoàn trả ...',
     ],
     async onOk() {
-      const response = await TicketActionApi.reopen({ ticketId: ticketOrderDetailRef.value.id })
-      Object.assign(ticketOrderDetailRef.value, response.ticketModified)
+      const response = await TicketActionApi.reopen({ ticketId: ticketRef.value.id })
     },
   })
 }
@@ -176,7 +166,7 @@ const clickDestroy = () => {
     async onOk() {
       try {
         loadingProcess.value = true
-        await TicketOrderApi.destroy(ticketOrderDetailRef.value.id!)
+        await TicketOrderApi.destroy(ticketRef.value.id!)
         AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
         router.push({ name: 'TicketOrderList' })
       } catch (error) {
@@ -188,16 +178,58 @@ const clickDestroy = () => {
   })
 }
 
+const startRefundDebt = async () => {
+  if (ticketRef.value.debtTotal <= 0) {
+    return ModalStore.alert({
+      title: 'Không có nợ để hoàn trả',
+      content: 'Đơn hàng này không có nợ cần hoàn trả',
+    })
+  }
+  if (ticketRef.value.paidTotal + ticketRef.value.debtTotal <= ticketRef.value.totalMoney) {
+    return ModalStore.alert({
+      title: 'Không đủ tiền để hoàn trả',
+      content: 'Đơn hàng này không đủ tiền để hoàn trả nợ',
+    })
+  }
+
+  const moneyToRefund = Math.min(
+    ticketRef.value.paidTotal + ticketRef.value.debtTotal - ticketRef.value.totalMoney,
+    ticketRef.value.debtTotal,
+  )
+
+  try {
+    loadingRefund.value = true
+    const result = await TicketMoneyApi.changeDebt({
+      customerId: ticketRef.value.customerId,
+      paymentActionType: PaymentActionType.RefundDebt,
+      walletId: '',
+      note: '',
+      changeDebtListBody: [
+        {
+          ticketActionType: TicketActionType.RefundDebt,
+          ticketId: ticketRef.value.id,
+          paid: 0,
+          debt: -moneyToRefund,
+        },
+      ],
+    })
+  } catch (error) {
+    console.log('🚀 ~ TicketOrderDetailContainer.vue:203 ~ refundDebt ~ error:', error)
+  } finally {
+    loadingRefund.value = false
+  }
+}
+
 const startPrint = async () => {
   await TemplateHtmlAction.startPrintTicketOrderDetail({
-    ticket: ticketOrderDetailRef.value,
-    customer: ticketOrderDetailRef.value.customer!,
+    ticket: ticketRef.value,
+    customer: ticketRef.value.customer!,
   })
 }
 
 const openModalTicketOrderPreview = async () => {
   const htmlText = await TemplateHtmlAction.startWriteTicketOrderPreview({
-    data: { ticket: ticketOrderDetailRef.value, customer: ticketOrderDetailRef.value.customer! },
+    data: { ticket: ticketRef.value, customer: ticketRef.value.customer! },
     templateHtmlType: TemplateHtmlType.TicketOrderDetail,
   })
   if (!htmlText) return
@@ -216,7 +248,7 @@ const openModalTicketOrderPreview = async () => {
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalTicketReturnProduct
     ref="modalTicketReturnProduct"
-    @success="() => startFetchData(ticketOrderDetailRef.id)"
+    @success="() => startFetchData(ticketRef.id)"
   />
   <ModalTicketOrderPayment ref="modalTicketOrderPayment" />
   <ModalTicketOrderDetailSetting ref="modalTicketOrderDetailSetting" />
@@ -225,10 +257,7 @@ const openModalTicketOrderPreview = async () => {
     <div class="flex items-center gap-4">
       <div class="hidden md:flex gap-2 text-lg font-medium items-center">
         <Breadcrumb />
-        <span
-          v-if="ticketOrderDetailRef.status === TicketStatus.Cancelled"
-          style="color: var(--text-red)"
-        >
+        <span v-if="ticketRef.status === TicketStatus.Cancelled" style="color: var(--text-red)">
           (Đơn đã bị hủy)
         </span>
       </div>
@@ -239,7 +268,7 @@ const openModalTicketOrderPreview = async () => {
           @click="
             $router.push({
               name: 'TicketOrderUpsert',
-              params: { roomId: ticketOrderDetailRef.roomId },
+              params: { roomId: ticketRef.roomId },
               query: { mode: ETicketOrderUpsertMode.CREATE },
             })
           "
@@ -254,7 +283,7 @@ const openModalTicketOrderPreview = async () => {
           <template #trigger>
             <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
           </template>
-          <pre>{{ JSON.stringify(ticketOrderDetailRef, null, 4) }}</pre>
+          <pre>{{ JSON.stringify(ticketRef, null, 4) }}</pre>
         </VueTooltip>
       </div>
       <VueDropdown>
@@ -281,39 +310,47 @@ const openModalTicketOrderPreview = async () => {
         <tr>
           <td class="px-2 py-1 whitespace-nowrap">Khách hàng</td>
           <td class="font-medium px-2 py-1">
-            {{ ticketOrderDetailRef.customer?.fullName }}
-            <a
-              class="ml-1"
-              @click="modalCustomerDetail?.openModal(ticketOrderDetailRef.customerId)"
-            >
-              <IconFileSearch />
-            </a>
+            <div class="flex flex-wrap gap-1">
+              <div>
+                <span>
+                  {{ ticketRef.customer?.fullName }}
+                </span>
+                <a class="ml-1" @click="modalCustomerDetail?.openModal(ticketRef.customerId)">
+                  <IconFileSearch />
+                </a>
+              </div>
+              <div v-if="ticketRef.customer?.debt" style="color: var(--text-red)">
+                (nợ:
+                <b>{{ formatMoney(ticketRef.customer?.debt) }}</b>
+                )
+              </div>
+            </div>
           </td>
         </tr>
         <tr>
           <td class="px-2 py-1 whitespace-nowrap">Mã đơn</td>
-          <td class="px-2 py-1">IV{{ ticketOrderDetailRef.id }}</td>
+          <td class="px-2 py-1">IV{{ ticketRef.id }}</td>
         </tr>
         <tr>
           <td class="px-2 py-1 whitespace-nowrap">Thời gian tạo</td>
           <td class="px-2 py-1">
-            {{ timeToText(ticketOrderDetailRef.createdAt, 'hh:mm DD/MM/YY') }}
+            {{ ESTimer.timeToText(ticketRef.createdAt, 'hh:mm DD/MM/YY') }}
           </td>
         </tr>
         <tr>
           <td class="px-2 py-1 whitespace-nowrap" style="vertical-align: top">Trạng thái</td>
           <td class="px-2 py-1">
             <div class="flex items-center gap-4">
-              <TicketStatusTag :ticket="ticketOrderDetailRef" />
+              <TicketStatusTag :ticket="ticketRef" />
               <span
                 v-if="
                   ![TicketStatus.Debt, TicketStatus.Completed, TicketStatus.Cancelled].includes(
-                    ticketOrderDetailRef.status,
+                    ticketRef.status,
                   )
                 "
                 style="color: #555; font-style: italic"
               >
-                ({{ DeliveryStatusText[ticketOrderDetailRef.deliveryStatus] }})
+                ({{ DeliveryStatusText[ticketRef.deliveryStatus] }})
               </span>
             </div>
           </td>
@@ -321,7 +358,7 @@ const openModalTicketOrderPreview = async () => {
         <tr>
           <td class="px-2 py-1 whitespace-nowrap align-top">Ghi chú</td>
           <td class="px-2 py-1">
-            {{ ticketOrderDetailRef.note }}
+            {{ ticketRef.note }}
           </td>
         </tr>
       </tbody>
@@ -338,23 +375,20 @@ const openModalTicketOrderPreview = async () => {
         <VueButton icon="print" @click="startPrint">In</VueButton>
         <VueButton
           v-if="
-            ticketOrderDetailRef.deliveryStatus === DeliveryStatus.Pending &&
-            userPermission[PermissionId.TICKET_CHANGE_PRODUCT_SEND_PRODUCT]
+            ticketRef.deliveryStatus === DeliveryStatus.Pending &&
+            userPermission[PermissionId.TICKET_CHANGE_PRODUCT_SHIP_PRODUCT]
           "
           icon="send"
-          @click="sendProduct"
+          @click="shipProductAll"
         >
           Gửi hàng
         </VueButton>
         <VueButton
           v-if="
             userPermission[PermissionId.TICKET_PAYMENT_MONEY] &&
-            [
-              TicketStatus.Draft,
-              TicketStatus.Schedule,
-              TicketStatus.Deposited,
-              TicketStatus.Executing,
-            ].includes(ticketOrderDetailRef.status)
+            [TicketStatus.Draft, TicketStatus.Schedule, TicketStatus.Executing].includes(
+              ticketRef.status,
+            )
           "
           color="green"
           icon="dollar"
@@ -370,11 +404,9 @@ const openModalTicketOrderPreview = async () => {
         </VueButton>
         <VueButton
           v-if="
-            [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Deposited].includes(
-              ticketOrderDetailRef.status,
-            ) ||
+            [TicketStatus.Draft, TicketStatus.Schedule].includes(ticketRef.status) ||
             (settingStore.SCREEN_INVOICE_DETAIL.process.forceEdit &&
-              ticketOrderDetailRef.status !== TicketStatus.Cancelled)
+              ticketRef.status !== TicketStatus.Cancelled)
           "
           color="blue"
           @click="startEdit"
@@ -393,7 +425,7 @@ const openModalTicketOrderPreview = async () => {
               v-if="
                 userPermission[PermissionId.TICKET_CHANGE_PRODUCT_RETURN_PRODUCT] &&
                 [TicketStatus.Debt, TicketStatus.Completed, TicketStatus.Executing].includes(
-                  ticketOrderDetailRef.status,
+                  ticketRef.status,
                 )
               "
               @click="clickReturnProduct()"
@@ -404,9 +436,7 @@ const openModalTicketOrderPreview = async () => {
               </span>
             </a>
             <a
-              v-if="
-                [TicketStatus.Debt, TicketStatus.Completed].includes(ticketOrderDetailRef.status)
-              "
+              v-if="[TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status)"
               @click="clickReopen()"
             >
               <span class="text-red-500">
@@ -416,9 +446,8 @@ const openModalTicketOrderPreview = async () => {
             </a>
             <a
               v-if="
-                ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                  ticketOrderDetailRef.status,
-                ) && ticketOrderDetailRef.paidTotal
+                ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status) &&
+                ticketRef.paidTotal
               "
               @click="modalTicketOrderPayment?.openModal(PaymentViewType.RefundOverpaid)"
             >
@@ -431,11 +460,11 @@ const openModalTicketOrderPreview = async () => {
               v-if="
                 userPermission[PermissionId.TICKET_TERMINATE] &&
                 [
-                  TicketStatus.Deposited,
+                  TicketStatus.Schedule,
                   TicketStatus.Executing,
                   TicketStatus.Debt,
                   TicketStatus.Completed,
-                ].includes(ticketOrderDetailRef.status)
+                ].includes(ticketRef.status)
               "
               @click="modalTicketOrderTerminal?.openModal()"
             >
@@ -447,10 +476,10 @@ const openModalTicketOrderPreview = async () => {
             <a
               v-if="
                 userPermission[PermissionId.TICKET_DRAFT_CRUD] &&
-                ticketOrderDetailRef.paidTotal === 0 &&
-                (ticketOrderDetailRef.status === TicketStatus.Draft ||
-                  ticketOrderDetailRef.status === TicketStatus.Cancelled ||
-                  ticketOrderDetailRef.status === TicketStatus.Deposited)
+                ticketRef.paidTotal === 0 &&
+                (ticketRef.status === TicketStatus.Draft ||
+                  ticketRef.status === TicketStatus.Cancelled ||
+                  ticketRef.status === TicketStatus.Schedule)
               "
               @click="clickDestroy()"
             >
@@ -466,16 +495,27 @@ const openModalTicketOrderPreview = async () => {
 
     <div class="mt-2">
       <TicketOrderDetailTable
-        @showInvoicePayment="(view) => modalTicketOrderPayment?.openModal(view)"
+        @showTicketPayment="(view) => modalTicketOrderPayment?.openModal(view)"
       />
     </div>
 
     <div class="flex justify-center gap-4 my-4">
-      <template v-if="ticketOrderDetailRef.status === TicketStatus.Draft">
+      <template v-if="ticketRef.debtTotal > 0">
+        <VueButton
+          v-if="userPermission[PermissionId.TICKET_PAYMENT_MONEY]"
+          color="blue"
+          :loading="loadingProcess"
+          @click="modalTicketOrderPayment?.openModal(PaymentViewType.PayDebt)"
+        >
+          <IconDollar />
+          Trả nợ
+        </VueButton>
+      </template>
+      <template v-if="ticketRef.status === TicketStatus.Draft">
         <VueButton
           v-if="
             userPermission[PermissionId.TICKET_PAYMENT_MONEY] &&
-            userPermission[PermissionId.TICKET_CHANGE_PRODUCT_SEND_PRODUCT] &&
+            userPermission[PermissionId.TICKET_CHANGE_PRODUCT_SHIP_PRODUCT] &&
             userPermission[PermissionId.TICKET_CLOSE]
           "
           color="blue"
@@ -486,27 +526,23 @@ const openModalTicketOrderPreview = async () => {
         </VueButton>
       </template>
 
-      <template
-        v-if="
-          [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketOrderDetailRef.status)
-        "
-      >
+      <template v-if="[TicketStatus.Schedule, TicketStatus.Executing].includes(ticketRef.status)">
         <VueButton
           v-if="
-            ticketOrderDetailRef.deliveryStatus === DeliveryStatus.Pending &&
-            userPermission[PermissionId.TICKET_CHANGE_PRODUCT_SEND_PRODUCT]
+            ticketRef.deliveryStatus === DeliveryStatus.Pending &&
+            userPermission[PermissionId.TICKET_CHANGE_PRODUCT_SHIP_PRODUCT]
           "
           color="blue"
           :loading="loadingProcess"
           icon="send"
-          @click="sendProduct"
+          @click="shipProductAll"
         >
           Gửi hàng
         </VueButton>
 
         <VueButton
           v-if="
-            ticketOrderDetailRef.paidTotal > ticketOrderDetailRef.totalMoney &&
+            ticketRef.paidTotal + ticketRef.debtTotal > ticketRef.totalMoney &&
             userPermission[PermissionId.TICKET_REFUND_MONEY]
           "
           color="cyan"
@@ -519,29 +555,38 @@ const openModalTicketOrderPreview = async () => {
 
         <VueButton
           v-if="
+            ticketRef.paidTotal + ticketRef.debtTotal > ticketRef.totalMoney &&
+            ticketRef.debtTotal > 0 &&
+            userPermission[PermissionId.TICKET_REFUND_MONEY]
+          "
+          color="cyan"
+          :loading="loadingProcess"
+          icon="dollar"
+          @click="startRefundDebt"
+        >
+          Hoàn nợ
+        </VueButton>
+
+        <VueButton
+          v-if="
             userPermission[PermissionId.TICKET_CLOSE] &&
-            ticketOrderDetailRef.deliveryStatus === DeliveryStatus.Delivered &&
-            ticketOrderDetailRef.paidTotal <= ticketOrderDetailRef.totalMoney
+            ticketRef.deliveryStatus === DeliveryStatus.Delivered &&
+            ticketRef.paidTotal + ticketRef.debtTotal <= ticketRef.totalMoney
           "
           color="blue"
           :loading="loadingProcess"
           @click="close()"
         >
           <IconFileDone />
-          <span v-if="ticketOrderDetailRef.debtTotal > 0">Đóng phiếu và Ghi nợ</span>
-          <span v-else>Kết thúc</span>
-        </VueButton>
-      </template>
-
-      <template v-if="ticketOrderDetailRef.status === TicketStatus.Debt">
-        <VueButton
-          v-if="userPermission[PermissionId.TICKET_PAYMENT_MONEY]"
-          color="blue"
-          :loading="loadingProcess"
-          @click="modalTicketOrderPayment?.openModal(PaymentViewType.PayDebt)"
-        >
-          <IconDollar />
-          Trả nợ
+          <span v-if="ticketRef.paidTotal === ticketRef.totalMoney && ticketRef.debtTotal === 0">
+            Kết thúc
+          </span>
+          <span v-else-if="ticketRef.paidTotal + ticketRef.debtTotal === ticketRef.totalMoney">
+            Đóng phiếu
+          </span>
+          <span v-else-if="ticketRef.paidTotal + ticketRef.debtTotal < ticketRef.totalMoney">
+            Đóng phiếu và Ghi nợ
+          </span>
         </VueButton>
       </template>
     </div>

@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconFileSearch } from '../../../common/icon-antd'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { SettingKey } from '../../../modules/_me/store.variable'
-import { OrganizationService } from '../../../modules/organization'
-import { InputCheckbox } from '../../../common/vue-form'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose, IconFileSearch } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { SettingKey } from '@/modules/_me/store.variable'
+import { OrganizationService } from '@/modules/organization'
+import { InputCheckbox } from '@/common/vue-form'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
 const settingDisplay = ref<typeof store.SCREEN_DISTRIBUTOR_LIST>(
-  JSON.parse(JSON.stringify(store.SCREEN_DISTRIBUTOR_LIST))
+  JSON.parse(JSON.stringify(store.SCREEN_DISTRIBUTOR_LIST)),
 )
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -82,7 +82,9 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
-                <InputCheckbox v-model:value="settingDisplay.address">Hiển thị địa chỉ</InputCheckbox>
+                <InputCheckbox v-model:value="settingDisplay.address">
+                  Hiển thị địa chỉ
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
@@ -99,7 +101,9 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
-                <InputCheckbox v-model:value="settingDisplay.action">Hiển thị nút sửa</InputCheckbox>
+                <InputCheckbox v-model:value="settingDisplay.action">
+                  Hiển thị nút sửa
+                </InputCheckbox>
               </td>
             </tr>
           </tbody>
@@ -107,7 +111,7 @@ defineExpose({ openModal })
       </div>
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left: auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

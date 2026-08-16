@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
 import { IconClose, IconQuestionCircle } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus } from '@/modules/enum'
 import { PurchaseOrderActionApi } from '@/modules/purchase-order'
-import { ref } from 'vue'
-import { purchaseOrder } from './purchase-order-detail.ref'
-import { AlertStore } from '@/common/vue-alert'
+import { purchaseOrderDetailRef } from '@/store/purchase-order.store'
 import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
+import { ref } from 'vue'
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -31,17 +31,14 @@ const startTerminal = async () => {
     const terminalResult = await PurchaseOrderActionApi.terminate({
       walletId: walletId.value,
       note: '',
-      purchaseOrderId: purchaseOrder.value.id,
+      purchaseOrderId: purchaseOrderDetailRef.value.id,
     })
 
-    Object.assign(purchaseOrder.value, terminalResult.purchaseOrderModified)
-    if (terminalResult.paymentCreated) {
-      purchaseOrder.value.paymentList?.push(terminalResult.paymentCreated)
-    }
+    Object.assign(purchaseOrderDetailRef.value, terminalResult.purchaseOrderModified)
     AlertStore.add({ type: 'success', message: 'Hủy phiếu thành công', time: 1000 })
     showModal.value = false
   } catch (error) {
-    console.log("🚀 ~ ModalPurchaseOrderTerminal.vue:44 ~ startTerminal ~ error:", error)
+    console.log('🚀 ~ ModalPurchaseOrderTerminal.vue:44 ~ startTerminal ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -67,20 +64,20 @@ defineExpose({ openModal })
         </div>
       </div>
       <div class="p-4">
-        <p v-if="purchaseOrder.deliveryStatus === DeliveryStatus.Delivered">
+        <p v-if="purchaseOrderDetailRef.deliveryStatus === DeliveryStatus.Delivered">
           - Kho hàng sẽ phải xuất lại tất cả hàng hóa trong phiếu
         </p>
-        <p v-if="purchaseOrder.debt">
-          - Trừ nợ nhà cung cấp: {{ formatMoney(purchaseOrder.debt) }}
+        <p v-if="purchaseOrderDetailRef.debt">
+          - Trừ nợ nhà cung cấp: {{ formatMoney(purchaseOrderDetailRef.debt) }}
         </p>
-        <p v-if="purchaseOrder.paid">
+        <p v-if="purchaseOrderDetailRef.paid">
           - Nhà cung cấp cần trả lại số tiền đã thanh toán là:
-          {{ formatMoney(purchaseOrder.paid) }}
+          {{ formatMoney(purchaseOrderDetailRef.paid) }}
         </p>
-        <div class="flex items-center gap-2 mb-4" v-if="purchaseOrder.paid">
+        <div class="flex items-center gap-2 mb-4" v-if="purchaseOrderDetailRef.paid">
           <div>- Phương thức nhận tiền</div>
           <div style="min-width: 150px">
-            <InputSelectWallet v-model:walletId="walletId" autoSelectFirstValue/>
+            <InputSelectWallet v-model:walletId="walletId" autoSelectFirstValue />
           </div>
         </div>
         <p>- Đơn bị hủy sẽ không thể phục hồi lại được</p>

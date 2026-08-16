@@ -13,14 +13,9 @@ import { Product } from '@/modules/product'
 import { RadiologyService } from '@/modules/radiology'
 import { RadiologyGroupService } from '@/modules/radiology-group'
 import { RegimenService } from '@/modules/regimen'
-import {
-  roomDeliveryPagination,
-  roomFinancePagination,
-  ticketRoomRef,
-} from '@/modules/room/room.ref'
 import { SurchargeService } from '@/modules/surcharge'
-import { Ticket } from '@/modules/ticket'
 import { WalletService } from '@/modules/wallet'
+import { ticketRef } from '@/store/room.store'
 import { BatchDB, CustomerDB, ProductDB } from '../indexed-db'
 
 export class SocketService {
@@ -71,8 +66,8 @@ export class SocketService {
     const customer = Customer.from(data.customer)
     await CustomerDB.upsertOne(customer)
 
-    if (ticketRoomRef.value.customerId === customer.id) {
-      ticketRoomRef.value.customer = customer
+    if (ticketRef.value.customerId === customer.id) {
+      ticketRef.value.customer = customer
     }
   }
 
@@ -98,24 +93,5 @@ export class SocketService {
       const batchIdDestroyList = data.batchDestroyedList.map((i) => i.id)
       await BatchDB.deleteMany(batchIdDestroyList)
     }
-  }
-
-  static getTicketAction(options: { ticketId: string }) {
-    const { ticketId } = options
-
-    const ticketAction: Ticket[] = []
-    if (ticketRoomRef.value.id === ticketId) {
-      ticketAction.push(ticketRoomRef.value)
-    }
-
-    return ticketAction
-  }
-
-  static getRoomPaginationAction() {
-    return [
-      roomFinancePagination.value || [],
-      roomDeliveryPagination.value || [],
-      [ticketRoomRef.value],
-    ]
   }
 }

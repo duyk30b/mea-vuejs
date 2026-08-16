@@ -76,7 +76,7 @@ defineExpose({ openModal })
           </thead>
           <tbody>
             <tr>
-              <td style="width: 200px">Yêu cầu thanh toán</td>
+              <td style="width: 200px">Kiểu thanh toán</td>
               <td>
                 <div>
                   <InputSelect
@@ -133,7 +133,7 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td colspan="2">
-                <InputCheckbox v-model:checked="settingDisplay.paymentList">
+                <InputCheckbox v-model:checked="settingDisplay.paymentTicketList">
                   Hiển thị thông tin thanh toán
                 </InputCheckbox>
               </td>

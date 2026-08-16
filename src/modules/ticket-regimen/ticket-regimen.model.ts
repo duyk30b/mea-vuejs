@@ -41,9 +41,7 @@ export class TicketRegimen extends BaseModel {
   moneyAmountActual: number // tính tổng các Procedure, bỏ qua những thằng NoEffect, theo quy tắc của isEffectTotalMoney
   moneyAmountUsed: number // Tiền TicketProcedure đã được trả và đã sử dụng
   paid: number
-  debt: number
   paidItem: number
-  debtItem: number
 
   discountMoney: number // tiền giảm giá
   discountPercent: number // % giảm giá
@@ -81,8 +79,6 @@ export class TicketRegimen extends BaseModel {
     ins.moneyAmountUsed = 0
     ins.paid = 0
     ins.paidItem = 0
-    ins.debt = 0
-    ins.debtItem = 0
 
     ins.discountMoney = 0
     ins.discountPercent = 0
@@ -170,8 +166,6 @@ export class TicketRegimen extends BaseModel {
     if (a.moneyAmountUsed != b.moneyAmountUsed) return false
     if (a.paid != b.paid) return false
     if (a.paidItem != b.paidItem) return false
-    if (a.debt != b.debt) return false
-    if (a.debtItem != b.debtItem) return false
 
     if (a.discountMoney != b.discountMoney) return false
     if (a.discountPercent != b.discountPercent) return false

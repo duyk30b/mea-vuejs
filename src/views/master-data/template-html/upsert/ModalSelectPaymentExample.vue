@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { VueTag } from '@/common'
 import VuePagination from '@/common/VuePagination.vue'
 import IconBug from '@/common/icon-antd/IconBug.vue'
 import { IconClose } from '@/common/icon-antd/index.ts'
@@ -7,8 +8,15 @@ import { InputSelect, VueSwitch } from '@/common/vue-form/index.ts'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { Payment, PaymentActionTypeText, PaymentApi } from '@/modules/payment'
+import { PaymentApi } from '@/modules/payment/payment.api'
+import type { Payment } from '@/modules/payment/payment.model'
+import {
+  MoneyDirection,
+  PaymentActionTypeText,
+  PaymentPersonType,
+} from '@/modules/payment/payment.type'
 import { ESTimer } from '@/utils/index.ts'
+import { BugDevelopment } from '@/views/component'
 import { ref } from 'vue'
 
 const emit = defineEmits<{
@@ -33,10 +41,13 @@ const startFetchData = async () => {
       page: page.value,
       limit: limit.value,
       relation: {
-        paymentTicketItemList: true,
+        customer: true,
+        distributor: true,
+        employee: true,
         cashier: true,
         wallet: true,
-        customer: true,
+        paymentTicketList: { ticket: true },
+        paymentPurchaseOrderList: { purchaseOrder: true },
       },
       sort: { id: 'DESC' },
     })
@@ -75,7 +86,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="margin-top: 50px">
+  <VueModal v-model:show="showModal" style="margin-top: 50px; width: 1000px">
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium" style="font-size: 16px">Chọn phiếu thanh toán</div>
@@ -91,11 +102,12 @@ defineExpose({ openModal })
               <tr>
                 <th v-if="CONFIG.MODE === 'development'"></th>
                 <th>Thời gian</th>
-                <th>Khách hàng</th>
+                <th>Loại</th>
+                <th>KH/NCC</th>
                 <th>Lý do</th>
                 <th>Ví</th>
-                <th>Số tiền</th>
-                <th>Item</th>
+                <th>Tiền thu</th>
+                <th>Tiền chi</th>
                 <th style="width: 100px">#</th>
               </tr>
             </thead>
@@ -105,27 +117,40 @@ defineExpose({ openModal })
               </tr>
               <tr v-for="payment in paymentList" :key="payment.id">
                 <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-                  <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-                    <template #trigger>
-                      <IconBug
-                        style="color: violet; cursor: pointer"
-                        width="1.2em"
-                        height="1.2em"
-                      />
-                    </template>
-                    <pre>{{ JSON.stringify(payment, null, 4) }}</pre>
-                  </VueTooltip>
+                  <BugDevelopment :data="payment" />
                 </td>
-                <td class="text-center">
+                <td class="text-center" style="white-space: nowrap">
                   {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
                 </td>
-                <td>{{ payment.customer?.fullName }}</td>
+                <td>
+                  <div class="text-left" v-if="payment.moneyDirection === MoneyDirection.In">
+                    <VueTag color="blue" icon="dollar">Phiếu thu</VueTag>
+                  </div>
+                  <div class="text-right" v-if="payment.moneyDirection === MoneyDirection.Out">
+                    <VueTag color="green" icon="dollar">Phiếu chi</VueTag>
+                  </div>
+                  <div class="text-center" v-if="payment.moneyDirection === MoneyDirection.Other">
+                    <VueTag color="purple" icon="dollar">Khác</VueTag>
+                  </div>
+                </td>
+                <td class="">
+                  <div v-if="payment.personType === PaymentPersonType.Distributor">
+                    <span>{{ payment.distributor?.fullName }}</span>
+                  </div>
+                  <div v-if="payment.personType === PaymentPersonType.Customer">
+                    <span>{{ payment.customer?.fullName }}</span>
+                  </div>
+                </td>
                 <td>{{ PaymentActionTypeText[payment.paymentActionType] }}</td>
                 <td>{{ payment.wallet?.name }}</td>
-                <td class="text-right">{{ formatMoney(payment.paidTotal) }}</td>
-                <td>
-                  <div class="flex justify-center items-center">
-                    <VueSwitch :modelValue="payment.hasPaymentItem" disabled />
+                <td class="text-right">
+                  <div v-if="payment.moneyDirection === MoneyDirection.In">
+                    {{ formatMoney(payment.paidTotal) }}
+                  </div>
+                </td>
+                <td class="text-right">
+                  <div v-if="payment.moneyDirection === MoneyDirection.Out">
+                    {{ formatMoney(-payment.paidTotal) }}
                   </div>
                 </td>
                 <td class="text-center">

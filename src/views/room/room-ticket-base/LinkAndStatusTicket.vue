@@ -4,7 +4,6 @@ import { RoomService, RoomType } from '@/modules/room'
 import { Ticket } from '@/modules/ticket'
 import { useRouter } from 'vue-router'
 import TicketStatusTag from './TicketStatusTag.vue'
-import TicketClinicSummaryContainer from '../room-ticket-clinic/detail/summary/TicketClinicSummaryContainer.vue'
 
 const props = withDefaults(
   defineProps<{

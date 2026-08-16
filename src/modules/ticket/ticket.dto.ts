@@ -1,7 +1,7 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionEnum, ConditionNumber } from '../_base/base-condition'
 import type { DeliveryStatus } from '../enum'
-import type { TicketStatus } from './ticket.model'
+import type { TicketStatus } from './ticket.type'
 
 export class TicketFilterQuery {
   roomId?: number | ConditionNumber
@@ -21,7 +21,7 @@ export class TicketGetQuery {
   relation?: {
     customer?: boolean
     ticketPaymentDetail?: boolean
-    paymentList?: boolean
+    paymentTicketList?: { payment?: boolean }
 
     ticketReceptionList?: boolean
 

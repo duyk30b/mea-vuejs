@@ -12,13 +12,14 @@ import {
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DeliveryStatus, DiscountType, PaymentMoneyStatus } from '@/modules/enum'
-import { ticketRoomRef } from '@/modules/room'
-import { TicketChangeProductApi, TicketStatus } from '@/modules/ticket'
+import { DeliveryStatus, DiscountType, TicketItemPaymentType } from '@/modules/enum'
+import { TicketChangeProductApi } from '@/modules/ticket'
 import { TicketProduct } from '@/modules/ticket-product'
 import { ESString } from '@/utils'
 import TicketDeliveryStatusTag from '@/views/room/room-ticket-base/TicketDeliveryStatusTag.vue'
 import { computed, ref } from 'vue'
+import { ticketRef } from '@/store/room.store'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -46,15 +47,15 @@ const hasChangeData = computed(() => {
 })
 
 const handleChangeUnitQuantityPrescription = (data: number) => {
-  if (ticketProduct.value.deliveryStatus !== DeliveryStatus.Delivered) {
+  if (ticketProduct.value.quantityCompleted === 0) {
     const { product, unitRate } = ticketProduct.value
-    ticketProduct.value.unitQuantityPrescription = data
-    ticketProduct.value.unitQuantity = data
+    ticketProduct.value.quantityPrescription = data * unitRate
+    ticketProduct.value.quantity = data * unitRate
   }
 }
 
 const handleChangeUnitQuantity = (data: number) => {
-  if (ticketProduct.value.deliveryStatus !== DeliveryStatus.Delivered) {
+  if (ticketProduct.value.quantityCompleted === 0) {
     const { product, unitRate } = ticketProduct.value
     ticketProduct.value.unitQuantity = data
   }
@@ -67,7 +68,7 @@ const closeModal = () => {
 }
 
 const clickDestroy = async () => {
-  if (ticketProductOrigin.deliveryStatus === DeliveryStatus.Delivered) {
+  if (ticketProductOrigin.quantityCompleted !== 0) {
     return ModalStore.alert({
       title: 'Không thể xóa thuốc ?',
       content: [
@@ -77,8 +78,8 @@ const clickDestroy = async () => {
     })
   }
   if (
-    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-      ticketProductOrigin.paymentMoneyStatus,
+    [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+      ticketProductOrigin.ticketItemPaymentType,
     )
   ) {
     return ModalStore.alert({
@@ -86,7 +87,7 @@ const clickDestroy = async () => {
       content: ['- Thuốc - vật tư đã được thanh toán sẽ không thể xóa'],
     })
   }
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return ModalStore.alert({
       title: 'Không thể xóa thuốc ?',
       content: [
@@ -104,7 +105,7 @@ const clickDestroy = async () => {
     onOk: async () => {
       try {
         await TicketChangeProductApi.destroyTicketProductPrescription({
-          ticketId: ticketRoomRef.value.id,
+          ticketId: ticketRef.value.id,
           ticketProductId: ticketProductOrigin.id,
         })
         closeModal()
@@ -119,7 +120,7 @@ const updateTicketProduct = async () => {
   saveLoading.value = true
   try {
     await TicketChangeProductApi.updateTicketProductPrescription({
-      ticketId: ticketRoomRef.value.id,
+      ticketId: ticketRef.value.id,
       ticketProductId: ticketProduct.value.id,
       ticketProduct: hasChangeTicketProduct.value ? ticketProduct.value : undefined,
     })
@@ -163,7 +164,7 @@ defineExpose({ openModal })
                 :value="ticketProduct.unitRate"
                 :disabled="
                   (ticketProduct.product?.unitObject.length || 0) <= 1 ||
-                  ticketProduct.deliveryStatus === DeliveryStatus.Delivered
+                  ticketProduct.quantityCompleted !== 0
                 "
                 :options="
                   ticketProduct.product?.unitObject.map((i) => ({
@@ -197,7 +198,7 @@ defineExpose({ openModal })
               </span>
             </div>
             <div>
-              <TicketDeliveryStatusTag :deliveryStatus="ticketProduct.deliveryStatus" />
+              <TicketDeliveryStatusTag :deliveryStatus="ticketProduct.deliveryStatusFix" />
             </div>
           </div>
           <div class="flex">
@@ -206,7 +207,7 @@ defineExpose({ openModal })
                 :value="ticketProduct.unitRate"
                 :disabled="
                   (ticketProduct.product?.unitObject.length || 0) <= 1 ||
-                  ticketProduct.deliveryStatus === DeliveryStatus.Delivered
+                  ticketProduct.quantityCompleted !== 0
                 "
                 :options="
                   ticketProduct.product?.unitObject.map((i) => ({
@@ -223,7 +224,7 @@ defineExpose({ openModal })
               <InputNumber
                 :value="ticketProduct.unitQuantity"
                 @update:value="handleChangeUnitQuantity"
-                :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
+                :disabled="ticketProduct.quantityCompleted !== 0"
                 :validate="{ gte: 0 }"
               />
             </div>
@@ -278,14 +279,14 @@ defineExpose({ openModal })
               <InputMoney
                 v-if="ticketProduct.discountType === DiscountType.VND"
                 :value="ticketProduct.unitDiscountMoney"
-                :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
+                :disabled="ticketProduct.quantityCompleted !== 0"
                 @update:value="(v) => ticketProduct.changeUnitDiscountMoney(v)"
                 :validate="{ gte: 0 }"
               />
               <InputNumber
                 v-else
                 :value="ticketProduct.discountPercent"
-                :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
+                :disabled="ticketProduct.quantityCompleted !== 0"
                 @update:value="(v) => ticketProduct.changeDiscountPercent(v)"
                 :validate="{ gte: 0, lte: 100 }"
               />
@@ -306,7 +307,7 @@ defineExpose({ openModal })
             <InputMoney
               :value="ticketProduct.unitActualPrice"
               :prepend="ticketProduct.unitRate !== 1 ? ticketProduct.unitName : ''"
-              :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
+              :disabled="ticketProduct.quantityCompleted !== 0"
               @update:value="(v) => ticketProduct.changeUnitActualPrice(v)"
               :validate="{ gte: 0 }"
             />

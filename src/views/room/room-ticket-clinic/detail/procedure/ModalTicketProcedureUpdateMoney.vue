@@ -4,10 +4,10 @@ import { IconClose } from '@/common/icon-antd'
 import { InputMoney, InputNumber, VueSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
-import { ticketRoomRef } from '@/modules/room'
+import { DiscountType, TicketItemPaymentType } from '@/modules/enum'
 import { TicketChangeProcedureApi } from '@/modules/ticket'
 import { TicketProcedure } from '@/modules/ticket-procedure'
+import { ticketRef } from '@/store/room.store'
 import { computed, ref } from 'vue'
 
 const emit = defineEmits<{
@@ -85,7 +85,7 @@ const handleSave = async () => {
   try {
     if (ticketProcedure.value.id) {
       await TicketChangeProcedureApi.updateMoneyTicketProcedure({
-        ticketId: ticketRoomRef.value.id,
+        ticketId: ticketRef.value.id,
         ticketProcedureId: ticketProcedure.value.id,
         ticketProcedure: ticketProcedure.value,
       })
@@ -150,8 +150,8 @@ defineExpose({ openModal })
                   v-if="ticketProcedure.discountType === DiscountType.VND"
                   :value="ticketProcedure.discountMoney"
                   :disabled="
-                    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                      ticketProcedure.paymentMoneyStatus,
+                    [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+                      ticketProcedure.ticketItemPaymentType,
                     )
                   "
                   @update:value="handleChangeUnitDiscountMoney"
@@ -161,8 +161,8 @@ defineExpose({ openModal })
                   v-else
                   :value="ticketProcedure.discountPercent"
                   :disabled="
-                    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                      ticketProcedure.paymentMoneyStatus,
+                    [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+                      ticketProcedure.ticketItemPaymentType,
                     )
                   "
                   @update:value="handleChangeDiscountPercent"
@@ -177,8 +177,8 @@ defineExpose({ openModal })
               <InputMoney
                 :value="ticketProcedure.actualPrice"
                 :disabled="
-                  [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-                    ticketProcedure.paymentMoneyStatus,
+                  [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+                    ticketProcedure.ticketItemPaymentType,
                   )
                 "
                 @update:value="handleChangeActualPrice"

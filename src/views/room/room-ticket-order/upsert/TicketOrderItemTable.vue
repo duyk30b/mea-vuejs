@@ -2,8 +2,10 @@
 import { IconBug, IconDelete, IconFileSearch } from '@/common/icon-antd'
 import { IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import { IconEditSquare } from '@/common/icon-google'
+import { VueTooltip } from '@/common/popover'
 import { InputNumber } from '@/common/vue-form'
 import VueTag from '@/common/VueTag.vue'
+import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import type { Procedure } from '@/modules/procedure'
 import type { Product } from '@/modules/product'
@@ -13,8 +15,6 @@ import { ref } from 'vue'
 import ModalTicketOrderUpdateProcedure from './ModalTicketOrderUpdateProcedure.vue'
 import ModalTicketOrderUpdateProduct from './ModalTicketOrderUpdateProduct.vue'
 import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
-import { CONFIG } from '@/config'
-import { VueTooltip } from '@/common/popover'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
@@ -560,7 +560,9 @@ const startRemoveTicketProcedure = (_localId: string) => {
                     {{ formatMoney(ticketProduct.unitExpectedPrice * ticketProduct.unitQuantity) }}
                   </del>
                 </div>
-                <div>{{ formatMoney(ticketProduct.unitActualPrice * ticketProduct.unitQuantity) }}</div>
+                <div>
+                  {{ formatMoney(ticketProduct.unitActualPrice * ticketProduct.unitQuantity) }}
+                </div>
               </td>
               <td class="text-center" style="width: 24px; font-size: 20px">
                 <a class="text-orange-500" @click="modalTicketOrderUpdateProduct?.openModal(index)">

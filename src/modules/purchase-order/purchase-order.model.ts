@@ -1,19 +1,10 @@
 import { Batch } from '../batch'
 import { Distributor } from '../distributor'
 import { DeliveryStatus, DiscountType } from '../enum'
-import { Payment } from '../payment'
+import { PaymentPurchaseOrder } from '../payment-purchase-order'
 import { Product } from '../product'
 import { PurchaseOrderItem } from '../purchase-order-item/purchase-order-item.model'
-
-export enum PurchaseOrderStatus {
-  Schedule = 1,
-  Draft = 2,
-  Deposited = 3,
-  Executing = 4,
-  Debt = 5,
-  Completed = 6,
-  Cancelled = 7,
-}
+import { PurchaseOrderStatus } from './purchase-order.type'
 
 export class PurchaseOrder {
   id: string
@@ -30,16 +21,18 @@ export class PurchaseOrder {
   debt: number // tiền nợ
   note: string
   startedAt: number
+  updatedAt: number
   shippedAt: number
 
   purchaseOrderItemList?: PurchaseOrderItem[]
   distributor?: Distributor
-  paymentList?: Payment[]
+  paymentPurchaseOrderList?: PaymentPurchaseOrder[]
 
   static init(): PurchaseOrder {
     const ins = new PurchaseOrder()
     ins.id = ''
     ins.status = PurchaseOrderStatus.Draft
+    ins.deliveryStatus = DeliveryStatus.Empty
     ins.itemsActualMoney = 0
     ins.discountMoney = 0
     ins.discountPercent = 0
@@ -56,7 +49,7 @@ export class PurchaseOrder {
     const ins = PurchaseOrder.init()
     ins.purchaseOrderItemList = []
     ins.distributor = Distributor.init()
-    ins.paymentList = []
+    ins.paymentPurchaseOrderList = []
     return ins
   }
 
@@ -111,8 +104,10 @@ export class PurchaseOrder {
         return purchaseOrderItem
       })
     }
-    if (source.paymentList) {
-      target.paymentList = Payment.basicList(source.paymentList)
+    if (source.paymentPurchaseOrderList) {
+      target.paymentPurchaseOrderList = PaymentPurchaseOrder.basicList(
+        source.paymentPurchaseOrderList,
+      )
     }
     return target
   }

@@ -57,7 +57,7 @@ const openModal = async (ticketProp: Ticket) => {
 
 const setReturnAllQuantity = () => {
   tbReturnList.value.forEach((i) => {
-    i.unitQuantityReturn = i.tbRoot.unitQuantity
+    i.unitQuantityReturn = i.tbRoot.quantityCompleted * i.tbRoot.unitRate
   })
 }
 
@@ -72,7 +72,7 @@ const validateQuantity = () => {
     const tbReturn = tbReturnList.value[i]
     const { product } = tbReturn.tbRoot
 
-    if (tbReturn.unitQuantityReturn > tbReturn.tbRoot.unitQuantity) {
+    if (tbReturn.unitQuantityReturn * tbReturn.unitRate > tbReturn.tbRoot.quantityCompleted) {
       AlertStore.addError(`Lỗi: Sản phẩm ${product?.brandName} hoàn trả bị quá số lượng đã mua`)
       return false
     }
@@ -93,14 +93,15 @@ const startReturnProduct = async () => {
       .map((i) => {
         return {
           ticketBatchId: i.ticketBatchId,
-          unitQuantityReturn: i.unitQuantityReturn,
-          unitRate: i.unitRate,
+          quantityExecute: i.unitQuantityReturn * i.unitRate,
         }
       })
 
-    await TicketActionApi.returnProduct({
+    await TicketActionApi.returnProductList({
       ticketId: ticket.value.id,
-      returnList: tbReturnListConvert,
+      body: {
+        returnProductList: tbReturnListConvert,
+      },
     })
 
     emit('success')
@@ -182,7 +183,9 @@ defineExpose({ openModal })
                   </div>
                 </td>
                 <td class="text-center">
-                  <div>{{ tbReturn.tbRoot.unitQuantity }}</div>
+                  <div>
+                    {{ tbReturn.tbRoot.quantityCompleted / (tbReturn.tbRoot.unitRate || 1) }}
+                  </div>
                 </td>
                 <td class="text-center">{{ tbReturn.tbRoot.product?.unitBasicName }}</td>
                 <td class="text-right">{{ formatMoney(tbReturn.tbRoot.unitActualPrice) }}</td>
@@ -192,7 +195,7 @@ defineExpose({ openModal })
                     style="width: 120px"
                     v-model="tbReturn.unitQuantityReturn"
                     min="0"
-                    :max="tbReturn.tbRoot.unitQuantity"
+                    :max="tbReturn.tbRoot.quantityCompleted / (tbReturn.tbRoot.unitRate || 1)"
                   />
                 </td>
                 <td class="text-right">

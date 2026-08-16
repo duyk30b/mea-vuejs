@@ -30,7 +30,9 @@
   "search.smartCase": true,
   "search.exclude": {
     "docs/**": true,
-    "dist/**": true
+    "dist/**": true,
+    "node_modules/**": true,
+    "package-lock.json": true,
   },
   "js/ts.preferences.quoteStyle": "single",
   "js/ts.format.semicolons": "remove",

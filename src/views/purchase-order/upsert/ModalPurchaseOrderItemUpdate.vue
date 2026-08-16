@@ -9,14 +9,13 @@ import {
   InputSelect,
   type InputSelectOption,
   InputText,
-  VueSelect,
 } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store.ts'
 import { PurchaseOrderItem } from '@/modules/purchase-order-item'
 import { Warehouse, WarehouseService } from '@/modules/warehouse'
 import { onMounted, ref } from 'vue'
-import { purchaseOrder } from './purchase-order-upsert.store'
+import { purchaseOrderUpsertRef } from './purchase_order_upsert.ref'
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -42,7 +41,7 @@ const openModal = async (purchaseOrderItemIndex: number) => {
   showModal.value = true
   indexUpdate = purchaseOrderItemIndex
   purchaseOrderItem.value = PurchaseOrderItem.from(
-    (purchaseOrder.value.purchaseOrderItemList || [])[purchaseOrderItemIndex],
+    (purchaseOrderUpsertRef.value.purchaseOrderItemList || [])[purchaseOrderItemIndex],
   )
 }
 
@@ -53,17 +52,17 @@ const closeModal = () => {
 }
 
 const changePurchaseOrderItem = async () => {
-  purchaseOrder.value.purchaseOrderItemList![indexUpdate] = PurchaseOrderItem.from(
+  purchaseOrderUpsertRef.value.purchaseOrderItemList![indexUpdate] = PurchaseOrderItem.from(
     purchaseOrderItem.value,
   )
   closeModal()
 }
 
 const startRemovePurchaseOrderItem = (_localId: string) => {
-  const index = purchaseOrder.value.purchaseOrderItemList!.findIndex((i) => {
+  const index = purchaseOrderUpsertRef.value.purchaseOrderItemList!.findIndex((i) => {
     return i._localId === _localId
   })
-  purchaseOrder.value.purchaseOrderItemList!.splice(index, 1)
+  purchaseOrderUpsertRef.value.purchaseOrderItemList!.splice(index, 1)
   closeModal()
 }
 
@@ -139,7 +138,10 @@ defineExpose({ openModal })
               />
             </div>
             <div class="flex-1">
-              <InputNumber v-model:value="purchaseOrderItem.unitQuantity" :validate="{ gt: 0 }" />
+              <InputNumber
+                v-model:value="purchaseOrderItem.unitQuantityFix"
+                :validate="{ gt: 0 }"
+              />
             </div>
           </div>
         </div>
@@ -149,7 +151,7 @@ defineExpose({ openModal })
             Giá nhập
             <span v-if="purchaseOrderItem.unitRate !== 1">
               (
-              <b>{{ formatMoney(purchaseOrderItem.costPrice) }} /</b>
+              <b>{{ formatMoney(purchaseOrderItem.costPriceFix) }} /</b>
               {{ purchaseOrderItem?.product?.unitBasicName }})
             </span>
           </div>

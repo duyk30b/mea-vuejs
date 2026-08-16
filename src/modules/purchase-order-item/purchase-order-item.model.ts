@@ -2,6 +2,7 @@ import { PurchaseOrder } from '@/modules/purchase-order'
 import { BaseModel } from '../_base/base.model'
 import { Batch } from '../batch'
 import { Product } from '../product'
+import { DeliveryStatus } from '../enum'
 
 export class PurchaseOrderItem extends BaseModel {
   id: string
@@ -13,11 +14,12 @@ export class PurchaseOrderItem extends BaseModel {
 
   lotNumber: string // Lô sản phẩm
   expiryDate?: number
-
-  unitQuantity: number
   unitRate: number
+
   unitCostPrice: number
   unitListPrice: number // Giá niêm yết
+  quantity: number
+  quantityCompleted: number
 
   purchaseOrder?: PurchaseOrder
   batch?: Batch
@@ -27,23 +29,35 @@ export class PurchaseOrderItem extends BaseModel {
     return this.product!.getUnitNameByRate(this.unitRate)
   }
 
-  get quantity() {
-    return this.unitQuantity * this.unitRate
+  get unitQuantityFix() {
+    return Math.round((this.quantity / this.unitRate) * 1000) / 1000
   }
 
-  get costPrice() {
+  set unitQuantityFix(unitQuantity: number) {
+    this.quantity = Math.round(unitQuantity * this.unitRate * 1000) / 1000
+  }
+
+  get costPriceFix() {
     return Math.round(this.unitCostPrice / this.unitRate)
   }
 
-  get listPrice() {
+  get listPriceFix() {
     return Math.round(this.unitListPrice / this.unitRate)
+  }
+
+  get deliveryStatusFix() {
+    if (this.quantity === 0 && this.quantityCompleted === 0) return DeliveryStatus.Empty
+    if (this.quantityCompleted === 0 && this.quantityCompleted < this.quantity)
+      return DeliveryStatus.Pending
+    if (this.quantity > 0 && this.quantityCompleted < this.quantity) return DeliveryStatus.Partial
+    if (this.quantity === this.quantityCompleted) return DeliveryStatus.Delivered
+    else return DeliveryStatus.Cancelled
   }
 
   public changeUnitRate(unitRate: number) {
     const oldUnitRate = this.unitRate
     this.unitCostPrice = Math.round((this.unitCostPrice * unitRate) / oldUnitRate)
     this.unitListPrice = Math.round((this.unitListPrice * unitRate) / oldUnitRate)
-    this.unitQuantity = Math.round((this.unitQuantity * oldUnitRate) / unitRate)
     this.unitRate = unitRate
   }
 
@@ -57,7 +71,7 @@ export class PurchaseOrderItem extends BaseModel {
     ins.distributorId = 0
     ins.warehouseId = 0
 
-    ins.unitQuantity = 0
+    ins.quantity = 0
     ins.unitCostPrice = 0
     ins.unitListPrice = 0
     ins.unitRate = 1

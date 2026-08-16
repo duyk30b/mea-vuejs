@@ -7,13 +7,15 @@ import VueModal from '@/common/vue-modal/VueModal.vue'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer, CustomerService } from '@/modules/customer'
-import { PaymentApi } from '@/modules/payment'
+import { TicketMoneyApi, TicketQueryApi, type Ticket } from '@/modules/ticket'
 import { WalletService } from '@/modules/wallet'
-import { TicketMoneyApi, TicketQueryApi, TicketStatus, type Ticket } from '@/modules/ticket'
 import { ESTimer } from '@/utils'
-import LinkAndStatusTicket from '@/views/room/room-ticket-base/LinkAndStatusTicket.vue'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import TicketLink from '../room/room-ticket-base/TicketLink.vue'
+import TicketStatusTag from '../room/room-ticket-base/TicketStatusTag.vue'
+import { TicketActionType } from '@/modules/ticket/ticket.type'
+import { PaymentActionType } from '@/modules/payment/payment.type'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -32,7 +34,7 @@ const customer = ref<Customer>(Customer.blank())
 const walletId = ref<string>('')
 const walletOptions = ref<{ value: any; label: string }[]>([])
 
-const ticketPaymentList = ref<{ ticket: Ticket; money: number }[]>([])
+const ticketPaymentList = ref<{ ticketId: string; ticket: Ticket; money: number }[]>([])
 
 const showModal = ref(false)
 const dataLoading = ref(false)
@@ -65,6 +67,7 @@ const openModal = async (customerId: number) => {
     ticketPaymentList.value = fetchPromise[1].ticketList.map((i) => ({
       ticket: i,
       money: 0,
+      ticketId: i.id,
       moneyItem: 0,
     }))
   } catch (error) {
@@ -80,7 +83,6 @@ const closeModal = () => {
   totalMoney.value = 0
   note.value = ''
   customer.value = Customer.blank()
-  walletId.value = ''
 }
 
 const handleSave = async () => {
@@ -90,20 +92,21 @@ const handleSave = async () => {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
 
-    const data = await TicketMoneyApi.payDebt({
+    const data = await TicketMoneyApi.changeDebt({
       customerId: customer.value.id,
       walletId: walletId.value,
-      totalMoney: totalMoney.value,
+      paymentActionType: PaymentActionType.PayDebt,
       note: '',
-      dataList: ticketPaymentList.value
+      changeDebtListBody: ticketPaymentList.value
         .map((i) => {
           return {
             ticketId: i.ticket.id,
-            isPaymentEachItem: i.ticket.isPaymentEachItem,
-            debtTotalMinus: i.money,
+            paid: i.money,
+            debt: -i.money,
+            ticketActionType: TicketActionType.PayDebt,
           }
         })
-        .filter((i) => i.debtTotalMinus > 0),
+        .filter((i) => i.paid > 0),
     })
     AlertStore.addSuccess(`Trả nợ cho KH ${customer.value.fullName} thành công`)
     emit('success', { customer: data.customerModified })
@@ -178,7 +181,13 @@ defineExpose({ openModal })
             <tbody>
               <tr v-for="(ticketPayment, index) in ticketPaymentList" :key="index">
                 <td>
-                  <LinkAndStatusTicket :ticket="ticketPayment.ticket" />
+                  <div class="flex gap-1 flex-wrap">
+                    <TicketLink
+                      :ticket="ticketPayment.ticket!"
+                      :ticketId="ticketPayment.ticketId"
+                    />
+                    <TicketStatusTag :ticket="ticketPayment.ticket!" />
+                  </div>
                   <div>
                     {{ ESTimer.timeToText(ticketPayment.ticket.createdAt, 'DD/MM/YYYY hh:mm') }}
                   </div>

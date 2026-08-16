@@ -16,27 +16,27 @@ export class DistributorService {
   static distributorDefault = Distributor.blank()
 
   // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng loadedAll
-  static getAll = (() => {
+  static fetchAll = (() => {
     const start = async () => {
       try {
-        const { distributorList } = await DistributorApi.list({})
+        const distributorList = await DistributorApi.list({})
         DistributorService.distributorAll = distributorList
       } catch (error: any) {
         console.log('🚀 ~ file: distributor.service.ts:33 ~ :', error)
       }
     }
-    let fetching: any = null
-    return async (options: { refresh?: boolean } = {}) => {
-      if (!fetching || !DistributorService.loadedAll || options.refresh) {
+    let fetchPromise: Promise<void> | null = null
+    return async (options: { refetch?: boolean } = {}) => {
+      if (!fetchPromise || !DistributorService.loadedAll || options.refetch) {
         DistributorService.loadedAll = true
-        fetching = start()
+        fetchPromise = start()
       }
-      await fetching
+      await fetchPromise
     }
   })()
 
   static async getMap() {
-    await DistributorService.getAll()
+    await DistributorService.fetchAll()
     return arrayToKeyValue(DistributorService.distributorAll, 'id')
   }
 
@@ -87,26 +87,29 @@ export class DistributorService {
     return data
   }
 
-  static async pagination(options: DistributorPaginationQuery) {
-    const page = options.page || 1
-    const limit = options.limit || 10
-    await DistributorService.getAll()
-    const dataQuery = DistributorService.executeQuery(DistributorService.distributorAll, options)
+  static async pagination(query: DistributorPaginationQuery, options?: { refetch: boolean }) {
+    const page = query.page || 1
+    const limit = query.limit || 10
+    await DistributorService.fetchAll({ refetch: !!options?.refetch })
+
+    const dataQuery = DistributorService.executeQuery(DistributorService.distributorAll, query)
     const data = dataQuery.slice((page - 1) * limit, page * limit)
     return {
-      data,
-      meta: { total: dataQuery.length },
+      distributorList: Distributor.fromList(data),
+      total: dataQuery.length,
+      page: page,
+      limit: limit,
     }
   }
 
-  static async list(options: DistributorListQuery) {
-    await DistributorService.getAll()
-    const data = DistributorService.executeQuery(DistributorService.distributorAll, options)
+  static async list(query: DistributorListQuery, options?: { refetch: boolean }) {
+    await DistributorService.fetchAll({ refetch: !!options?.refetch })
+    const data = DistributorService.executeQuery(DistributorService.distributorAll, query)
     return Distributor.fromList(data)
   }
 
   static async search(text: string) {
-    await DistributorService.getAll()
+    await DistributorService.fetchAll()
     if (!text) text = ''
     const data = DistributorService.distributorAll.filter((i) => {
       if (ESString.customFilter(i.fullName || '', text, 2)) {
@@ -155,7 +158,7 @@ export class DistributorService {
     const idDefault = useSettingStore().SCREEN_PURCHASE_ORDER_UPSERT.distributor.idDefault
 
     if (idDefault) {
-      await DistributorService.getAll()
+      await DistributorService.fetchAll()
       if (!DistributorService.distributorDefault.id) {
         try {
           const distributor = DistributorService.distributorAll.find((i) => i.id === idDefault)

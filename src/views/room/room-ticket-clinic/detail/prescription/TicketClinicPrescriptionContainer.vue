@@ -8,13 +8,12 @@ import { InputArea, VueSwitch } from '@/common/vue-form'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DeliveryStatus, DiscountType, PaymentMoneyStatus, PickupStrategy } from '@/modules/enum'
+import { DeliveryStatus, DiscountType, TicketItemPaymentType, PickupStrategy } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrescriptionSample, PrescriptionSampleItem } from '@/modules/prescription-sample'
 import { TemplateHtmlAction } from '@/modules/template-html'
 import { Product, ProductService } from '@/modules/product'
-import { ticketRoomRef } from '@/modules/room'
-import { TicketChangeAttributeApi, TicketChangeProductApi, TicketStatus } from '@/modules/ticket'
+import { TicketChangeAttributeApi, TicketChangeProductApi } from '@/modules/ticket'
 import {
   TicketAttributeKeyAdviceList,
   type TicketAttributeKeyAdviceType,
@@ -23,7 +22,7 @@ import { TicketProduct, TicketProductService, TicketProductType } from '@/module
 import { TicketUser } from '@/modules/ticket-user'
 import { BugDevelopment } from '@/views/component'
 import InputSearchPrescriptionSample from '@/views/component/InputSearchPrescriptionSample.vue'
-import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import TicketItemPaymentTypeTooltip from '@/views/room/room-ticket-base/TicketItemPaymentTypeTooltip.vue'
 import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import TicketDeliveryStatusTooltip from '@/views/room/room-ticket-base/TicketDeliveryStatusTooltip.vue'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -32,7 +31,8 @@ import ModalSelectItemFromPrescriptionSample from './ModalSelectItemFromPrescrip
 import ModalTicketPrescriptionUpdate from './ModalTicketPrescriptionUpdate.vue'
 import TicketPrescriptionSelectItem from './TicketPrescriptionSelectItem.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
-import { useTicketClinicDetailStore } from '@/store/ticket-clinic-detail.store'
+import { ticketRef, roomRef } from '@/store/room.store'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 
 const modalTicketPrescriptionUpdate = ref<InstanceType<typeof ModalTicketPrescriptionUpdate>>()
 const ticketSpaPrescriptionSelectItem = ref<InstanceType<typeof TicketPrescriptionSelectItem>>()
@@ -42,7 +42,6 @@ const modalSelectItemFromPrescriptionSample =
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalSavePrescriptionSample = ref<InstanceType<typeof ModalSavePrescriptionSample>>()
 
-const ticketClinicDetailStore = useTicketClinicDetailStore()
 const { userPermission, organizationPermission, organization } = MeService
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -58,8 +57,8 @@ const ticketAttributeMap = ref<{ [P in TicketAttributeKeyAdviceType]?: any } & {
 })
 
 onMounted(async () => {
-  await TicketProductService.refreshRelation(ticketRoomRef.value.ticketProductList)
-  ticketRoomRef.value.refreshTicketProduct()
+  await TicketProductService.refreshRelation(ticketRef.value.ticketProductList)
+  ticketRef.value.refreshTicketProduct()
 })
 
 const selectPrescriptionSample = async (psSelect?: PrescriptionSample) => {
@@ -69,7 +68,7 @@ const selectPrescriptionSample = async (psSelect?: PrescriptionSample) => {
 }
 
 watch(
-  () => ticketRoomRef.value.ticketProductPrescriptionList,
+  () => ticketRef.value.ticketProductPrescriptionList,
   (newValue, oldValue) => {
     ticketProductPrescriptionList.value = TicketProduct.fromList(newValue || [])
   },
@@ -77,7 +76,7 @@ watch(
 )
 
 watch(
-  () => ticketRoomRef.value.ticketAttributeList,
+  () => ticketRef.value.ticketAttributeList,
   (newValue, oldValue) => {
     if (!newValue) {
       return (ticketAttributeMap.value = { advice: '' })
@@ -94,7 +93,7 @@ watch(
 )
 
 watch(
-  () => ticketRoomRef.value.ticketUserTree,
+  () => ticketRef.value.ticketUserTree,
   (newValue, oldValue) => {},
   { immediate: true, deep: true },
 )
@@ -102,10 +101,10 @@ watch(
 const hasChangePriority = computed(() => {
   for (
     let index = 0;
-    index < (ticketRoomRef.value.ticketProductPrescriptionList || []).length;
+    index < (ticketRef.value.ticketProductPrescriptionList || []).length;
     index++
   ) {
-    const tpRoot = ticketRoomRef.value.ticketProductPrescriptionList![index]
+    const tpRoot = ticketRef.value.ticketProductPrescriptionList![index]
     if (tpRoot.priority !== ticketProductPrescriptionList.value[index].priority) {
       return true
     }
@@ -117,7 +116,7 @@ const hasChangeAttribute = computed(() => {
   let hasChange = false
   Object.entries(ticketAttributeMap.value).forEach(([key, value]) => {
     const k = key as unknown as TicketAttributeKeyAdviceType
-    const rootValue = ticketRoomRef.value.ticketAttributeMap[k] || ''
+    const rootValue = ticketRef.value.ticketAttributeMap[k] || ''
     if (rootValue != value) {
       hasChange = true
     }
@@ -147,7 +146,7 @@ const hasChangeData = computed(() => {
 })
 
 const disabledButton = computed(() => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return true
   }
   return !hasChangeData.value
@@ -161,15 +160,15 @@ const changeItemPosition = (index: number, count: number) => {
 
 const startPrint = async () => {
   await TemplateHtmlAction.startPrintTicketClinicPrescription({
-    ticket: ticketRoomRef.value,
-    customer: ticketRoomRef.value.customer!,
+    ticket: ticketRef.value,
+    customer: ticketRef.value.customer!,
   })
 }
 
 const savePriorityTicketProductPrescription = async () => {
   try {
     await TicketChangeProductApi.updatePriorityTicketProductPrescription({
-      ticketId: ticketRoomRef.value.id,
+      ticketId: ticketRef.value.id,
       ticketProductList: ticketProductPrescriptionList.value,
     })
   } catch (e: any) {
@@ -180,7 +179,7 @@ const savePriorityTicketProductPrescription = async () => {
 const saveAdvicePrescription = async () => {
   try {
     await TicketChangeAttributeApi.updateTicketAttributeList({
-      ticketId: ticketRoomRef.value.id,
+      ticketId: ticketRef.value.id,
       ticketAttributeList: Object.entries(ticketAttributeMap.value).map(([key, value]) => {
         return {
           key,
@@ -212,7 +211,7 @@ const handleAddTicketProductPrescription = async (ticketProductAddList: TicketPr
     ticketProductPrescriptionList.value = [...tpListOrigin, ...ticketProductAddList]
 
     await TicketChangeProductApi.addTicketProductPrescriptionList({
-      ticketId: ticketRoomRef.value.id,
+      ticketId: ticketRef.value.id,
       ticketProductList: ticketProductAddList,
     })
   } catch (error) {
@@ -223,7 +222,7 @@ const handleAddTicketProductPrescription = async (ticketProductAddList: TicketPr
 
 const clickOpenModalSavePrescriptionSample = () => {
   const psGenerate = PrescriptionSample.blank()
-  psGenerate.name = ticketRoomRef.value.note
+  psGenerate.name = ticketRef.value.note
   psGenerate.prescriptionSampleItemList = ticketProductPrescriptionList.value.map((i) => {
     const psiBlank = PrescriptionSampleItem.blank()
     psiBlank.productId = i.productId
@@ -239,17 +238,14 @@ const handleSelectPrescriptionSampleItemList = async (
   prescriptionSampleItemList: PrescriptionSampleItem[],
 ) => {
   if (
-    ![
-      TicketStatus.Schedule,
-      TicketStatus.Draft,
-      TicketStatus.Deposited,
-      TicketStatus.Executing,
-    ].includes(ticketRoomRef.value.status)
+    ![TicketStatus.Draft, TicketStatus.Schedule, TicketStatus.Executing].includes(
+      ticketRef.value.status,
+    )
   ) {
     return AlertStore.addWarning(`Trạng thái phiếu khám không hợp lệ`)
   }
 
-  const priorityList = (ticketRoomRef.value.ticketProductPrescriptionList || []).map((i) => {
+  const priorityList = (ticketRef.value.ticketProductPrescriptionList || []).map((i) => {
     return i.priority
   })
   priorityList.push(0) // tránh tạo mảng rỗng thì Math.max không tính được
@@ -269,14 +265,14 @@ const handleSelectPrescriptionSampleItemList = async (
       temp.pickupStrategy =
         product.warehouseIds === '[]'
           ? PickupStrategy.NoImpact
-          : ticketClinicDetailStore.roomRef.roomSettingObj.consumable.pickupStrategy ||
+          : roomRef.value.roomSettingObj.consumable.pickupStrategy ||
             PickupStrategy.RequireBatchSelection
-      temp.customerId = ticketRoomRef.value.customerId
+      temp.customerId = ticketRef.value.customerId
       temp.batchId = 0
 
       temp.unitRate = psItem.unitRate || 1
-      temp.unitQuantity = psItem.unitQuantity // lấy theo mẫu
-      temp.unitQuantityPrescription = psItem.unitQuantity // lấy theo mẫu
+      temp.quantity = psItem.unitQuantity * psItem.unitRate // lấy theo mẫu
+      temp.quantityPrescription = psItem.unitQuantity * psItem.unitRate // lấy theo mẫu
       temp.hintUsage = psItem.hintUsage // lấy theo mẫu
 
       temp.createdAt = Date.now()
@@ -291,7 +287,6 @@ const handleSelectPrescriptionSampleItemList = async (
       }
 
       temp.type = TicketProductType.Prescription
-      temp.deliveryStatus = DeliveryStatus.Pending
 
       temp.unitExpectedPrice = product.retailPrice * temp.unitRate
       temp.discountType = DiscountType.Percent
@@ -299,9 +294,7 @@ const handleSelectPrescriptionSampleItemList = async (
       temp.unitDiscountMoney = 0
       temp.unitActualPrice = product.retailPrice * temp.unitRate
 
-      temp.warehouseIds = JSON.stringify(
-        ticketClinicDetailStore.roomRef.roomSettingObj.prescription.warehouseIdList,
-      )
+      temp.warehouseIds = JSON.stringify(roomRef.value.roomSettingObj.prescription.warehouseIdList)
 
       return temp
     })
@@ -331,7 +324,7 @@ const handleSelectPrescriptionSampleItemList = async (
 }
 
 const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
-  if (ticketProductProp.deliveryStatus === DeliveryStatus.Delivered) {
+  if (ticketProductProp.quantityCompleted !== 0) {
     return ModalStore.alert({
       title: 'Không thể xóa thuốc ?',
       content: [
@@ -341,8 +334,8 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
     })
   }
   if (
-    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-      ticketProductProp.paymentMoneyStatus,
+    [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+      ticketProductProp.ticketItemPaymentType,
     )
   ) {
     return ModalStore.alert({
@@ -350,7 +343,7 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
       content: ['- Thuốc - vật tư đã được thanh toán sẽ không thể xóa'],
     })
   }
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return ModalStore.alert({
       title: 'Không thể xóa thuốc ?',
       content: [
@@ -368,7 +361,7 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
     onOk: async () => {
       try {
         await TicketChangeProductApi.destroyTicketProductPrescription({
-          ticketId: ticketRoomRef.value.id,
+          ticketId: ticketRef.value.id,
           ticketProductId: ticketProductProp.id,
         })
       } catch (error) {
@@ -397,7 +390,7 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
         <InputSearchPrescriptionSample
           @selectPrescriptionSample="selectPrescriptionSample"
           removeLabelWrapper
-          :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.status)"
+          :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketRef.status)"
           prepend="Đơn mẫu"
         />
       </div>
@@ -444,7 +437,7 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
                     margin-bottom: -0.5rem;
                   "
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
-                  :disabled="index === 0 || tpItem.deliveryStatus === DeliveryStatus.Delivered"
+                  :disabled="index === 0 || tpItem.quantityCompleted !== 0"
                   @click="changeItemPosition(index, -1)"
                 >
                   <IconSortUp style="opacity: 0.6" />
@@ -462,7 +455,7 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
                   :disabled="
                     index === ticketProductPrescriptionList.length - 1 ||
-                    tpItem.deliveryStatus === DeliveryStatus.Delivered
+                    tpItem.quantityCompleted !== 0
                   "
                   @click="changeItemPosition(index, 1)"
                 >
@@ -471,10 +464,10 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
               </div>
             </td>
             <td class="text-center">
-              <TicketDeliveryStatusTooltip :deliveryStatus="tpItem.deliveryStatus" />
+              <TicketDeliveryStatusTooltip :deliveryStatus="tpItem.deliveryStatusFix" />
             </td>
             <td class="text-center">
-              <PaymentMoneyStatusTooltip :paymentMoneyStatus="tpItem.paymentMoneyStatus" />
+              <TicketItemPaymentTypeTooltip :ticketItemPaymentType="tpItem.ticketItemPaymentType" />
             </td>
             <td>
               <div style="font-weight: 500">
@@ -509,9 +502,12 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
               </a>
               <a
                 v-else-if="
-                  [PaymentMoneyStatus.PendingPayment, PaymentMoneyStatus.TicketPaid].includes(
-                    tpItem.paymentMoneyStatus,
-                  ) && userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
+                  [
+                    TicketItemPaymentType.NoEffect,
+                    TicketItemPaymentType.PendingPayment,
+                    TicketItemPaymentType.TicketPaid,
+                  ].includes(tpItem.ticketItemPaymentType) &&
+                  userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
                 "
                 style="color: var(--text-orange)"
                 @click="modalTicketPrescriptionUpdate?.openModal(tpItem)"
@@ -525,9 +521,12 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
               </a>
               <a
                 v-else-if="
-                  [PaymentMoneyStatus.PendingPayment, PaymentMoneyStatus.TicketPaid].includes(
-                    tpItem.paymentMoneyStatus,
-                  ) && userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
+                  [
+                    TicketItemPaymentType.NoEffect,
+                    TicketItemPaymentType.PendingPayment,
+                    TicketItemPaymentType.TicketPaid,
+                  ].includes(tpItem.ticketItemPaymentType) &&
+                  userPermission[PermissionId.TICKET_CHANGE_PRODUCT_PRESCRIPTION]
                 "
                 style="color: var(--text-red)"
                 @click="clickDestroyTicketProduct(tpItem)"
@@ -565,11 +564,11 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
       <div>
         <InputArea
           v-model:value="ticketAttributeMap.advice"
-          :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.status)"
+          :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketRef.status)"
         />
         <!-- <VueTinyMCE
           v-model="ticketAttributeMap.advice"
-          :readonly="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.status)"
+          :readonly="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketRef.status)"
         /> -->
       </div>
     </div>

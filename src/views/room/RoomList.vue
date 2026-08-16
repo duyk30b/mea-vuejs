@@ -1,12 +1,12 @@
 <script setup lang="ts">
+import { IconApartment } from '@/common/icon-antd'
 import { IconDoorOpen } from '@/common/icon-google'
+import { MeService } from '@/modules/_me/me.service'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { RoomType, RoomService } from '@/modules/room'
+import { RoomService, RoomType } from '@/modules/room'
+import Breadcrumb from '@/views/component/Breadcrumb.vue'
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { IconApartment } from '../../common/icon-antd'
-import { MeService } from '../../modules/_me/me.service'
-import Breadcrumb from '../component/Breadcrumb.vue'
 
 const router = useRouter()
 

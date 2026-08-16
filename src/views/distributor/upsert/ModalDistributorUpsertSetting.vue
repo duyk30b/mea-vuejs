@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon-antd'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputCheckbox } from '../../../common/vue-form'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { SettingKey } from '../../../modules/_me/store.variable'
-import { OrganizationService } from '../../../modules/organization'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputCheckbox } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { SettingKey } from '@/modules/_me/store.variable'
+import { OrganizationService } from '@/modules/organization'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
 const settingDisplay = ref<typeof store.SCREEN_DISTRIBUTOR_UPSERT>(
-  JSON.parse(JSON.stringify(store.SCREEN_DISTRIBUTOR_UPSERT))
+  JSON.parse(JSON.stringify(store.SCREEN_DISTRIBUTOR_UPSERT)),
 )
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -78,7 +78,7 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" style="margin-left:auto" @click="handleClose">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left: auto" @click="handleClose">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

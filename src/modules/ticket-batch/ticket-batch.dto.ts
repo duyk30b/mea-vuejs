@@ -17,7 +17,6 @@ export class TicketBatchGetQuery {
     customerId?: number
     productId?: number
     batchId?: number
-    deliveryStatus?: DeliveryStatus | ConditionEnum<DeliveryStatus>
   }
 
   sort?: {
@@ -36,6 +35,6 @@ export class TicketBatchGetQuery {
   }
 }
 
-export class TicketBatchPaginationQuery extends TicketBatchGetQuery {}
-export class TicketBatchListQuery extends OmitClass(TicketBatchGetQuery, ['page']) {}
-export class TicketBatchDetailQuery extends PickClass(TicketBatchGetQuery, ['relation']) {}
+export class TicketBatchPaginationQuery extends TicketBatchGetQuery { }
+export class TicketBatchListQuery extends OmitClass(TicketBatchGetQuery, ['page']) { }
+export class TicketBatchDetailQuery extends PickClass(TicketBatchGetQuery, ['relation']) { }

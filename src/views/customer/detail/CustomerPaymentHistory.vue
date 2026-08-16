@@ -7,20 +7,16 @@ import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { type Customer } from '@/modules/customer'
-import {
-  MoneyDirection,
-  Payment,
-  PaymentActionTypeText,
-  PaymentApi,
-  PaymentPersonType,
-  PaymentVoucherType,
-} from '@/modules/payment'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { ESTimer } from '@/utils'
 import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
+import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
+import type { Payment } from '@/modules/payment/payment.model'
+import { PaymentApi } from '@/modules/payment/payment.api'
+import { PaymentActionTypeText, PaymentPersonType } from '@/modules/payment/payment.type'
 
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
 
@@ -44,7 +40,7 @@ const total = ref(0)
 const startFetchData = async () => {
   try {
     const paginationResponse = await PaymentApi.pagination({
-      relation: { ticket: true, wallet: true },
+      relation: { paymentTicketList: { ticket: true }, wallet: true },
       page: page.value,
       limit: limit.value,
       filter: {
@@ -114,13 +110,18 @@ defineExpose({ startFetchData })
           </tr>
           <tr v-for="(payment, index) in paymentList" :key="index">
             <td>
-              <TicketLink :ticket="payment.ticket!" :ticketId="payment.voucherId" />
               <div style="white-space: nowrap">
                 {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
-              <div v-if="payment.note">
-                {{ payment.note }}
+              <div
+                v-for="(paymentTicket, index) in payment.paymentTicketList"
+                :key="index"
+                class="flex gap-1 flex-wrap"
+              >
+                <TicketLink :ticket="paymentTicket.ticket!" :ticketId="paymentTicket.ticketId" />
+                <TicketStatusTag :ticket="paymentTicket.ticket!" />
               </div>
+              <div v-if="payment.note">{{ payment.note }}</div>
             </td>
             <td class="text-right">
               <div class="flex justify-between item-center" style="white-space: nowrap">
@@ -148,7 +149,7 @@ defineExpose({ startFetchData })
             <th v-if="CONFIG.MODE === 'development'"></th>
             <th>Hóa đơn</th>
             <th>PT.Thanh Toán</th>
-            <th>Note</th>
+            <th>Ghi chú</th>
             <th>Tiền thu</th>
             <th>Ghi Nợ</th>
             <th>Nợ hiện tại</th>
@@ -168,13 +169,20 @@ defineExpose({ startFetchData })
               </VueTooltip>
             </td>
             <td>
-              <TicketLink :ticketId="payment.voucherId" :ticket="payment.ticket!" target="_blank" />
               <div style="white-space: nowrap">
                 {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
+              <div
+                v-for="(paymentTicket, index) in payment.paymentTicketList"
+                :key="index"
+                class="flex gap-1 flex-wrap"
+              >
+                <TicketLink :ticket="paymentTicket.ticket!" :ticketId="paymentTicket.ticketId" />
+                <TicketStatusTag :ticket="paymentTicket.ticket!" />
+              </div>
             </td>
             <td class="text-center">
-              {{ payment.wallet?.name }}
+              <div>{{ payment.wallet?.name }}</div>
             </td>
             <td style="width: 300px">
               <div>{{ PaymentActionTypeText[payment.paymentActionType] }}</div>

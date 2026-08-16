@@ -22,7 +22,7 @@ export class PurchaseOrderReceptionApi {
         lotNumber: i.lotNumber || '',
         expiryDate: i.expiryDate,
         unitRate: i.unitRate,
-        unitQuantity: i.unitQuantity,
+        quantity: i.quantity,
         unitCostPrice: i.unitCostPrice,
         unitListPrice: i.unitListPrice,
       })),

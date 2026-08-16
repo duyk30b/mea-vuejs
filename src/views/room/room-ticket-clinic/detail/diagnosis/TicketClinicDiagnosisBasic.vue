@@ -7,14 +7,12 @@ import { MeService } from '@/modules/_me/me.service'
 import { CustomerService } from '@/modules/customer'
 import { ICD, ICDService } from '@/modules/icd'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { ticketRoomRef } from '@/modules/room'
 import { TemplateHtmlAction } from '@/modules/template-html'
 import { TicketChangeAttributeApi } from '@/modules/ticket'
-import { useTicketClinicDetailStore } from '@/store/ticket-clinic-detail.store'
 import { ESImage } from '@/utils'
 import { computed, onBeforeMount, ref, watch } from 'vue'
+import { roomRef, ticketRef } from '@/store/room.store'
 
-const ticketClinicDetailStore = useTicketClinicDetailStore()
 const { userPermission, organization, user } = MeService
 
 const note = ref<string>('')
@@ -51,17 +49,17 @@ const hasChangeImage = ref(false)
 const loadingImage = ref(false)
 
 onBeforeMount(async () => {
-  if (ticketClinicDetailStore.roomRef.roomSettingObj.diagnosis.icd10) {
+  if (roomRef.value.roomSettingObj.diagnosis.icd10) {
     ICDService.fetchAll()
       .then(() => {})
       .catch((error) => {
-        console.log('🚀 ~ file: TicketClinicDiagnosis.vue:90 ~ ICDService.fetchAll ~ error:', error)
+        console.log('🚀 ~ file: TicketClinicDiagnosisBasic.vue:55 ~ ICDService.fetchAll ~ error:', error)
       })
   }
 })
 
 watch(
-  () => ticketRoomRef.value.note,
+  () => ticketRef.value.note,
   (newValue, oldValue) => {
     note.value = newValue
   },
@@ -80,11 +78,13 @@ const checkHasChangeAttribute = () => {
 }
 
 watch(
-  () => ticketRoomRef.value.ticketAttributeMap,
+  () => ticketRef.value.ticketAttributeMap,
   (newValue, oldValue) => {
     ticketAttributeKeyList.forEach((k) => {
       const value = newValue[k]
-      if (ticketAttributeOriginMap[k] === value) return
+      if (ticketAttributeOriginMap[k] === value) {
+        return
+      }
       ticketAttributeOriginMap[k] = value
       ticketAttributeMap.value[k] = value
     })
@@ -102,15 +102,15 @@ watch(
 )
 
 watch(
-  () => ticketRoomRef.value!.imageDiagnosisIds,
+  () => ticketRef.value!.imageDiagnosisIds,
   (newValue, oldValue) => {
     try {
       const imageDiagnosisIdList: number[] = JSON.parse(newValue)
-      ticketRoomRef.value!.imageDiagnosisList = imageDiagnosisIdList
-        .map((i) => ticketRoomRef.value!.imageMap[i])
+      ticketRef.value!.imageDiagnosisList = imageDiagnosisIdList
+        .map((i) => ticketRef.value!.imageMap[i])
         .filter((i) => !!i)
     } catch (error) {
-      ticketRoomRef.value!.imageDiagnosisList = []
+      ticketRef.value!.imageDiagnosisList = []
     }
     hasChangeImage.value = false
   },
@@ -118,11 +118,13 @@ watch(
 )
 
 const hasChangeCustomer = computed(() => {
-  return ticketRoomRef.value.customer?.healthHistory != ticketAttributeMap.value.healthHistory
+  const healthHistoryRoot = ticketRef.value.customer?.healthHistory || ''
+  const healthHistoryCurrent = ticketAttributeMap.value.healthHistory || ''
+  return healthHistoryRoot != healthHistoryCurrent
 })
 
 const hasChangeData = computed(() => {
-  if (note.value != ticketRoomRef.value.note) {
+  if (note.value != ticketRef.value.note) {
     return true
   }
   if (hasChangeImage.value) {
@@ -182,8 +184,8 @@ const saveTicketDiagnosis = async () => {
 
     await Promise.all([
       TicketChangeAttributeApi.updateDiagnosis({
-        ticketId: ticketRoomRef.value.id,
-        note: note.value !== ticketRoomRef.value.note ? note.value : undefined,
+        ticketId: ticketRef.value.id,
+        note: note.value !== ticketRef.value.note ? note.value : undefined,
         imagesChange: hasChangeImage.value
           ? {
               files: imgData.files,
@@ -194,7 +196,7 @@ const saveTicketDiagnosis = async () => {
         ticketAttributeChangeList,
       }),
       hasChangeCustomer.value
-        ? CustomerService.updateOne(ticketRoomRef.value.customerId, {
+        ? CustomerService.updateOne(ticketRef.value.customerId, {
             healthHistory: ticketAttributeMap.value.healthHistory,
           })
         : undefined,
@@ -208,8 +210,8 @@ const saveTicketDiagnosis = async () => {
 
 const startPrintTicketClinicDiagnosis = async () => {
   await TemplateHtmlAction.startPrintTicketClinicDiagnosis({
-    ticket: ticketRoomRef.value,
-    customer: ticketRoomRef.value.customer!,
+    ticket: ticketRef.value,
+    customer: ticketRef.value.customer!,
   })
 }
 </script>
@@ -284,17 +286,17 @@ const startPrintTicketClinicDiagnosis = async () => {
         </div>
       </div>
     </div>
-    <!-- <pre>{{ JSON.stringify(ticketRoomRef?.imageDiagnosisList, null, 4) }}</pre> -->
+    <!-- <pre>{{ JSON.stringify(ticketRef?.imageDiagnosisList, null, 4) }}</pre> -->
     <div class="mt-4">
       <div>Hình ảnh</div>
       <ImageUploadCloudinary
         ref="imageUploadMultipleRef"
         :oid="organization.id"
-        :customerId="ticketRoomRef.customerId"
-        :editable="!!ticketRoomRef.id"
+        :customerId="ticketRef.customerId"
+        :editable="!!ticketRef.id"
         :height="100"
         :rootImageList="
-          (ticketRoomRef?.imageDiagnosisList || []).map((i) => ({
+          (ticketRef?.imageDiagnosisList || []).map((i) => ({
             thumbnail: ESImage.getImageLink(i, { size: 200 }),
             enlarged: ESImage.getImageLink(i, { size: 1000 }),
             id: i.id,
@@ -304,7 +306,7 @@ const startPrintTicketClinicDiagnosis = async () => {
         @loading="(v) => (loadingImage = v)"
       />
     </div>
-    <div class="mt-4" v-if="ticketClinicDetailStore.roomRef.roomSettingObj.diagnosis.icd10">
+    <div class="mt-4" v-if="roomRef.roomSettingObj.diagnosis.icd10">
       <div>Chẩn đoán theo ICD10</div>
       <div>
         <InputOptionsText
@@ -332,7 +334,7 @@ const startPrintTicketClinicDiagnosis = async () => {
         </VueButton>
       </div>
       <VueButton
-        v-if="ticketRoomRef.id && userPermission[PermissionId.TICKET_CHANGE_ATTRIBUTE]"
+        v-if="ticketRef.id && userPermission[PermissionId.TICKET_CHANGE_ATTRIBUTE]"
         color="blue"
         :disabled="!hasChangeData || loadingImage"
         :loading="saveLoading"

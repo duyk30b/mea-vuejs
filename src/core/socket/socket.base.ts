@@ -1,6 +1,7 @@
 import io, { Socket } from 'socket.io-client'
 import { CONFIG } from '../../config'
 import { REFRESH_TOKEN } from '../local-storage.service'
+import { SocketPurchaseOrderService } from './socket-purchase-order.service'
 import { SocketTicketService } from './socket-ticket.service'
 import { SocketService } from './socket.service'
 import { SOCKET_EVENT } from './socket.variable'
@@ -36,12 +37,20 @@ export const socketInit = () => {
     SocketService.listenServerEmitDemo(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.SOCKET_ROOM_TICKET_PAGINATION_CHANGE, (data) => {
-    SocketTicketService.listenSocketRoomTicketPaginationChange(data)
+  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_PAGINATION_CHANGE, (data) => {
+    SocketTicketService.listenSocketTicketPaginationChange(data)
   })
   SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_CHANGE, (data) => {
     SocketTicketService.listenSocketTicketChange(data)
   })
+
+  SocketBase.on(SOCKET_EVENT.SOCKET_PURCHASE_ORDER_PAGINATION_CHANGE, (data) => {
+    SocketPurchaseOrderService.listenSocketPurchaseOrderPaginationChange(data)
+  })
+  SocketBase.on(SOCKET_EVENT.SOCKET_PURCHASE_ORDER_CHANGE, (data) => {
+    SocketPurchaseOrderService.listenSocketPurchaseOrderChange(data)
+  })
+
   SocketBase.on(SOCKET_EVENT.SOCKET_MASTER_DATA_CHANGE, (data) => {
     SocketService.listenMasterDataChange(data)
   })

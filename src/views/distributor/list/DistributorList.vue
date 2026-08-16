@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import VuePagination from '../../../common/VuePagination.vue'
-import VueTag from '../../../common/VueTag.vue'
-import { IconContainer, IconFileSearch, IconSetting } from '../../../common/icon-antd'
-import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
-import { IconEditSquare } from '../../../common/icon-google'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
-import { InputSelect, InputText, VueSelect } from '../../../common/vue-form'
-import { MeService } from '../../../modules/_me/me.service'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Distributor, DistributorService } from '../../../modules/distributor'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { ESString } from '../../../utils'
+import VueButton from '@/common/VueButton.vue'
+import VuePagination from '@/common/VuePagination.vue'
+import VueTag from '@/common/VueTag.vue'
+import { IconContainer, IconFileSearch, IconSetting } from '@/common/icon-antd'
+import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
+import { IconEditSquare } from '@/common/icon-google'
+import VueDropdown from '@/common/popover/VueDropdown.vue'
+import { InputSelect, InputText, VueSelect } from '@/common/vue-form'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Distributor, DistributorService } from '@/modules/distributor'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { ESString } from '@/utils'
 import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import ModalDistributorDetail from '../detail/ModalDistributorDetail.vue'
 import ModalDistributorUpsert from '../upsert/ModalDistributorUpsert.vue'
@@ -42,28 +42,31 @@ const isActive = ref<1 | 0 | ''>(1)
 const sortColumn = ref<'fullName' | 'debt' | 'id' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
-const startFetchData = async () => {
+const startFetchData = async (options?: { refetch?: boolean }) => {
   try {
-    const response = await DistributorService.pagination({
-      page: page.value,
-      limit: limit.value,
-      filter: {
-        isActive: isActive.value !== '' ? isActive.value : undefined,
-        $OR: searchText.value
-          ? [{ fullName: { LIKE: searchText.value } }, { phone: { LIKE: searchText.value } }]
-          : undefined,
+    const response = await DistributorService.pagination(
+      {
+        page: page.value,
+        limit: limit.value,
+        filter: {
+          isActive: isActive.value !== '' ? isActive.value : undefined,
+          $OR: searchText.value
+            ? [{ fullName: { LIKE: searchText.value } }, { phone: { LIKE: searchText.value } }]
+            : undefined,
+        },
+        sort: sortValue.value
+          ? {
+              fullName: sortColumn.value === 'fullName' ? sortValue.value : undefined,
+              id: sortColumn.value === 'id' ? sortValue.value : undefined,
+              debt: sortColumn.value === 'debt' ? sortValue.value : undefined,
+            }
+          : { id: 'DESC' },
       },
-      sort: sortValue.value
-        ? {
-            fullName: sortColumn.value === 'fullName' ? sortValue.value : undefined,
-            id: sortColumn.value === 'id' ? sortValue.value : undefined,
-            debt: sortColumn.value === 'debt' ? sortValue.value : undefined,
-          }
-        : { id: 'DESC' },
-    })
+      { refetch: !!options?.refetch },
+    )
 
-    distributorList.value = response.data
-    total.value = response.meta.total
+    distributorList.value = response.distributorList
+    total.value = response.total
   } catch (error) {
     console.log('🚀 ~ file: DistributorList.vue:65 ~ startFetchData ~ error:', error)
   }

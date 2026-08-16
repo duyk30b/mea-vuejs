@@ -6,18 +6,19 @@ import { InputText } from '@/common/vue-form'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
+import { DiscountType, TicketItemPaymentType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { Radiology, RadiologyService } from '@/modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '@/modules/radiology-group'
-import { ticketRoomRef } from '@/modules/room'
-import { TicketChangeRadiologyApi, TicketStatus } from '@/modules/ticket'
+import { TicketChangeRadiologyApi } from '@/modules/ticket'
 import { TicketRadiology } from '@/modules/ticket-radiology'
 import { ESFunction, ESString } from '@/utils'
 import ModalRadiologyDetail from '@/views/master-data/radiology/detail/ModalRadiologyDetail.vue'
 import { onMounted, ref } from 'vue'
 import ModalTicketRadiologyUpdate from './ModalTicketRadiologyUpdate.vue'
 import { VueTooltip } from '@/common/popover'
+import { ticketRef } from '@/store/room.store'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalTicketRadiologyUpdate = ref<InstanceType<typeof ModalTicketRadiologyUpdate>>()
@@ -61,7 +62,7 @@ const handleSave = async () => {
   try {
     saveLoading.value = true
     await TicketChangeRadiologyApi.addTicketRadiology({
-      ticketId: ticketRoomRef.value.id,
+      ticketId: ticketRef.value.id,
       ticketRadiologyWrapList: ticketRadiologyListDraft.value.map((i) => {
         return {
           ticketRadiology: i,
@@ -101,7 +102,7 @@ const startFilterRadiology = (text: string) => {
 }
 
 const selectRadiology = async (radiologyData: Radiology) => {
-  const priorityList = (ticketRoomRef.value.ticketRadiologyList || []).map((i) => i.priority)
+  const priorityList = (ticketRef.value.ticketRadiologyList || []).map((i) => i.priority)
   priorityList.push(0) // tránh tạo mảng rỗng thì Math.max không tính được
   const priorityMax = Math.max(...priorityList)
 
@@ -109,9 +110,9 @@ const selectRadiology = async (radiologyData: Radiology) => {
 
   const temp = TicketRadiology.blank()
 
-  temp.ticketId = ticketRoomRef.value.id
+  temp.ticketId = ticketRef.value.id
   temp.priority = priorityMax + 1
-  temp.customerId = ticketRoomRef.value.customerId
+  temp.customerId = ticketRef.value.customerId
   temp.radiologyId = radiologyData.id
   temp.roomId = radiologyGroup.roomId || 0
   temp.radiology = radiologyData
@@ -151,7 +152,7 @@ const selectRadiology = async (radiologyData: Radiology) => {
 }
 
 const handleChangeCheckboxRadiology = async (checked: boolean, radiologyData: Radiology) => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return
   }
 
@@ -281,7 +282,7 @@ const handleModalTicketRadiologyUpdateSuccess = (
                     :checked="!!radiologyIdCheckbox[radiology.id]"
                     style="cursor: pointer"
                     :disabled="
-                      [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status)
+                      [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status)
                     "
                   />
                 </td>
@@ -384,7 +385,7 @@ const handleModalTicketRadiologyUpdateSuccess = (
       <div class="my-3 flex justify-center">
         <VueButton
           :disabled="
-            [TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.status) ||
+            [TicketStatus.Completed, TicketStatus.Debt].includes(ticketRef.status) ||
             !userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_REQUEST] ||
             !ticketRadiologyListDraft.length
           "

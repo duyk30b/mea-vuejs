@@ -4,7 +4,11 @@ import { Ticket } from '@/modules/ticket'
 import { useRouter } from 'vue-router'
 
 const props = withDefaults(
-  defineProps<{ ticket?: Ticket | undefined; ticketId: string; target?: '_blank' | '_self' }>(),
+  defineProps<{
+    ticket?: Ticket | undefined
+    ticketId: string
+    target?: '_blank' | '_self'
+  }>(),
   {
     ticket: () => Ticket.blank(),
     ticketId: '0',
@@ -34,7 +38,7 @@ const openLinkBlankTicketClinicDetail = async (ticket: Ticket) => {
 
 <template>
   <span v-if="!ticket?.id || ticket.id === '0'" style="color: #555; font-weight: bold">
-    T{{ ticketId.slice(0, 8) }}
+    T{{ ticketId.slice(-10) }}
   </span>
   <template v-else-if="props.target === '_self'">
     <span v-if="roomMap[ticket.roomId]?.roomType === RoomType.TicketOrder">

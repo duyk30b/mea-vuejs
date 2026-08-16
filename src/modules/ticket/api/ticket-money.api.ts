@@ -1,88 +1,87 @@
 import { AxiosInstance } from '@/core/axios.instance'
 import { Customer } from '@/modules/customer'
-import { Payment, PaymentActionType } from '@/modules/payment'
-import type { PaymentTicketItem } from '@/modules/payment-ticket-item'
+import { PaymentActionType } from '@/modules/payment/payment.type'
+import type { PaymentTicket } from '@/modules/payment_ticket'
 import type { FullResponse } from '../../_base/base-dto'
 import { Ticket } from '../ticket.model'
+import type { TicketActionType } from '../ticket.type'
+import { Payment } from '@/modules/payment/payment.model'
 
 export type PaymentTicketItemBody = Pick<
-  PaymentTicketItem,
-  | 'ticketItemType'
+  PaymentTicket,
+  | 'paymentTicketItemType'
   | 'ticketItemId'
-  | 'interactId'
+  | 'ticketItemInteractId'
   | 'expectedPrice'
+  | 'discountType'
   | 'discountMoney'
   | 'discountPercent'
-  | 'discountType'
   | 'actualPrice'
   | 'quantity'
   | 'unitRate'
   | 'sessionIndex'
   | 'paidMoney'
-  | 'debtMoney'
 >
 
 class PaymentTicketItemMapBody {
   paymentWait: { paidMoney: number }
-  paymentSurcharge: { paidMoney: number; debtMoney: number }
-  paymentDiscount: { paidMoney: number; debtMoney: number }
-  ticketRegimenBodyList: PaymentTicketItemBody[]
-  ticketProcedureNoEffectBodyList: PaymentTicketItemBody[]
-  ticketProcedureHasEffectBodyList: PaymentTicketItemBody[]
-  ticketProductConsumableBodyList: PaymentTicketItemBody[]
-  ticketProductPrescriptionBodyList: PaymentTicketItemBody[]
-  ticketLaboratoryBodyList: PaymentTicketItemBody[]
-  ticketRadiologyBodyList: PaymentTicketItemBody[]
+  paymentSurcharge: { paidMoney: number }
+  paymentDiscount: { paidMoney: number }
+  paymentTicketRegimenList: PaymentTicketItemBody[]
+  paymentTicketProcedureNoEffectList: PaymentTicketItemBody[]
+  paymentTicketProcedureHasEffectList: PaymentTicketItemBody[]
+  paymentTicketProductConsumableList: PaymentTicketItemBody[]
+  paymentTicketProductPrescriptionList: PaymentTicketItemBody[]
+  paymentTicketLaboratoryList: PaymentTicketItemBody[]
+  paymentTicketRadiologyList: PaymentTicketItemBody[]
 }
 
 export class TicketMoneyApi {
   static async paymentMoney(object: {
     ticketId: string
     body: {
-      walletId: string
       paymentActionType: PaymentActionType
-      hasPaymentItem: 0 | 1
+      ticketActionType: TicketActionType
+      walletId: string
+      isPaymentEachItem: 0 | 1
       paidTotal: number
-      debtTotal: number
       note: string
-      paymentTicketItemMapDto?: PaymentTicketItemMapBody
+      paymentTicketItemMap?: PaymentTicketItemMapBody
     }
   }) {
     const { ticketId, body } = object
     const response = await AxiosInstance.post(`/ticket/${ticketId}/payment-money`, body)
     const { data } = response.data as FullResponse<{
-      customerModified: any
-      paymentCreated: any
       ticketModified: any
+      paymentCreated: any
     }>
 
-    const customerModified = Customer.from(data.customerModified)
-    const ticketModified = Ticket.from(data.ticketModified)
-    const paymentCreated = Payment.from(data.paymentCreated)
-
-    return { customerModified, ticketModified, paymentCreated }
+    return {
+      paymentCreated: Payment.from(data.paymentCreated),
+    }
   }
 
-  static async payDebt(body: {
+  static async changeDebt(body: {
     customerId: number
+    paymentActionType: PaymentActionType
     walletId: string
-    totalMoney: number
     note: string
-    dataList: {
+    changeDebtListBody: {
+      ticketActionType: TicketActionType
       ticketId: string
-      isPaymentEachItem: number
-      debtTotalMinus: number
+      paid: number
+      debt: number
     }[]
   }) {
-    const response = await AxiosInstance.post('/ticket/pay-debt', body)
+    const response = await AxiosInstance.post('/ticket/change-debt', body)
     const { data } = response.data as FullResponse<{
-      customerModified: any
       ticketModifiedList: any[]
+      customerModified: any
     }>
 
-    const customerModified = Customer.from(data.customerModified)
-    const ticketModifiedList = Ticket.fromList(data.ticketModifiedList)
-
-    return { customerModified, ticketModifiedList }
+    return {
+      ticketModifiedList: Ticket.fromList(data.ticketModifiedList),
+      customerModified: Customer.from(data.customerModified),
+    }
   }
 }

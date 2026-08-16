@@ -7,13 +7,15 @@ import VueModal from '@/common/vue-modal/VueModal.vue'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { PaymentViewType } from '@/modules/enum'
-import { PaymentActionType, PaymentVoucherType } from '@/modules/payment'
 import { WalletService } from '@/modules/wallet'
 import { PaymentApi } from '@/modules/payment/payment.api'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { Ticket, TicketMoneyApi, TicketStatus } from '@/modules/ticket'
+import { Ticket, TicketMoneyApi } from '@/modules/ticket'
 import TicketPaymentList from '@/views/room/room-ticket-base/TicketPaymentList.vue'
 import { onMounted, ref } from 'vue'
+import { TicketActionType, TicketStatus } from '@/modules/ticket/ticket.type'
+import { PaymentActionType } from '@/modules/payment/payment.type'
+import { PaymentTicketApi } from '@/modules/payment_ticket/payment_ticket.api'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputNumber>>()
 
@@ -47,10 +49,12 @@ const openModal = async (options: { ticket: Ticket; paymentView: PaymentViewType
   try {
     ticketClone.value = Ticket.from(options.ticket)
 
-    ticketClone.value.paymentList = await PaymentApi.list({
+    ticketClone.value.paymentTicketList = await PaymentTicketApi.list({
       filter: {
-        voucherId: ticketClone.value.id,
-        voucherType: PaymentVoucherType.Ticket,
+        ticketId: ticketClone.value.id,
+      },
+      relation: {
+        payment: true,
       },
       sort: { id: 'ASC' },
     })
@@ -72,11 +76,11 @@ const startPrepayment = async () => {
     const result = await TicketMoneyApi.paymentMoney({
       ticketId: ticketClone.value.id,
       body: {
-        walletId: walletId.value,
         paymentActionType: PaymentActionType.PaymentMoney,
-        hasPaymentItem: 0,
+        ticketActionType: TicketActionType.PrePayment,
+        walletId: walletId.value,
+        isPaymentEachItem: 0,
         paidTotal: money.value,
-        debtTotal: 0,
         note: '',
       },
     })
@@ -98,11 +102,11 @@ const startRefundOverpaid = async () => {
     const result = await TicketMoneyApi.paymentMoney({
       ticketId: ticketClone.value.id,
       body: {
-        walletId: walletId.value,
         paymentActionType: PaymentActionType.RefundMoney,
-        hasPaymentItem: 0,
+        ticketActionType: TicketActionType.RefundMoney,
+        walletId: walletId.value,
+        isPaymentEachItem: 0,
         paidTotal: -money.value,
-        debtTotal: 0,
         note: '',
       },
     })
@@ -118,16 +122,19 @@ const startRefundOverpaid = async () => {
 const startPayDebt = async () => {
   paymentLoading.value = true
   try {
-    const result = await TicketMoneyApi.paymentMoney({
-      ticketId: ticketClone.value.id,
-      body: {
-        walletId: walletId.value,
-        paymentActionType: PaymentActionType.PayDebt,
-        hasPaymentItem: 0,
-        paidTotal: money.value,
-        debtTotal: -money.value,
-        note: '',
-      },
+    const result = await TicketMoneyApi.changeDebt({
+      customerId: ticketClone.value.customerId,
+      paymentActionType: PaymentActionType.PayDebt,
+      walletId: walletId.value,
+      note: '',
+      changeDebtListBody: [
+        {
+          ticketActionType: TicketActionType.PayDebt,
+          ticketId: ticketClone.value.id,
+          paid: money.value,
+          debt: -money.value,
+        },
+      ],
     })
     emit('success')
     closeModal()
@@ -227,12 +234,9 @@ defineExpose({ openModal })
           <div
             v-if="
               userPermission[PermissionId.TICKET_PAYMENT_MONEY] &&
-              [
-                TicketStatus.Draft,
-                TicketStatus.Schedule,
-                TicketStatus.Deposited,
-                TicketStatus.Executing,
-              ].includes(ticketClone.status)
+              [TicketStatus.Draft, TicketStatus.Schedule, TicketStatus.Executing].includes(
+                ticketClone.status,
+              )
             "
           >
             <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
@@ -312,7 +316,7 @@ defineExpose({ openModal })
           <div
             v-if="
               userPermission[PermissionId.TICKET_REFUND_MONEY] &&
-              [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketClone.status)
+              [TicketStatus.Executing].includes(ticketClone.status)
             "
           >
             <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">

@@ -13,16 +13,18 @@ import { PermissionId } from '@/modules/permission/permission.enum'
 import { PositionType } from '@/modules/position'
 import { type Procedure } from '@/modules/procedure'
 import { Room, RoomService, RoomType } from '@/modules/room'
-import { Ticket, TicketChangeReceptionApi, TicketQueryApi, TicketStatus } from '@/modules/ticket'
+import { Ticket, TicketChangeReceptionApi, TicketQueryApi } from '@/modules/ticket'
 import type { TicketAttributeKeyGeneralType, TicketAttributeMap } from '@/modules/ticket-attribute'
 import { TicketProcedure } from '@/modules/ticket-procedure'
 import { TicketReception } from '@/modules/ticket-reception'
 import type { TicketRegimen } from '@/modules/ticket-regimen'
 import { TicketUser } from '@/modules/ticket-user'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 import { ESTimer } from '@/utils'
 import InputAddress from '@/views/component/InputAddress.vue'
 import InputSearchCustomer from '@/views/component/InputSearchCustomer.vue'
 import InputSearchProcedure from '@/views/component/InputSearchProcedure.vue'
+import InputSelectCustomerGroup from '@/views/component/InputSelectCustomerGroup.vue'
 import InputSelectCustomerSource from '@/views/component/InputSelectCustomerSource.vue'
 import InputSelectRoom from '@/views/component/InputSelectRoom.vue'
 import TableTicketProcedureListRequest from '@/views/room/room-ticket-clinic/detail/procedure/TableTicketProcedureListDraft.vue'
@@ -30,7 +32,6 @@ import TicketChangeTicketUserPosition from '@/views/room/room-user/TicketChangeT
 import { nextTick, ref } from 'vue'
 import TicketLink from '../../room-ticket-base/TicketLink.vue'
 import ModalReceptionCreateSetting from './ModalReceptionCreateSetting.vue'
-import InputSelectCustomerGroup from '@/views/component/InputSelectCustomerGroup.vue'
 
 const modalReceptionCreateSetting = ref<InstanceType<typeof ModalReceptionCreateSetting>>()
 const tableTicketProcedureListRequest = ref<InstanceType<typeof TableTicketProcedureListRequest>>()
@@ -143,12 +144,7 @@ const selectCustomer = async (customerSelect?: Customer) => {
       TicketQueryApi.list({
         filter: {
           status: {
-            IN: [
-              TicketStatus.Draft,
-              TicketStatus.Schedule,
-              TicketStatus.Deposited,
-              TicketStatus.Executing,
-            ],
+            IN: [TicketStatus.Draft, TicketStatus.Schedule, TicketStatus.Executing],
           },
           customerId: customerSelect.id,
         },

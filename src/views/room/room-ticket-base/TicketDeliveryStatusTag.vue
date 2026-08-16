@@ -4,12 +4,12 @@ import VueTag from '@/common/VueTag.vue'
 import { DeliveryStatus } from '@/modules/enum'
 
 const props = withDefaults(defineProps<{ deliveryStatus: DeliveryStatus }>(), {
-  deliveryStatus: DeliveryStatus.NoStock,
+  deliveryStatus: DeliveryStatus.Empty,
 })
 </script>
 
 <template>
-  <VueTag v-if="deliveryStatus === DeliveryStatus.NoStock" color="default">
+  <VueTag v-if="deliveryStatus === DeliveryStatus.Empty" color="default">
     <IconCloseCircle />
     <span>Không có thuốc - vật tư</span>
   </VueTag>

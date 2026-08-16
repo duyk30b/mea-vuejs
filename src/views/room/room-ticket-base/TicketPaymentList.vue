@@ -1,19 +1,14 @@
 <script setup lang="ts">
-import { IconBug, IconPrint } from '@/common/icon-antd'
-import { VueTooltip } from '@/common/popover'
+import { IconPrint } from '@/common/icon-antd'
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import type { Customer } from '@/modules/customer'
-import {
-  Payment,
-  PaymentActionType,
-  PaymentActionTypeText,
-  PaymentPersonType,
-} from '@/modules/payment'
+import type { Payment } from '@/modules/payment/payment.model'
 import { TemplateHtmlAction } from '@/modules/template-html'
 import { Ticket } from '@/modules/ticket'
+import { TicketActionType, TicketActionTypeText } from '@/modules/ticket/ticket.type'
 import { WalletService } from '@/modules/wallet'
-import { timeToText } from '@/utils'
+import { ESTimer } from '@/utils'
+import { BugDevelopment } from '@/views/component'
 import { onMounted } from 'vue'
 
 const props = defineProps<{
@@ -32,21 +27,9 @@ onMounted(async () => {
   }
 })
 
-const startPrintCustomerPayment = async (options: { customer: Customer; payment: Payment }) => {
-  let payment = options.payment
-  const paymentPrint = await Payment.refreshData(payment)
-  await TemplateHtmlAction.startPrintTicketClinicCustomerPayment({
-    customer: props.ticket.customer!,
-    payment: paymentPrint,
-  })
-}
-
-const startPrintCustomerRefund = async (options: { customer: Customer; payment: Payment }) => {
-  const payment = options.payment
-  const paymentPrint = await Payment.refreshData(payment)
-  await TemplateHtmlAction.startPrintTicketClinicCustomerRefund({
-    customer: props.ticket.customer!,
-    payment: paymentPrint,
+const startPrintPayment = async (options: { payment: Payment }) => {
+  await TemplateHtmlAction.startPrintPayment({
+    payment: options.payment,
   })
 }
 </script>
@@ -62,6 +45,7 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
         </span>
       </div>
     </div>
+
     <div class="mt-2 table-wrapper">
       <table>
         <thead>
@@ -69,70 +53,66 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
             <th v-if="CONFIG.MODE === 'development'"></th>
             <th>#</th>
             <th>Thời gian</th>
-            <th>PT Thanh toán</th>
-            <th>Note</th>
+            <th>Ví</th>
+            <th>DV</th>
             <th>Tiền</th>
-            <th v-if="CONFIG.MODE === 'development'">Ghi nợ</th>
+            <th>Ghi nợ</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(payment, index) in ticket.paymentList" :key="index">
+          <tr v-for="(paymentTicket, index) in ticket.paymentTicketList || []" :key="index">
             <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-              <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-                <template #trigger>
-                  <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-                </template>
-                <pre>{{ JSON.stringify(payment, null, 4) }}</pre>
-              </VueTooltip>
+              <BugDevelopment :data="paymentTicket" />
             </td>
             <td class="text-center">{{ index + 1 }}</td>
-            <td class="">
-              {{ timeToText(payment.createdAt, 'DD/MM/YY hh:mm') }}
+            <td class="text-center">
+              {{ ESTimer.timeToText(paymentTicket.createdAt, 'DD/MM/YY hh:mm') }}
             </td>
             <td class="text-left">
-              <div>{{ walletMap[payment.walletId]?.name }}</div>
-              <div v-if="CONFIG.MODE === 'development'" style="color: violet">
-                {{ formatMoney(payment.walletOpenMoney) }} ->
-                {{ formatMoney(payment.walletCloseMoney) }}
-              </div>
+              <div>{{ walletMap[paymentTicket.payment.walletId]?.name }}</div>
             </td>
             <td>
-              <div>{{ PaymentActionTypeText[payment.paymentActionType] }}</div>
-              <div v-if="payment.note" style="font-size: 0.9em">
-                {{ payment.note }}
+              <template
+                v-if="
+                  [TicketActionType.PaymentItem, TicketActionType.RefundItem].includes(
+                    paymentTicket.ticketActionType,
+                  )
+                "
+              >
+                <div>
+                  <span>{{ paymentTicket.interactNameDisplay }}</span>
+                  <span
+                    v-if="paymentTicket.sessionIndex"
+                    style="margin-left: 4px; font-weight: 500"
+                  >
+                    (Buổi {{ paymentTicket.sessionIndex }})
+                  </span>
+                  <span
+                    v-if=" paymentTicket.ticketActionType === TicketActionType.RefundItem"
+                    style="margin-left: 4px; font-weight: 500; color: var(--text-red)"
+                  >
+                    (Hoàn tiền)
+                  </span>
+                </div>
+              </template>
+              <template v-else>
+                <div>{{ TicketActionTypeText[paymentTicket.ticketActionType] }}</div>
+              </template>
+              <div v-if="paymentTicket.payment.note" style="font-size: 0.9em">
+                {{ paymentTicket.payment.note }}
               </div>
             </td>
             <td class="text-right" style="padding-right: 8px">
-              <div>{{ formatMoney(payment.paidTotal) }}</div>
+              <div>{{ formatMoney(paymentTicket.paidMoney) }}</div>
             </td>
-            <td class="text-right" v-if="CONFIG.MODE === 'development'" style="color: violet">
-              <div>{{ formatMoney(payment.debtTotal) }}</div>
-              <div>
-                {{ formatMoney(payment.personOpenDebt) }} ->
-                {{ formatMoney(payment.personCloseDebt) }}
-              </div>
+            <td class="text-right" style="padding-right: 8px">
+              <div>{{ formatMoney(paymentTicket.debtMoney) }}</div>
             </td>
             <td class="text-center">
               <IconPrint
-                v-if="
-                  payment.personType === PaymentPersonType.Customer &&
-                  payment.paidTotal !== 0 &&
-                  [PaymentActionType.PaymentMoney, PaymentActionType.PayDebt].includes(
-                    payment.paymentActionType,
-                  )
-                "
                 style="font-size: 18px; color: var(--text-blue); cursor: pointer"
-                @click="startPrintCustomerPayment({ payment, customer: payment.customer })"
-              />
-              <IconPrint
-                v-if="
-                  payment.personType === PaymentPersonType.Customer &&
-                  payment.paidTotal !== 0 &&
-                  [PaymentActionType.RefundMoney].includes(payment.paymentActionType)
-                "
-                style="font-size: 18px; color: var(--text-green); cursor: pointer"
-                @click="startPrintCustomerRefund({ payment, customer: payment.customer })"
+                @click="startPrintPayment({ payment: paymentTicket.payment })"
               />
             </td>
           </tr>
@@ -141,32 +121,38 @@ const startPrintCustomerRefund = async (options: { customer: Customer; payment: 
             <td v-if="CONFIG.MODE === 'development'"></td>
             <td colspan="4" class="text-right">Đã thanh toán :</td>
             <td class="text-right font-bold">{{ formatMoney(ticket.paidTotal) }}</td>
-            <td v-if="CONFIG.MODE === 'development'"></td>
+            <td></td>
             <td></td>
           </tr>
           <tr v-if="ticket.debtTotal" style="color: var(--text-red)">
             <td v-if="CONFIG.MODE === 'development'"></td>
             <td colspan="4" class="text-right">Đang nợ :</td>
+            <td></td>
             <td class="text-right font-bold">{{ formatMoney(ticket.debtTotal) }}</td>
-            <td v-if="CONFIG.MODE === 'development'"></td>
             <td></td>
           </tr>
-          <tr v-if="ticket.paidTotal > ticket.totalMoney" style="color: var(--text-green)">
+          <tr
+            v-if="ticket.paidTotal + ticket.debtTotal > ticket.totalMoney"
+            style="color: var(--text-green)"
+          >
             <td v-if="CONFIG.MODE === 'development'"></td>
             <td colspan="4" class="text-right">Đang thừa</td>
             <td class="text-right font-bold">
-              {{ formatMoney(ticket.paidTotal - ticket.totalMoney) }}
+              {{ formatMoney(ticket.paidTotal + ticket.debtTotal - ticket.totalMoney) }}
             </td>
-            <td v-if="CONFIG.MODE === 'development'"></td>
+            <td></td>
             <td></td>
           </tr>
-          <tr v-else-if="ticket.debtTotal !== ticket.totalMoney - ticket.paidTotal">
+          <tr
+            v-else-if="ticket.paidTotal + ticket.debtTotal < ticket.totalMoney"
+            style="color: var(--text-red)"
+          >
             <td v-if="CONFIG.MODE === 'development'"></td>
             <td colspan="4" class="text-right">Đang thiếu :</td>
             <td class="text-right font-bold" style="color: var(--text-red)">
-              {{ formatMoney(ticket.totalMoney - ticket.paidTotal) }}
+              {{ formatMoney(ticket.totalMoney - (ticket.paidTotal + ticket.debtTotal)) }}
             </td>
-            <td v-if="CONFIG.MODE === 'development'"></td>
+            <td></td>
             <td></td>
           </tr>
         </tbody>

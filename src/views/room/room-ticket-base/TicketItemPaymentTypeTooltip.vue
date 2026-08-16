@@ -1,46 +1,46 @@
 <script setup lang="ts">
 import { IconDollar, IconMinusCircle } from '@/common/icon-antd'
 import { VueTooltip } from '@/common/popover'
-import { PaymentMoneyStatus } from '@/modules/enum'
+import { TicketItemPaymentType } from '@/modules/enum'
 
-const props = withDefaults(defineProps<{ paymentMoneyStatus: PaymentMoneyStatus }>(), {
-  paymentMoneyStatus: PaymentMoneyStatus.TicketPaid,
+const props = withDefaults(defineProps<{ ticketItemPaymentType: TicketItemPaymentType }>(), {
+  ticketItemPaymentType: TicketItemPaymentType.TicketPaid,
 })
 </script>
 
 <template>
   <div class="flex justify-center">
-    <VueTooltip v-if="paymentMoneyStatus === PaymentMoneyStatus.NoEffect">
+    <VueTooltip v-if="ticketItemPaymentType === TicketItemPaymentType.NoEffect">
       <template #trigger>
         <IconMinusCircle style="font-size: 18px; cursor: not-allowed" />
       </template>
       <div>Không áp dụng</div>
     </VueTooltip>
-    <VueTooltip v-if="paymentMoneyStatus === PaymentMoneyStatus.TicketPaid">
+    <VueTooltip v-if="ticketItemPaymentType === TicketItemPaymentType.TicketPaid">
       <template #trigger>
         <IconDollar style="font-size: 18px; color: var(--text-cyan); cursor: not-allowed" />
       </template>
       <div>Thanh toán cùng phiếu</div>
     </VueTooltip>
-    <VueTooltip v-if="paymentMoneyStatus === PaymentMoneyStatus.PendingPayment">
+    <VueTooltip v-if="ticketItemPaymentType === TicketItemPaymentType.PendingPayment">
       <template #trigger>
         <IconDollar style="font-size: 18px; color: orange; cursor: not-allowed" />
       </template>
       <div>Chờ thanh toán</div>
     </VueTooltip>
-    <VueTooltip v-else-if="paymentMoneyStatus === PaymentMoneyStatus.PartialPaid">
+    <VueTooltip v-else-if="ticketItemPaymentType === TicketItemPaymentType.PartialPaid">
       <template #trigger>
         <IconDollar style="color: var(--text-blue); font-size: 18px; cursor: not-allowed" />
       </template>
       <div>Thanh toán một phần</div>
     </VueTooltip>
-    <VueTooltip v-else-if="paymentMoneyStatus === PaymentMoneyStatus.FullPaid">
+    <VueTooltip v-else-if="ticketItemPaymentType === TicketItemPaymentType.FullPaid">
       <template #trigger>
         <IconDollar style="color: var(--text-green); font-size: 18px; cursor: not-allowed" />
       </template>
       <div>Đã thanh toán</div>
     </VueTooltip>
-    <VueTooltip v-else-if="paymentMoneyStatus === PaymentMoneyStatus.Debt">
+    <VueTooltip v-else-if="ticketItemPaymentType === TicketItemPaymentType.Debt">
       <template #trigger>
         <IconDollar style="color: var(--text-red); font-size: 18px; cursor: not-allowed" />
       </template>

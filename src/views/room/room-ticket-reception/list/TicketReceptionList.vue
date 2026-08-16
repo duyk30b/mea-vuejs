@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { IconBug, IconDelete, IconFileSearch, IconSetting } from '@/common/icon-antd'
 import { IconEditSquare } from '@/common/icon-google'
+import { VueTooltip } from '@/common/popover'
 import VueDropdown from '@/common/popover/VueDropdown.vue'
 import { AlertStore } from '@/common/vue-alert'
 import { InputDate, InputSelect } from '@/common/vue-form'
@@ -10,30 +11,26 @@ import VuePagination from '@/common/VuePagination.vue'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DeliveryStatus } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { RoomService, RoomType } from '@/modules/room'
-import { Ticket, TicketActionApi, TicketChangeReceptionApi, TicketStatus } from '@/modules/ticket'
+import { TicketChangeReceptionApi } from '@/modules/ticket'
 import { TicketReceptionApi, type TicketReception } from '@/modules/ticket-reception'
 import { ESString, ESTimer } from '@/utils'
 import Breadcrumb from '@/views/component/Breadcrumb.vue'
 import InputSearchCustomer from '@/views/component/InputSearchCustomer.vue'
 import InputSelectRoom from '@/views/component/InputSelectRoom.vue'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
-import ModalTicketChangeAllMoney from '@/views/finance/finance-ticket/modal/ModalTicketChangeAllMoney.vue'
+import ModalTicketChangeAllMoney from '@/views/room/room-ticket-base/ModalTicketChangeAllMoney.vue'
 import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
 import { onBeforeMount, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import ModalTicketClinicPayment from '../../room-ticket-base/ModalTicketPayment.vue'
 import TicketLink from '../../room-ticket-base/TicketLink.vue'
 import ModalReceptionCreate from '../create/ModalReceptionCreate.vue'
 import ModalReceptionListSetting from './ModalReceptionListSetting.vue'
-import { VueTooltip } from '@/common/popover'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalReceptionCreate = ref<InstanceType<typeof ModalReceptionCreate>>()
 const modalReceptionListSetting = ref<InstanceType<typeof ModalReceptionListSetting>>()
-const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalTicketChangeAllMoney = ref<InstanceType<typeof ModalTicketChangeAllMoney>>()
 
 const router = useRouter()

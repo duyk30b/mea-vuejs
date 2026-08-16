@@ -5,16 +5,16 @@ import { InputFilter, InputMoney, InputNumber, VueSelect } from '@/common/vue-fo
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
+import { DiscountType, TicketItemPaymentType } from '@/modules/enum'
 import { Laboratory, LaboratoryService } from '@/modules/laboratory'
 import { Role } from '@/modules/role'
-import { ticketRoomRef } from '@/modules/room'
 import { TicketChangeLaboratoryApi } from '@/modules/ticket'
 import { TicketLaboratory, TicketLaboratoryStatus } from '@/modules/ticket-laboratory'
 import { TicketUser } from '@/modules/ticket-user'
 import { User } from '@/modules/user'
 import { ESString } from '@/utils'
 import { computed, onMounted, ref } from 'vue'
+import { ticketRef } from '@/store/room.store'
 
 const emit = defineEmits<{
   (e: 'success', value: TicketLaboratory, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
@@ -104,8 +104,8 @@ const closeModal = () => {
 
 const clickDestroy = async () => {
   if (
-    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-      ticketLaboratoryOrigin.value.paymentMoneyStatus,
+    [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+      ticketLaboratoryOrigin.value.ticketItemPaymentType,
     )
   ) {
     return ModalStore.alert({
@@ -122,7 +122,7 @@ const clickDestroy = async () => {
     onOk: async () => {
       try {
         await TicketChangeLaboratoryApi.destroyTicketLaboratory({
-          ticketId: ticketRoomRef.value.id,
+          ticketId: ticketRef.value.id,
           ticketLaboratoryId: ticketLaboratory.value.id,
         })
         emit('success', ticketLaboratory.value, 'DESTROY')
@@ -140,7 +140,7 @@ const updateTicketLaboratory = async () => {
     const hasUpdateTicketUser =
       ticketUserListOrigin.length || ticketUserList.value.filter((i) => !!i.userId).length
     await TicketChangeLaboratoryApi.updateRequestTicketLaboratory({
-      ticketId: ticketRoomRef.value.id,
+      ticketId: ticketRef.value.id,
       ticketLaboratoryId: ticketLaboratory.value.id,
       ticketLaboratory: hasChangeTicketLaboratory.value ? ticketLaboratory.value : undefined,
       ticketUserList: hasUpdateTicketUser ? ticketUserList.value : undefined,
@@ -259,8 +259,8 @@ defineExpose({ openModal })
             @click="clickDestroy"
             v-if="
               ticketLaboratory.status === TicketLaboratoryStatus.Pending &&
-              [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                ticketLaboratory.paymentMoneyStatus,
+              [TicketItemPaymentType.TicketPaid, TicketItemPaymentType.PendingPayment].includes(
+                ticketLaboratory.ticketItemPaymentType,
               )
             "
           >

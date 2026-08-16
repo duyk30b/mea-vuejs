@@ -6,8 +6,7 @@ import { InputDate, InputMoney, InputText } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { PaymentApi } from '@/modules/payment/payment.api'
-import { MoneyDirection, Payment, PaymentVoucherType } from '@/modules/payment/payment.model'
-import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
+import { Payment } from '@/modules/payment/payment.model'
 import { onMounted, ref } from 'vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
@@ -41,7 +40,6 @@ const handleUpdateInfo = async () => {
       body: {
         createdAt: payment.value.createdAt,
         note: payment.value.note,
-        walletId: payment.value.walletId,
       },
     })
     emit('success')
@@ -54,10 +52,11 @@ const handleUpdateInfo = async () => {
   }
 }
 
-const handleClickDestroy = async (prescriptionId: number) => {
+const handleClickDestroy = async () => {
   ModalStore.confirm({
     title: 'Bạn có chắc muốn xóa phiếu thanh toán này ?',
-    content: 'Phiếu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
+    content:
+      'Xóa phiếu thanh toán có thể gây sai lệch về lịch sử tiền và ví thanh toán, bạn vẫn muốn xóa ?',
     onOk: async () => {
       try {
         await PaymentApi.destroy({ paymentId: payment.value.id })
@@ -79,17 +78,7 @@ defineExpose({ openModal })
 <template>
   <VueModal v-model:show="showModal" style="margin-top: 50px" @close="closeModal">
     <div class="pl-4 py-3 flex items-center bg-white" style="border-bottom: 1px solid #dedede">
-      <div class="flex-1 font-medium" style="font-size: 16px">
-        <span v-if="payment.moneyDirection === MoneyDirection.In">
-          Cập nhật thông tin phiếu thu
-        </span>
-        <span v-if="payment.moneyDirection === MoneyDirection.Out">
-          Cập nhật thông tin phiếu chi
-        </span>
-        <span v-if="payment.moneyDirection === MoneyDirection.Other">
-          Cập nhật thông tin phiếu thanh toán
-        </span>
-      </div>
+      <div class="flex-1 font-medium" style="font-size: 16px">Cập nhật thông tin thanh toán</div>
       <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
         <IconClose />
       </div>
@@ -102,15 +91,6 @@ defineExpose({ openModal })
             <InputDate v-model:value="payment.createdAt" showTime typeParser="number" />
           </div>
         </div>
-        <div
-          v-if="[MoneyDirection.In, MoneyDirection.Out].includes(payment.moneyDirection)"
-          style="flex-grow: 1; flex-basis: 90%; min-width: 300px"
-        >
-          <div>Phương thức thanh toán</div>
-          <div>
-            <InputSelectWallet v-model:walletId="payment.walletId" />
-          </div>
-        </div>
         <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
           <div>Ghi chú</div>
           <div>
@@ -121,18 +101,7 @@ defineExpose({ openModal })
 
       <div class="mt-8 flex gap-4">
         <VueButton type="reset" icon="close" @click="closeModal">Hủy bỏ</VueButton>
-        <VueButton
-          v-if="
-            !payment.voucherId ||
-            payment.voucherId === '0' ||
-            (payment.voucherType === PaymentVoucherType.Ticket && !payment.ticket) ||
-            (payment.voucherType === PaymentVoucherType.PurchaseOrder && !payment.purchaseOrder)
-          "
-          type="button"
-          icon="trash"
-          color="red"
-          @click="handleClickDestroy"
-        >
+        <VueButton type="button" icon="trash" color="red" @click="handleClickDestroy">
           Xóa phiếu
         </VueButton>
         <VueButton

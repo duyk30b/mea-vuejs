@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon-antd'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputCheckbox } from '../../../common/vue-form'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { SettingKey } from '../../../modules/_me/store.variable'
-import { OrganizationService } from '../../../modules/organization'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputCheckbox } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { SettingKey } from '@/modules/_me/store.variable'
+import { OrganizationService } from '@/modules/organization'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
 const settingDisplay = ref<typeof store.SCREEN_PURCHASE_ORDER_LIST>(
-  JSON.parse(JSON.stringify(store.SCREEN_PURCHASE_ORDER_LIST))
+  JSON.parse(JSON.stringify(store.SCREEN_PURCHASE_ORDER_LIST)),
 )
 const showModal = ref(false)
 const saveLoading = ref(false)

@@ -6,11 +6,10 @@ import { InputFilter, InputMoney, InputNumber, VueSelect } from '@/common/vue-fo
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DeliveryStatus, DiscountType, PaymentMoneyStatus } from '@/modules/enum'
+import { DeliveryStatus, DiscountType, TicketItemPaymentType } from '@/modules/enum'
 import { PositionType, PositionService } from '@/modules/position'
 import { Role, RoleService } from '@/modules/role'
-import { ticketRoomRef } from '@/modules/room'
-import { TicketChangeProductApi, TicketStatus } from '@/modules/ticket'
+import { TicketChangeProductApi } from '@/modules/ticket'
 import { TicketProduct } from '@/modules/ticket-product'
 import { TicketUser } from '@/modules/ticket-user'
 import { User, UserService } from '@/modules/user'
@@ -18,6 +17,8 @@ import { UserRoleService } from '@/modules/user-role'
 import { ESString } from '@/utils'
 import TicketDeliveryStatusTag from '@/views/room/room-ticket-base/TicketDeliveryStatusTag.vue'
 import { computed, onMounted, ref } from 'vue'
+import { roomRef, ticketRef } from '@/store/room.store'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -95,7 +96,7 @@ const disabledButtonSave = computed(() => {
 })
 
 const handleChangeUnitQuantity = (data: number) => {
-  if (ticketProduct.value.deliveryStatus !== DeliveryStatus.Delivered) {
+  if (ticketProduct.value.quantityCompleted === 0) {
     const { product, unitRate } = ticketProduct.value
     ticketProduct.value.unitQuantity = data
   }
@@ -110,7 +111,7 @@ const closeModal = () => {
 }
 
 const clickDestroy = async () => {
-  if (ticketProductOrigin.deliveryStatus === DeliveryStatus.Delivered) {
+  if (ticketProductOrigin.quantityCompleted !== 0) {
     return ModalStore.alert({
       title: 'Không thể xóa vật tư ?',
       content: [
@@ -120,8 +121,8 @@ const clickDestroy = async () => {
     })
   }
   if (
-    [PaymentMoneyStatus.FullPaid, PaymentMoneyStatus.PartialPaid].includes(
-      ticketProductOrigin.paymentMoneyStatus,
+    [TicketItemPaymentType.FullPaid, TicketItemPaymentType.PartialPaid].includes(
+      ticketProductOrigin.ticketItemPaymentType,
     )
   ) {
     return ModalStore.alert({
@@ -129,7 +130,7 @@ const clickDestroy = async () => {
       content: ['- Vật tư đã được thanh toán sẽ không thể xóa'],
     })
   }
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return ModalStore.alert({
       title: 'Không thể xóa vật tư ?',
       content: [
@@ -147,7 +148,7 @@ const clickDestroy = async () => {
     onOk: async () => {
       try {
         await TicketChangeProductApi.destroyTicketProductConsumable({
-          ticketId: ticketRoomRef.value.id,
+          ticketId: ticketRef.value.id,
           ticketProductId: ticketProductOrigin.id,
         })
         closeModal()
@@ -165,7 +166,7 @@ const updateTicketProduct = async () => {
       ticketUserListOrigin.length || ticketUserList.value.filter((i) => !!i.userId).length
 
     await TicketChangeProductApi.updateTicketProductConsumable({
-      ticketId: ticketRoomRef.value.id,
+      ticketId: ticketRef.value.id,
       ticketProductId: ticketProduct.value.id,
       ticketProduct: hasChangeTicketProduct.value ? ticketProduct.value : undefined,
     })
@@ -202,7 +203,7 @@ defineExpose({ openModal })
               </span>
             </div>
             <div>
-              <TicketDeliveryStatusTag :deliveryStatus="ticketProduct.deliveryStatus" />
+              <TicketDeliveryStatusTag :deliveryStatus="ticketProduct.deliveryStatusFix" />
             </div>
           </div>
           <div class="flex">
@@ -224,7 +225,7 @@ defineExpose({ openModal })
             <div class="flex-1">
               <InputNumber
                 :value="ticketProduct.unitQuantity"
-                :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
+                :disabled="ticketProduct.quantityCompleted !== 0"
                 @update:value="handleChangeUnitQuantity"
                 :validate="{ gte: 0 }"
               />
@@ -245,7 +246,7 @@ defineExpose({ openModal })
           <div style="width: 100%">
             <InputMoney
               :value="ticketProduct.unitExpectedPrice"
-              :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
+              :disabled="ticketProduct.quantityCompleted !== 0"
               @update:value="(v) => ticketProduct.changeUnitExpectedPrice(v)"
             />
           </div>
@@ -282,14 +283,14 @@ defineExpose({ openModal })
               <InputMoney
                 v-if="ticketProduct.discountType === DiscountType.VND"
                 :value="ticketProduct.unitDiscountMoney"
-                :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
+                :disabled="ticketProduct.quantityCompleted !== 0"
                 @update:value="(v) => ticketProduct.changeUnitDiscountMoney(v)"
                 :validate="{ gte: 0 }"
               />
               <InputNumber
                 v-else
                 :value="ticketProduct.discountPercent"
-                :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
+                :disabled="ticketProduct.quantityCompleted !== 0"
                 @update:value="(v) => ticketProduct.changeDiscountPercent(v)"
                 :validate="{ gte: 0, lte: 100 }"
               />
@@ -310,7 +311,7 @@ defineExpose({ openModal })
             <InputMoney
               :value="ticketProduct.unitActualPrice"
               :prepend="ticketProduct.unitRate !== 1 ? ticketProduct.unitName : ''"
-              :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
+              :disabled="ticketProduct.quantityCompleted !== 0"
               @update:value="(v) => ticketProduct.changeUnitActualPrice(v)"
             />
           </div>

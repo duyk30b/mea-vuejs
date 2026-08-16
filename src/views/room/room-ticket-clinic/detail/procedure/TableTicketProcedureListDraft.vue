@@ -5,7 +5,7 @@ import { IconBug, IconDelete, IconDollar, IconFileSearch, IconTeam } from '@/com
 import { InputNumber } from '@/common/vue-form'
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
+import { DiscountType, TicketItemPaymentType } from '@/modules/enum'
 import { ProcedureService, ProcedureType, type Procedure } from '@/modules/procedure'
 import type { Regimen } from '@/modules/regimen'
 import { TicketProcedure, TicketProcedureStatus } from '@/modules/ticket-procedure'
@@ -19,7 +19,7 @@ import ModalTicketRegimenUpdateMoney from './ModalTicketRegimenUpdateMoney.vue'
 import ModalTicketRegimenUpdateUser from './ModalTicketRegimenUpdateUser.vue'
 import { IconEditSquare } from '@/common/icon-google'
 import { VueTooltip } from '@/common/popover'
-import { useTicketClinicDetailStore } from '@/store/ticket-clinic-detail.store'
+import { roomRef, ticketRef } from '@/store/room.store'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
@@ -48,7 +48,6 @@ const emit = defineEmits<{
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
-const ticketClinicDetailStore = useTicketClinicDetailStore()
 const selectProcedure = async (data: { procedure: Procedure }) => {
   const procedureData = data.procedure
   const temp = TicketProcedure.blank()
@@ -104,9 +103,7 @@ const selectRegimen = async (data: { regimen: Regimen }) => {
   temp.ticketId = ''
   temp.customerId = 0
   temp.regimenId = regimenData.id
-  temp.isEffectTotalMoney = Number(
-    ticketClinicDetailStore.roomRef.roomSettingObj.regimen.isEffectTotalMoney,
-  )
+  temp.isEffectTotalMoney = Number(roomRef.value.roomSettingObj.regimen.isEffectTotalMoney)
 
   temp.expectedPrice = regimenData.totalMoney
   const discountApply = regimenData.discountApply
@@ -472,7 +469,7 @@ defineExpose({ selectProcedure, selectRegimen })
           <td v-if="ticketRegimenListDraft.length"></td>
           <template v-if="!!tp.ticketRegimenId">
             <td colspan="4" class="text-center">
-              <!-- <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" /> -->
+              <!-- <TicketItemPaymentTypeTooltip :ticketItemPaymentType="tp.ticketItemPaymentType" /> -->
             </td>
           </template>
           <template v-else>

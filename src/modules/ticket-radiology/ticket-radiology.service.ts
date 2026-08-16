@@ -1,6 +1,6 @@
 import { RadiologyService } from '../radiology'
 import { RadiologyGroupService } from '../radiology-group'
-import { RoomService } from '../room'
+import { RoomService } from '../room/room.service'
 import { TicketRadiology } from './ticket-radiology.model'
 
 export class TicketRadiologyService {

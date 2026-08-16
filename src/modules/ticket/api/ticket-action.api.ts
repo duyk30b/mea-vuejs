@@ -1,7 +1,6 @@
 import { AxiosInstance } from '@/core/axios.instance'
 import { Customer } from '@/modules/customer'
 import type { DiscountType } from '@/modules/enum'
-import { Payment } from '@/modules/payment'
 import { TicketProduct } from '@/modules/ticket-product'
 import type { TicketSurcharge } from '@/modules/ticket-surcharge/ticket-surcharge.model'
 import type { FullResponse } from '../../_base/base-dto'
@@ -90,92 +89,96 @@ export class TicketActionApi {
     }
   }
 
-  static async sendProduct(body: { ticketId: string; ticketProductIdList: string[] }) {
-    const { ticketId, ticketProductIdList } = body
-    const response = await AxiosInstance.post(`/ticket/${ticketId}/send-product`, {
-      ticketProductIdList,
-    })
-    const { data } = response.data as FullResponse<{
-      ticketModified: any
-      ticketProductModifiedAll?: any[]
-    }>
-    return {
-      ticketModified: Ticket.from(data.ticketModified),
-      ticketProductModifiedAll: data.ticketProductModifiedAll
-        ? TicketProduct.fromList(data.ticketProductModifiedAll)
-        : undefined,
-    }
-  }
-
-  static async returnProduct(body: {
+  static async shipProductList(props: {
     ticketId: string
-    returnList: {
-      ticketBatchId: string
-      unitQuantityReturn: number
-      unitRate: number
-    }[]
+    body: { shipProductList: { ticketProductId: string; quantityExecute: number }[] }
   }) {
-    const { ticketId, returnList } = body
-    const response = await AxiosInstance.post(`/ticket/${ticketId}/return-product`, {
-      returnList,
-    })
+    const { ticketId, body } = props
+    const response = await AxiosInstance.post(`/ticket/${ticketId}/ship-product-list`, body)
     const { data } = response.data as FullResponse<{
       ticketModified: any
-      ticketProductModifiedAll?: any[]
+      ticketProductModifiedAll: any[]
     }>
-    return data
+    return {
+      ticketModified: Ticket.from(data.ticketModified),
+      ticketProductModifiedAll: TicketProduct.fromList(data.ticketProductModifiedAll),
+    }
   }
 
-  static async close(options: { ticketId: string }) {
-    const { ticketId } = options
+  static async shipProductAll(props: { ticketId: string }) {
+    const { ticketId } = props
+    const response = await AxiosInstance.post(`/ticket/${ticketId}/ship-product-all`)
+    const { data } = response.data as FullResponse<{
+      ticketModified: any
+      ticketProductModifiedAll: any[]
+    }>
+    return {
+      ticketModified: Ticket.from(data.ticketModified),
+      ticketProductModifiedAll: TicketProduct.fromList(data.ticketProductModifiedAll),
+    }
+  }
+
+  static async returnProductList(props: {
+    ticketId: string
+    body: {
+      returnProductList: { ticketBatchId: string; quantityExecute: number }[]
+    }
+  }) {
+    const { ticketId, body } = props
+    const response = await AxiosInstance.post(`/ticket/${ticketId}/return-product-list`, body)
+    const { data } = response.data as FullResponse<{
+      ticketModified: any
+      ticketProductModifiedAll: any[]
+    }>
+    return {
+      ticketModified: Ticket.from(data.ticketModified),
+      ticketProductModifiedAll: TicketProduct.fromList(data.ticketProductModifiedAll),
+    }
+  }
+
+  static async returnProductAll(props: { ticketId: string }) {
+    const { ticketId } = props
+    const response = await AxiosInstance.post(`/ticket/${ticketId}/return-product-all`)
+    const { data } = response.data as FullResponse<{
+      ticketModified: any
+      ticketProductModifiedAll: any[]
+    }>
+    return {
+      ticketModified: Ticket.from(data.ticketModified),
+      ticketProductModifiedAll: TicketProduct.fromList(data.ticketProductModifiedAll),
+    }
+  }
+
+  static async close(props: { ticketId: string }) {
+    const { ticketId } = props
     const response = await AxiosInstance.post(`/ticket/${ticketId}/close`)
-    const { data } = response.data as FullResponse<{
-      ticketModified: any
-      customerModified?: any
-      paymentCreated: any
-    }>
-    return {
-      ticketModified: Ticket.from(data.ticketModified),
-      paymentCreated: data.paymentCreated ? Payment.from(data.paymentCreated) : undefined,
-    }
+    const { data } = response.data as FullResponse<{ ticketModified: any }>
+    return { ticketModified: Ticket.from(data.ticketModified) }
   }
 
-  static async reopen(options: { ticketId: string }) {
-    const { ticketId } = options
+  static async reopen(props: { ticketId: string }) {
+    const { ticketId } = props
     const response = await AxiosInstance.post(`/ticket/${ticketId}/reopen`)
-    const { data } = response.data as FullResponse<{
-      ticketModified: any
-    }>
-    return {
-      ticketModified: Ticket.from(data.ticketModified),
-    }
+    const { data } = response.data as FullResponse<{ ticketModified: any }>
+    return { ticketModified: Ticket.from(data.ticketModified) }
   }
 
-  static async terminate(options: { ticketId: string; walletId: string; note: string }) {
-    const { ticketId } = options
-    const response = await AxiosInstance.post(`/ticket/${ticketId}/terminate`, {
-      walletId: options.walletId,
-      note: options.note,
-    })
+  static async terminate(props: { ticketId: string; body: { walletId: string; note: string } }) {
+    const { ticketId, body } = props
+    const response = await AxiosInstance.post(`/ticket/${ticketId}/terminate`, body)
     const { data } = response.data as FullResponse<{
       ticketModified: any
-      customerModified?: any
-      paymentCreated: any
+      customerModified: any
       ticketProductModifiedAll?: any[]
     }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
-      customerModified: data.customerModified ? Customer.from(data.customerModified) : undefined,
-      paymentCreated: data.paymentCreated ? Payment.from(data.paymentCreated) : undefined,
-      ticketProductModifiedAll: data.ticketProductModifiedAll
-        ? TicketProduct.fromList(data.ticketProductModifiedAll)
-        : undefined,
     }
   }
 
   static async destroy(ticketId: string) {
     const response = await AxiosInstance.post(`/ticket/${ticketId}/destroy`)
-    const { data } = response.data as FullResponse<{ ticketId: any }>
+    const { data } = response.data as FullResponse<{ ticketDestroyed: any }>
     return data
   }
 }

@@ -1,5 +1,5 @@
 import { BaseModel } from '../_base/base.model'
-import { DiscountType, PaymentMoneyStatus } from '../enum'
+import { DiscountType, TicketItemPaymentType } from '../enum'
 import { Procedure } from '../procedure'
 import type { TicketProcedure } from '../ticket-procedure'
 

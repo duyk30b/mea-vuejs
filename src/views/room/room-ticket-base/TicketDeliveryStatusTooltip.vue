@@ -4,13 +4,13 @@ import { VueTooltip } from '@/common/popover'
 import { DeliveryStatus } from '@/modules/enum'
 
 const props = withDefaults(defineProps<{ deliveryStatus: DeliveryStatus }>(), {
-  deliveryStatus: DeliveryStatus.NoStock,
+  deliveryStatus: DeliveryStatus.Empty,
 })
 </script>
 
 <template>
   <div class="flex justify-center">
-    <VueTooltip v-if="deliveryStatus === DeliveryStatus.NoStock">
+    <VueTooltip v-if="deliveryStatus === DeliveryStatus.Empty">
       <template #trigger>
         <IconMinusCircle style="font-size: 18px; color: #555; cursor: not-allowed" />
       </template>

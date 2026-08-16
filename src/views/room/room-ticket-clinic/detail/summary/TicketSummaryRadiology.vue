@@ -5,17 +5,17 @@ import { IconEditSquare } from '@/common/icon-google'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
+import { DiscountType, TicketItemPaymentType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { ticketRoomRef } from '@/modules/room'
-import { TicketStatus } from '@/modules/ticket'
-import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import TicketItemPaymentTypeTooltip from '@/views/room/room-ticket-base/TicketItemPaymentTypeTooltip.vue'
 import ModalRadiologyDetail from '@/views/master-data/radiology/detail/ModalRadiologyDetail.vue'
 import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadiologyStatusTooltip.vue'
 import { computed, onMounted, ref } from 'vue'
 import ModalTicketRadiologyUpdate from '../radiology/ModalTicketRadiologyUpdate.vue'
 import { TicketRadiologyService } from '@/modules/ticket-radiology'
 import { VueTooltip } from '@/common/popover'
+import { ticketRef } from '@/store/room.store'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalTicketRadiologyUpdate = ref<InstanceType<typeof ModalTicketRadiologyUpdate>>()
@@ -25,12 +25,12 @@ const { formatMoney, isMobile } = settingStore
 const { userPermission } = MeService
 
 onMounted(async () => {
-  await TicketRadiologyService.refreshRelation(ticketRoomRef.value.ticketRadiologyList)
-  ticketRoomRef.value.refreshTicketRadiology()
+  await TicketRadiologyService.refreshRelation(ticketRef.value.ticketRadiologyList)
+  ticketRef.value.refreshTicketRadiology()
 })
 
 const radiologyDiscount = computed(() => {
-  return ticketRoomRef.value.ticketRadiologyList?.reduce((acc, item) => {
+  return ticketRef.value.ticketRadiologyList?.reduce((acc, item) => {
     return acc + item.discountMoney
   }, 0)
 })
@@ -39,12 +39,12 @@ const radiologyDiscount = computed(() => {
 <template>
   <ModalRadiologyDetail ref="modalRadiologyDetail" />
   <ModalTicketRadiologyUpdate ref="modalTicketRadiologyUpdate" />
-  <template v-if="ticketRoomRef.ticketRadiologyList?.length">
+  <template v-if="ticketRef.ticketRadiologyList?.length">
     <thead>
       <tr>
         <th v-if="CONFIG.MODE === 'development'"></th>
         <th>#</th>
-        <th v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></th>
+        <th v-if="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development'"></th>
         <th></th>
         <th colspan="1">CHẨN ĐOÁN HÌNH ẢNH</th>
         <th></th>
@@ -57,7 +57,7 @@ const radiologyDiscount = computed(() => {
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(ticketRadiology, index) in ticketRoomRef.ticketRadiologyList" :key="index">
+      <tr v-for="(ticketRadiology, index) in ticketRef.ticketRadiologyList" :key="index">
         <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
           <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
             <template #trigger>
@@ -69,8 +69,8 @@ const radiologyDiscount = computed(() => {
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ index + 1 }}
         </td>
-        <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'">
-          <PaymentMoneyStatusTooltip :paymentMoneyStatus="ticketRadiology.paymentMoneyStatus" />
+        <td v-if="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development'">
+          <TicketItemPaymentTypeTooltip :ticketItemPaymentType="ticketRadiology.ticketItemPaymentType" />
         </td>
         <td class="text-center">
           <TicketRadiologyStatusTooltip :status="ticketRadiology.status" />
@@ -113,9 +113,9 @@ const radiologyDiscount = computed(() => {
         <td class="text-center">
           <a
             v-if="
-              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-              [PaymentMoneyStatus.TicketPaid, PaymentMoneyStatus.PendingPayment].includes(
-                ticketRadiology.paymentMoneyStatus,
+              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.status) &&
+              [TicketItemPaymentType.TicketPaid, TicketItemPaymentType.PendingPayment].includes(
+                ticketRadiology.ticketItemPaymentType,
               ) &&
               userPermission[PermissionId.TICKET_CHANGE_RADIOLOGY_REQUEST]
             "
@@ -128,7 +128,7 @@ const radiologyDiscount = computed(() => {
       </tr>
       <tr>
         <td v-if="CONFIG.MODE === 'development'" class="text-right" style="color: violet"></td>
-        <td v-if="ticketRoomRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
+        <td v-if="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
         <td class="text-right" colspan="8">
           <div class="flex items-center justify-end gap-2">
             <span class="uppercase">Tiền CĐHA</span>
@@ -138,7 +138,7 @@ const radiologyDiscount = computed(() => {
           </div>
         </td>
         <td class="font-bold text-right whitespace-nowrap">
-          {{ formatMoney(ticketRoomRef.radiologyMoney) }}
+          {{ formatMoney(ticketRef.radiologyMoney) }}
         </td>
         <td></td>
       </tr>

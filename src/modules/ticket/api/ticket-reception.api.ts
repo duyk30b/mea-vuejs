@@ -5,7 +5,8 @@ import { AxiosInstance } from '../../../core/axios.instance'
 import type { FullResponse } from '../../_base/base-dto'
 import type { Customer } from '../../customer'
 import type { TicketUser } from '../../ticket-user'
-import { Ticket, type TicketStatus } from '../ticket.model'
+import { Ticket } from '../ticket.model'
+import type { TicketStatus } from '../ticket.type'
 
 export class TicketChangeReceptionApi {
   static async create(obj: {

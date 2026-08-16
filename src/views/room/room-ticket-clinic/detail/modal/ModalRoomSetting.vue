@@ -6,14 +6,11 @@ import { InputCheckbox, InputSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
 import { MeService } from '@/modules/_me/me.service'
-import { useSettingStore } from '@/modules/_me/setting.store'
-import { SettingKey } from '@/modules/_me/store.variable'
 import { PickupStrategy } from '@/modules/enum'
-import { OrganizationService } from '@/modules/organization'
 import { ROOM_SETTING_DEFAULT, RoomService } from '@/modules/room'
 import { TemplateHtmlService, TemplateHtmlType } from '@/modules/template-html'
 import { WarehouseService } from '@/modules/warehouse/warehouse.service'
-import { useTicketClinicDetailStore } from '@/store/ticket-clinic-detail.store'
+import { roomRef } from '@/store/room.store'
 import { ref } from 'vue'
 
 const TABS_KEY = {
@@ -28,7 +25,6 @@ const TABS_KEY = {
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const ticketClinicDetailStore = useTicketClinicDetailStore()
 const { userPermission, organizationPermission } = MeService
 
 const roomSettingObj = ref<typeof ROOM_SETTING_DEFAULT>(
@@ -46,7 +42,7 @@ const activeTab = ref(TABS_KEY.GENERAL)
 const openModal = async () => {
   showModal.value = true
 
-  roomSettingObj.value = JSON.parse(JSON.stringify(ticketClinicDetailStore.roomRef.roomSettingObj))
+  roomSettingObj.value = JSON.parse(JSON.stringify(roomRef.value.roomSettingObj))
   activeTab.value = TABS_KEY.GENERAL
 
   WarehouseService.list({})
@@ -120,12 +116,12 @@ const handleSave = async () => {
   try {
     clearWarehouseIdList()
     const roomSetting = JSON.stringify(roomSettingObj.value)
-    await ticketClinicDetailStore.updateRoomSetting(roomSetting)
+    roomRef.value = await RoomService.updateRoomSetting(roomRef.value.id, roomSetting)
     AlertStore.addSuccess('Cập nhật cài đặt thành công', 1000)
     emit('success')
     showModal.value = false
   } catch (error) {
-    console.log('🚀 ~ file: ModalProductUpsert.vue:68 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ file: ModalRoomSetting.vue:123 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
   }

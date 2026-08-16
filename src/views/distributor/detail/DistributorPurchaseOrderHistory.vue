@@ -8,6 +8,11 @@ import { PurchaseOrderQueryApi, type PurchaseOrder } from '@/modules/purchase-or
 import { timeToText } from '@/utils'
 import PurchaseOrderStatusTag from '@/views/purchase-order/PurchaseOrderStatusTag.vue'
 import VuePagination from '@/common/VuePagination.vue'
+import { CONFIG } from '@/config'
+import { VueTooltip } from '@/common/popover'
+import { IconBug } from '@/common/icon-antd'
+import PurchaseOrderLink from '@/views/purchase-order/PurchaseOrderLink.vue'
+import { BugDevelopment } from '@/views/component'
 
 const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
   distributor: () => Distributor.blank(),
@@ -28,7 +33,7 @@ const startFetchData = async () => {
     page: page.value,
     limit: limit.value,
     filter: { distributorId: props.distributor.id! },
-    relation: { distributor: false, purchaseOrderItemList: false },
+    relation: { distributor: false },
     sort: { id: 'DESC' },
   })
   purchaseOrderList.value = paginationResponse.purchaseOrderList
@@ -51,14 +56,6 @@ watch(
   },
   { immediate: true },
 )
-
-const openBlankPurchaseOrderDetail = (purchaseOrderId: string) => {
-  const route = router.resolve({
-    name: 'PurchaseOrderDetailContainer',
-    params: { id: purchaseOrderId },
-  })
-  window.open(route.href, '_blank')
-}
 
 const openBlankPurchaseOrderUpsert = (distributorId: number) => {
   const route = router.resolve({
@@ -87,6 +84,8 @@ const openBlankPurchaseOrderUpsert = (distributorId: number) => {
       <table>
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE == 'development'"></th>
+            <th>Thời gian</th>
             <th>Phiếu</th>
             <th>Phụ Phí</th>
             <th>T.Tiền</th>
@@ -97,21 +96,25 @@ const openBlankPurchaseOrderUpsert = (distributorId: number) => {
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="(purchaseOrder, index) in purchaseOrderList" :key="index">
-            <td>
-              <div>
-                <a @click="openBlankPurchaseOrderDetail(purchaseOrder.id)">NH{{ purchaseOrder.id }}</a>
-                <span class="ml-2">
-                  <PurchaseOrderStatusTag :purchaseOrder="purchaseOrder" />
-                </span>
-              </div>
-              <div style="font-size: 0.8rem; white-space: nowrap">
+            <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
+              <BugDevelopment :data="purchaseOrder" />
+            </td>
+            <td class="text-center">
+              <div style="white-space: nowrap">
                 {{ timeToText(purchaseOrder.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
-            <td class="text-right">
-              <div>
-                {{ formatMoney(purchaseOrder.surcharge) }}
+            <td>
+              <div class="flex flex-wrap gap-1">
+                <PurchaseOrderLink
+                  :purchaseOrder="purchaseOrder"
+                  :purchaseOrderId="purchaseOrder.id"
+                />
+                <PurchaseOrderStatusTag :purchaseOrder="purchaseOrder" />
               </div>
+            </td>
+            <td class="text-right">
+              {{ formatMoney(purchaseOrder.surcharge) }}
             </td>
             <td class="text-right">
               <div style="font-weight: 500">

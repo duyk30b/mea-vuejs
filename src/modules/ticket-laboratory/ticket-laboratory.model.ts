@@ -1,7 +1,7 @@
 import { Customer } from '../customer'
-import { PaymentMoneyStatus, type DiscountType } from '../enum'
+import { TicketItemPaymentType, type DiscountType } from '../enum'
 import { Laboratory } from '../laboratory'
-import { Room } from '../room'
+import { Room } from '../room/room.model'
 import { TicketUser } from '../ticket-user'
 import { Ticket } from '../ticket/ticket.model'
 
@@ -28,9 +28,8 @@ export class TicketLaboratory {
   actualPrice: number
 
   status: TicketLaboratoryStatus
-  paymentMoneyStatus: PaymentMoneyStatus
+  ticketItemPaymentType: TicketItemPaymentType
   paid: number
-  debt: number
 
   createdAt: number
   completedAt: number | null
@@ -45,8 +44,7 @@ export class TicketLaboratory {
     const ins = new TicketLaboratory()
     ins.id = ''
     ins.paid = 0
-    ins.debt = 0
-    ins.paymentMoneyStatus = PaymentMoneyStatus.TicketPaid
+    ins.ticketItemPaymentType = TicketItemPaymentType.TicketPaid
     return ins
   }
 
@@ -120,9 +118,8 @@ export class TicketLaboratory {
     if (a.actualPrice != b.actualPrice) return false
 
     if (a.status != b.status) return false
-    if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
+    if (a.ticketItemPaymentType != b.ticketItemPaymentType) return false
     if (a.paid != b.paid) return false
-    if (a.debt != b.debt) return false
 
     if (a.createdAt != b.createdAt) return false
     if (a.completedAt != b.completedAt) return false

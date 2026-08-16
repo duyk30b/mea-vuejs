@@ -1,4 +1,5 @@
 export enum TemplateHtmlType {
+  Unknown = 0,
   _HEADER = 1,
   _FOOTER = 2,
   _HEADER_PREVIEW = 3,
@@ -14,11 +15,14 @@ export enum TemplateHtmlType {
   TicketClinicLaboratoryResult = 71,
   TicketClinicRadiologyResult = 72,
   TicketClinicAllMoney = 80,
-  TicketClinicCustomerPayment = 81,
-  TicketClinicCustomerRefund = 82,
+  PaymentDistributorPayment = 101,
+  PaymentDistributorRefund = 102,
+  PaymentCustomerPayment = 111,
+  PaymentCustomerRefund = 112,
 }
 
 export const TemplateHtmlTypeText = {
+  [TemplateHtmlType.Unknown]: 'Không xác định',
   [TemplateHtmlType._HEADER]: '_HEADER',
   [TemplateHtmlType._FOOTER]: '_FOOTER',
   [TemplateHtmlType._HEADER_PREVIEW]: '_HEADER_PREVIEW',
@@ -34,8 +38,10 @@ export const TemplateHtmlTypeText = {
   [TemplateHtmlType.TicketClinicLaboratoryResult]: 'Phiếu kết quả xét nghiệm',
   [TemplateHtmlType.TicketClinicRadiologyResult]: 'Phiếu kết quả CĐHA',
   [TemplateHtmlType.TicketClinicAllMoney]: 'Bảng kê chi phí',
-  [TemplateHtmlType.TicketClinicCustomerPayment]: 'Phiếu thu tiền',
-  [TemplateHtmlType.TicketClinicCustomerRefund]: 'Phiếu hoàn tiền',
+  [TemplateHtmlType.PaymentDistributorPayment]: 'Phiếu thanh toán với nhà phân phối',
+  [TemplateHtmlType.PaymentDistributorRefund]: 'Phiếu hoàn tiền từ nhà phân phối',
+  [TemplateHtmlType.PaymentCustomerPayment]: 'Phiếu thu tiền của khách hàng',
+  [TemplateHtmlType.PaymentCustomerRefund]: 'Phiếu hoàn tiền của khách hàng',
 }
 
 export class TemplateHtml {

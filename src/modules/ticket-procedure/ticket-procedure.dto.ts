@@ -5,7 +5,7 @@ import type {
   ConditionNumber,
   ConditionString,
 } from '../_base/base-condition'
-import type { PaymentMoneyStatus } from '../enum'
+import type { TicketItemPaymentType } from '../enum'
 import type { TicketProcedureStatus, TicketProcedureType } from './ticket-procedure.model'
 
 export class TicketProcedureGetQuery {
@@ -26,7 +26,7 @@ export class TicketProcedureGetQuery {
     customerId?: number
     procedureId?: number
     ticketProcedureType?: TicketProcedureType | ConditionEnum<TicketProcedureType>
-    paymentMoneyStatus?: PaymentMoneyStatus | ConditionEnum<PaymentMoneyStatus>
+    ticketItemPaymentType?: TicketItemPaymentType | ConditionEnum<TicketItemPaymentType>
     status?: TicketProcedureStatus | ConditionEnum<TicketProcedureStatus>
     createdAt?: ConditionDate
   }

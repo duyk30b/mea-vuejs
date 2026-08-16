@@ -1,75 +1,28 @@
 import { Customer } from '../customer/customer.model'
 import { Distributor } from '../distributor'
-import { LaboratoryService } from '../laboratory'
-import { PaymentTicketItem, TicketItemType } from '../payment-ticket-item'
+import { LaboratoryGroupService } from '../laboratory-group'
+import { PaymentPurchaseOrder } from '../payment-purchase-order/payment_purchase_order.model'
+import { PaymentTicket, PaymentTicketItemType } from '../payment_ticket'
 import { ProcedureService } from '../procedure'
 import { ProductService } from '../product'
 import { RadiologyService } from '../radiology'
-import type { PurchaseOrder } from '../purchase-order'
-import type { Ticket } from '../ticket'
-import { User, UserService } from '../user'
 import { RegimenService } from '../regimen'
+import { User } from '../user'
 import { Wallet } from '../wallet/wallet.model'
-import { WalletService } from '../wallet'
-
-export enum PaymentPersonType {
-  Other = 0,
-  Distributor = 1,
-  Customer = 2,
-  Employee = 3,
-}
-
-export enum PaymentVoucherType {
-  Other = 0, // Không xác định
-  PurchaseOrder = 1,
-  Ticket = 2,
-}
-
-export enum PaymentActionType {
-  Other = 0, // Tạm ứng
-  PaymentMoney = 1, // Thanh toán
-  RefundMoney = 2, // Hoàn tiền
-  Debit = 3, // Ghi nợ
-  CancelDebt = 4, // Hủy nợ
-  PayDebt = 5, // Trả nợ
-  Close = 6, // Đóng phiếu
-  Terminal = 7, // Hủy phiếu
-  FixByExcel = 8,
-}
-
-export const PaymentActionTypeText = {
-  [PaymentActionType.Other]: 'Khác',
-  [PaymentActionType.PaymentMoney]: 'Thanh toán',
-  [PaymentActionType.RefundMoney]: 'Hoàn tiền',
-  [PaymentActionType.Debit]: 'Ghi nợ',
-  [PaymentActionType.CancelDebt]: 'Hủy nợ',
-  [PaymentActionType.PayDebt]: 'Trả nợ',
-  [PaymentActionType.Close]: 'Đóng phiếu',
-  [PaymentActionType.Terminal]: 'Hủy phiếu',
-  [PaymentActionType.FixByExcel]: 'Cập nhật bởi Excel',
-}
-
-export enum MoneyDirection {
-  Other = 0,
-  In = 1,
-  Out = 2,
-}
+import { PaymentPersonType, type MoneyDirection, type PaymentActionType } from './payment.type'
 
 export class Payment {
   id: string
-  voucherType: PaymentVoucherType
-  voucherId: string
   personType: PaymentPersonType
   personId: number
-
-  walletId: string
-  createdAt: number
-  moneyDirection: MoneyDirection
-  paymentActionType: PaymentActionType
   cashierId: number
+  walletId: string
+
+  paymentActionType: PaymentActionType
+  moneyDirection: MoneyDirection
+  createdAt: number
   note: string // Ghi chú
 
-  hasPaymentItem: number
   paidTotal: number
   debtTotal: number
   personOpenDebt: number
@@ -77,26 +30,24 @@ export class Payment {
   walletOpenMoney: number
   walletCloseMoney: number
 
-  ticket: Ticket
-  purchaseOrder: PurchaseOrder
+  paymentTicketList: PaymentTicket[]
+  paymentPurchaseOrderList: PaymentPurchaseOrder[]
+
   customer: Customer
   distributor: Distributor
   employee: User
   cashier: User
 
-  paymentTicketItemList: PaymentTicketItem[]
   wallet: Wallet
 
   static init(): Payment {
     const ins = new Payment()
     ins.id = ''
-    ins.voucherType = PaymentVoucherType.Other
-    ins.voucherId = ''
     ins.personType = PaymentPersonType.Other
     ins.personId = 0
-
     ins.walletId = ''
     ins.cashierId = 0
+
     ins.note = ''
 
     ins.paidTotal = 0
@@ -106,7 +57,8 @@ export class Payment {
     ins.walletOpenMoney = 0
     ins.walletCloseMoney = 0
 
-    ins.paymentTicketItemList = []
+    ins.paymentTicketList = []
+    ins.paymentPurchaseOrderList = []
     return ins
   }
 
@@ -148,68 +100,18 @@ export class Payment {
     if (Object.prototype.hasOwnProperty.call(source, 'wallet')) {
       target.wallet = source.wallet ? Wallet.basic(source.wallet) : source.wallet
     }
-    if (source.paymentTicketItemList) {
-      target.paymentTicketItemList = PaymentTicketItem.basicList(source.paymentTicketItemList)
+    if (source.paymentTicketList) {
+      target.paymentTicketList = PaymentTicket.basicList(source.paymentTicketList)
+    }
+    if (source.paymentPurchaseOrderList) {
+      target.paymentPurchaseOrderList = PaymentPurchaseOrder.basicList(
+        source.paymentPurchaseOrderList,
+      )
     }
     return target
   }
 
   static fromList(roots: Payment[]) {
     return roots.map((i) => Payment.from(i))
-  }
-
-  static async refreshData(payment: Payment) {
-    if (payment.walletId) {
-      const walletMap = await WalletService.getMap()
-      payment.wallet = walletMap[payment.walletId]
-    }
-
-    if (payment.voucherType !== PaymentVoucherType.Ticket) {
-      return payment
-    }
-    if (!payment.hasPaymentItem) {
-      return payment
-    }
-    const productIdList = payment.paymentTicketItemList
-      .filter((i) => {
-        return (
-          i.ticketItemType === TicketItemType.TicketProductConsumable ||
-          i.ticketItemType === TicketItemType.TicketProductPrescription
-        )
-      })
-      .map((i) => i.interactId)
-
-    const [regimenMap, procedureMap, productMap, laboratoryMap, radiologyMap, userMap] =
-      await Promise.all([
-        RegimenService.getMap(),
-        ProcedureService.getMap(),
-        ProductService.map({ filter: { id: { IN: productIdList } } }),
-        LaboratoryService.getMap(),
-        RadiologyService.getMap(),
-        UserService.getMap(),
-      ])
-
-    payment.cashier = userMap[payment.cashierId] || User.blank()
-    payment.paymentTicketItemList.forEach((i) => {
-      if (i.ticketItemType === TicketItemType.TicketRegimen) {
-        i.interactName = regimenMap[i.interactId]?.name || ''
-      }
-      if (i.ticketItemType === TicketItemType.TicketProcedure) {
-        i.interactName = procedureMap[i.interactId]?.name || ''
-      }
-      if (i.ticketItemType === TicketItemType.TicketProductConsumable) {
-        i.interactName = productMap[i.interactId]?.brandName || ''
-      }
-      if (i.ticketItemType === TicketItemType.TicketProductPrescription) {
-        i.interactName = productMap[i.interactId]?.brandName || ''
-      }
-      if (i.ticketItemType === TicketItemType.TicketLaboratory) {
-        i.interactName = laboratoryMap[i.interactId]?.name || ''
-      }
-      if (i.ticketItemType === TicketItemType.TicketRadiology) {
-        i.interactName = radiologyMap[i.interactId]?.name || ''
-      }
-    })
-    return payment
   }
 }

@@ -22,7 +22,7 @@ import TicketLink from '../../room-ticket-base/TicketLink.vue'
 import TicketRegimenStatusTooltip from '../detail/procedure/TicketRegimenStatusTooltip.vue'
 import { DiscountType } from '@/modules/enum'
 import { CONFIG } from '@/config'
-import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import TicketItemPaymentTypeTooltip from '@/views/room/room-ticket-base/TicketItemPaymentTypeTooltip.vue'
 import TicketProcedureStatusTooltip from '../detail/procedure/TicketProcedureStatusTooltip.vue'
 import TicketLaboratoryStatusTooltip from '../../room-laboratory/TicketLaboratoryStatusTooltip.vue'
 import TicketRadiologyStatusTooltip from '../../room-radiology/TicketRadiologyStatusTooltip.vue'
@@ -386,7 +386,7 @@ defineExpose({ openModal })
                         {{ index + (ticket.ticketRegimenList?.length || 0) + 1 }}
                       </td>
                       <td v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'">
-                        <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />
+                        <TicketItemPaymentTypeTooltip :ticketItemPaymentType="tp.ticketItemPaymentType" />
                       </td>
                       <td class="text-center">
                         <TicketProcedureStatusTooltip :status="tp.status" />
@@ -464,8 +464,8 @@ defineExpose({ openModal })
                             <span>{{ index + 1 }}</span>
                           </td>
                           <td v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'">
-                            <PaymentMoneyStatusTooltip
-                              :paymentMoneyStatus="tl.paymentMoneyStatus"
+                            <TicketItemPaymentTypeTooltip
+                              :ticketItemPaymentType="tl.ticketItemPaymentType"
                             />
                           </td>
                           <td class="text-center">
@@ -566,8 +566,8 @@ defineExpose({ openModal })
                     >
                       <td class="text-center">{{ index + 1 }}</td>
                       <td v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'">
-                        <PaymentMoneyStatusTooltip
-                          :paymentMoneyStatus="ticketRadiology.paymentMoneyStatus"
+                        <TicketItemPaymentTypeTooltip
+                          :ticketItemPaymentType="ticketRadiology.ticketItemPaymentType"
                         />
                       </td>
                       <td class="text-center">
@@ -636,10 +636,10 @@ defineExpose({ openModal })
                     <tr v-for="(tp, index) in ticket.ticketProductConsumableList" :key="tp.id">
                       <td class="text-center">{{ index + 1 }}</td>
                       <td v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'">
-                        <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />
+                        <TicketItemPaymentTypeTooltip :ticketItemPaymentType="tp.ticketItemPaymentType" />
                       </td>
                       <td class="text-center">
-                        <TicketDeliveryStatusTooltip :deliveryStatus="tp.deliveryStatus" />
+                        <TicketDeliveryStatusTooltip :deliveryStatus="tp.deliveryStatusFix" />
                       </td>
                       <td>{{ tp.product?.brandName }}</td>
                       <td class="text-center">{{ tp.unitQuantity }}</td>
@@ -694,10 +694,10 @@ defineExpose({ openModal })
                     <tr v-for="(tp, index) in ticket.ticketProductPrescriptionList" :key="tp.id">
                       <td class="text-center">{{ index + 1 }}</td>
                       <td v-if="ticket.isPaymentEachItem || CONFIG.MODE === 'development'">
-                        <PaymentMoneyStatusTooltip :paymentMoneyStatus="tp.paymentMoneyStatus" />
+                        <TicketItemPaymentTypeTooltip :ticketItemPaymentType="tp.ticketItemPaymentType" />
                       </td>
                       <td class="text-center">
-                        <TicketDeliveryStatusTooltip :deliveryStatus="tp.deliveryStatus" />
+                        <TicketDeliveryStatusTooltip :deliveryStatus="tp.deliveryStatusFix" />
                       </td>
                       <td>
                         <div>{{ tp.product?.brandName }}</div>

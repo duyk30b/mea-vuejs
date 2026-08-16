@@ -1,7 +1,7 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import { debounceAsync } from '../../utils/helpers'
 import type { FullResponse } from '../_base/base-dto'
-import { Ticket } from '../ticket'
+import { Ticket } from '../ticket/ticket.model'
 import { RoomDetailQuery, RoomGetQuery, RoomListQuery, type RoomPaginationQuery } from './room.dto'
 import { Room } from './room.model'
 

@@ -12,11 +12,11 @@ import { ProcedureService } from '@/modules/procedure'
 import { Product, ProductService } from '@/modules/product'
 import { RadiologyService } from '@/modules/radiology'
 import { RegimenService } from '@/modules/regimen'
-import { ticketRoomRef } from '@/modules/room'
 import type { TicketUser } from '@/modules/ticket-user'
 import { arrayToKeyValue, ESTimer } from '@/utils'
 import ModalTicketUserUpdateCommission from '@/views/room/room-user/ModalTicketUserUpdateCommission.vue'
 import { onMounted, ref, watch } from 'vue'
+import { ticketRef } from '@/store/room.store'
 
 const modalTicketUserUpdateCommission = ref<InstanceType<typeof ModalTicketUserUpdateCommission>>()
 
@@ -31,13 +31,13 @@ const laboratoryMap = LaboratoryService.laboratoryMap
 const radiologyMap = RadiologyService.radiologyMap
 
 onMounted(async () => {
-  ticketRoomRef.value.refreshTicketUserRelationTicketItem()
+  ticketRef.value.refreshTicketUserRelationTicketItem()
 })
 
 watch(
-  () => ticketRoomRef.value.ticketUserList,
+  () => ticketRef.value.ticketUserList,
   async (newValue, oldValue) => {
-    ticketRoomRef.value.refreshTicketUserRelationTicketItem()
+    ticketRef.value.refreshTicketUserRelationTicketItem()
   },
   { immediate: true, deep: true },
 )
@@ -46,19 +46,19 @@ const handleModalTicketUserUpdateCommissionSuccess = (
   data: TicketUser,
   type: 'CREATE' | 'UPDATE' | 'DESTROY',
 ) => {
-  const findIndex = (ticketRoomRef.value.ticketUserList || []).findIndex((i) => {
+  const findIndex = (ticketRef.value.ticketUserList || []).findIndex((i) => {
     return i.id === data.id
   })
 
   if (type === 'DESTROY') {
     if (findIndex !== -1) {
-      ticketRoomRef.value.ticketUserList!.splice(findIndex, 1)
+      ticketRef.value.ticketUserList!.splice(findIndex, 1)
     }
   }
 
   if (type === 'UPDATE') {
     if (findIndex !== -1) {
-      Object.assign(ticketRoomRef.value.ticketUserList![findIndex], data)
+      Object.assign(ticketRef.value.ticketUserList![findIndex], data)
     }
   }
 }
@@ -87,12 +87,12 @@ const handleModalTicketUserUpdateCommissionSuccess = (
           </tr>
         </thead>
         <tbody>
-          <tr v-if="!ticketRoomRef.ticketUserList?.length">
+          <tr v-if="!ticketRef.ticketUserList?.length">
             <td colspan="100" class="text-center">Không có dữ liệu</td>
           </tr>
           <template v-else>
             <tr
-              v-for="(ticketUser, index) in ticketRoomRef.ticketUserList || []"
+              v-for="(ticketUser, index) in ticketRef.ticketUserList || []"
               :key="ticketUser.id"
             >
               <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
@@ -201,7 +201,7 @@ const handleModalTicketUserUpdateCommissionSuccess = (
                 <span class="uppercase">Tổng tiền hoa hồng</span>
               </td>
               <td class="font-bold text-right whitespace-nowrap">
-                {{ formatMoney(ticketRoomRef.commissionMoney) }}
+                {{ formatMoney(ticketRef.commissionMoney) }}
               </td>
               <td></td>
             </tr>

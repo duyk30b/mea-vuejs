@@ -4,31 +4,28 @@ import { IconClose } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputMoney, InputSelect, InputText } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
-import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Distributor, DistributorService } from '@/modules/distributor'
-import { WalletService } from '@/modules/wallet'
 import {
   PurchaseOrderMoneyApi,
   PurchaseOrderQueryApi,
-  PurchaseOrderStatus,
   type PurchaseOrder,
 } from '@/modules/purchase-order'
+import { PurchaseOrderStatus } from '@/modules/purchase-order/purchase-order.type'
+import { WalletService } from '@/modules/wallet'
 import { ESTimer } from '@/utils'
 import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import LinkAndStatusPurchaseOrder from '../purchase-order/LinkAndStatusPurchaseOrder.vue'
+import PurchaseOrderLink from '../purchase-order/PurchaseOrderLink.vue'
+import PurchaseOrderStatusTag from '../purchase-order/PurchaseOrderStatusTag.vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
 const emit = defineEmits<{
   (e: 'success', value: { distributor: Distributor }): void
 }>()
-const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const { userPermission, user } = MeService
 
 const money = ref<number>(0)
 const note = ref('')
@@ -36,7 +33,9 @@ const distributor = ref<Distributor>(Distributor.blank())
 const walletId = ref<string>('')
 const walletOptions = ref<{ value: any; label: string }[]>([])
 
-const purchaseOrderPaymentList = ref<{ purchaseOrder: PurchaseOrder; money: number }[]>([])
+const purchaseOrderPaymentList = ref<
+  { purchaseOrderId: string; purchaseOrder: PurchaseOrder; money: number }[]
+>([])
 
 const showModal = ref(false)
 const dataLoading = ref(false)
@@ -59,13 +58,20 @@ const openModal = async (distributorId: number) => {
       PurchaseOrderQueryApi.list({
         filter: {
           distributorId,
-          status: PurchaseOrderStatus.Debt,
+          status: {
+            IN: [PurchaseOrderStatus.Executing, PurchaseOrderStatus.Debt],
+          },
+          debt: { GT: 0 },
         },
         sort: { id: 'ASC' },
       }),
     ])
     distributor.value = fetchPromise[0] || Distributor.blank()
-    purchaseOrderPaymentList.value = fetchPromise[1].map((i) => ({ purchaseOrder: i, money: 0 }))
+    purchaseOrderPaymentList.value = fetchPromise[1].map((i) => ({
+      purchaseOrderId: i.id,
+      purchaseOrder: i,
+      money: 0,
+    }))
   } catch (error) {
     console.log('🚀 ~ ModalDistributorPayDebt.vue:62 ~ openModal ~ error:', error)
   } finally {
@@ -79,7 +85,6 @@ const closeModal = () => {
   money.value = 0
   note.value = ''
   distributor.value = Distributor.blank()
-  walletId.value = ''
 }
 
 const handleSave = async () => {
@@ -92,14 +97,13 @@ const handleSave = async () => {
     const result = await PurchaseOrderMoneyApi.payDebt({
       distributorId: distributor.value.id,
       walletId: walletId.value,
-      totalMoney: money.value,
-      note: '',
-      dataList: purchaseOrderPaymentList.value
-        .map((i) => ({ purchaseOrderId: i.purchaseOrder.id, debtTotalMinus: i.money }))
-        .filter((i) => i.debtTotalMinus > 0),
+      note: note.value,
+      changeDebtList: purchaseOrderPaymentList.value
+        .map((i) => ({ purchaseOrderId: i.purchaseOrder.id, paid: i.money, debt: -i.money }))
+        .filter((i) => i.paid > 0),
     })
     AlertStore.addSuccess(`Trả nợ cho NCC ${distributor.value.fullName} thành công`)
-    emit('success', { distributor: result[result.length].distributorModified! })
+    emit('success', { distributor: result.distributorModified! })
     closeModal()
   } catch (error) {
     console.log('🚀 ~ ModalDistributorPayDebt.vue:104 ~ handleSave ~ error:', error)
@@ -149,6 +153,7 @@ defineExpose({ openModal })
           <table>
             <thead>
               <tr>
+                <th style="width: 150px">Thời gian</th>
                 <th>Đơn</th>
                 <th>Nợ</th>
                 <th>Số tiền trả</th>
@@ -170,15 +175,21 @@ defineExpose({ openModal })
             </tbody>
             <tbody>
               <tr v-for="(purchaseOrderPayment, index) in purchaseOrderPaymentList" :key="index">
+                <td class="text-center">
+                  {{
+                    ESTimer.timeToText(
+                      purchaseOrderPayment.purchaseOrder.startedAt,
+                      'DD/MM/YYYY hh:mm',
+                    )
+                  }}
+                </td>
                 <td>
-                  <LinkAndStatusPurchaseOrder :purchaseOrder="purchaseOrderPayment.purchaseOrder" />
-                  <div>
-                    {{
-                      ESTimer.timeToText(
-                        purchaseOrderPayment.purchaseOrder.startedAt,
-                        'DD/MM/YYYY hh:mm',
-                      )
-                    }}
+                  <div class="flex gap-1 flex-wrap">
+                    <PurchaseOrderLink
+                      :purchaseOrder="purchaseOrderPayment.purchaseOrder!"
+                      :purchaseOrderId="purchaseOrderPayment.purchaseOrderId"
+                    />
+                    <PurchaseOrderStatusTag :purchaseOrder="purchaseOrderPayment.purchaseOrder!" />
                   </div>
                 </td>
                 <td class="text-right">

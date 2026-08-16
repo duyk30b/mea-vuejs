@@ -17,7 +17,6 @@ import {
   PurchaseOrder,
   PurchaseOrderQueryApi,
   PurchaseOrderReceptionApi,
-  PurchaseOrderStatus,
 } from '@/modules/purchase-order'
 import { PurchaseOrderItem } from '@/modules/purchase-order-item'
 import Breadcrumb from '../../component/Breadcrumb.vue'
@@ -27,14 +26,15 @@ import ModalPurchaseOrderUpsertSettingScreen from './ModalPurchaseOrderUpsertSet
 import ModalUploadPurchaseOrder from './ModalUploadPurchaseOrder.vue'
 import PurchaseOrderItemCreate from './PurchaseOrderItemCreate.vue'
 import PurchaseOrderItemTable from './PurchaseOrderItemTable.vue'
+import { ProductService } from '@/modules/product'
+import { ESArray } from '@/utils'
+import { PurchaseOrderStatus } from '@/modules/purchase-order/purchase-order.type'
 import {
   EPurchaseOrderSave,
   EPurchaseOrderUpsertMode,
-  purchaseOrder,
-  warehouseId,
-} from './purchase-order-upsert.store'
-import { ProductService } from '@/modules/product'
-import { ESArray } from '@/utils'
+  purchaseOrderUpsertRef,
+  warehouseIdForReceive,
+} from './purchase_order_upsert.ref'
 
 const modalUploadPurchaseOrder = ref<InstanceType<typeof ModalUploadPurchaseOrder>>()
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
@@ -83,7 +83,7 @@ watch(
         },
       })
 
-      purchaseOrder.value = purchaseOrderResponse
+      purchaseOrderUpsertRef.value = purchaseOrderResponse
       distributorDefault = purchaseOrderResponse.distributor || Distributor.blank()
     } else if (distributorId) {
       distributorDefault = await DistributorApi.detail(distributorId)
@@ -92,16 +92,16 @@ watch(
     }
 
     distributor.value = distributorDefault
-    purchaseOrder.value.distributor = distributorDefault
-    purchaseOrder.value.distributorId = distributorDefault.id
+    purchaseOrderUpsertRef.value.distributor = distributorDefault
+    purchaseOrderUpsertRef.value.distributorId = distributorDefault.id
     if (
       mode.value === EPurchaseOrderUpsertMode.CREATE ||
       mode.value === EPurchaseOrderUpsertMode.COPY
     ) {
-      purchaseOrder.value.startedAt = Date.now()
-      purchaseOrder.value.status = PurchaseOrderStatus.Draft
+      purchaseOrderUpsertRef.value.startedAt = Date.now()
+      purchaseOrderUpsertRef.value.status = PurchaseOrderStatus.Draft
     } else if (mode.value === EPurchaseOrderUpsertMode.UPDATE) {
-      purchaseOrder.value.startedAt ||= Date.now()
+      purchaseOrderUpsertRef.value.startedAt ||= Date.now()
     }
     await nextTick(() => {
       inputOptionsDistributor.value?.setItem({
@@ -123,11 +123,11 @@ onMounted(async () => {
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', handleDocumentKeyup)
-  purchaseOrder.value = PurchaseOrder.blank()
+  purchaseOrderUpsertRef.value = PurchaseOrder.blank()
 })
 
 const handleFocusFirstSearchDistributor = async () => {
-  await DistributorService.getAll()
+  await DistributorService.fetchAll()
   await searchingDistributor('')
 }
 const handleFocusSearchDistributor = async () => {
@@ -160,17 +160,17 @@ const handleUpsertDistributorSuccess = (instance?: Distributor) => {
 const selectDistributor = (data?: Distributor) => {
   const snapDistributor = data ? Distributor.from(data) : Distributor.blank()
   distributor.value = snapDistributor
-  purchaseOrder.value.distributorId = snapDistributor.id!
-  purchaseOrder.value.distributor = snapDistributor
+  purchaseOrderUpsertRef.value.distributorId = snapDistributor.id!
+  purchaseOrderUpsertRef.value.distributor = snapDistributor
 }
 
 const handleChangePurchaseOrderDiscountMoney = (data: number) => {
-  purchaseOrder.value.discountMoney = data
-  purchaseOrder.value.discountType = DiscountType.VND
+  purchaseOrderUpsertRef.value.discountMoney = data
+  purchaseOrderUpsertRef.value.discountType = DiscountType.VND
 }
 const handleChangePurchaseOrderDiscountPercent = (data: number) => {
-  purchaseOrder.value.discountPercent = data
-  purchaseOrder.value.discountType = DiscountType.Percent
+  purchaseOrderUpsertRef.value.discountPercent = data
+  purchaseOrderUpsertRef.value.discountType = DiscountType.Percent
 }
 
 const savePurchaseOrder = async (type: EPurchaseOrderSave) => {
@@ -178,12 +178,14 @@ const savePurchaseOrder = async (type: EPurchaseOrderSave) => {
   if (!validForm) {
     return purchaseOrderUpsertForm.value?.reportValidity()
   }
-  if (purchaseOrder.value.purchaseOrderItemList!.length == 0) {
+  if (purchaseOrderUpsertRef.value.purchaseOrderItemList!.length == 0) {
     return AlertStore.addError('Lỗi: cần có ít nhất 1 sản phẩm trong phiếu')
   }
-  const invalidPurchaseOrderItem = purchaseOrder.value.purchaseOrderItemList!.find((ri) => {
-    return ri.unitQuantity === 0
-  })
+  const invalidPurchaseOrderItem = purchaseOrderUpsertRef.value.purchaseOrderItemList!.find(
+    (ri) => {
+      return ri.unitQuantityFix === 0
+    },
+  )
   if (invalidPurchaseOrderItem) {
     return AlertStore.addError(
       `Lỗi: sản phẩm ${invalidPurchaseOrderItem!.product!.brandName} có số lượng 0`,
@@ -194,7 +196,7 @@ const savePurchaseOrder = async (type: EPurchaseOrderSave) => {
     saveLoading.value = true
     switch (type) {
       case EPurchaseOrderSave.CREATE_DRAFT: {
-        const response = await PurchaseOrderReceptionApi.draftInsert(purchaseOrder.value)
+        const response = await PurchaseOrderReceptionApi.draftInsert(purchaseOrderUpsertRef.value)
         await router.push({
           name: 'PurchaseOrderDetailContainer',
           params: { id: response!.purchaseOrderCreated.id },
@@ -203,23 +205,23 @@ const savePurchaseOrder = async (type: EPurchaseOrderSave) => {
       }
       case EPurchaseOrderSave.UPDATE_DRAFT: {
         const response = await PurchaseOrderReceptionApi.draftUpdate(
-          purchaseOrder.value.id,
-          purchaseOrder.value,
+          purchaseOrderUpsertRef.value.id,
+          purchaseOrderUpsertRef.value,
         )
         await router.push({
           name: 'PurchaseOrderDetailContainer',
-          params: { id: purchaseOrder.value.id },
+          params: { id: purchaseOrderUpsertRef.value.id },
         })
         break
       }
       case EPurchaseOrderSave.UPDATE_PREPAYMENT: {
         const response = await PurchaseOrderReceptionApi.depositedUpdate(
-          purchaseOrder.value.id,
-          purchaseOrder.value,
+          purchaseOrderUpsertRef.value.id,
+          purchaseOrderUpsertRef.value,
         )
         await router.push({
           name: 'PurchaseOrderDetailContainer',
-          params: { id: purchaseOrder.value.id },
+          params: { id: purchaseOrderUpsertRef.value.id },
         })
         break
       }
@@ -235,7 +237,7 @@ const savePurchaseOrder = async (type: EPurchaseOrderSave) => {
 
 const handleAddPurchaseOrderItem = (ri: PurchaseOrderItem) => {
   const purchaseOrderItem = PurchaseOrderItem.from(ri)
-  purchaseOrder.value.purchaseOrderItemList!.unshift(purchaseOrderItem)
+  purchaseOrderUpsertRef.value.purchaseOrderItemList!.unshift(purchaseOrderItem)
 }
 
 const openModalDistributorDetail = (data?: Distributor) => {
@@ -252,9 +254,9 @@ const handleModalUploadPurchaseOrderSuccess = async (
   const productMap = ESArray.arrayToKeyValue(productList, 'id')
   purchaseOrderItemInsertList.forEach((ri) => {
     ri.product = productMap[ri.productId]
-    ri.warehouseId = warehouseId.value
+    ri.warehouseId = warehouseIdForReceive.value
   })
-  purchaseOrder.value.purchaseOrderItemList!.push(...purchaseOrderItemInsertList)
+  purchaseOrderUpsertRef.value.purchaseOrderItemList!.push(...purchaseOrderItemInsertList)
 }
 </script>
 
@@ -301,7 +303,7 @@ const handleModalUploadPurchaseOrderSuccess = async (
         </div>
         <div class="mt-4 bg-white p-4">
           <div class="flex flex-wrap justify-between items-baseline">
-            <span>Giỏ hàng ({{ purchaseOrder.purchaseOrderItemList?.length || 0 }})</span>
+            <span>Giỏ hàng ({{ purchaseOrderUpsertRef.purchaseOrderItemList?.length || 0 }})</span>
             <div>
               <VueButton
                 v-if="userPermission[PermissionId.FILE_EXCEL_UPLOAD_PURCHASE_ORDER]"
@@ -322,7 +324,7 @@ const handleModalUploadPurchaseOrderSuccess = async (
             <span>Tên NCC</span>
             <a
               v-if="!!distributor.id"
-              @click="openModalDistributorDetail(purchaseOrder.distributor)"
+              @click="openModalDistributorDetail(purchaseOrderUpsertRef.distributor)"
             >
               <IconFileSearch />
             </a>
@@ -350,7 +352,7 @@ const handleModalUploadPurchaseOrderSuccess = async (
           <div style="height: 40px">
             <InputOptions
               ref="inputOptionsDistributor"
-              :disabled="purchaseOrder.status === PurchaseOrderStatus.Deposited"
+              :disabled="purchaseOrderUpsertRef.status === PurchaseOrderStatus.Schedule"
               :max-height="260"
               :options="distributorOptions"
               placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
@@ -372,7 +374,7 @@ const handleModalUploadPurchaseOrderSuccess = async (
 
           <div class="mt-3">Thời gian tạo đơn</div>
           <div>
-            <InputDate v-model:value="purchaseOrder.startedAt" show-time typeParser="number" />
+            <InputDate v-model:value="purchaseOrderUpsertRef.startedAt" show-time typeParser="number" />
           </div>
         </div>
 
@@ -386,7 +388,7 @@ const handleModalUploadPurchaseOrderSuccess = async (
                     Tiền hàng
                   </td>
                   <td class="text-right" style="padding-right: 11px; font-size: 16px">
-                    {{ formatMoney(purchaseOrder.itemsActualMoney) }}
+                    {{ formatMoney(purchaseOrderUpsertRef.itemsActualMoney) }}
                   </td>
                 </tr>
                 <tr v-if="settingStore.SCREEN_PURCHASE_ORDER_UPSERT.paymentInfo.discount">
@@ -396,26 +398,26 @@ const handleModalUploadPurchaseOrderSuccess = async (
                       <template #trigger>
                         <div class="flex">
                           <div>
-                            <VueTag color="green">{{ purchaseOrder.discountPercent || 0 }}%</VueTag>
+                            <VueTag color="green">{{ purchaseOrderUpsertRef.discountPercent || 0 }}%</VueTag>
                           </div>
                           <div
                             class="flex-1 text-right"
                             style="padding-right: 11px; border-bottom: 1px solid #cdcdcd"
                           >
-                            {{ formatMoney(purchaseOrder.discountMoney) }}
+                            {{ formatMoney(purchaseOrderUpsertRef.discountMoney) }}
                           </div>
                         </div>
                       </template>
                       <div class="p-4">
                         <div>
                           Chiết khấu (Tiền hàng:
-                          <b>{{ formatMoney(purchaseOrder.itemsActualMoney) }}</b>
+                          <b>{{ formatMoney(purchaseOrderUpsertRef.itemsActualMoney) }}</b>
                           )
                         </div>
                         <div class="mt-2">
                           <div>
                             <InputMoney
-                              :value="purchaseOrder.discountMoney"
+                              :value="purchaseOrderUpsertRef.discountMoney"
                               append="VNĐ"
                               style="width: 100%"
                               @update:value="handleChangePurchaseOrderDiscountMoney"
@@ -423,7 +425,7 @@ const handleModalUploadPurchaseOrderSuccess = async (
                           </div>
                           <div class="mt-2">
                             <InputNumber
-                              :value="purchaseOrder.discountPercent"
+                              :value="purchaseOrderUpsertRef.discountPercent"
                               append="%"
                               @update:value="handleChangePurchaseOrderDiscountPercent"
                             />
@@ -436,7 +438,7 @@ const handleModalUploadPurchaseOrderSuccess = async (
                 <tr v-if="settingStore.SCREEN_PURCHASE_ORDER_UPSERT.paymentInfo.surcharge">
                   <td style="white-space: nowrap; padding-right: 10px">Phụ phí</td>
                   <td>
-                    <InputMoney v-model:value="purchaseOrder.surcharge" class="input-payment" />
+                    <InputMoney v-model:value="purchaseOrderUpsertRef.surcharge" class="input-payment" />
                   </td>
                 </tr>
                 <tr>
@@ -448,7 +450,7 @@ const handleModalUploadPurchaseOrderSuccess = async (
                     Tổng tiền
                   </td>
                   <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px">
-                    {{ formatMoney(purchaseOrder.totalMoney) }}
+                    {{ formatMoney(purchaseOrderUpsertRef.totalMoney) }}
                   </td>
                 </tr>
               </tbody>
@@ -464,7 +466,7 @@ const handleModalUploadPurchaseOrderSuccess = async (
                 <tr>
                   <td class="whitespace-nowrap">Ghi chú</td>
                   <td>
-                    <input v-model="purchaseOrder.note" class="input-basic" />
+                    <input v-model="purchaseOrderUpsertRef.note" class="input-basic" />
                   </td>
                 </tr>
               </tbody>
@@ -499,7 +501,7 @@ const handleModalUploadPurchaseOrderSuccess = async (
           <div
             v-if="
               userPermission[PermissionId.PURCHASE_ORDER_DRAFT_CRUD] &&
-              [PurchaseOrderStatus.Draft].includes(purchaseOrder.status)
+              [PurchaseOrderStatus.Draft].includes(purchaseOrderUpsertRef.status)
             "
             class="mt-4 w-full flex flex-col px-1"
           >
@@ -518,7 +520,7 @@ const handleModalUploadPurchaseOrderSuccess = async (
           <div
             v-if="
               userPermission[PermissionId.PURCHASE_ORDER_DEPOSITED_UPDATE] &&
-              [PurchaseOrderStatus.Deposited].includes(purchaseOrder.status)
+              [PurchaseOrderStatus.Schedule].includes(purchaseOrderUpsertRef.status)
             "
             class="mt-4 w-full flex flex-col px-1"
           >

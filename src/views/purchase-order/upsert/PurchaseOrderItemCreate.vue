@@ -24,9 +24,9 @@ import { Warehouse, WarehouseService } from '@/modules/warehouse'
 import { arrayToKeyValue, timeToText } from '@/utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
-import { purchaseOrder, warehouseId } from './purchase-order-upsert.store'
 import { CONFIG } from '@/config'
 import { BugDevelopment } from '@/views/component'
+import { purchaseOrderUpsertRef, warehouseIdForReceive } from './purchase_order_upsert.ref'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
@@ -82,7 +82,7 @@ const handleFocusFirstSearchProduct = async () => {
 }
 
 watch(
-  () => purchaseOrder.value.distributorId,
+  () => purchaseOrderUpsertRef.value.distributorId,
   () => {
     purchaseOrderItem.value.batchId = 0
   },
@@ -147,7 +147,7 @@ const selectProduct = async (productData?: Product) => {
 
     // thêm tự động chọn lô
     const newBatch = Batch.blank()
-    newBatch.distributorId = purchaseOrder.value.distributorId
+    newBatch.distributorId = purchaseOrderUpsertRef.value.distributorId
     newBatch.productId = productData.id
     newBatch.costPrice = productData.costPrice
     batchListData.push(newBatch)
@@ -189,7 +189,7 @@ const selectBatch = (batchData?: Batch) => {
 
 const addPurchaseOrderItem = async () => {
   try {
-    purchaseOrderItem.value.warehouseId = warehouseId.value
+    purchaseOrderItem.value.warehouseId = warehouseIdForReceive.value
     emit('addPurchaseOrderItem', purchaseOrderItem.value)
     inputOptionsProduct.value?.clear()
     clear()
@@ -350,7 +350,7 @@ const clear = () => {
         <div>Nhập vào kho hàng</div>
         <div>
           <VueSelect
-            v-model:value="warehouseId"
+            v-model:value="warehouseIdForReceive"
             :disabled="!!purchaseOrderItem.batchId"
             :options="warehouseOptions"
           ></VueSelect>
@@ -405,7 +405,7 @@ const clear = () => {
           </div>
           <div class="flex-1">
             <InputNumber
-              v-model:value="purchaseOrderItem.unitQuantity"
+              v-model:value="purchaseOrderItem.unitQuantityFix"
               :validate="{ gt: 0 }"
               required
             />
@@ -418,7 +418,7 @@ const clear = () => {
           Giá nhập
           <span v-if="purchaseOrderItem.unitRate !== 1" class="italic">
             (
-            <b>{{ formatMoney(purchaseOrderItem.costPrice) }} /</b>
+            <b>{{ formatMoney(purchaseOrderItem.costPriceFix) }} /</b>
             {{ product.unitBasicName }})
           </span>
         </div>
@@ -438,7 +438,7 @@ const clear = () => {
           Giá bán
           <span v-if="purchaseOrderItem.unitRate !== 1" class="italic">
             (
-            <b>{{ formatMoney(purchaseOrderItem.listPrice) }} /</b>
+            <b>{{ formatMoney(purchaseOrderItem.listPriceFix) }} /</b>
             {{ product.unitBasicName }})
           </span>
         </div>

@@ -8,7 +8,7 @@ import {
   StatisticTicketQuery,
   type StatisticTicketQueryCustomerResponseType,
 } from '@/modules/statistics'
-import { TicketStatus } from '@/modules/ticket'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 import { ESTimer } from '@/utils'
 import { BugDevelopment } from '@/views/component'
 import type { ChartData, ChartOptions } from 'chart.js'

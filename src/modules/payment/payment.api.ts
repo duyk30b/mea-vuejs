@@ -1,7 +1,8 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { FullResponse } from '../_base/base-dto'
 import { PaymentGetParams, PaymentListQuery, PaymentPaginationQuery } from './payment.dto'
-import { MoneyDirection, Payment } from './payment.model'
+import { Payment } from './payment.model'
+import type { MoneyDirection } from './payment.type'
 
 export class PaymentApi {
   static async pagination(options: PaymentPaginationQuery) {
@@ -31,7 +32,6 @@ export class PaymentApi {
     body: {
       createdAt: number
       note: string
-      walletId: string
     }
   }) {
     const { paymentId, body } = options

@@ -2,10 +2,10 @@
 import VueButton from '@/common/VueButton.vue'
 import { MeService } from '@/modules/_me/me.service'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { ticketRoomRef } from '@/modules/room'
 import { TemplateHtml, TemplateHtmlAction } from '@/modules/template-html'
 import { TicketChangeAttributeApi } from '@/modules/ticket'
 import { type TicketAttributeKeyType } from '@/modules/ticket-attribute'
+import { ticketRef } from '@/store/room.store'
 import { nextTick, ref, watch } from 'vue'
 
 const props = withDefaults(defineProps<{ templateHtml: TemplateHtml }>(), {
@@ -34,7 +34,7 @@ watch(
 
     ticketAttributeKeyList.forEach((key) => {
       const k = key as unknown as TicketAttributeKeyType
-      const v = ticketRoomRef.value.ticketAttributeMap[k] || ''
+      const v = ticketRef.value.ticketAttributeMap[k] || ''
       ticketAttributeOriginMap[k] = v
       ticketAttributeMap[k] = v
     })
@@ -59,7 +59,7 @@ watch(
 )
 
 watch(
-  () => ticketRoomRef.value.ticketAttributeList,
+  () => ticketRef.value.ticketAttributeList,
   (newValue, oldValue) => {
     if (!newValue) return
 
@@ -98,7 +98,7 @@ const saveDocumentExtra = async () => {
     saveLoading.value = true
 
     await TicketChangeAttributeApi.updateTicketAttributeList({
-      ticketId: ticketRoomRef.value.id,
+      ticketId: ticketRef.value.id,
       ticketAttributeList: ticketAttributeKeyList.map((key) => ({
         key,
         value: ticketAttributeMap[key] || '',
@@ -113,8 +113,8 @@ const saveDocumentExtra = async () => {
 
 const startPrintTicketClinicDocumentExtra = async () => {
   await TemplateHtmlAction.startPrintTicketClinicDocumentExtra({
-    ticket: ticketRoomRef.value,
-    customer: ticketRoomRef.value.customer!,
+    ticket: ticketRef.value,
+    customer: ticketRef.value.customer!,
     templateHtmlId: templateHtmlIdCurrent,
   })
 }
@@ -134,7 +134,7 @@ const startPrintTicketClinicDocumentExtra = async () => {
         </VueButton>
       </div>
       <VueButton
-        v-if="ticketRoomRef.id && userPermission[PermissionId.TICKET_CHANGE_ATTRIBUTE]"
+        v-if="ticketRef.id && userPermission[PermissionId.TICKET_CHANGE_ATTRIBUTE]"
         color="blue"
         :disabled="!hasChangeAttribute"
         :loading="saveLoading"

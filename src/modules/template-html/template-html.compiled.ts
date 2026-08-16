@@ -2,7 +2,7 @@ import { ESImage, ESString, ESTimer } from '../../utils'
 import type { Customer } from '../customer'
 import { LaboratoryValueType } from '../laboratory'
 import type { Organization } from '../organization'
-import { TicketItemType } from '../payment-ticket-item'
+import { PaymentTicketItemType } from '../payment_ticket'
 import { PositionType } from '../position'
 import type { Ticket } from '../ticket'
 import type { User } from '../user'
@@ -28,7 +28,6 @@ export class TemplateHtmlCompile {
       _UTILS: {
         PositionType,
         LaboratoryValueType,
-        TicketItemType,
         ESTimer,
         ESImage,
         ESString,

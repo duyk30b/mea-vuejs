@@ -1,11 +1,9 @@
 <script lang="ts" setup>
 import { TemplateHtml, TemplateHtmlService } from '@/modules/template-html'
-import { useTicketClinicDetailStore } from '@/store/ticket-clinic-detail.store'
 import { onBeforeMount, ref } from 'vue'
 import TicketClinicDiagnosisBasic from './TicketClinicDiagnosisBasic.vue'
 import TicketClinicDocumentExtra from './TicketClinicDocumentExtra.vue'
-
-const ticketClinicDetailStore = useTicketClinicDetailStore()
+import { roomRef, ticketRef } from '@/store/room.store'
 
 const templateHtmlChooseList = ref<TemplateHtml[]>([])
 const templateHtmlCurrent = ref<TemplateHtml | null>(null)
@@ -16,8 +14,7 @@ const selectTemplateHtml = (templateHtml: TemplateHtml | null) => {
 
 onBeforeMount(async () => {
   const templateHtmlMap = await TemplateHtmlService.getMap()
-  const templateHtmlIdList =
-    ticketClinicDetailStore.roomRef?.roomSettingObj?.diagnosis?.templateHtmlIdList || []
+  const templateHtmlIdList = roomRef.value?.roomSettingObj?.diagnosis?.templateHtmlIdList || []
   templateHtmlChooseList.value = templateHtmlIdList
     .map((i) => templateHtmlMap[i] || TemplateHtml.blank())
     .filter((i) => !!i.id)

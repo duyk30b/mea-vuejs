@@ -6,9 +6,9 @@ import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus } from '@/modules/enum'
 import { TicketActionApi } from '@/modules/ticket'
+import { ticketRef } from '@/store/room.store'
 import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
 import { ref } from 'vue'
-import { ticketOrderDetailRef } from './ticket-order-detail.ref'
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -29,15 +29,13 @@ const startTerminal = async () => {
   try {
     saveLoading.value = true
     const terminalResult = await TicketActionApi.terminate({
-      walletId: walletId.value,
-      note: '',
-      ticketId: ticketOrderDetailRef.value.id,
+      ticketId: ticketRef.value.id,
+      body: {
+        note: '',
+        walletId: walletId.value,
+      },
     })
 
-    Object.assign(ticketOrderDetailRef.value, terminalResult.ticketModified)
-    if (terminalResult.paymentCreated) {
-      ticketOrderDetailRef.value.paymentList?.push(terminalResult.paymentCreated)
-    }
     AlertStore.add({ type: 'success', message: 'Hủy phiếu thành công', time: 1000 })
     showModal.value = false
   } catch (error) {
@@ -67,17 +65,17 @@ defineExpose({ openModal })
         </div>
       </div>
       <div class="p-4">
-        <p v-if="ticketOrderDetailRef.deliveryStatus === DeliveryStatus.Delivered">
+        <p v-if="ticketRef.deliveryStatus === DeliveryStatus.Delivered">
           - Kho hàng sẽ nhập lại tất cả hàng hóa trong đơn
         </p>
-        <p v-if="ticketOrderDetailRef.debtTotal">
-          - Trừ nợ khách hàng: {{ formatMoney(ticketOrderDetailRef.debtTotal) }}
+        <p v-if="ticketRef.debtTotal">
+          - Trừ nợ khách hàng: {{ formatMoney(ticketRef.debtTotal) }}
         </p>
-        <p v-if="ticketOrderDetailRef.paidTotal">
+        <p v-if="ticketRef.paidTotal">
           - Khách hàng nhận lại số tiền đã thanh toán là:
-          {{ formatMoney(ticketOrderDetailRef.paidTotal) }}
+          {{ formatMoney(ticketRef.paidTotal) }}
         </p>
-        <div class="flex items-center gap-2 mb-4" v-if="ticketOrderDetailRef.paidTotal">
+        <div class="flex items-center gap-2 mb-4" v-if="ticketRef.paidTotal">
           <div>- Phương thức thanh toán</div>
           <div style="min-width: 150px">
             <InputSelectWallet v-model:walletId="walletId" autoSelectFirstValue />

@@ -5,7 +5,7 @@ import { AlertStore } from '@/common/vue-alert'
 import { InputHint, InputMoney, InputNumber, VueSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DeliveryStatus, DiscountType } from '@/modules/enum'
+import { DiscountType } from '@/modules/enum'
 import { TicketProduct } from '@/modules/ticket-product'
 import { ESString } from '@/utils'
 import { computed, ref } from 'vue'
@@ -107,7 +107,7 @@ defineExpose({ openModal })
             <div class="flex-1">
               <InputNumber
                 v-model:value="ticketProduct.unitQuantity"
-                :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
+                :disabled="ticketProduct.quantityCompleted > 0"
                 :validate="{ gt: 0 }"
               />
             </div>
@@ -163,14 +163,14 @@ defineExpose({ openModal })
               <InputMoney
                 v-if="ticketProduct.discountType === DiscountType.VND"
                 :value="ticketProduct.unitDiscountMoney"
-                :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
+                :disabled="ticketProduct.quantityCompleted > 0"
                 @update:value="(v) => ticketProduct.changeUnitDiscountMoney(v)"
                 :validate="{ gte: 0 }"
               />
               <InputNumber
                 v-else
                 :value="ticketProduct.discountPercent"
-                :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
+                :disabled="ticketProduct.quantityCompleted > 0"
                 @update:value="(v) => ticketProduct.changeDiscountPercent(v)"
                 :validate="{ gte: 0, lte: 100 }"
               />
@@ -191,7 +191,7 @@ defineExpose({ openModal })
             <InputMoney
               :value="ticketProduct.unitActualPrice"
               :prepend="ticketProduct.unitRate !== 1 ? ticketProduct.unitName : ''"
-              :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
+              :disabled="ticketProduct.quantityCompleted > 0"
               @update:value="(v) => ticketProduct.changeUnitActualPrice(v)"
             />
           </div>

@@ -9,13 +9,19 @@ import { Ticket, TicketActionApi } from '@/modules/ticket'
 import { TicketProduct } from '@/modules/ticket-product'
 import { TicketProductService } from '@/modules/ticket-product/ticket-product.service'
 import { ESTimer } from '@/utils'
-import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import TicketItemPaymentTypeTooltip from '@/views/room/room-ticket-base/TicketItemPaymentTypeTooltip.vue'
 import TicketDeliveryStatusTooltip from '@/views/room/room-ticket-base/TicketDeliveryStatusTooltip.vue'
 import { ref } from 'vue'
 
 const ticket = ref<Ticket>(Ticket.blank())
-const ticketProductList = ref<TicketProduct[]>([])
-const ticketProductIdSelect = ref<Record<string, boolean>>({})
+const shipData = ref<
+  {
+    ticketProductId: string
+    quantityExecute: number
+    checked: boolean
+    ticketProduct: TicketProduct
+  }[]
+>([])
 const checkedAll = ref(false)
 
 const emit = defineEmits<{ (e: 'success'): void }>()
@@ -27,38 +33,37 @@ const showModal = ref(false)
 const dataLoading = ref(false)
 const sendLoading = ref(false)
 
-const openModal = async (options: { ticket: Ticket; queryTicketProduct?: boolean }) => {
+const openModal = async (options: { ticket: Ticket; refetch?: boolean }) => {
   showModal.value = true
   ticket.value = Ticket.from(options.ticket)
 
   try {
     dataLoading.value = true
-    if (options.queryTicketProduct) {
-      ticketProductList.value = await TicketProductService.list(
-        { filter: { ticketId: ticket.value.id, deliveryStatus: DeliveryStatus.Pending } },
+    let ticketProductList: TicketProduct[] = []
+    if (options.refetch) {
+      ticketProductList = await TicketProductService.list(
+        { filter: { ticketId: ticket.value.id } },
         { refresh: { product: true, batch: true } },
       )
     } else {
-      ticketProductList.value = TicketProduct.fromList(options.ticket.ticketProductList || [])
+      ticketProductList = TicketProduct.fromList(options.ticket.ticketProductList || [])
     }
-
-    ticketProductList.value.forEach((i) => {
-      ticketProductIdSelect.value[i.id] = true
+    ticketProductList.forEach((i) => {
+      if (i.quantityCompleted >= i.quantity) {
+        return
+      }
+      shipData.value.push({
+        ticketProductId: i.id,
+        quantityExecute: i.quantity - i.quantityCompleted,
+        checked: true,
+        ticketProduct: i,
+      })
     })
     checkedAll.value = true
   } catch (error) {
-    console.log('🚀 ~ ModalTicketSendProduct.vue:50 ~ openModal ~ error:', error)
+    console.log('🚀 ~ ModalTicketSendProduct.vue:56 ~ openModal ~ error:', error)
   } finally {
     dataLoading.value = false
-  }
-}
-
-const handleChangeInput = (e: Event, tpId: string) => {
-  const target = e.target as HTMLInputElement
-  if (target.checked) {
-    ticketProductIdSelect.value[tpId] = true
-  } else {
-    ticketProductIdSelect.value[tpId] = false
   }
 }
 
@@ -66,13 +71,13 @@ const handleChangeCheckedAll = (e: Event) => {
   const target = e.target as HTMLInputElement
   if (target.checked) {
     checkedAll.value = true
-    ticketProductList.value.forEach((i) => {
-      ticketProductIdSelect.value[i.id] = true
+    shipData.value.forEach((i) => {
+      i.checked = true
     })
   } else {
     checkedAll.value = false
-    ticketProductList.value.forEach((i) => {
-      ticketProductIdSelect.value[i.id] = false
+    shipData.value.forEach((i) => {
+      i.checked = false
     })
   }
 }
@@ -80,8 +85,7 @@ const handleChangeCheckedAll = (e: Event) => {
 const closeModal = () => {
   showModal.value = false
   ticket.value = Ticket.blank()
-  ticketProductList.value = []
-  ticketProductIdSelect.value = {}
+  shipData.value = []
   checkedAll.value = false
 }
 
@@ -89,20 +93,18 @@ const validateQuantity = () => {
   if (settingStore.PRODUCT_SETTING.allowNegativeQuantity) {
     return true
   }
-  for (let i = 0; i < ticketProductList.value.length; i++) {
-    const ticketProduct = ticketProductList.value[i]
+  for (let i = 0; i < shipData.value.length; i++) {
+    if (!shipData.value[i].checked) {
+      continue
+    }
+    const ticketProduct = shipData.value[i].ticketProduct
     if (ticketProduct.pickupStrategy === PickupStrategy.NoImpact) {
       continue
     }
     if (ticketProduct.product?.warehouseIds === '[]') {
       continue
     }
-
-    if (!ticketProductIdSelect.value[ticketProduct.id]) {
-      continue
-    }
     const { product, batch } = ticketProduct
-
     if (ticketProduct.quantity > (product?.quantity || 0)) {
       AlertStore.addError(
         `Sản phẩm ${product?.brandName} không đủ ` +
@@ -124,24 +126,29 @@ const validateQuantity = () => {
 const startSendProduct = async () => {
   if (!validateQuantity()) return
 
-  const ticketProductIdList = Object.entries(ticketProductIdSelect.value)
-    .filter(([key, value]) => !!value)
-    .map(([key, value]) => key)
+  const shipProductList = shipData.value
+    .filter((i) => i.checked)
+    .map((i) => ({
+      ticketProductId: i.ticketProductId,
+      quantityExecute: i.quantityExecute,
+    }))
 
-  if (!ticketProductIdList.length) {
+  if (!shipProductList.length) {
     return AlertStore.addError('Cần chọn ít nhất 1 sản phẩm xuất hàng')
   }
   try {
     sendLoading.value = true
-    await TicketActionApi.sendProduct({
+    await TicketActionApi.shipProductList({
       ticketId: ticket.value.id,
-      ticketProductIdList,
+      body: {
+        shipProductList: shipProductList,
+      },
     })
 
     emit('success')
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalVisitReturn.vue:90 ~ startSendProduct ~ error:', error)
+    console.log('🚀 ~ file: ModalTicketSendProduct.vue:145 ~ startSendProduct ~ error:', error)
   } finally {
     sendLoading.value = false
   }
@@ -195,47 +202,57 @@ defineExpose({ openModal })
               </tr>
             </tbody>
             <tbody v-else>
-              <tr v-if="ticketProductList.length == 0">
-                <td colspan="20" class="text-center">Chưa xuất thuốc</td>
+              <tr v-if="shipData.length == 0">
+                <td colspan="20" class="text-center">Không có sản phẩm cần xuất hàng</td>
               </tr>
-              <tr v-for="ticketProduct in ticketProductList" :key="ticketProduct.id">
+              <tr v-for="shpDataItem in shipData" :key="shpDataItem.ticketProductId">
                 <td class="text-center">
                   <input
                     style="cursor: pointer"
-                    :checked="ticketProductIdSelect[ticketProduct.id]"
+                    v-model="shpDataItem.checked"
                     type="checkbox"
-                    @change="(e) => handleChangeInput(e, ticketProduct.id)"
                   />
                 </td>
                 <td>
-                  <PaymentMoneyStatusTooltip
-                    :paymentMoneyStatus="ticketProduct.paymentMoneyStatus"
+                  <TicketItemPaymentTypeTooltip
+                    :ticketItemPaymentType="shpDataItem.ticketProduct.ticketItemPaymentType"
                   />
                 </td>
                 <td>
-                  <TicketDeliveryStatusTooltip :deliveryStatus="ticketProduct.deliveryStatus" />
+                  <TicketDeliveryStatusTooltip
+                    :deliveryStatus="shpDataItem.ticketProduct.deliveryStatusFix"
+                  />
                 </td>
                 <td class="text-left">
-                  <div style="font-weight: 500">{{ ticketProduct.product?.brandName }}</div>
-                  <div class="text-xs italic">
-                    {{ ticketProduct.product?.substance || '' }}
+                  <div style="font-weight: 500">
+                    {{ shpDataItem.ticketProduct.product?.brandName }}
                   </div>
-                  <div v-if="ticketProduct.batchId" class="text-xs italic">
-                    <span v-if="ticketProduct.batch?.lotNumber">
-                      Lô {{ ticketProduct.batch?.lotNumber }}
+                  <div class="text-xs italic">
+                    {{ shpDataItem.ticketProduct.product?.substance || '' }}
+                  </div>
+                  <div v-if="shpDataItem.ticketProduct.batchId" class="text-xs italic">
+                    <span v-if="shpDataItem.ticketProduct.batch?.lotNumber">
+                      Lô {{ shpDataItem.ticketProduct.batch?.lotNumber }}
                     </span>
-                    <span v-if="ticketProduct.batch?.expiryDate">
-                      - HSD {{ ESTimer.timeToText(ticketProduct.batch?.expiryDate) }}
+                    <span v-if="shpDataItem.ticketProduct.batch?.expiryDate">
+                      - HSD {{ ESTimer.timeToText(shpDataItem.ticketProduct.batch?.expiryDate) }}
                     </span>
                   </div>
                 </td>
                 <td class="text-center">
-                  <div>{{ ticketProduct.unitQuantity }}</div>
+                  <div>{{ shpDataItem.quantityExecute / shpDataItem.ticketProduct.unitQuantity }}</div>
                 </td>
-                <td class="text-center">{{ ticketProduct.unitName }}</td>
-                <td class="text-right">{{ formatMoney(ticketProduct.unitActualPrice) }}</td>
+                <td class="text-center">{{ shpDataItem.ticketProduct.unitName }}</td>
                 <td class="text-right">
-                  {{ formatMoney(ticketProduct.unitActualPrice * ticketProduct.unitQuantity) }}
+                  {{ formatMoney(shpDataItem.ticketProduct.unitActualPrice) }}
+                </td>
+                <td class="text-right">
+                  {{
+                    formatMoney(
+                      shpDataItem.ticketProduct.actualPrice *
+                        shpDataItem.quantityExecute,
+                    )
+                  }}
                 </td>
               </tr>
             </tbody>
