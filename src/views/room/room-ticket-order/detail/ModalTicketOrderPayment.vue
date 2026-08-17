@@ -13,8 +13,8 @@ import { TicketMoneyApi, TicketOrderApi } from '@/modules/ticket'
 import { TicketActionType, TicketStatus } from '@/modules/ticket/ticket.type'
 import { ticketRef } from '@/store/room.store'
 import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
-import TicketPaymentList from '@/views/room/room-ticket-base/TicketPaymentList.vue'
 import { ref } from 'vue'
+import TableTicketPaidOverallHistory from '../../room-ticket-base/TableTicketPaidOverallHistory.vue'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputMoney>>()
 const emit = defineEmits<{ (e: 'success'): void }>()
@@ -164,7 +164,7 @@ defineExpose({ openModal })
       </div>
 
       <div class="p-4">
-        <TicketPaymentList :ticket="ticketRef" />
+        <TableTicketPaidOverallHistory :ticket="ticketRef" />
       </div>
 
       <!-- RefundOverpaid -->

@@ -73,7 +73,8 @@ export class TicketMoneyApi {
       debt: number
     }[]
   }) {
-    const response = await AxiosInstance.post('/ticket/change-debt', body)
+    const ticketIdListString = body.changeDebtListBody.map((i) => i.ticketId).join('-')
+    const response = await AxiosInstance.post(`/ticket/change-debt/${ticketIdListString}`, body)
     const { data } = response.data as FullResponse<{
       ticketModifiedList: any[]
       customerModified: any

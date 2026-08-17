@@ -2,7 +2,10 @@
 import { IconPrint } from '@/common/icon-antd'
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import type { Payment } from '@/modules/payment/payment.model'
+import { Customer } from '@/modules/customer'
+import { Payment } from '@/modules/payment/payment.model'
+import { PaymentTicket } from '@/modules/payment_ticket'
+import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
 import { TemplateHtmlAction } from '@/modules/template-html'
 import { Ticket } from '@/modules/ticket'
 import { TicketActionType, TicketActionTypeText } from '@/modules/ticket/ticket.type'
@@ -23,13 +26,17 @@ onMounted(async () => {
   try {
     await WalletService.getAll()
   } catch (error) {
-    console.log('🚀 ~ TicketPaymentList.vue:22 ~ error:', error)
+    console.log('🚀 ~ TableTicketPaidOverallHistory.vue:22 ~ error:', error)
   }
 })
 
-const startPrintPayment = async (options: { payment: Payment }) => {
-  await TemplateHtmlAction.startPrintPayment({
-    payment: options.payment,
+const startPrintPayment = async (options: { payment: Payment; paymentTicket: PaymentTicket }) => {
+  const payment = Payment.from(options.payment)
+  payment.customer = Customer.from(props.ticket.customer)
+  payment.paymentTicketList = [PaymentTicket.from(options.paymentTicket)]
+  await PaymentTicketService.refreshRelation(payment.paymentTicketList)
+  await TemplateHtmlAction.startPrintCustomerPayment({
+    payment,
   })
 }
 </script>
@@ -54,7 +61,7 @@ const startPrintPayment = async (options: { payment: Payment }) => {
             <th>#</th>
             <th>Thời gian</th>
             <th>Ví</th>
-            <th>DV</th>
+            <th>HĐ</th>
             <th>Tiền</th>
             <th>Ghi nợ</th>
             <th></th>
@@ -81,7 +88,7 @@ const startPrintPayment = async (options: { payment: Payment }) => {
                 "
               >
                 <div>
-                  <span>{{ paymentTicket.interactNameDisplay }}</span>
+                  <span>{{ paymentTicket.interactName }}</span>
                   <span
                     v-if="paymentTicket.sessionIndex"
                     style="margin-left: 4px; font-weight: 500"
@@ -89,7 +96,7 @@ const startPrintPayment = async (options: { payment: Payment }) => {
                     (Buổi {{ paymentTicket.sessionIndex }})
                   </span>
                   <span
-                    v-if=" paymentTicket.ticketActionType === TicketActionType.RefundItem"
+                    v-if="paymentTicket.ticketActionType === TicketActionType.RefundItem"
                     style="margin-left: 4px; font-weight: 500; color: var(--text-red)"
                   >
                     (Hoàn tiền)
@@ -112,7 +119,7 @@ const startPrintPayment = async (options: { payment: Payment }) => {
             <td class="text-center">
               <IconPrint
                 style="font-size: 18px; color: var(--text-blue); cursor: pointer"
-                @click="startPrintPayment({ payment: paymentTicket.payment })"
+                @click="startPrintPayment({ payment: paymentTicket.payment, paymentTicket })"
               />
             </td>
           </tr>

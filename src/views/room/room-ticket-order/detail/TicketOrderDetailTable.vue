@@ -12,9 +12,11 @@ import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProc
 import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import TicketDeliveryStatusTooltip from '@/views/room/room-ticket-base/TicketDeliveryStatusTooltip.vue'
 import { computed, onMounted, ref } from 'vue'
+import ModalTicketPaidHistory from '../../room-ticket-base/ModalTicketPaidHistory.vue'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
+const modalTicketPaidHistory = ref<InstanceType<typeof ModalTicketPaidHistory>>()
 
 const surchargeMap = SurchargeService.surchargeMap
 const expenseMap = ExpenseService.expenseMap
@@ -46,6 +48,7 @@ const colspan = computed(() => {
 </script>
 
 <template>
+  <ModalTicketPaidHistory ref="modalTicketPaidHistory" />
   <ModalProductDetail ref="modalProductDetail" />
   <ModalProcedureDetail ref="modalProcedureDetail" />
   <div class="px-4 table-wrapper w-full" :class="isMobile ? '' : 'px-4 w-full'">
@@ -456,7 +459,7 @@ const colspan = computed(() => {
           <td
             class="text-right cursor-pointer"
             :colspan="colspan"
-            @click="showModalTicketPayment(PaymentViewType.Success)"
+            @click="modalTicketPaidHistory?.openModal({ ticket: ticketRef, refetch: true })"
           >
             <a>
               <span class="mr-1">Đã thanh toán</span>

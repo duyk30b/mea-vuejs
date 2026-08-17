@@ -73,7 +73,7 @@ export class PaymentTicket {
     return ins
   }
 
-  get interactNameDisplay() {
+  get interactName() {
     if (this.paymentTicketItemType === PaymentTicketItemType.Unknown) {
       return 'Tiền chờ'
     }
@@ -81,10 +81,10 @@ export class PaymentTicket {
       return 'Tiền chờ'
     }
     if (this.paymentTicketItemType === PaymentTicketItemType.Surcharge) {
-      return 'Phụ thu'
+      return 'Phụ phí'
     }
     if (this.paymentTicketItemType === PaymentTicketItemType.Discount) {
-      return 'Giảm giá'
+      return 'Chiết khấu'
     }
     if (this.paymentTicketItemType === PaymentTicketItemType.TicketRegimen) {
       return this.regimen?.name || ''
@@ -93,10 +93,10 @@ export class PaymentTicket {
       return this.procedure?.name || ''
     }
     if (this.paymentTicketItemType === PaymentTicketItemType.TicketProductConsumable) {
-      return this.product?.substance || ''
+      return this.product?.brandName || ''
     }
     if (this.paymentTicketItemType === PaymentTicketItemType.TicketProductPrescription) {
-      return this.product?.substance || ''
+      return this.product?.brandName || ''
     }
     if (this.paymentTicketItemType === PaymentTicketItemType.TicketLaboratory) {
       return this.laboratory?.name || ''

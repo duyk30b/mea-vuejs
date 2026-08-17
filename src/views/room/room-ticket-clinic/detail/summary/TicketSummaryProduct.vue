@@ -18,6 +18,7 @@ import { TicketProductService } from '@/modules/ticket-product'
 import { VueTooltip } from '@/common/popover'
 import { ticketRef } from '@/store/room.store'
 import { TicketStatus } from '@/modules/ticket/ticket.type'
+import { BugDevelopment } from '@/views/component'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalTicketClinicConsumableUpdate =
@@ -87,12 +88,7 @@ const prescriptionMoney = computed(() => {
         :key="tpConsumable.id + '_' + tpConsumableIndex"
       >
         <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-          <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-            <template #trigger>
-              <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-            </template>
-            <pre>{{ JSON.stringify(tpConsumable, null, 4) }}</pre>
-          </VueTooltip>
+          <BugDevelopment :data="tpConsumable" />
         </td>
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ tpConsumableIndex + 1 }}
@@ -207,12 +203,7 @@ const prescriptionMoney = computed(() => {
         :key="tpPrescription.id + '_' + tpPrescriptionIndex"
       >
         <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-          <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-            <template #trigger>
-              <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-            </template>
-            <pre>{{ JSON.stringify(tpPrescription, null, 4) }}</pre>
-          </VueTooltip>
+          <BugDevelopment :data="tpPrescription" />
         </td>
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ tpPrescriptionIndex + 1 }}

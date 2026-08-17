@@ -26,6 +26,7 @@ import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 import { onBeforeMount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ModalPaymentUpdateInfo from './ModalPaymentUpdateInfo.vue'
+import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
 
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -99,6 +100,8 @@ const startFetchData = async () => {
     ])
 
     paymentList.value = paginationResponse.paymentList
+    paymentList.value.forEach((i) => i.refreshData()) // Refresh data for frontend only
+
     total.value = paginationResponse.total
     statistics.value = sumMoneyResponse.aggregate
   } catch (error) {
@@ -144,9 +147,12 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const startPrintPayment = async (options: { payment: Payment }) => {
-  await TemplateHtmlAction.startPrintPayment({
-    payment: options.payment,
+const startPrintCustomerPayment = async (options: { payment: Payment }) => {
+  const paymentPrint = Payment.from(options.payment)
+
+  await PaymentTicketService.refreshRelation(paymentPrint.paymentTicketList)
+  await TemplateHtmlAction.startPrintCustomerPayment({
+    payment: paymentPrint,
   })
 }
 </script>
@@ -278,23 +284,23 @@ const startPrintPayment = async (options: { payment: Payment }) => {
               <BugDevelopment :data="payment" />
             </td>
             <td>
-              <div v-if="payment.paymentTicketList.length">
+              <div v-if="payment.ticketList.length">
                 <TicketLink
-                  v-for="(paymentTicket, index) in payment.paymentTicketList"
+                  v-for="(ticket, index) in payment.ticketList"
                   :key="index"
-                  :ticket="paymentTicket.ticket!"
-                  :ticketId="paymentTicket.ticketId"
+                  :ticket="ticket"
+                  :ticketId="ticket.id"
                 />
               </div>
-              <div v-if="payment.paymentPurchaseOrderList.length">
+              <div v-if="payment.purchaseOrderList.length">
                 <PurchaseOrderLink
-                  v-for="(paymentPurchaseOrder, index) in payment.paymentPurchaseOrderList"
+                  v-for="(purchaseOrder, index) in payment.purchaseOrderList"
                   :key="index"
-                  :purchaseOrder="paymentPurchaseOrder.purchaseOrder!"
-                  :purchaseOrderId="paymentPurchaseOrder.purchaseOrderId"
+                  :purchaseOrder="purchaseOrder"
+                  :purchaseOrderId="purchaseOrder.id"
                 />
               </div>
-              <div style="font-size: 0.9em;">
+              <div style="font-size: 0.9em">
                 <span style="white-space: nowrap">
                   {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
                 </span>
@@ -364,8 +370,9 @@ const startPrintPayment = async (options: { payment: Payment }) => {
             </td>
             <td class="text-center">
               <IconPrint
+                v-if="payment.personType === PaymentPersonType.Customer"
                 style="font-size: 18px; color: var(--text-blue); cursor: pointer"
-                @click="startPrintPayment({ payment })"
+                @click="startPrintCustomerPayment({ payment })"
               />
             </td>
           </tr>

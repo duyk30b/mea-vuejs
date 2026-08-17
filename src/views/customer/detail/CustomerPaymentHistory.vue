@@ -1,22 +1,21 @@
 <script setup lang="ts">
-import { IconBug } from '@/common/icon-antd'
-import { VueTooltip } from '@/common/popover'
 import VueButton from '@/common/VueButton.vue'
 import VuePagination from '@/common/VuePagination.vue'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { type Customer } from '@/modules/customer'
+import { PaymentApi } from '@/modules/payment/payment.api'
+import type { Payment } from '@/modules/payment/payment.model'
+import { PaymentActionTypeText, PaymentPersonType } from '@/modules/payment/payment.type'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { ESTimer } from '@/utils'
+import { BugDevelopment } from '@/views/component'
 import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
-import type { Payment } from '@/modules/payment/payment.model'
-import { PaymentApi } from '@/modules/payment/payment.api'
-import { PaymentActionTypeText, PaymentPersonType } from '@/modules/payment/payment.type'
 
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
 
@@ -50,6 +49,7 @@ const startFetchData = async () => {
       sort: { id: 'DESC' },
     })
     paymentList.value = paginationResponse.paymentList
+    paymentList.value.forEach((payment) => payment.refreshData())
     total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: CustomerPaymentsHistory.vue:33 ~ error:', error)
@@ -114,12 +114,12 @@ defineExpose({ startFetchData })
                 {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
               <div
-                v-for="(paymentTicket, index) in payment.paymentTicketList"
+                v-for="(ticket, index) in payment.ticketList"
                 :key="index"
                 class="flex gap-1 flex-wrap"
               >
-                <TicketLink :ticket="paymentTicket.ticket!" :ticketId="paymentTicket.ticketId" />
-                <TicketStatusTag :ticket="paymentTicket.ticket!" />
+                <TicketLink :ticket="ticket" :ticketId="ticket.id" />
+                <TicketStatusTag :ticket="ticket" />
               </div>
               <div v-if="payment.note">{{ payment.note }}</div>
             </td>
@@ -161,24 +161,19 @@ defineExpose({ startFetchData })
           </tr>
           <tr v-for="(payment, index) in paymentList" :key="index">
             <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-              <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-                <template #trigger>
-                  <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-                </template>
-                <pre>{{ JSON.stringify(payment, null, 4) }}</pre>
-              </VueTooltip>
+              <BugDevelopment :data="payment" />
             </td>
             <td>
               <div style="white-space: nowrap">
                 {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
               <div
-                v-for="(paymentTicket, index) in payment.paymentTicketList"
+                v-for="(ticket, index) in payment.ticketList"
                 :key="index"
                 class="flex gap-1 flex-wrap"
               >
-                <TicketLink :ticket="paymentTicket.ticket!" :ticketId="paymentTicket.ticketId" />
-                <TicketStatusTag :ticket="paymentTicket.ticket!" />
+                <TicketLink :ticket="ticket" :ticketId="ticket.id" />
+                <TicketStatusTag :ticket="ticket" />
               </div>
             </td>
             <td class="text-center">

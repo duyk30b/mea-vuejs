@@ -1,12 +1,9 @@
 import { Customer } from '../customer/customer.model'
 import { Distributor } from '../distributor'
-import { LaboratoryGroupService } from '../laboratory-group'
 import { PaymentPurchaseOrder } from '../payment-purchase-order/payment_purchase_order.model'
-import { PaymentTicket, PaymentTicketItemType } from '../payment_ticket'
-import { ProcedureService } from '../procedure'
-import { ProductService } from '../product'
-import { RadiologyService } from '../radiology'
-import { RegimenService } from '../regimen'
+import { PaymentTicket } from '../payment_ticket'
+import type { PurchaseOrder } from '../purchase-order'
+import type { Ticket } from '../ticket'
 import { User } from '../user'
 import { Wallet } from '../wallet/wallet.model'
 import { PaymentPersonType, type MoneyDirection, type PaymentActionType } from './payment.type'
@@ -39,6 +36,26 @@ export class Payment {
   cashier: User
 
   wallet: Wallet
+
+  ticketList: Ticket[] // Convert from paymentTicketList, chỉ dùng ở frontend
+  purchaseOrderList: PurchaseOrder[] // Convert from paymentPurchaseOrderList, chỉ dùng ở frontend
+
+  public refreshData() {
+    const ticketIdSet = new Set<string>()
+    this.ticketList = []
+    ;(this.paymentTicketList || []).forEach((i) => {
+      if (ticketIdSet.has(i.ticketId)) return
+      ticketIdSet.add(i.ticketId)
+      this.ticketList.push(i.ticket)
+    })
+    const purchaseOrderIdSet = new Set<string>()
+    this.purchaseOrderList = []
+    ;(this.paymentPurchaseOrderList || []).forEach((i) => {
+      if (purchaseOrderIdSet.has(i.purchaseOrderId)) return
+      purchaseOrderIdSet.add(i.purchaseOrderId)
+      this.purchaseOrderList.push(i.purchaseOrder)
+    })
+  }
 
   static init(): Payment {
     const ins = new Payment()

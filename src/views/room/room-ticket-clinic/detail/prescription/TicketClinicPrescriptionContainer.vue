@@ -464,10 +464,10 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
               </div>
             </td>
             <td class="text-center">
-              <TicketDeliveryStatusTooltip :deliveryStatus="tpItem.deliveryStatusFix" />
+              <TicketItemPaymentTypeTooltip :ticketItemPaymentType="tpItem.ticketItemPaymentType" />
             </td>
             <td class="text-center">
-              <TicketItemPaymentTypeTooltip :ticketItemPaymentType="tpItem.ticketItemPaymentType" />
+              <TicketDeliveryStatusTooltip :deliveryStatus="tpItem.deliveryStatusFix" />
             </td>
             <td>
               <div style="font-weight: 500">

@@ -7,10 +7,6 @@ export class TicketPaymentDetail {
   paidSurcharge: number
   paidDiscount: number
 
-  debtItem: number
-  debtSurcharge: number
-  debtDiscount: number
-
   static init(): TicketPaymentDetail {
     const ins = new TicketPaymentDetail()
     ins.id = ''

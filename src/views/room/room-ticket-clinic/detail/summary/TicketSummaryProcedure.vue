@@ -19,6 +19,7 @@ import TicketRegimenStatusTooltip from '../procedure/TicketRegimenStatusTooltip.
 import { VueTooltip } from '@/common/popover'
 import { ticketRef } from '@/store/room.store'
 import { TicketStatus } from '@/modules/ticket/ticket.type'
+import { BugDevelopment } from '@/views/component'
 
 const modalRegimenDetail = ref<InstanceType<typeof ModalRegimenDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
@@ -78,12 +79,7 @@ const procedureDiscount = computed(() => {
       >
         <tr>
           <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-            <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-              <template #trigger>
-                <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-              </template>
-              <pre>{{ JSON.stringify(ticketRegimen, null, 4) }}</pre>
-            </VueTooltip>
+            <BugDevelopment :data="ticketRegimen" />
           </td>
           <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
             {{ trIndex + 1 }}
@@ -128,12 +124,7 @@ const procedureDiscount = computed(() => {
         </tr>
         <tr v-for="(tri, triIndex) in ticketRegimen.ticketRegimenItemList" :key="tri.id">
           <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-            <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-              <template #trigger>
-                <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-              </template>
-              <pre>{{ JSON.stringify(tri, null, 4) }}</pre>
-            </VueTooltip>
+            <BugDevelopment :data="tri" />
           </td>
           <td></td>
           <td v-if="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
@@ -183,12 +174,7 @@ const procedureDiscount = computed(() => {
         :key="ticketProcedure.id"
       >
         <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-          <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-            <template #trigger>
-              <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-            </template>
-            <pre>{{ JSON.stringify(ticketProcedure, null, 4) }}</pre>
-          </VueTooltip>
+          <BugDevelopment :data="ticketProcedure" />
         </td>
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ index + (ticketRef.ticketRegimenList?.length || 0) + 1 }}

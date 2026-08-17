@@ -564,7 +564,7 @@ const openModalTicketOrderPreview = async () => {
           icon="dollar"
           @click="startRefundDebt"
         >
-          Hoàn nợ
+          Hủy nợ
         </VueButton>
 
         <VueButton

@@ -16,6 +16,7 @@ import { TicketRadiologyService } from '@/modules/ticket-radiology'
 import { VueTooltip } from '@/common/popover'
 import { ticketRef } from '@/store/room.store'
 import { TicketStatus } from '@/modules/ticket/ticket.type'
+import { BugDevelopment } from '@/views/component'
 
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalTicketRadiologyUpdate = ref<InstanceType<typeof ModalTicketRadiologyUpdate>>()
@@ -59,12 +60,7 @@ const radiologyDiscount = computed(() => {
     <tbody>
       <tr v-for="(ticketRadiology, index) in ticketRef.ticketRadiologyList" :key="index">
         <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-          <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-            <template #trigger>
-              <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-            </template>
-            <pre>{{ JSON.stringify(ticketRadiology, null, 4) }}</pre>
-          </VueTooltip>
+          <BugDevelopment :data="ticketRadiology" />
         </td>
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ index + 1 }}

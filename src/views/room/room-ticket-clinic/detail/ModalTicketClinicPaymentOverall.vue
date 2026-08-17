@@ -7,15 +7,14 @@ import VueModal from '@/common/vue-modal/VueModal.vue'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { PaymentViewType } from '@/modules/enum'
-import { WalletService } from '@/modules/wallet'
-import { PaymentApi } from '@/modules/payment/payment.api'
-import { PermissionId } from '@/modules/permission/permission.enum'
-import { Ticket, TicketMoneyApi } from '@/modules/ticket'
-import TicketPaymentList from '@/views/room/room-ticket-base/TicketPaymentList.vue'
-import { onMounted, ref } from 'vue'
-import { TicketActionType, TicketStatus } from '@/modules/ticket/ticket.type'
 import { PaymentActionType } from '@/modules/payment/payment.type'
 import { PaymentTicketApi } from '@/modules/payment_ticket/payment_ticket.api'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { Ticket, TicketMoneyApi } from '@/modules/ticket'
+import { TicketActionType, TicketStatus } from '@/modules/ticket/ticket.type'
+import { WalletService } from '@/modules/wallet'
+import { onMounted, ref } from 'vue'
+import TableTicketPaidOverallHistory from '../../room-ticket-base/TableTicketPaidOverallHistory.vue'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputNumber>>()
 
@@ -161,7 +160,7 @@ defineExpose({ openModal })
       </div>
 
       <div class="p-4">
-        <TicketPaymentList :ticket="ticketClone" />
+        <TableTicketPaidOverallHistory :ticket="ticketClone" />
       </div>
 
       <!-- Prepayment -->

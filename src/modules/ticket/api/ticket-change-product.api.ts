@@ -137,8 +137,8 @@ export class TicketChangeProductApi {
         ticketProduct: ticketProduct
           ? {
             unitRate: ticketProduct.unitRate,
-            unitQuantity: ticketProduct.unitQuantity,
-            unitQuantityPrescription: ticketProduct.unitQuantityPrescription,
+            quantity: ticketProduct.quantity,
+            quantityPrescription: ticketProduct.quantityPrescription,
             printPrescription: ticketProduct.printPrescription,
             unitExpectedPrice: ticketProduct.unitExpectedPrice,
             discountType: ticketProduct.discountType,
@@ -174,8 +174,8 @@ export class TicketChangeProductApi {
         ticketProduct: ticketProduct
           ? {
             unitRate: ticketProduct.unitRate,
-            unitQuantity: ticketProduct.unitQuantity,
-            unitQuantityPrescription: ticketProduct.unitQuantityPrescription,
+            quantity: ticketProduct.quantity,
+            quantityPrescription: ticketProduct.quantityPrescription,
             printPrescription: ticketProduct.printPrescription,
             unitExpectedPrice: ticketProduct.unitExpectedPrice,
             discountType: ticketProduct.discountType,

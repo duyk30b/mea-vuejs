@@ -29,6 +29,10 @@ import {
 } from '@/modules/payment/payment.type'
 import { Payment } from '@/modules/payment/payment.model'
 import { TicketActionType } from '@/modules/ticket/ticket.type'
+import { Procedure } from '@/modules/procedure'
+import { Product } from '@/modules/product'
+import { Laboratory } from '@/modules/laboratory'
+import { Radiology } from '@/modules/radiology'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -126,9 +130,10 @@ const refreshData = async () => {
     paidSurchargeAction.value.paidMoney =
       ticket.value.surcharge - ticket.value.ticketPaymentDetail.paidSurcharge
 
-    // do discountMoney là số âm
+    // do ticket.value.discountMoney là số dương
+    // còn ticket.value.ticketPaymentDetail.paidDiscount là số âm
     paidDiscountAction.value.paidMoney =
-      -ticket.value.discountMoney - -ticket.value.ticketPaymentDetail.paidDiscount
+      -ticket.value.ticketPaymentDetail.paidDiscount - ticket.value.discountMoney
   } else if (paymentActionType.value === PaymentActionType.RefundMoney) {
     paidSurchargeAction.value.paidMoney = -ticket.value.ticketPaymentDetail.paidSurcharge
     paidDiscountAction.value.paidMoney = -ticket.value.ticketPaymentDetail.paidDiscount
@@ -583,8 +588,10 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
     })
 
     if (options?.print) {
-      await TemplateHtmlAction.startPrintPayment({
-        payment: paymentResult.paymentCreated,
+      const paymentPrint = Payment.from(paymentResult.paymentCreated)
+      paymentPrint.customer = Customer.from(ticket.value.customer)
+      await TemplateHtmlAction.startPrintCustomerPayment({
+        payment: paymentPrint,
       })
     }
 
@@ -661,6 +668,8 @@ const startPrint = async () => {
             paymentTicket.sessionIndex = tp!.indexSession
             paymentTicket.paidMoney = tpContainer.paidMoney
             paymentTicket.debtMoney = 0
+
+            paymentTicket.procedure = Procedure.from(tp.procedure || Procedure.blank())
             return paymentTicket
           })
       })
@@ -688,6 +697,8 @@ const startPrint = async () => {
         paymentTicket.paidMoney = tpContainer.paidMoney
         paymentTicket.debtMoney = 0
 
+        paymentTicket.procedure = Procedure.from(tp.procedure || Procedure.blank())
+
         return paymentTicket
       })
 
@@ -712,6 +723,7 @@ const startPrint = async () => {
         paymentTicket.paidMoney = tpContainer.paidMoney
         paymentTicket.debtMoney = 0
 
+        paymentTicket.product = Product.from(tp.product || Product.blank())
         return paymentTicket
       })
 
@@ -738,6 +750,7 @@ const startPrint = async () => {
         paymentTicket.paidMoney = tpContainer.paidMoney
         paymentTicket.debtMoney = 0
 
+        paymentTicket.product = Product.from(tp.product || Product.blank())
         return paymentTicket
       })
 
@@ -761,6 +774,7 @@ const startPrint = async () => {
         paymentTicket.paidMoney = tlContainer.paidMoney
         paymentTicket.debtMoney = 0
 
+        paymentTicket.laboratory = Laboratory.from(tl.laboratory || Laboratory.blank())
         return paymentTicket
       })
 
@@ -784,6 +798,7 @@ const startPrint = async () => {
         paymentTicket.paidMoney = trContainer.paidMoney
         paymentTicket.debtMoney = 0
 
+        paymentTicket.radiology = Radiology.from(tr.radiology || Radiology.blank())
         return paymentTicket
       })
 
@@ -798,7 +813,8 @@ const startPrint = async () => {
       ...paymentTicketRadiology,
     ]
 
-    await TemplateHtmlAction.startPrintPayment({
+    paymentTemp.customer = Customer.from(ticket.value.customer)
+    await TemplateHtmlAction.startPrintCustomerPayment({
       payment: paymentTemp,
     })
   } catch (error) {
@@ -917,7 +933,12 @@ defineExpose({ openModal, openModalByTicket })
                   <td v-if="CONFIG.MODE === 'development'"></td>
                   <td></td>
                   <td class="text-center">1</td>
-                  <td colspan="3">Thanh toán vào VÍ (tiền chờ)</td>
+                  <td colspan="3">
+                    <div>Thanh toán vào VÍ (tiền chờ)</div>
+                    <div v-if="ticketRef.ticketPaymentDetail?.paidWait">
+                      Hiện có: {{ formatMoney(ticketRef.ticketPaymentDetail?.paidWait) }}
+                    </div>
+                  </td>
                   <td colspan="2">
                     <InputNumber v-model:value="paidWait" textAlign="right" />
                   </td>
@@ -1394,7 +1415,7 @@ defineExpose({ openModal, openModalByTicket })
                   </td>
                   <td class="text-center"></td>
                   <td class="text-center"></td>
-                  <td colspan="3">Tiền khuyến mại</td>
+                  <td colspan="3">Chiết khấu</td>
                   <td colspan="1" style="text-align: right">
                     {{ formatMoney(paidDiscountAction.paidMoney) }}
                   </td>

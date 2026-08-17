@@ -21,30 +21,26 @@ import { TicketItemPaymentType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { TemplateHtmlAction } from '@/modules/template-html'
 import { TicketSurchargeService } from '@/modules/ticket-surcharge'
+import { TicketStatus } from '@/modules/ticket/ticket.type'
 import { ticketRef } from '@/store/room.store'
 import { ESString, ESTimer } from '@/utils'
-import TicketItemPaymentTypeTooltip from '@/views/room/room-ticket-base/TicketItemPaymentTypeTooltip.vue'
-import ModalTicketPaymentHistory from '@/views/room/room-ticket-base/ModalTicketPaymentHistory.vue'
+import ModalTicketPaidHistory from '@/views/room/room-ticket-base/ModalTicketPaidHistory.vue'
 import ModalTicketRegisterAppointment from '@/views/room/room-ticket-base/ModalTicketRegisterAppointment.vue'
 import TicketDeliveryStatusTag from '@/views/room/room-ticket-base/TicketDeliveryStatusTag.vue'
+import TicketItemPaymentTypeTooltip from '@/views/room/room-ticket-base/TicketItemPaymentTypeTooltip.vue'
 import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
 import { onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import ModalTicketChangeDiscount from './ModalTicketChangeDiscount.vue'
 import ModalTicketChangeSurcharge from './ModalTicketChangeSurcharge.vue'
 import TicketSummaryLaboratory from './TicketSummaryLaboratory.vue'
 import TicketSummaryProcedure from './TicketSummaryProcedure.vue'
 import TicketSummaryProduct from './TicketSummaryProduct.vue'
 import TicketSummaryRadiology from './TicketSummaryRadiology.vue'
-import { TicketStatus } from '@/modules/ticket/ticket.type'
 
 const modalTicketChangeDiscount = ref<InstanceType<typeof ModalTicketChangeDiscount>>()
 const modalTicketChangeSurcharge = ref<InstanceType<typeof ModalTicketChangeSurcharge>>()
 const modalTicketRegisterAppointment = ref<InstanceType<typeof ModalTicketRegisterAppointment>>()
-const modalTicketPaymentHistory = ref<InstanceType<typeof ModalTicketPaymentHistory>>()
-
-const route = useRoute()
-const router = useRouter()
+const modalTicketPaidHistory = ref<InstanceType<typeof ModalTicketPaidHistory>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -83,7 +79,7 @@ const handleClickModalRegisterAppointment = () => {
   <ModalTicketChangeDiscount ref="modalTicketChangeDiscount" />
   <ModalTicketChangeSurcharge ref="modalTicketChangeSurcharge" />
   <ModalTicketRegisterAppointment ref="modalTicketRegisterAppointment" />
-  <ModalTicketPaymentHistory ref="modalTicketPaymentHistory" />
+  <ModalTicketPaidHistory ref="modalTicketPaidHistory" />
 
   <div class="flex flex-wrap gap-4">
     <div style="flex-grow: 5; flex-basis: 400px">
@@ -124,18 +120,8 @@ const handleClickModalRegisterAppointment = () => {
                       :ticketItemPaymentType="TicketItemPaymentType.FullPaid"
                     />
                     <TicketItemPaymentTypeTooltip
-                      v-else-if="
-                        ticketRef.ticketPaymentDetail.paidDiscount === 0 &&
-                        ticketRef.ticketPaymentDetail.debtDiscount === 0
-                      "
+                      v-else-if="ticketRef.ticketPaymentDetail.paidDiscount === 0"
                       :ticketItemPaymentType="TicketItemPaymentType.PendingPayment"
-                    />
-                    <TicketItemPaymentTypeTooltip
-                      v-else-if="
-                        ticketRef.ticketPaymentDetail.paidDiscount === 0 &&
-                        ticketRef.ticketPaymentDetail.debtDiscount !== 0
-                      "
-                      :ticketItemPaymentType="TicketItemPaymentType.Debt"
                     />
                     <TicketItemPaymentTypeTooltip
                       v-else
@@ -143,15 +129,25 @@ const handleClickModalRegisterAppointment = () => {
                     />
                   </div>
                   <div>Chiết khấu</div>
+                  <div
+                    v-if="
+                      ticketRef.isPaymentEachItem &&
+                      ticketRef.itemsDiscount &&
+                      ticketRef.discountMoney !== -ticketRef.ticketPaymentDetail.paidDiscount
+                    "
+                    style="font-size: 13px; font-style: italic"
+                  >
+                    (Đã thanh toán: {{ formatMoney(-ticketRef.ticketPaymentDetail.paidDiscount) }})
+                  </div>
                 </div>
               </td>
               <td class="text-center" style="width: 40px">
-                <VueTag v-if="ticketRef.discountType === 'VNĐ'" color="green">
+                <div class="flex gap-2 items-center justify-end">
+                  <VueTag v-if="ticketRef.discountType === '%'" color="green">
+                    {{ ticketRef.discountPercent || 0 }}%
+                  </VueTag>
                   {{ formatMoney(ticketRef.discountMoney) }}
-                </VueTag>
-                <VueTag v-if="ticketRef.discountType === '%'" color="green">
-                  {{ ticketRef.discountPercent || 0 }}%
-                </VueTag>
+                </div>
               </td>
               <td class="text-center">
                 <a
@@ -180,18 +176,8 @@ const handleClickModalRegisterAppointment = () => {
                       :ticketItemPaymentType="TicketItemPaymentType.FullPaid"
                     />
                     <TicketItemPaymentTypeTooltip
-                      v-else-if="
-                        ticketRef.ticketPaymentDetail.paidSurcharge === 0 &&
-                        ticketRef.ticketPaymentDetail.debtSurcharge === 0
-                      "
+                      v-else-if="ticketRef.ticketPaymentDetail.paidSurcharge === 0"
                       :ticketItemPaymentType="TicketItemPaymentType.PendingPayment"
-                    />
-                    <TicketItemPaymentTypeTooltip
-                      v-else-if="
-                        ticketRef.ticketPaymentDetail.paidSurcharge === 0 &&
-                        ticketRef.ticketPaymentDetail.debtSurcharge !== 0
-                      "
-                      :ticketItemPaymentType="TicketItemPaymentType.Debt"
                     />
                     <TicketItemPaymentTypeTooltip
                       v-else
@@ -232,18 +218,8 @@ const handleClickModalRegisterAppointment = () => {
                       :ticketItemPaymentType="TicketItemPaymentType.FullPaid"
                     />
                     <TicketItemPaymentTypeTooltip
-                      v-else-if="
-                        ticketRef.ticketPaymentDetail.paidSurcharge === 0 &&
-                        ticketRef.ticketPaymentDetail.debtSurcharge === 0
-                      "
+                      v-else-if="ticketRef.ticketPaymentDetail.paidSurcharge === 0"
                       :ticketItemPaymentType="TicketItemPaymentType.PendingPayment"
-                    />
-                    <TicketItemPaymentTypeTooltip
-                      v-else-if="
-                        ticketRef.ticketPaymentDetail.paidSurcharge === 0 &&
-                        ticketRef.ticketPaymentDetail.debtSurcharge !== 0
-                      "
-                      :ticketItemPaymentType="TicketItemPaymentType.Debt"
                     />
                     <TicketItemPaymentTypeTooltip
                       v-else
@@ -286,11 +262,7 @@ const handleClickModalRegisterAppointment = () => {
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
               <td class="uppercase text-right font-bold" colspan="8">
-                <a
-                  @click="
-                    modalTicketPaymentHistory?.openModal({ ticket: ticketRef, refetch: true })
-                  "
-                >
+                <a @click="modalTicketPaidHistory?.openModal({ ticket: ticketRef, refetch: true })">
                   <span class="mr-1">Đã thanh toán</span>
                   <IconExclamationCircle />
                 </a>
@@ -403,7 +375,7 @@ const handleClickModalRegisterAppointment = () => {
             <td><IconDollar /></td>
             <td class="cursor-pointer">
               <a
-                @click="modalTicketPaymentHistory?.openModal({ ticket: ticketRef, refetch: true })"
+                @click="modalTicketPaidHistory?.openModal({ ticket: ticketRef, refetch: true })"
                 style="display: flex; gap: 4px; align-items: center"
               >
                 <span>Đã thanh toán</span>
@@ -428,17 +400,17 @@ const handleClickModalRegisterAppointment = () => {
               </div>
             </td>
           </tr>
-          <tr v-if="ticketRef.paidTotal > ticketRef.totalMoney">
+          <tr v-if="ticketRef.paidTotal + ticketRef.debtTotal > ticketRef.totalMoney">
             <td><IconDollar /></td>
             <td>Tiền thừa</td>
             <td>:</td>
             <td>
               <div class="text-lg font-bold" style="color: var(--text-green)">
-                {{ formatMoney(ticketRef.paidTotal - ticketRef.totalMoney) }}
+                {{ formatMoney(ticketRef.paidTotal + ticketRef.debtTotal - ticketRef.totalMoney) }}
               </div>
             </td>
           </tr>
-          <tr v-else-if="ticketRef.debtTotal !== ticketRef.totalMoney - ticketRef.paidTotal">
+          <tr v-else-if="ticketRef.paidTotal + ticketRef.debtTotal < ticketRef.totalMoney">
             <td><IconDollar /></td>
             <td>Còn thiếu</td>
             <td>:</td>

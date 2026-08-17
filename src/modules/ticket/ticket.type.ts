@@ -33,7 +33,7 @@ export const TicketActionTypeText = {
   [TicketActionType.RefundMoney]: 'Hoàn tiền',
   [TicketActionType.RefundItem]: 'Hoàn lẻ',
   [TicketActionType.PayDebt]: 'Trả nợ',
-  [TicketActionType.RefundDebt]: 'Hoàn nợ',
+  [TicketActionType.RefundDebt]: 'Hủy nợ',
   [TicketActionType.Close]: 'Đóng phiếu',
   [TicketActionType.Reopen]: 'Mở lại phiếu',
   [TicketActionType.Terminal]: 'Hủy phiếu',

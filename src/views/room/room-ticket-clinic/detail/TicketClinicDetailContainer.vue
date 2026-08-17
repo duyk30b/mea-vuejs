@@ -27,43 +27,45 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer } from '@/modules/customer'
 import { DeliveryStatus, PaymentViewType, PickupStrategy } from '@/modules/enum'
+import { PaymentActionType } from '@/modules/payment/payment.type'
 import { PermissionId } from '@/modules/permission/permission.enum'
+import { RoomService } from '@/modules/room'
+import { TemplateHtmlAction } from '@/modules/template-html'
 import { Ticket, TicketActionApi, TicketMoneyApi, TicketService } from '@/modules/ticket'
 import { TicketProcedureStatus } from '@/modules/ticket-procedure'
 import { TicketRadiologyStatus } from '@/modules/ticket-radiology'
 import { TicketUserService } from '@/modules/ticket-user'
+import { TicketActionType, TicketStatus } from '@/modules/ticket/ticket.type'
+import { roomRef, ticketRef } from '@/store/room.store'
 import { ESString } from '@/utils'
 import { BugDevelopment } from '@/views/component'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
-import ModalTicketPaymentItem from '@/views/room/room-ticket-base/ModalTicketPaymentItem.vue'
 import { computed, onBeforeMount, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import ModalTicketPayment from '../../room-ticket-base/ModalTicketPayment.vue'
-import ModalTicketPaymentHistory from '../../room-ticket-base/ModalTicketPaymentHistory.vue'
 import ModalTicketReturnProduct from '../../room-ticket-base/ModalTicketReturnProduct.vue'
 import ModalTicketClinicHistory from '../history/ModalTicketClinicHistory.vue'
 import TicketClinicConsumableContainer from './consumable/TicketClinicConsumableContainer.vue'
 import TicketClinicDiagnosisContainer from './diagnosis/TicketClinicDiagnosisContainer.vue'
 import TicketClinicLaboratoryContainer from './laboratory/TicketClinicLaboratoryContainer.vue'
 import ModalRoomSetting from './modal/ModalRoomSetting.vue'
+import ModalTicketClinicPaymentItem from './ModalTicketClinicPaymentItem.vue'
+import ModalTicketClinicPaymentOverall from './ModalTicketClinicPaymentOverall.vue'
 import TicketClinicPrescriptionContainer from './prescription/TicketClinicPrescriptionContainer.vue'
 import TicketClinicProcedureContainer from './procedure/TicketClinicProcedureContainer.vue'
 import TicketClinicRadiologyContainer from './radiology/TicketClinicRadiologyContainer.vue'
 import TicketClinicSummaryContainer from './summary/TicketClinicSummaryContainer.vue'
 import TicketClinicUserContainer from './user/TicketClinicUserContainer.vue'
-import { TemplateHtmlAction } from '@/modules/template-html'
-import { roomRef, ticketRef } from '@/store/room.store'
-import { TicketActionType, TicketStatus } from '@/modules/ticket/ticket.type'
-import { RoomService } from '@/modules/room'
-import { PaymentActionType } from '@/modules/payment/payment.type'
+import ModalTicketPaidHistory from '../../room-ticket-base/ModalTicketPaidHistory.vue'
+import ModalTicketPayDebt from '../../room-ticket-base/ModalTicketPayDebt.vue'
 
 const modalRoomSetting = ref<InstanceType<typeof ModalRoomSetting>>()
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
-const modalTicketPaymentItem = ref<InstanceType<typeof ModalTicketPaymentItem>>()
-const modalTicketPayment = ref<InstanceType<typeof ModalTicketPayment>>()
+const modalTicketClinicPaymentItem = ref<InstanceType<typeof ModalTicketClinicPaymentItem>>()
+const modalTicketClinicPaymentOverall = ref<InstanceType<typeof ModalTicketClinicPaymentOverall>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
-const modalTicketPaymentHistory = ref<InstanceType<typeof ModalTicketPaymentHistory>>()
+const modalTicketPaidHistory = ref<InstanceType<typeof ModalTicketPaidHistory>>()
+const modalTicketPayDebt = ref<InstanceType<typeof ModalTicketPayDebt>>()
 
 const route = useRoute()
 const router = useRouter()
@@ -210,12 +212,6 @@ const clickCloseTicket = () => {
     })
   }
   if (ticketRef.value.isPaymentEachItem) {
-    if (ticketRef.value.paidTotal + ticketRef.value.debtTotal < ticketRef.value.totalMoney) {
-      return ModalStore.alert({
-        title: 'Khách hàng chưa thanh toán đủ',
-        content: 'Nếu vẫn muốn kết thúc phiếu, cần ghi nợ những dịch vụ chưa thanh toán',
-      })
-    }
     if (ticketRef.value.ticketPaymentDetail.paidWait > 0) {
       return ModalStore.alert({
         title: 'Không thể đóng phiếu khi vẫn còn tiền thừa trong ví tạm',
@@ -225,30 +221,23 @@ const clickCloseTicket = () => {
   }
 
   if (ticketRef.value.paidTotal + ticketRef.value.debtTotal < ticketRef.value.totalMoney) {
-    if (ticketRef.value.isPaymentEachItem) {
-      return ModalStore.alert({
-        title: 'Khách hàng chưa thanh toán đủ',
-        content: 'Nếu vẫn muốn kết thúc phiếu, cần ghi nợ những dịch vụ chưa thanh toán',
-      })
-    } else {
-      return ModalStore.confirm({
-        title: 'Đóng phiếu khám khi khách hàng chưa thanh toán đủ ?',
-        content: [
-          `- Hiện tại, phiếu khám cần thanh toán tổng là: ${formatMoney(ticketRef.value.totalMoney)}.`,
-          ticketRef.value.paidTotal
-            ? `- Phiếu khám đã thanh toán: ${formatMoney(ticketRef.value.paidTotal)}.`
-            : '',
-          ticketRef.value.debtTotal
-            ? `- Phiếu khám đang ghi nợ: ${formatMoney(ticketRef.value.debtTotal)}.`
-            : '',
-          `===> Xác nhận Ghi nợ khách hàng: ${formatMoney(ticketRef.value.totalMoney - ticketRef.value.paidTotal - ticketRef.value.debtTotal)}.`,
-        ],
-        okText: 'Xác nhận Đóng phiếu',
-        async onOk() {
-          await startCloseTicket()
-        },
-      })
-    }
+    return ModalStore.confirm({
+      title: 'Đóng phiếu khám khi khách hàng chưa thanh toán đủ ?',
+      content: [
+        `- Hiện tại, phiếu khám cần thanh toán tổng là: ${formatMoney(ticketRef.value.totalMoney)}.`,
+        ticketRef.value.paidTotal
+          ? `- Phiếu khám đã thanh toán: ${formatMoney(ticketRef.value.paidTotal)}.`
+          : '',
+        ticketRef.value.debtTotal
+          ? `- Phiếu khám đang ghi nợ: ${formatMoney(ticketRef.value.debtTotal)}.`
+          : '',
+        `===> Xác nhận Ghi nợ khách hàng: ${formatMoney(ticketRef.value.totalMoney - ticketRef.value.paidTotal - ticketRef.value.debtTotal)}.`,
+      ],
+      okText: 'Xác nhận Đóng phiếu',
+      async onOk() {
+        await startCloseTicket()
+      },
+    })
   }
 
   startCloseTicket()
@@ -423,44 +412,30 @@ const clickCancelDebt = async () => {
   }
 }
 
-const clickRefundMoney = () => {
+const clickRefundMoneyOverall = () => {
   if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return ModalStore.alert({
       title: 'Trạng thái hồ sơ không hợp lệ ?',
       content: 'Cần mở lại hồ sơ trước khi hoàn trả tiền',
     })
   } else {
-    modalTicketPayment.value?.openModal({
+    modalTicketClinicPaymentOverall.value?.openModal({
       ticket: ticketRef.value,
       paymentView: PaymentViewType.RefundOverpaid,
     })
   }
 }
 
-const clickRefundTicketItem = () => {
+const clickRefundMoneyItem = () => {
   if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
     return ModalStore.alert({
       title: 'Trạng thái hồ sơ không hợp lệ ?',
       content: 'Cần mở lại hồ sơ trước khi hoàn trả tiền',
     })
   } else {
-    modalTicketPaymentItem.value?.openModalByTicket({
+    modalTicketClinicPaymentItem.value?.openModalByTicket({
       ticket: ticketRef.value,
       paymentActionType: PaymentActionType.RefundMoney,
-    })
-  }
-}
-
-const clickDebitTicketItem = () => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
-    return ModalStore.alert({
-      title: 'Trạng thái hồ sơ không hợp lệ ?',
-      content: 'Cần mở lại hồ sơ trước khi thanh toán',
-    })
-  } else {
-    modalTicketPaymentItem.value?.openModalByTicket({
-      ticket: ticketRef.value,
-      paymentActionType: PaymentActionType.Debit,
     })
   }
 }
@@ -501,9 +476,10 @@ const startPrintTicketClinicAllMoney = async () => {
 <template>
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalRoomSetting ref="modalRoomSetting" />
-  <ModalTicketPaymentItem ref="modalTicketPaymentItem" />
-  <ModalTicketPayment ref="modalTicketPayment" />
-  <ModalTicketPaymentHistory ref="modalTicketPaymentHistory" />
+  <ModalTicketClinicPaymentItem ref="modalTicketClinicPaymentItem" />
+  <ModalTicketClinicPaymentOverall ref="modalTicketClinicPaymentOverall" />
+  <ModalTicketPayDebt ref="modalTicketPayDebt" />
+  <ModalTicketPaidHistory ref="modalTicketPaidHistory" />
   <ModalTicketReturnProduct ref="modalTicketReturnProduct" />
   <ModalTicketClinicHistory ref="modalTicketClinicHistory" />
   <div
@@ -561,7 +537,7 @@ const startPrintTicketClinicAllMoney = async () => {
       </div>
       <div
         style="text-align: right; cursor: pointer"
-        @click="modalTicketPaymentHistory?.openModal({ ticket: ticketRef, refetch: true })"
+        @click="modalTicketPaidHistory?.openModal({ ticket: ticketRef, refetch: true })"
         class="hover:opacity-70"
       >
         <div style="font-weight: bold; color: #555">Đã thanh toán</div>
@@ -603,12 +579,17 @@ const startPrintTicketClinicAllMoney = async () => {
         VÀO PHÒNG
       </VueButton>
       <VueButton
-        v-if="ticketRef.isPaymentEachItem"
+        v-if="
+          ticketRef.isPaymentEachItem &&
+          [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Executing].includes(
+            ticketRef.status,
+          )
+        "
         color="red"
         size="default"
         icon="dollar"
         @click="
-          modalTicketPaymentItem?.openModalByTicket({
+          modalTicketClinicPaymentItem?.openModalByTicket({
             ticket: ticketRef,
             paymentActionType: PaymentActionType.PaymentMoney,
           })
@@ -627,7 +608,7 @@ const startPrintTicketClinicAllMoney = async () => {
         icon="dollar"
         size="default"
         @click="
-          modalTicketPayment?.openModal({
+          modalTicketClinicPaymentOverall?.openModal({
             ticket: ticketRef,
             paymentView: PaymentViewType.Prepayment,
           })
@@ -636,16 +617,11 @@ const startPrintTicketClinicAllMoney = async () => {
         <span class="font-bold">THANH TOÁN</span>
       </VueButton>
       <VueButton
-        v-if="!ticketRef.isPaymentEachItem && [TicketStatus.Debt].includes(ticketRef.status)"
+        v-if="[TicketStatus.Debt].includes(ticketRef.status)"
         color="green"
         icon="dollar"
         size="default"
-        @click="
-          modalTicketPayment?.openModal({
-            ticket: ticketRef,
-            paymentView: PaymentViewType.PayDebt,
-          })
-        "
+        @click="modalTicketPayDebt?.openModal({ ticket: ticketRef, refetch: true })"
       >
         <span class="font-bold">TRẢ NỢ</span>
       </VueButton>
@@ -663,7 +639,10 @@ const startPrintTicketClinicAllMoney = async () => {
         size="default"
         @click="startSendProduct"
       >
-        <span v-if="ticketRef.deliveryStatus === DeliveryStatus.Pending" class="font-bold">
+        <span
+          v-if="[DeliveryStatus.Pending, DeliveryStatus.Partial].includes(ticketRef.deliveryStatus)"
+          class="font-bold"
+        >
           XUẤT HÀNG
         </span>
         <span v-else-if="ticketRef.deliveryStatus === DeliveryStatus.Delivered" class="font-bold">
@@ -702,24 +681,10 @@ const startPrintTicketClinicAllMoney = async () => {
             <span class="text-red-500 font-bold">HỦY NỢ</span>
           </a>
           <a
-            @click="clickRefundMoney"
+            @click="clickRefundMoneyOverall"
             v-if="
-              ticketRef.paidTotal &&
               !ticketRef.isPaymentEachItem &&
-              [TicketStatus.Executing].includes(ticketRef.status) &&
-              userPermission[PermissionId.TICKET_REFUND_MONEY]
-            "
-          >
-            <span class="text-red-500">
-              <IconDollar />
-            </span>
-            <span class="text-red-500 font-bold">HOÀN TIỀN</span>
-          </a>
-          <a
-            @click="clickRefundTicketItem"
-            v-if="
               ticketRef.paidTotal &&
-              ticketRef.isPaymentEachItem &&
               [TicketStatus.Executing].includes(ticketRef.status) &&
               userPermission[PermissionId.TICKET_REFUND_MONEY]
             "
@@ -730,17 +695,18 @@ const startPrintTicketClinicAllMoney = async () => {
             <span class="text-red-500 font-bold">HOÀN TIỀN</span>
           </a>
           <a
-            @click="clickDebitTicketItem"
+            @click="clickRefundMoneyItem"
             v-if="
               ticketRef.isPaymentEachItem &&
+              ticketRef.paidTotal &&
               [TicketStatus.Executing].includes(ticketRef.status) &&
-              userPermission[PermissionId.TICKET_PAYMENT_MONEY]
+              userPermission[PermissionId.TICKET_REFUND_MONEY]
             "
           >
             <span class="text-red-500">
               <IconDollar />
             </span>
-            <span class="text-red-500 font-bold">GHI NỢ</span>
+            <span class="text-red-500 font-bold">HOÀN TIỀN</span>
           </a>
           <a
             @click="clickReturnProduct"

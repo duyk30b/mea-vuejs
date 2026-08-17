@@ -9,6 +9,9 @@ import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { Customer } from '@/modules/customer'
+import { Payment } from '@/modules/payment/payment.model'
+import { PaymentTicketItemType } from '@/modules/payment_ticket'
+import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
 import {
   TemplateHtml,
   TemplateHtmlAction,
@@ -20,16 +23,13 @@ import {
 import { Ticket, TicketService } from '@/modules/ticket'
 import type { TicketRadiology } from '@/modules/ticket-radiology'
 import { ESDom, ESTypescript } from '@/utils'
+import { BugDevelopment } from '@/views/component'
 import Breadcrumb from '@/views/component/Breadcrumb.vue'
 import { computed, onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalSelectPaymentExample from './ModalSelectPaymentExample.vue'
 import ModalSelectTemplateHtmlExample from './ModalSelectTemplateHtmlExample.vue'
 import ModalSelectTicketExample from './ModalSelectTicketExample.vue'
-import { Payment } from '@/modules/payment/payment.model'
-import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
-import { BugDevelopment } from '@/views/component'
-import { PaymentTicketItemType } from '@/modules/payment_ticket'
 
 const TABS_KEY = {
   PRINT: 'PRINT',
@@ -159,6 +159,10 @@ const startCompilePrint = () => {
       TemplateHtmlType.PaymentCustomerRefund,
     ].includes(templateHtml.value.templateHtmlType)
   ) {
+    if (!paymentDemo.value.customer) {
+      paymentDemo.value.customer = customerDemo.value
+    }
+
     templateHtmlCompiled = TemplateHtmlCompile.compilePageHtml({
       data: {
         ...dataCompile,

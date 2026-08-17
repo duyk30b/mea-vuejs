@@ -284,7 +284,7 @@ export class TicketChangeProcedureApi {
         ticketProductConsumableList.map((i) => {
           return {
             productId: i.productId,
-            unitQuantity: i.unitQuantity,
+            quantity: i.quantity,
             unitRate: i.unitRate,
             pickupStrategy: i.pickupStrategy,
             warehouseIds: i.warehouseIds,

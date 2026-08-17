@@ -31,18 +31,18 @@ import ModalProcedureDetail from '@/views/master-data/procedure/detail/ModalProc
 import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
 import { onBeforeMount, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import ModalTicketPayment from '../../room-ticket-base/ModalTicketPayment.vue'
 import TicketLink from '../../room-ticket-base/TicketLink.vue'
 import { fromTime, toTime } from '../../room-ticket-base/room-ticket.ref'
 import ModalReceptionCreate from '../../room-ticket-reception/create/ModalReceptionCreate.vue'
 import ModalTicketClinicListSetting from './ModalTicketClinicListSetting.vue'
 import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
+import ModalTicketClinicPaymentOverall from '../detail/ModalTicketClinicPaymentOverall.vue'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalReceptionCreate = ref<InstanceType<typeof ModalReceptionCreate>>()
 const modalTicketClinicListSetting = ref<InstanceType<typeof ModalTicketClinicListSetting>>()
 
-const modalTicketPayment = ref<InstanceType<typeof ModalTicketPayment>>()
+const modalTicketClinicPaymentOverall = ref<InstanceType<typeof ModalTicketClinicPaymentOverall>>()
 const modalTicketChangeAllMoney = ref<InstanceType<typeof ModalTicketChangeAllMoney>>()
 
 const router = useRouter()
@@ -283,7 +283,7 @@ const clickCloseTicket = (ticket: Ticket) => {
     @success="handleModalTicketClinicListSettingSuccess"
   />
 
-  <ModalTicketPayment ref="modalTicketPayment" />
+  <ModalTicketClinicPaymentOverall ref="modalTicketClinicPaymentOverall" />
 
   <div class="mx-4 mt-4 gap-4 flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -542,31 +542,13 @@ const clickCloseTicket = (ticket: Ticket) => {
               >
                 <VueButton
                   v-if="
-                    [TicketStatus.Draft, TicketStatus.Schedule, TicketStatus.Executing].includes(
-                      ticket.status,
-                    ) && userPermission[PermissionId.TICKET_PAYMENT_MONEY]
-                  "
-                  size="small"
-                  icon="dollar"
-                  color="green"
-                  @click="
-                    modalTicketPayment?.openModal({
-                      ticket,
-                      paymentView: PaymentViewType.Prepayment,
-                    })
-                  "
-                >
-                  <span>Thanh toán</span>
-                </VueButton>
-                <VueButton
-                  v-if="
                     [TicketStatus.Debt].includes(ticket.status) &&
                     userPermission[PermissionId.TICKET_PAYMENT_MONEY]
                   "
                   size="small"
                   icon="dollar"
                   @click="
-                    modalTicketPayment?.openModal({
+                    modalTicketClinicPaymentOverall?.openModal({
                       ticket,
                       paymentView: PaymentViewType.PayDebt,
                     })
@@ -634,7 +616,7 @@ const clickCloseTicket = (ticket: Ticket) => {
                       "
                       style="color: var(--text-red)"
                       @click="
-                        modalTicketPayment?.openModal({
+                        modalTicketClinicPaymentOverall?.openModal({
                           ticket,
                           paymentView: PaymentViewType.RefundOverpaid,
                         })

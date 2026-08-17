@@ -15,6 +15,7 @@ import { VueTooltip } from '@/common/popover'
 import { IconBug } from '@/common/icon-antd'
 import { ticketRef } from '@/store/room.store'
 import { TicketStatus } from '@/modules/ticket/ticket.type'
+import BugDevelopment from '@/views/component/BugDevelopment.vue'
 
 const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
@@ -61,12 +62,7 @@ const laboratoryDiscount = computed(() => {
       <template v-for="tlg in ticketRef.ticketLaboratoryGroupList || []" :key="tlg.id">
         <tr>
           <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-            <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-              <template #trigger>
-                <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-              </template>
-              <pre>{{ JSON.stringify(tlg, null, 4) }}</pre>
-            </VueTooltip>
+            <BugDevelopment :data="tlg" />
           </td>
           <td colspan="100" class="font-bold">
             {{ tlg.laboratoryGroup?.name || 'Chưa phân nhóm xét nghiệm ' }}

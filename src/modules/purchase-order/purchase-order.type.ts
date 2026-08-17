@@ -42,7 +42,7 @@ export const PurchaseOrderActionTypeText = {
   [PurchaseOrderActionType.RefundMoney]: 'Hoàn tiền',
   [PurchaseOrderActionType.RefundItem]: 'Hoàn lẻ',
   [PurchaseOrderActionType.PayDebt]: 'Trả nợ',
-  [PurchaseOrderActionType.RefundDebt]: 'Hoàn nợ',
+  [PurchaseOrderActionType.RefundDebt]: 'Hủy nợ',
   [PurchaseOrderActionType.Close]: 'Đóng phiếu',
   [PurchaseOrderActionType.Reopen]: 'Mở lại phiếu',
   [PurchaseOrderActionType.Terminal]: 'Hủy phiếu',

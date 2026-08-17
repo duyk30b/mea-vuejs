@@ -3,7 +3,8 @@ import { ESDom } from '../../utils'
 import { MeService } from '../_me/me.service'
 import type { Customer } from '../customer'
 import type { Payment } from '../payment/payment.model'
-import { MoneyDirection, PaymentPersonType } from '../payment/payment.type'
+import { MoneyDirection, PaymentActionType, PaymentActionTypeText } from '../payment/payment.type'
+import { PaymentTicketItemType } from '../payment_ticket'
 import { PrintSettingService } from '../print-setting'
 import type { PurchaseOrder } from '../purchase-order'
 import type { Ticket } from '../ticket'
@@ -12,7 +13,6 @@ import type { TicketRadiology } from '../ticket-radiology'
 import { TemplateHtmlCompile } from './template-html.compiled'
 import { TemplateHtml, TemplateHtmlType } from './template-html.model'
 import { TemplateHtmlService } from './template-html.service'
-import { PaymentTicketItemType } from '../payment_ticket'
 
 export class TemplateHtmlAction {
   static async getTemplateHtmlByType(options: {
@@ -376,41 +376,26 @@ export class TemplateHtmlAction {
     })
   }
 
-  static async startPrintPayment(dataProp: { payment: Payment }) {
+  static async startPrintCustomerPayment(dataProp: { payment: Payment }) {
     const { payment } = dataProp
     const data = {
       payment,
       PaymentTicketItemType,
+      PaymentActionType,
+      PaymentActionTypeText,
     }
 
-    if (payment.personType === PaymentPersonType.Distributor) {
-      if (payment.moneyDirection === MoneyDirection.In) {
-        await TemplateHtmlAction.startPrintCommon({
-          data,
-          templateHtmlType: TemplateHtmlType.PaymentDistributorRefund,
-        })
-      }
-      if (payment.moneyDirection === MoneyDirection.Out) {
-        await TemplateHtmlAction.startPrintCommon({
-          data,
-          templateHtmlType: TemplateHtmlType.PaymentDistributorPayment,
-        })
-      }
+    if (payment.moneyDirection === MoneyDirection.In) {
+      await TemplateHtmlAction.startPrintCommon({
+        data,
+        templateHtmlType: TemplateHtmlType.PaymentCustomerPayment,
+      })
     }
-
-    if (payment.personType === PaymentPersonType.Customer) {
-      if (payment.moneyDirection === MoneyDirection.In) {
-        await TemplateHtmlAction.startPrintCommon({
-          data,
-          templateHtmlType: TemplateHtmlType.PaymentCustomerPayment,
-        })
-      }
-      if (payment.moneyDirection === MoneyDirection.Out) {
-        await TemplateHtmlAction.startPrintCommon({
-          data,
-          templateHtmlType: TemplateHtmlType.PaymentCustomerRefund,
-        })
-      }
+    if (payment.moneyDirection === MoneyDirection.Out) {
+      await TemplateHtmlAction.startPrintCommon({
+        data,
+        templateHtmlType: TemplateHtmlType.PaymentCustomerRefund,
+      })
     }
   }
 }

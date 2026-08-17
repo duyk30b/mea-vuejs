@@ -6,8 +6,9 @@ import VueModal from '@/common/vue-modal/VueModal.vue'
 import { PaymentTicketApi } from '@/modules/payment_ticket/payment_ticket.api'
 import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
 import { Ticket } from '@/modules/ticket'
-import TicketPaymentList from '@/views/room/room-ticket-base/TicketPaymentList.vue'
 import { ref } from 'vue'
+import TableTicketPaidItemHistory from './TableTicketPaidItemHistory.vue'
+import TableTicketPaidOverallHistory from './TableTicketPaidOverallHistory.vue'
 
 const ticket = ref(Ticket.blank())
 
@@ -56,7 +57,8 @@ defineExpose({ openModal })
       </div>
 
       <div class="p-4">
-        <TicketPaymentList :ticket="ticket" />
+        <TableTicketPaidItemHistory v-if="ticket.isPaymentEachItem" :ticket="ticket" />
+        <TableTicketPaidOverallHistory v-else :ticket="ticket" />
       </div>
 
       <div class="mt-4 pb-4 flex justify-center gap-4">

@@ -16,6 +16,7 @@ import type { ConditionNumber, ConditionString } from '@/modules/_base/base-cond
 import { RootSystemLogApi } from '@/modules/root/system-log/root-system-log.api'
 import type { SystemLog, SystemLogGetFilter } from '@/modules/system-log'
 import { ESObject, ESTimer } from '@/utils'
+import { BugDevelopment } from '@/views/component'
 import { computed, onBeforeMount, ref } from 'vue'
 
 type FilterCondition = {
@@ -317,12 +318,7 @@ const handleUpdateValue = (id: number, value: any) => {
           </tr>
           <tr v-for="(systemLog, index) in systemLogList" :key="index">
             <td style="color: violet; text-align: center">
-              <VueTooltip :maxHeight="'600px'" :maxWidth="'800px'">
-                <template #trigger>
-                  <IconBug style="color: violet; cursor: pointer" width="1.2em" height="1.2em" />
-                </template>
-                <pre>{{ JSON.stringify(systemLog, null, 4) }}</pre>
-              </VueTooltip>
+              <BugDevelopment :data="systemLog" />
             </td>
             <td class="text-center">{{ index + 1 }}</td>
             <td class="text-center">
