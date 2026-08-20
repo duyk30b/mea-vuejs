@@ -249,7 +249,7 @@ const disableSendProduct = computed(() => {
     return true
   }
   // chỉ được phép khi có hàng chưa gửi (Pending)
-  if (ticketRef.value.deliveryStatus !== DeliveryStatus.Pending) {
+  if (![DeliveryStatus.Pending, DeliveryStatus.Partial].includes(ticketRef.value.deliveryStatus)) {
     return true
   }
 
