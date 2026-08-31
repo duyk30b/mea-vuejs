@@ -61,7 +61,7 @@ export class TicketProduct extends BaseModel {
   }
 
   set unitQuantity(value: number) {
-    this.quantity = value * this.unitRate
+    this.quantity = value * (this.unitRate || 1)
   }
 
   get unitQuantityPrescription() {

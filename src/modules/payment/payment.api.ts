@@ -32,6 +32,7 @@ export class PaymentApi {
     body: {
       createdAt: number
       note: string
+      walletId: string
     }
   }) {
     const { paymentId, body } = options

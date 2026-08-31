@@ -5,7 +5,7 @@ import { ref } from 'vue'
 import TopBatchExpiryDate from './TopBatchExpiryDate.vue'
 import TopProductHighMoney from './TopProductHighMoney.vue'
 import StatisticTicketProduct from './StatisticTicketProduct.vue'
-import TotalProductMoney from './TotalProductMoney.vue'
+import StatisticWarehouse from './StatisticWarehouse.vue'
 
 const TABS_KEY = {
   INVENTORY: 'INVENTORY',
@@ -34,7 +34,7 @@ const activeTab = ref<any>(TABS_KEY.INVENTORY)
       <template #panel>
         <VueTabPanel :tabKey="TABS_KEY.INVENTORY">
           <div class="mt-4">
-            <TotalProductMoney />
+            <StatisticWarehouse />
             <TopProductHighMoney />
           </div>
         </VueTabPanel>

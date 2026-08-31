@@ -7,6 +7,7 @@ import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { PaymentApi } from '@/modules/payment/payment.api'
 import { Payment } from '@/modules/payment/payment.model'
+import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
 import { onMounted, ref } from 'vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
@@ -40,6 +41,7 @@ const handleUpdateInfo = async () => {
       body: {
         createdAt: payment.value.createdAt,
         note: payment.value.note,
+        walletId: payment.value.walletId,
       },
     })
     emit('success')
@@ -89,6 +91,12 @@ defineExpose({ openModal })
           <div>Thời gian thanh toán</div>
           <div>
             <InputDate v-model:value="payment.createdAt" showTime typeParser="number" />
+          </div>
+        </div>
+        <div v-if="payment.paidTotal != 0" style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
+          <div>Phương thức thanh toán</div>
+          <div>
+            <InputSelectWallet v-model:walletId="payment.walletId" />
           </div>
         </div>
         <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">

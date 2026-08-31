@@ -4,6 +4,12 @@ import { onBeforeMount, ref } from 'vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import type { Warehouse } from '../../../modules/warehouse'
 import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
+import { IconDownload } from '@/common/icon-antd'
+import { VueButton } from '@/common'
+import { CONFIG } from '@/config'
+import { BugDevelopment } from '@/views/component'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { FileStatisticApi } from '@/modules/file-excel/file-statistic.api'
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
@@ -29,6 +35,16 @@ const startFetchData = async () => {
   }
 }
 
+const downloadExcelWarehouseStatistic = async () => {
+  ModalStore.confirm({
+    title: 'Xác nhận tải file báo cáo',
+    content: 'Thời gian tải file có thể tốn vài phút nếu dữ liệu lớn, bạn vẫn mốn tải ?',
+    onOk: async () => {
+      await FileStatisticApi.downloadExcelWarehouseStatistic()
+    },
+  })
+}
+
 onBeforeMount(async () => {
   const promise = await Promise.all([WarehouseService.getMap(), startFetchData()])
   warehouseMap.value = promise[0]
@@ -39,11 +55,18 @@ onBeforeMount(async () => {
   <div class="">
     <div class="flex justify-between items-center">
       <span style="font-size: 18px; font-weight: 500">Thống kê kho:</span>
+      <div
+        style="cursor: pointer; border: 1px solid #ccc; padding: 4px; border-radius: 4px"
+        @click="downloadExcelWarehouseStatistic"
+      >
+        <IconDownload width="20" height="20" />
+      </div>
     </div>
     <div class="mt-2 table-wrapper">
       <table class="">
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>#</th>
             <th>Tên Kho</th>
             <th>Tổng vốn</th>
@@ -55,6 +78,9 @@ onBeforeMount(async () => {
             <td colspan="20" class="text-center">Không có sản phẩm cận date</td>
           </tr>
           <tr v-for="(w, index) in statisticWarehouse" :key="index">
+            <td v-if="CONFIG.MODE === 'development'" class="text-center">
+              <BugDevelopment :data="w" />
+            </td>
             <td class="text-center" style="white-space: nowrap">
               {{ index + 1 }}
             </td>

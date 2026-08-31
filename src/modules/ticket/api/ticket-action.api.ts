@@ -97,11 +97,11 @@ export class TicketActionApi {
     const response = await AxiosInstance.post(`/ticket/${ticketId}/ship-product-list`, body)
     const { data } = response.data as FullResponse<{
       ticketModified: any
-      ticketProductModifiedAll: any[]
+      ticketProductModifiedAll?: any[]
     }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
-      ticketProductModifiedAll: TicketProduct.fromList(data.ticketProductModifiedAll),
+      ticketProductModifiedAll: TicketProduct.fromList(data.ticketProductModifiedAll || []),
     }
   }
 
@@ -110,11 +110,11 @@ export class TicketActionApi {
     const response = await AxiosInstance.post(`/ticket/${ticketId}/ship-product-all`)
     const { data } = response.data as FullResponse<{
       ticketModified: any
-      ticketProductModifiedAll: any[]
+      ticketProductModifiedAll?: any[]
     }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
-      ticketProductModifiedAll: TicketProduct.fromList(data.ticketProductModifiedAll),
+      ticketProductModifiedAll: TicketProduct.fromList(data.ticketProductModifiedAll || []),
     }
   }
 
@@ -128,11 +128,11 @@ export class TicketActionApi {
     const response = await AxiosInstance.post(`/ticket/${ticketId}/return-product-list`, body)
     const { data } = response.data as FullResponse<{
       ticketModified: any
-      ticketProductModifiedAll: any[]
+      ticketProductModifiedAll?: any[]
     }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
-      ticketProductModifiedAll: TicketProduct.fromList(data.ticketProductModifiedAll),
+      ticketProductModifiedAll: TicketProduct.fromList(data.ticketProductModifiedAll || []),
     }
   }
 
@@ -141,11 +141,11 @@ export class TicketActionApi {
     const response = await AxiosInstance.post(`/ticket/${ticketId}/return-product-all`)
     const { data } = response.data as FullResponse<{
       ticketModified: any
-      ticketProductModifiedAll: any[]
+      ticketProductModifiedAll?: any[]
     }>
     return {
       ticketModified: Ticket.from(data.ticketModified),
-      ticketProductModifiedAll: TicketProduct.fromList(data.ticketProductModifiedAll),
+      ticketProductModifiedAll: TicketProduct.fromList(data.ticketProductModifiedAll || []),
     }
   }
 

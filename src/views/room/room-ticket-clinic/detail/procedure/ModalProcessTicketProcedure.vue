@@ -127,8 +127,8 @@ const selectProduct = async (productData: Product) => {
       })
       if (findIndex === -1) {
         const temp = new TicketProduct()
-        temp.unitQuantity = 1
         temp.unitRate = 1
+        temp.unitQuantity = 1
         temp.productId = productData.id
         temp.product = productData
         temp.warehouseIds = '[]'
