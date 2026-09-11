@@ -459,7 +459,7 @@ const colspan = computed(() => {
           <td
             class="text-right cursor-pointer"
             :colspan="colspan"
-            @click="modalTicketPaidHistory?.openModal({ ticket: ticketRef, refetch: true })"
+            @click="modalTicketPaidHistory?.openModal({ ticket: ticketRef })"
           >
             <a>
               <span class="mr-1">Đã thanh toán</span>
@@ -484,7 +484,7 @@ const colspan = computed(() => {
           </td>
         </tr>
         <tr v-else-if="ticketRef.paidTotal + ticketRef.debtTotal < ticketRef.totalMoney">
-          <td class="text-right" :colspan="colspan">Còn thiếu</td>
+          <td class="text-right" :colspan="colspan">Chưa thanh toán</td>
           <td colspan="2" class="text-right">
             {{ formatMoney(ticketRef.totalMoney - (ticketRef.paidTotal + ticketRef.debtTotal)) }}
           </td>

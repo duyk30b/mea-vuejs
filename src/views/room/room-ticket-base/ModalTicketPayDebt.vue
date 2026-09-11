@@ -2,64 +2,40 @@
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { InputMoney, InputSelect, InputText } from '@/common/vue-form'
+import { InputMoney, InputText } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
-import { MeService } from '@/modules/_me/me.service'
-import { useSettingStore } from '@/modules/_me/setting.store'
+import type { Payment } from '@/modules/payment/payment.model'
 import { PaymentActionType } from '@/modules/payment/payment.type'
 import { PaymentTicketApi } from '@/modules/payment_ticket/payment_ticket.api'
-import { PermissionId } from '@/modules/permission/permission.enum'
+import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
 import { Ticket, TicketMoneyApi } from '@/modules/ticket'
 import { TicketActionType, TicketStatus } from '@/modules/ticket/ticket.type'
-import { WalletService } from '@/modules/wallet'
-import { onMounted, ref } from 'vue'
-import TableTicketPaidOverallHistory from './TableTicketPaidOverallHistory.vue'
-import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
+import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
+import { nextTick, ref } from 'vue'
+import TableTicketPaidHistory from './TableTicketPaidHistory.vue'
+
+const tableTicketPaidHistory = ref<InstanceType<typeof TableTicketPaidHistory>>()
 
 const emit = defineEmits<{ (e: 'success'): void }>()
-
-const settingStore = useSettingStore()
-const { formatMoney, isMobile } = settingStore
-const { userPermission } = MeService
 
 const showModal = ref(false)
 const paymentLoading = ref(false)
 const ticketClone = ref(Ticket.blank())
+const paymentList = ref<Payment[]>([])
 
 const money = ref(0)
 const walletId = ref<string>('')
 const note = ref('')
-const walletOptions = ref<{ value: any; label: string }[]>([])
 
-onMounted(async () => {
-  const walletAll = await WalletService.list({ sort: { code: 'ASC' } })
-  walletOptions.value = walletAll.map((i) => ({ value: i.id, label: i.name }))
-  walletId.value = walletAll[0]?.id || ''
-})
-
-const openModal = async (options: { ticket: Ticket; refetch: boolean }) => {
+const openModal = async (options: { ticket: Ticket }) => {
   money.value = 0
   showModal.value = true
 
   ticketClone.value = Ticket.from(options.ticket)
 
-  if (options.refetch) {
-    try {
-      const paymentTicketList = await PaymentTicketApi.list({
-        filter: {
-          ticketId: ticketClone.value.id,
-        },
-        relation: {
-          payment: true,
-        },
-        sort: { id: 'ASC' },
-      })
-      await PaymentTicketService.refreshRelation(paymentTicketList)
-      ticketClone.value.paymentTicketList = paymentTicketList
-    } catch (error: any) {
-      console.log('🚀 ~ ModalTicketPayDebt.vue:58 ~ openModal ~ error:', error)
-    }
-  }
+  nextTick(async () => {
+    await tableTicketPaidHistory.value?.startFetchData()
+  })
 }
 
 const closeModal = () => {
@@ -110,8 +86,8 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="p-4" style="max-height: 350px; overflow-y: auto">
-        <TableTicketPaidOverallHistory :ticket="ticketClone" />
+      <div class="p-4">
+        <TableTicketPaidHistory ref="tableTicketPaidHistory" :ticket="ticketClone" />
       </div>
 
       <!-- PayDebt -->
@@ -121,7 +97,7 @@ defineExpose({ openModal })
             <div>
               <div>Phương thức thanh toán</div>
               <div>
-                <InputSelect v-model:value="walletId" :options="walletOptions" />
+                <InputSelectWallet v-model:walletId="walletId" autoSelectFirstValue />
               </div>
             </div>
             <div class="mt-4">
@@ -134,7 +110,7 @@ defineExpose({ openModal })
           <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
             <div class="">
               <div class="flex flex-wrap justify-between">
-                <span>Số tiền thanh toán</span>
+                <span>Số tiền trả nợ</span>
               </div>
               <div>
                 <div class="flex">
@@ -163,15 +139,14 @@ defineExpose({ openModal })
           <div>
             <VueButton type="button" icon="close" @click="closeModal">Đóng lại</VueButton>
           </div>
-          <div
-            v-if="
-              userPermission[PermissionId.TICKET_PAYMENT_MONEY] &&
-              [TicketStatus.Debt].includes(ticketClone.status)
-            "
-          >
+          <div>
             <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
-              <template v-if="ticketClone.debtTotal === money">Trả nợ và Hoàn thành</template>
-              <template v-if="ticketClone.debtTotal != money">Trả nợ</template>
+              <template
+                v-if="ticketClone.status === TicketStatus.Debt && ticketClone.debtTotal === money"
+              >
+                Trả nợ và Hoàn thành
+              </template>
+              <template v-else>Trả nợ</template>
             </VueButton>
           </div>
         </div>

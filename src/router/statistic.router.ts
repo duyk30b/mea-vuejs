@@ -3,27 +3,33 @@ import type { RouteRecordRaw } from 'vue-router'
 export const statisticRouter: RouteRecordRaw = {
   path: 'statistic',
   name: 'Statistic',
-  redirect: () => ({ name: 'StatisticTicket' }),
+  redirect: () => ({ name: 'StatisticOverview' }),
   component: () => import('../views/statistic/Statistics.vue'),
   meta: { title: 'Thống kê' },
   children: [
     {
-      meta: { title: 'Thống kê' },
-      path: 'statistic-ticket',
-      name: 'StatisticTicket',
-      component: () => import('../views/statistic/statistic-ticket/StatisticTicket.vue'),
+      meta: { title: 'Tổng quan' },
+      path: 'statistic-overview',
+      name: 'StatisticOverview',
+      component: () => import('../views/statistic/statistic-overview/StatisticOverview.vue'),
     },
     {
-      path: 'statistic-product',
-      meta: { title: 'Báo cáo sản phẩm' },
-      name: 'StatisticProduct',
-      component: () => import('../views/statistic/statistic-product/StatisticProduct.vue'),
+      path: 'statistic-distributor',
+      meta: { title: 'Báo cáo nhà cung cấp' },
+      name: 'StatisticDistributor',
+      component: () => import('../views/statistic/statistic-distributor/StatisticDistributor.vue'),
     },
     {
       path: 'statistic-customer',
       meta: { title: 'Báo cáo khách hàng' },
       name: 'StatisticCustomer',
       component: () => import('../views/statistic/statistic-customer/StatisticCustomer.vue'),
+    },
+    {
+      path: 'statistic-product',
+      meta: { title: 'Báo cáo sản phẩm' },
+      name: 'StatisticProduct',
+      component: () => import('../views/statistic/statistic-product/StatisticProduct.vue'),
     },
     {
       path: 'statistic-procedure',

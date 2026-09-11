@@ -1,11 +1,11 @@
 import { AxiosInstance } from '@/core/axios.instance'
 import { Customer } from '@/modules/customer'
+import { Payment } from '@/modules/payment/payment.model'
 import { PaymentActionType } from '@/modules/payment/payment.type'
-import type { PaymentTicket } from '@/modules/payment_ticket'
+import type { PaymentTicket } from '@/modules/payment_ticket/payment_ticket.model'
 import type { FullResponse } from '../../_base/base-dto'
 import { Ticket } from '../ticket.model'
 import type { TicketActionType } from '../ticket.type'
-import { Payment } from '@/modules/payment/payment.model'
 
 export type PaymentTicketItemBody = Pick<
   PaymentTicket,
@@ -37,7 +37,7 @@ class PaymentTicketItemMapBody {
 }
 
 export class TicketMoneyApi {
-  static async paymentMoney(object: {
+  static async changePaid(object: {
     ticketId: string
     body: {
       paymentActionType: PaymentActionType
@@ -45,12 +45,13 @@ export class TicketMoneyApi {
       walletId: string
       isPaymentEachItem: 0 | 1
       paidTotal: number
+      debtTotal: number
       note: string
       paymentTicketItemMap?: PaymentTicketItemMapBody
     }
   }) {
     const { ticketId, body } = object
-    const response = await AxiosInstance.post(`/ticket/${ticketId}/payment-money`, body)
+    const response = await AxiosInstance.post(`/ticket/${ticketId}/change-paid`, body)
     const { data } = response.data as FullResponse<{
       ticketModified: any
       paymentCreated: any

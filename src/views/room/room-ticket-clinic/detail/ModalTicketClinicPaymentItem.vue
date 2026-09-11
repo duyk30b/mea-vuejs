@@ -9,30 +9,30 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer } from '@/modules/customer'
 import { TicketItemPaymentType } from '@/modules/enum'
-import { PaymentTicket, PaymentTicketItemType } from '@/modules/payment_ticket'
+import { Laboratory } from '@/modules/laboratory'
+import { Payment } from '@/modules/payment/payment.model'
+import {
+  MoneyDirection,
+  PaymentActionType,
+  PaymentPersonType,
+} from '@/modules/payment/payment.type'
+import { PaymentTicket, PaymentTicketItemType } from '@/modules/payment_ticket/payment_ticket.model'
+import { Procedure } from '@/modules/procedure'
+import { Product } from '@/modules/product'
+import { Radiology } from '@/modules/radiology'
 import { TemplateHtmlAction } from '@/modules/template-html'
-import { ticketRef } from '@/store/room.store'
 import { Ticket, TicketMoneyApi, TicketService, type PaymentTicketItemBody } from '@/modules/ticket'
 import type { TicketLaboratory } from '@/modules/ticket-laboratory'
 import type { TicketProcedure } from '@/modules/ticket-procedure'
 import type { TicketProduct } from '@/modules/ticket-product'
 import type { TicketRadiology } from '@/modules/ticket-radiology'
 import type { TicketRegimen } from '@/modules/ticket-regimen'
+import { TicketActionType } from '@/modules/ticket/ticket.type'
+import { ticketRef } from '@/store/room.store'
 import { BugDevelopment } from '@/views/component'
 import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
 import TicketItemPaymentTypeTooltip from '@/views/room/room-ticket-base/TicketItemPaymentTypeTooltip.vue'
 import { computed, ref } from 'vue'
-import {
-  MoneyDirection,
-  PaymentActionType,
-  PaymentPersonType,
-} from '@/modules/payment/payment.type'
-import { Payment } from '@/modules/payment/payment.model'
-import { TicketActionType } from '@/modules/ticket/ticket.type'
-import { Procedure } from '@/modules/procedure'
-import { Product } from '@/modules/product'
-import { Laboratory } from '@/modules/laboratory'
-import { Radiology } from '@/modules/radiology'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -381,21 +381,29 @@ const startPaymentMoney = async (options?: { print: boolean }) => {
   try {
     let ticketActionType: TicketActionType
     if (paymentActionType.value === PaymentActionType.PaymentMoney) {
-      ticketActionType = TicketActionType.PaymentItem
+      if (walletId.value === '-1') {
+        ticketActionType = TicketActionType.DebitItem
+      } else {
+        ticketActionType = TicketActionType.PaymentItem
+      }
     } else if (paymentActionType.value === PaymentActionType.RefundMoney) {
       ticketActionType = TicketActionType.RefundItem
     } else {
       throw new Error('Invalid payment action type')
     }
 
-    const paymentResult = await TicketMoneyApi.paymentMoney({
+    const paymentResult = await TicketMoneyApi.changePaid({
       ticketId: ticket.value.id,
       body: {
-        paymentActionType: paymentActionType.value,
+        paymentActionType:
+          ticketActionType === TicketActionType.DebitItem
+            ? PaymentActionType.Debit
+            : paymentActionType.value,
         ticketActionType: ticketActionType,
-        walletId: walletId.value,
+        walletId: ticketActionType === TicketActionType.DebitItem ? '0' : walletId.value,
         isPaymentEachItem: 1,
-        paidTotal: paidTotal.value,
+        paidTotal: ticketActionType === TicketActionType.DebitItem ? 0 : paidTotal.value,
+        debtTotal: ticketActionType === TicketActionType.DebitItem ? paidTotal.value : 0,
         note: note.value,
         paymentTicketItemMap: {
           paymentWait: { paidMoney: paidWait.value },
@@ -1465,7 +1473,11 @@ defineExpose({ openModal, openModalByTicket })
             <template v-if="paymentActionType === PaymentActionType.PaymentMoney">
               <div>Phương thức thanh toán</div>
               <div>
-                <InputSelectWallet v-model:walletId="walletId" autoSelectFirstValue />
+                <InputSelectWallet
+                  v-model:walletId="walletId"
+                  autoSelectFirstValue
+                  :append="[{ value: '-1', label: '== Ghi nợ ==' }]"
+                />
               </div>
             </template>
             <template v-if="paymentActionType === PaymentActionType.RefundMoney">
@@ -1477,7 +1489,8 @@ defineExpose({ openModal, openModalByTicket })
           </div>
           <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
             <template v-if="paymentActionType === PaymentActionType.PaymentMoney">
-              <div>Số tiền thanh toán</div>
+              <div v-if="walletId == '-1'">Số tiền ghi nợ</div>
+              <div v-else>Số tiền thanh toán</div>
               <div class="flex">
                 <InputMoney ref="inputMoneyPay" :value="paidTotal" textAlign="right" disabled />
               </div>
@@ -1525,9 +1538,10 @@ defineExpose({ openModal, openModalByTicket })
           icon="dollar"
           :disabled="disabledButtonSave"
         >
-          <span v-if="paymentActionType === PaymentActionType.PaymentMoney">
-            Xác nhận thanh toán
-          </span>
+          <template v-if="paymentActionType === PaymentActionType.PaymentMoney">
+            <span v-if="walletId === '-1'">Xác nhận ghi nợ</span>
+            <span v-else>Xác nhận thanh toán</span>
+          </template>
           <span v-if="paymentActionType === PaymentActionType.RefundMoney">Xác nhận HOÀN TRẢ</span>
         </VueButton>
       </div>

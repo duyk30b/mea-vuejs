@@ -22,6 +22,7 @@ import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { DeliveryStatus, DeliveryStatusText, PaymentViewType } from '@/modules/enum'
+import { PaymentActionType } from '@/modules/payment/payment.type'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { TemplateHtmlAction, TemplateHtmlType } from '@/modules/template-html'
 import { Ticket, TicketActionApi, TicketMoneyApi, TicketService } from '@/modules/ticket'
@@ -37,17 +38,18 @@ import ModalTicketReturnProduct from '@/views/room/room-ticket-base/ModalTicketR
 import TicketStatusTag from '@/views/room/room-ticket-base/TicketStatusTag.vue'
 import { onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import ModalTicketPayDebt from '../../room-ticket-base/ModalTicketPayDebt.vue'
 import { ETicketOrderUpsertMode } from '../upsert/ticket-order-upsert.ref'
 import ModalTicketOrderDetailSetting from './ModalTicketOrderDetailSetting.vue'
 import ModalTicketOrderPayment from './ModalTicketOrderPayment.vue'
 import ModalTicketOrderTerminal from './ModalTicketOrderTerminal.vue'
 import TicketOrderDetailTable from './TicketOrderDetailTable.vue'
-import { PaymentActionType } from '@/modules/payment/payment.type'
 
 const modalTicketOrderDetailSetting = ref<InstanceType<typeof ModalTicketOrderDetailSetting>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalTicketOrderPayment = ref<InstanceType<typeof ModalTicketOrderPayment>>()
+const modalTicketPayDebt = ref<InstanceType<typeof ModalTicketPayDebt>>()
 const modalTicketOrderTerminal = ref<InstanceType<typeof ModalTicketOrderTerminal>>()
 
 const route = useRoute()
@@ -65,7 +67,7 @@ const startFetchData = async (ticketId: string) => {
     ticketRef.value = await TicketService.detail(ticketId, {
       relation: {
         customer: true,
-        paymentTicketList: { payment: true },
+        // paymentTicketList: { payment: true },
         // ticketAttributeList: true,
         ticketProductList: { batch: true, product: true },
         ticketProcedureList: true,
@@ -178,46 +180,61 @@ const clickDestroy = () => {
   })
 }
 
-const startRefundDebt = async () => {
-  if (ticketRef.value.debtTotal <= 0) {
-    return ModalStore.alert({
-      title: 'Không có nợ để hoàn trả',
-      content: 'Đơn hàng này không có nợ cần hoàn trả',
-    })
-  }
-  if (ticketRef.value.paidTotal + ticketRef.value.debtTotal <= ticketRef.value.totalMoney) {
-    return ModalStore.alert({
-      title: 'Không đủ tiền để hoàn trả',
-      content: 'Đơn hàng này không đủ tiền để hoàn trả nợ',
-    })
-  }
-
-  const moneyToRefund = Math.min(
-    ticketRef.value.paidTotal + ticketRef.value.debtTotal - ticketRef.value.totalMoney,
-    ticketRef.value.debtTotal,
-  )
-
+const clickCancelDebt = async () => {
   try {
-    loadingRefund.value = true
-    const result = await TicketMoneyApi.changeDebt({
-      customerId: ticketRef.value.customerId,
-      paymentActionType: PaymentActionType.RefundDebt,
-      walletId: '',
-      note: '',
-      changeDebtListBody: [
-        {
-          ticketActionType: TicketActionType.RefundDebt,
-          ticketId: ticketRef.value.id,
-          paid: 0,
-          debt: -moneyToRefund,
-        },
-      ],
+    const result = await TicketMoneyApi.changePaid({
+      ticketId: ticketRef.value.id,
+      body: {
+        paymentActionType: PaymentActionType.RefundDebt,
+        ticketActionType: TicketActionType.RefundDebt,
+        walletId: '',
+        isPaymentEachItem: 0,
+        paidTotal: 0,
+        debtTotal: -ticketRef.value.debtTotal,
+        note: '',
+      },
     })
   } catch (error) {
-    console.log('🚀 ~ TicketOrderDetailContainer.vue:203 ~ refundDebt ~ error:', error)
+    console.log('🚀 ~ TicketOrderDetailContainer.vue:198 ~ cancelDebt ~ error:', error)
   } finally {
-    loadingRefund.value = false
   }
+}
+
+const clickRefundDebt = async () => {
+  const debtRefund = Math.min(
+    ticketRef.value.debtTotal,
+    ticketRef.value.paidTotal + ticketRef.value.debtTotal - ticketRef.value.totalMoney,
+  )
+
+  ModalStore.confirm({
+    title: 'Bạn có chắc chắn muốn sửa nợ của đơn này ?',
+    content: [
+      '- Hiện tại: số nợ + số tiền thanh toán > tổng tiền đơn. Điều này cần được điều chỉnh.',
+      '- Chức năng này sẽ điều chỉnh số nợ của đơn hàng.',
+      '- Số nợ hiện tại: ' + formatMoney(ticketRef.value.debtTotal),
+      '- Số nợ điều chỉnh: ' + formatMoney(-debtRefund),
+      '- Số nợ sau khi điều chỉnh: ' + formatMoney(ticketRef.value.debtTotal - debtRefund),
+    ],
+    async onOk() {
+      try {
+        const result = await TicketMoneyApi.changePaid({
+          ticketId: ticketRef.value.id,
+          body: {
+            paymentActionType: PaymentActionType.RefundDebt,
+            ticketActionType: TicketActionType.RefundDebt,
+            walletId: '',
+            isPaymentEachItem: 0,
+            paidTotal: 0,
+            debtTotal: -debtRefund,
+            note: '',
+          },
+        })
+      } catch (error) {
+        console.log('🚀 ~ TicketOrderDetailContainer.vue:231 ~ clickRefundDebt ~ error:', error)
+      } finally {
+      }
+    },
+  })
 }
 
 const startPrint = async () => {
@@ -251,6 +268,7 @@ const openModalTicketOrderPreview = async () => {
     @success="() => startFetchData(ticketRef.id)"
   />
   <ModalTicketOrderPayment ref="modalTicketOrderPayment" />
+  <ModalTicketPayDebt ref="modalTicketPayDebt" />
   <ModalTicketOrderDetailSetting ref="modalTicketOrderDetailSetting" />
 
   <div class="mx-4 mt-4 gap-4 flex items-center justify-between">
@@ -422,6 +440,20 @@ const openModalTicketOrderPreview = async () => {
           </template>
           <div class="vue-menu">
             <a
+              @click="clickCancelDebt"
+              v-if="
+                [TicketStatus.Executing].includes(ticketRef.status) &&
+                !ticketRef.isPaymentEachItem &&
+                ticketRef.debtTotal &&
+                userPermission[PermissionId.TICKET_REFUND_MONEY]
+              "
+            >
+              <span class="text-red-500">
+                <IconDollar />
+              </span>
+              <span class="text-red-500 font-bold">HỦY NỢ</span>
+            </a>
+            <a
               v-if="
                 userPermission[PermissionId.TICKET_CHANGE_PRODUCT_RETURN_PRODUCT] &&
                 [TicketStatus.Debt, TicketStatus.Completed, TicketStatus.Executing].includes(
@@ -505,7 +537,7 @@ const openModalTicketOrderPreview = async () => {
           v-if="userPermission[PermissionId.TICKET_PAYMENT_MONEY]"
           color="blue"
           :loading="loadingProcess"
-          @click="modalTicketOrderPayment?.openModal(PaymentViewType.PayDebt)"
+          @click="modalTicketPayDebt?.openModal({ ticket: ticketRef })"
         >
           <IconDollar />
           Trả nợ
@@ -555,16 +587,16 @@ const openModalTicketOrderPreview = async () => {
 
         <VueButton
           v-if="
-            ticketRef.paidTotal + ticketRef.debtTotal > ticketRef.totalMoney &&
             ticketRef.debtTotal > 0 &&
+            ticketRef.paidTotal + ticketRef.debtTotal > ticketRef.totalMoney &&
             userPermission[PermissionId.TICKET_REFUND_MONEY]
           "
           color="cyan"
           :loading="loadingProcess"
           icon="dollar"
-          @click="startRefundDebt"
+          @click="clickRefundDebt"
         >
-          Hủy nợ
+          Hoàn nợ thừa
         </VueButton>
 
         <VueButton

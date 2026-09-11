@@ -165,34 +165,8 @@ const downloadTicketList = (menu: { key: string }) => {
     v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalStatisticTicketSetting"
   />
-  <div class="page-header">
-    <div class="page-header-content">
-      <div class="md:block">
-        <IconBarChart />
-        <span class="ml-2">Báo cáo lượt tiếp đón</span>
-      </div>
-    </div>
 
-    <div class="mr-2 flex items-center gap-8">
-      <VueDropdown>
-        <template #trigger>
-          <span style="font-size: 1.2rem; cursor: pointer">
-            <IconSetting />
-          </span>
-        </template>
-        <div class="vue-menu">
-          <a
-            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-            @click="modalStatisticTicketSetting?.openModal()"
-          >
-            Cài đặt hiển thị
-          </a>
-        </div>
-      </VueDropdown>
-    </div>
-  </div>
-
-  <div class="page-main p-4">
+  <div class="mt-4">
     <div class="flex flex-wrap gap-2 items-center">
       <div style="width: 150px">
         <div>Chọn phòng</div>
@@ -250,6 +224,24 @@ const downloadTicketList = (menu: { key: string }) => {
             picker="month"
           />
         </div>
+      </div>
+      <div class="">
+        <div>&nbsp;</div>
+        <VueDropdown>
+          <template #trigger>
+            <span style="font-size: 1.2rem; cursor: pointer">
+              <IconSetting />
+            </span>
+          </template>
+          <div class="vue-menu">
+            <a
+              v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+              @click="modalStatisticTicketSetting?.openModal()"
+            >
+              Cài đặt hiển thị
+            </a>
+          </div>
+        </VueDropdown>
       </div>
     </div>
 

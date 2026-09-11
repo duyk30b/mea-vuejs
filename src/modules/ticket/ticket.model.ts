@@ -6,12 +6,12 @@ import { CustomerSource } from '../customer_source'
 import { DeliveryStatus, DiscountType } from '../enum'
 import { Expense } from '../expense'
 import { Image } from '../image/image.model'
-import { PaymentTicket } from '../payment_ticket'
+import { PaymentTicket } from '../payment_ticket/payment_ticket.model'
 import { PositionType } from '../position/position.type'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
 import { TicketAttribute } from '../ticket-attribute'
-import { TicketBatch } from '../ticket-batch'
+import { TicketBatch } from '../ticket-batch/ticket-batch.model'
 import { TicketExpense } from '../ticket-expense/ticket-expense.model'
 import {
   TicketLaboratory,
@@ -19,8 +19,8 @@ import {
   TicketLaboratoryResult,
   TicketLaboratoryService,
 } from '../ticket-laboratory'
-import { TicketProcedureService } from '../ticket-procedure'
 import { TicketProcedure, TicketProcedureType } from '../ticket-procedure/ticket-procedure.model'
+import { TicketProcedureService } from '../ticket-procedure/ticket-procedure.service'
 import { TicketProduct, TicketProductType } from '../ticket-product/ticket-product.model'
 import { TicketRadiology, TicketRadiologyService } from '../ticket-radiology'
 import type { TicketReception } from '../ticket-reception'

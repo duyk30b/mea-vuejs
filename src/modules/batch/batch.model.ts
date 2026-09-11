@@ -1,3 +1,4 @@
+import { Distributor } from '../distributor/distributor.model'
 import { Product } from '../product/product.model'
 
 export class Batch {
@@ -19,6 +20,7 @@ export class Batch {
   registeredAt: number
 
   product?: Product
+  distributor?: Distributor
 
   get unitQuantity() {
     return Number(((this.quantity || 0) / (this.product?.unitDefaultRate || 1)).toFixed(3))
@@ -70,6 +72,9 @@ export class Batch {
     if (Object.prototype.hasOwnProperty.call(source, 'product')) {
       target.product = source.product ? Product.basic(source.product) : source.product
     }
+    if (Object.prototype.hasOwnProperty.call(source, 'distributor')) {
+      target.distributor = source.distributor ? Distributor.basic(source.distributor) : source.distributor
+    }
     return target
   }
 
@@ -79,15 +84,17 @@ export class Batch {
 
   static equal(a: Batch, b: Batch) {
     if (a.id != b.id) return false
+    if (a.distributorId != b.distributorId) return false
     if (a.warehouseId != b.warehouseId) return false
     if (a.productId != b.productId) return false
-    if (a.distributorId != b.distributorId) return false
 
     if (a.lotNumber != b.lotNumber) return false
     if (a.expiryDate != b.expiryDate) return false
 
-    if (a.costPrice != b.costPrice) return false
     if (a.quantity != b.quantity) return false
+    if (a.costPrice != b.costPrice) return false
+    if (a.costAmount != b.costAmount) return false
+    if (a.isActive != b.isActive) return false
     return true
   }
 }

@@ -27,20 +27,6 @@ export class PaymentApi {
     return Payment.fromList(data.paymentList)
   }
 
-  static async updateInfo(options: {
-    paymentId: string
-    body: {
-      createdAt: number
-      note: string
-      walletId: string
-    }
-  }) {
-    const { paymentId, body } = options
-    const response = await AxiosInstance.post(`/payment/update-info/${paymentId}`, body)
-    const { data } = response.data as FullResponse<{ payment: any }>
-    return Payment.from(data.payment)
-  }
-
   static async sumMoney(options: PaymentListQuery) {
     const params = PaymentGetParams.toQuery(options)
 
@@ -54,6 +40,26 @@ export class PaymentApi {
       }[]
     }>
     return data
+  }
+
+  static async getListByTicketId(ticketId: string) {
+    const response = await AxiosInstance.get(`/payment/list-by-ticket-id/${ticketId}`)
+    const { data } = response.data as FullResponse<{ paymentList: any[] }>
+    return Payment.fromList(data.paymentList)
+  }
+
+  static async updateInfo(options: {
+    paymentId: string
+    body: {
+      createdAt: number
+      note: string
+      walletId: string
+    }
+  }) {
+    const { paymentId, body } = options
+    const response = await AxiosInstance.post(`/payment/update-info/${paymentId}`, body)
+    const { data } = response.data as FullResponse<{ payment: any }>
+    return Payment.from(data.payment)
   }
 
   static async otherCreateMoneyOut(body: { walletId: string; paidAmount: number; note: string }) {

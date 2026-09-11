@@ -172,7 +172,7 @@ onBeforeMount(async () => await startFetchData())
 <template>
   <div class="flex flex-col gap-4" style="height: 100%">
     <div class="flex flex-wrap items-center gap-4" style="height: 80px">
-      <span style="font-size: 18px; font-weight: 500">Khách hàng mua nhiều:</span>
+      <span style="font-size: 18px; font-weight: 500">Nhóm khách mua nhiều:</span>
       <div style="width: 120px; margin-right: auto">
         <InputSelect
           v-model:value="typeBestSelling"

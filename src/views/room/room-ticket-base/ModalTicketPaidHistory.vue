@@ -3,40 +3,24 @@
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
 import VueModal from '@/common/vue-modal/VueModal.vue'
-import { PaymentTicketApi } from '@/modules/payment_ticket/payment_ticket.api'
-import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
 import { Ticket } from '@/modules/ticket'
-import { ref } from 'vue'
-import TableTicketPaidItemHistory from './TableTicketPaidItemHistory.vue'
-import TableTicketPaidOverallHistory from './TableTicketPaidOverallHistory.vue'
+import { nextTick, ref } from 'vue'
+import TableTicketPaidHistory from './TableTicketPaidHistory.vue'
+import { ESFunction } from '@/utils'
+
+const tableTicketPaidHistory = ref<InstanceType<typeof TableTicketPaidHistory>>()
 
 const ticket = ref(Ticket.blank())
 
 const showModal = ref(false)
 
-const openModal = async (options: { ticket: Ticket; refetch?: boolean }) => {
+const openModal = async (options: { ticket: Ticket }) => {
   showModal.value = true
-  ticket.value = Ticket.from(options.ticket)
-  if (options.refetch) {
-    const paymentTicketList = await PaymentTicketApi.list({
-      filter: {
-        ticketId: ticket.value.id,
-      },
-      relation: {
-        payment: true,
-        // ticket: true,
-        // ticketRegimen: { regimen: false },
-        // ticketProcedure: { procedure: false },
-        // ticketProductConsumable: { product: false },
-        // ticketProductPrescription: { product: false },
-        // ticketLaboratoryGroup: { laboratoryGroup: false },
-        // ticketRadiology: { radiology: false },
-      },
-      sort: { id: 'ASC' },
-    })
-    await PaymentTicketService.refreshRelation(paymentTicketList)
-    ticket.value.paymentTicketList = paymentTicketList
-  }
+  ticket.value = Ticket.basic(options.ticket)
+
+  nextTick(async () => {
+    await tableTicketPaidHistory.value?.startFetchData()
+  })
 }
 
 const closeModal = () => {
@@ -57,8 +41,7 @@ defineExpose({ openModal })
       </div>
 
       <div class="p-4">
-        <TableTicketPaidItemHistory v-if="ticket.isPaymentEachItem" :ticket="ticket" />
-        <TableTicketPaidOverallHistory v-else :ticket="ticket" />
+        <TableTicketPaidHistory ref="tableTicketPaidHistory" :ticket="ticket" />
       </div>
 
       <div class="mt-4 pb-4 flex justify-center gap-4">

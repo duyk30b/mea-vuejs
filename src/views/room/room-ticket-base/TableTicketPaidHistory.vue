@@ -3,42 +3,56 @@ import { IconPrint } from '@/common/icon-antd'
 import { CONFIG } from '@/config'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Customer } from '@/modules/customer'
+import { PaymentApi } from '@/modules/payment/payment.api'
 import { Payment } from '@/modules/payment/payment.model'
-import { PaymentTicket } from '@/modules/payment_ticket/payment_ticket.model'
+import { PaymentActionType, PaymentActionTypeText } from '@/modules/payment/payment.type'
 import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
 import { TemplateHtmlAction } from '@/modules/template-html'
 import { Ticket } from '@/modules/ticket'
-import { TicketActionType, TicketActionTypeText } from '@/modules/ticket/ticket.type'
 import { WalletService } from '@/modules/wallet'
 import { ESTimer } from '@/utils'
 import { BugDevelopment } from '@/views/component'
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 
-const props = defineProps<{
-  ticket: Ticket
-}>()
+const props = withDefaults(defineProps<{ ticket: Ticket }>(), {
+  ticket: () => Ticket.blank(),
+})
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const walletMap = WalletService.walletMap
+const paymentList = ref<Payment[]>([])
 
 onMounted(async () => {
   try {
     await WalletService.getAll()
   } catch (error) {
-    console.log('🚀 ~ TableTicketPaidOverallHistory.vue:22 ~ error:', error)
+    console.log('🚀 ~ TableTicketPaidHistory.vue:22 ~ error:', error)
   }
 })
 
-const startPrintPayment = async (options: { payment: Payment; paymentTicket: PaymentTicket }) => {
+const startFetchData = async () => {
+  try {
+    console.log(
+      '🚀 ~ TableTicketPaidHistory.vue:37 ~ startFetchData ~ paymentList.value:',
+      paymentList.value,
+    )
+    paymentList.value = await PaymentApi.getListByTicketId(props.ticket.id)
+  } catch (error) {
+    console.log('🚀 ~ TableTicketPaidHistory.vue:32 ~ error:', error)
+  }
+}
+
+const startPrintPayment = async (options: { payment: Payment }) => {
   const payment = Payment.from(options.payment)
   payment.customer = Customer.from(props.ticket.customer)
-  payment.paymentTicketList = [PaymentTicket.from(options.paymentTicket)]
   await PaymentTicketService.refreshRelation(payment.paymentTicketList)
   await TemplateHtmlAction.startPrintCustomerPayment({
     payment,
   })
 }
+
+defineExpose({ startFetchData })
 </script>
 
 <template>
@@ -53,7 +67,7 @@ const startPrintPayment = async (options: { payment: Payment; paymentTicket: Pay
       </div>
     </div>
 
-    <div class="mt-2 table-wrapper">
+    <div class="table-wrapper">
       <table>
         <thead>
           <tr>
@@ -61,70 +75,41 @@ const startPrintPayment = async (options: { payment: Payment; paymentTicket: Pay
             <th>#</th>
             <th>Thời gian</th>
             <th>Ví</th>
-            <th>DV</th>
+            <th>HĐ</th>
             <th>Tiền</th>
             <th>Ghi nợ</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(paymentTicket, index) in ticket.paymentTicketList || []" :key="index">
+          <tr v-for="(payment, index) in paymentList || []" :key="index">
             <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
-              <BugDevelopment :data="paymentTicket" />
+              <BugDevelopment :data="payment" />
             </td>
             <td class="text-center">{{ index + 1 }}</td>
             <td class="text-center">
-              {{ ESTimer.timeToText(paymentTicket.createdAt, 'DD/MM/YY hh:mm') }}
+              {{ ESTimer.timeToText(payment.createdAt, 'DD/MM/YY hh:mm') }}
             </td>
             <td class="text-left">
-              <div v-if="paymentTicket.ticketActionType === TicketActionType.DebitItem">
-                Ghi nợ
-              </div>
-              <div>{{ walletMap[paymentTicket.payment.walletId]?.name }}</div>
+              <div>{{ walletMap[payment.walletId]?.name }}</div>
             </td>
             <td>
-              <template
-                v-if="
-                  [
-                    TicketActionType.PaymentItem,
-                    TicketActionType.DebitItem,
-                    TicketActionType.RefundItem,
-                  ].includes(paymentTicket.ticketActionType)
-                "
-              >
-                <div>
-                  <span>{{ paymentTicket.interactName }}</span>
-                  <span
-                    v-if="paymentTicket.sessionIndex"
-                    style="margin-left: 4px; font-weight: 500"
-                  >
-                    (Buổi {{ paymentTicket.sessionIndex }})
-                  </span>
-                  <span
-                    v-if="paymentTicket.ticketActionType === TicketActionType.RefundItem"
-                    style="margin-left: 4px; font-weight: 500; color: var(--text-red)"
-                  >
-                    (Hoàn tiền)
-                  </span>
-                </div>
-              </template>
-              <template v-else>
-                <div>{{ TicketActionTypeText[paymentTicket.ticketActionType] }}</div>
-              </template>
-              <div v-if="paymentTicket.payment.note" style="font-size: 0.9em">
-                {{ paymentTicket.payment.note }}
+              <div>{{ PaymentActionTypeText[payment.paymentActionType] }}</div>
+              <div v-if="payment.note" style="font-size: 0.9em">
+                {{ payment.note }}
               </div>
             </td>
             <td class="text-right" style="padding-right: 8px">
-              <div>{{ formatMoney(paymentTicket.paidMoney) }}</div>
+              <div>{{ formatMoney(payment.paidTotal) }}</div>
             </td>
             <td class="text-right" style="padding-right: 8px">
-              <div>{{ formatMoney(paymentTicket.debtMoney) }}</div>
+              <div>{{ formatMoney(payment.debtTotal) }}</div>
             </td>
             <td class="text-center">
               <IconPrint
+                v-if="[PaymentActionType.PaymentMoney].includes(payment.paymentActionType)"
                 style="font-size: 18px; color: var(--text-blue); cursor: pointer"
-                @click="startPrintPayment({ payment: paymentTicket.payment, paymentTicket })"
+                @click="startPrintPayment({ payment })"
               />
             </td>
           </tr>

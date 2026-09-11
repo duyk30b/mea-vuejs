@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon-antd'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputCheckbox } from '../../../common/vue-form'
+import { IconClose } from '../../../common/icon-antd/index.ts'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store.ts'
+import { InputCheckbox } from '../../../common/vue-form/index.ts'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { SettingKey } from '../../../modules/_me/store.variable'
-import { OrganizationService } from '../../../modules/organization'
+import { useSettingStore } from '../../../modules/_me/setting.store.ts'
+import { SettingKey } from '../../../modules/_me/store.variable.ts'
+import { OrganizationService } from '../../../modules/organization/index.ts'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 

@@ -1,8 +1,13 @@
 <script setup lang="ts">
+import { IconDownload } from '@/common/icon-google'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { CONFIG } from '@/config'
+import { FileBatchApi } from '@/modules/file-excel/file-batch.api'
+import { BugDevelopment } from '@/views/component'
 import { computed, onBeforeMount, ref } from 'vue'
 import VuePagination from '../../../common/VuePagination.vue'
 import { IconFileSearch } from '../../../common/icon-antd'
-import { InputSelect } from '../../../common/vue-form'
+import { InputNumber, InputSelect } from '../../../common/vue-form'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchApi } from '../../../modules/batch'
 import { ESTimer } from '../../../utils'
@@ -14,6 +19,7 @@ const { formatMoney, isMobile } = settingStore
 
 const loaded = ref(false)
 const batchList = ref<Batch[]>([])
+const expiryMonth = ref(3)
 
 const page = ref(1)
 const limit = ref(10)
@@ -25,10 +31,13 @@ const startFetchData = async () => {
     const paginationResponse = await BatchApi.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { product: true },
+      relation: { product: true, distributor: true },
       filter: {
         quantity: { NOT: 0 },
-        expiryDate: { IS_NULL: false, LTE: closeExpiryDate.value },
+        expiryDate: {
+          IS_NULL: false,
+          LTE: Date.now() + expiryMonth.value * 30 * 24 * 60 * 60 * 1000,
+        },
       },
       sort: { expiryDate: 'ASC' },
     })
@@ -54,23 +63,56 @@ const now = computed(() => {
   return Date.now()
 })
 
-const closeExpiryDate = computed(() => {
-  return Date.now() + 6 * 30 * 24 * 60 * 60 * 1000
+const expiryDateWarn = computed(() => {
+  return Date.now() + 3 * 30 * 24 * 60 * 60 * 1000
 })
+
+const downloadExcelBatchStatistic = async () => {
+  ModalStore.confirm({
+    title: 'Xác nhận tải file báo cáo',
+    content: 'Thời gian tải file có thể tốn vài phút nếu dữ liệu lớn, bạn vẫn mốn tải ?',
+    onOk: async () => {
+      await FileBatchApi.downloadExcel({
+        relation: { product: true, distributor: true },
+        filter: {
+          quantity: { NOT: 0 },
+          expiryDate: {
+            IS_NULL: false,
+            LTE: Date.now() + expiryMonth.value * 30 * 24 * 60 * 60 * 1000,
+          },
+        },
+      })
+    },
+  })
+}
 </script>
 
 <template>
   <ModalProductDetail ref="modalProductDetail" />
   <div>
-    <div class="mt-4 flex justify-between items-center">
+    <div class="mt-4 flex flex-wrap items-center">
       <span style="font-size: 18px; font-weight: 500">Hàng cận date:</span>
+      <div class="ml-auto flex gap-4">
+        <div style="width: 150px">
+          <InputNumber v-model:value="expiryMonth" append="tháng" @update:value="startFetchData" />
+        </div>
+        <div
+          style="cursor: pointer; border: 1px solid #ccc; padding: 4px; border-radius: 4px"
+          @click="downloadExcelBatchStatistic"
+        >
+          <IconDownload width="20" height="20" />
+        </div>
+      </div>
     </div>
     <div class="mt-2 table-wrapper">
       <table class="">
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th>#</th>
-            <th>Tên HH</th>
+            <th>Mã sản phẩm</th>
+            <th>Tên sản phẩm</th>
+            <th>Nhà cung cấp</th>
             <th>HSD</th>
             <th>SL</th>
             <th>ĐV</th>
@@ -82,8 +124,14 @@ const closeExpiryDate = computed(() => {
             <td colspan="20" class="text-center">Không có sản phẩm cận date</td>
           </tr>
           <tr v-for="(batch, batchIndex) in batchList" :key="batchIndex">
+            <td v-if="CONFIG.MODE === 'development'" class="text-center">
+              <BugDevelopment :data="batch" />
+            </td>
             <td class="text-center" style="white-space: nowrap">
               {{ batchIndex + 1 }}
+            </td>
+            <td class="text-center" style="white-space: nowrap">
+              {{ batch.product?.productCode }}
             </td>
             <td>
               <div class="flex gap-2">
@@ -100,13 +148,16 @@ const closeExpiryDate = computed(() => {
                 {{ batch.product?.substance }}
               </div>
             </td>
+            <td class="text-center" style="white-space: nowrap">
+              {{ batch.distributor?.fullName }}
+            </td>
             <td
               class="text-center"
               style="white-space: nowrap"
               :style="
                 batch.expiryDate && batch.expiryDate < now
                   ? 'color:red; font-weight:500'
-                  : batch.expiryDate && batch.expiryDate < closeExpiryDate
+                  : batch.expiryDate && batch.expiryDate < expiryDateWarn
                     ? 'color:orange; font-weight:500'
                     : ''
               "
@@ -114,13 +165,13 @@ const closeExpiryDate = computed(() => {
               {{ ESTimer.timeToText(batch.expiryDate) }}
             </td>
             <td class="text-center" style="white-space: nowrap">
-              {{ batch.unitQuantity }}
+              {{ batch.quantity }}
             </td>
             <td class="text-center" style="white-space: nowrap">
-              {{ batch.product?.unitDefaultName }}
+              {{ batch.product?.unitBasicName }}
             </td>
             <td class="text-right" style="white-space: nowrap">
-              {{ formatMoney(batch.product?.unitRetailPrice || 0) }}
+              {{ formatMoney(batch.product?.retailPrice || 0) }}
             </td>
           </tr>
         </tbody>

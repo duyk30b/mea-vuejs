@@ -262,7 +262,7 @@ const handleClickModalRegisterAppointment = () => {
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
               <td class="uppercase text-right font-bold" colspan="8">
-                <a @click="modalTicketPaidHistory?.openModal({ ticket: ticketRef, refetch: true })">
+                <a @click="modalTicketPaidHistory?.openModal({ ticket: ticketRef })">
                   <span class="mr-1">Đã thanh toán</span>
                   <IconExclamationCircle />
                 </a>
@@ -295,7 +295,7 @@ const handleClickModalRegisterAppointment = () => {
             <tr v-if="ticketRef.debtTotal + ticketRef.paidTotal < ticketRef.totalMoney">
               <td v-if="CONFIG.MODE === 'development'"></td>
               <td v-if="ticketRef.isPaymentEachItem || CONFIG.MODE === 'development'"></td>
-              <td class="uppercase text-right font-bold" colspan="8">Đang thiếu</td>
+              <td class="uppercase text-right font-bold" colspan="8">Chưa thanh toán</td>
               <td class="font-bold text-right whitespace-nowrap" style="color: var(--text-red)">
                 {{ formatMoney(ticketRef.totalMoney - ticketRef.paidTotal - ticketRef.debtTotal) }}
               </td>
@@ -375,7 +375,7 @@ const handleClickModalRegisterAppointment = () => {
             <td><IconDollar /></td>
             <td class="cursor-pointer">
               <a
-                @click="modalTicketPaidHistory?.openModal({ ticket: ticketRef, refetch: true })"
+                @click="modalTicketPaidHistory?.openModal({ ticket: ticketRef })"
                 style="display: flex; gap: 4px; align-items: center"
               >
                 <span>Đã thanh toán</span>
@@ -412,7 +412,7 @@ const handleClickModalRegisterAppointment = () => {
           </tr>
           <tr v-else-if="ticketRef.paidTotal + ticketRef.debtTotal < ticketRef.totalMoney">
             <td><IconDollar /></td>
-            <td>Còn thiếu</td>
+            <td>Chưa thanh toán</td>
             <td>:</td>
             <td>
               <div class="text-lg font-bold" style="color: var(--text-red)">

@@ -72,7 +72,7 @@ const closeModal = () => {
 const startPrepayment = async () => {
   paymentLoading.value = true
   try {
-    const result = await TicketMoneyApi.paymentMoney({
+    const result = await TicketMoneyApi.changePaid({
       ticketId: ticketClone.value.id,
       body: {
         paymentActionType: PaymentActionType.PaymentMoney,
@@ -80,7 +80,8 @@ const startPrepayment = async () => {
         walletId: walletId.value,
         isPaymentEachItem: 0,
         paidTotal: money.value,
-        note: '',
+        debtTotal: 0,
+        note: note.value,
       },
     })
     emit('success')
@@ -98,7 +99,7 @@ const startRefundOverpaid = async () => {
   }
   paymentLoading.value = true
   try {
-    const result = await TicketMoneyApi.paymentMoney({
+    const result = await TicketMoneyApi.changePaid({
       ticketId: ticketClone.value.id,
       body: {
         paymentActionType: PaymentActionType.RefundMoney,
@@ -106,7 +107,8 @@ const startRefundOverpaid = async () => {
         walletId: walletId.value,
         isPaymentEachItem: 0,
         paidTotal: -money.value,
-        note: '',
+        debtTotal: 0,
+        note: note.value,
       },
     })
     emit('success')

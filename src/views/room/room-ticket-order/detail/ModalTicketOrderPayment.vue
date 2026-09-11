@@ -51,7 +51,7 @@ const startPrepayment = async () => {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
     paymentLoading.value = true
-    const result = await TicketMoneyApi.paymentMoney({
+    const result = await TicketMoneyApi.changePaid({
       ticketId: ticketRef.value.id,
       body: {
         paymentActionType: PaymentActionType.PaymentMoney,
@@ -59,7 +59,8 @@ const startPrepayment = async () => {
         walletId: walletId.value,
         isPaymentEachItem: 0,
         paidTotal: money.value,
-        note: '',
+        debtTotal: 0,
+        note: note.value,
       },
     })
 
@@ -99,7 +100,7 @@ const startRefundMoney = async () => {
       return AlertStore.addError('Số tiền hoàn trả không hợp lệ')
     }
 
-    const result = await TicketMoneyApi.paymentMoney({
+    const result = await TicketMoneyApi.changePaid({
       ticketId: ticketRef.value.id,
       body: {
         paymentActionType: PaymentActionType.RefundMoney,
@@ -107,7 +108,8 @@ const startRefundMoney = async () => {
         walletId: walletId.value,
         isPaymentEachItem: 0,
         paidTotal: -money.value,
-        note: '',
+        debtTotal: 0,
+        note: note.value,
       },
     })
     emit('success')
@@ -402,72 +404,6 @@ defineExpose({ openModal })
               <template v-if="ticketRef.totalMoney != ticketRef.paidTotal + money">
                 Gửi hàng và Ghi nợ
               </template>
-            </VueButton>
-          </div>
-        </div>
-      </form>
-
-      <!-- PayDebt -->
-      <form
-        class="p-4"
-        v-else-if="paymentView == PaymentViewType.PayDebt"
-        @submit.prevent="(e) => startPayDebt()"
-      >
-        <div class="flex flex-wrap gap-4">
-          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-            <div>
-              <div>Phương thức thanh toán</div>
-              <div>
-                <InputSelectWallet v-model:walletId="walletId" required autoSelectFirstValue />
-              </div>
-            </div>
-            <div class="mt-4">
-              <div>Ghi chú</div>
-              <div>
-                <InputText v-model:value="note" />
-              </div>
-            </div>
-          </div>
-          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-            <div class="">
-              <div class="flex flex-wrap justify-between">
-                <span>Số tiền trả nợ</span>
-              </div>
-              <div>
-                <div class="flex">
-                  <VueButton color="default" type="button" @click="money = ticketRef.debtTotal">
-                    Tất cả
-                  </VueButton>
-                  <InputMoney
-                    ref="inputMoneyPayment"
-                    v-model:value="money"
-                    text-align="right"
-                    :validate="{ gt: 0, lte: ticketRef.debtTotal }"
-                  />
-                </div>
-              </div>
-            </div>
-            <div class="mt-4">
-              <div>Nợ còn</div>
-              <div>
-                <InputMoney :value="ticketRef.debtTotal - money" disabled textAlign="right" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-8 pb-4 flex justify-center gap-4">
-          <div>
-            <VueButton type="button" icon="close" @click="closeModal">Đóng lại</VueButton>
-          </div>
-          <div v-if="userPermission[PermissionId.TICKET_PAYMENT_MONEY] && ticketRef.debtTotal != 0">
-            <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
-              <template
-                v-if="ticketRef.status === TicketStatus.Debt && ticketRef.paidTotal === money"
-              >
-                Trả nợ và Kết thúc
-              </template>
-              <template v-else>Trả nợ</template>
             </VueButton>
           </div>
         </div>

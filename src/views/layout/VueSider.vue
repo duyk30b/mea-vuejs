@@ -208,14 +208,20 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <IconAreaChart />
       </template>
       <template #title>Thống kê</template>
-      <a-menu-item v-if="userPermission[PermissionId.STATISTIC_TICKET]" key="StatisticTicket">
-        <router-link :to="{ name: 'StatisticTicket' }">Doanh Thu</router-link>
+      <a-menu-item v-if="userPermission[PermissionId.STATISTIC]" key="StatisticTicket">
+        <router-link :to="{ name: 'StatisticOverview' }">Tổng quan</router-link>
+      </a-menu-item>
+      <a-menu-item v-if="userPermission[PermissionId.STATISTIC_PRODUCT]" key="StatisticProduct">
+        <router-link :to="{ name: 'StatisticProduct' }">Báo cáo sản phẩm</router-link>
       </a-menu-item>
       <a-menu-item v-if="userPermission[PermissionId.STATISTIC_CUSTOMER]" key="StatisticCustomer">
         <router-link :to="{ name: 'StatisticCustomer' }">Báo cáo khách hàng</router-link>
       </a-menu-item>
-      <a-menu-item v-if="userPermission[PermissionId.STATISTIC_PRODUCT]" key="StatisticProduct">
-        <router-link :to="{ name: 'StatisticProduct' }">Báo cáo sản phẩm</router-link>
+      <a-menu-item
+        v-if="userPermission[PermissionId.STATISTIC_DISTRIBUTOR]"
+        key="StatisticDistributor"
+      >
+        <router-link :to="{ name: 'StatisticDistributor' }">Báo cáo nhà cung cấp</router-link>
       </a-menu-item>
       <a-menu-item v-if="userPermission[PermissionId.STATISTIC_PROCEDURE]" key="StatisticProcedure">
         <router-link :to="{ name: 'StatisticProcedure' }">Báo cáo dịch vụ</router-link>

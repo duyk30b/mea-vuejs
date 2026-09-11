@@ -19,6 +19,7 @@ export class BatchGetQuery {
   limit?: number
   relation?: {
     product?: boolean
+    distributor?: boolean
   }
 
   filter?: BatchFilterQuery & { $OR?: BatchFilterQuery[] }

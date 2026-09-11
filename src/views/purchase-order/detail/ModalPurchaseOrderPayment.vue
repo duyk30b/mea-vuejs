@@ -230,7 +230,7 @@ defineExpose({ openModal })
                 "
               >
                 <td v-if="CONFIG.MODE === 'development'"></td>
-                <td colspan="4" class="text-right">Đang thiếu :</td>
+                <td colspan="4" class="text-right">Chưa thanh toán :</td>
                 <td class="text-right font-bold">
                   {{ formatMoney(purchaseOrderDetailRef.totalMoney - purchaseOrderDetailRef.paid) }}
                 </td>

@@ -42,6 +42,8 @@ import { BugDevelopment } from '@/views/component'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
 import { computed, onBeforeMount, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import ModalTicketPaidHistory from '../../room-ticket-base/ModalTicketPaidHistory.vue'
+import ModalTicketPayDebt from '../../room-ticket-base/ModalTicketPayDebt.vue'
 import ModalTicketReturnProduct from '../../room-ticket-base/ModalTicketReturnProduct.vue'
 import ModalTicketClinicHistory from '../history/ModalTicketClinicHistory.vue'
 import TicketClinicConsumableContainer from './consumable/TicketClinicConsumableContainer.vue'
@@ -55,8 +57,6 @@ import TicketClinicProcedureContainer from './procedure/TicketClinicProcedureCon
 import TicketClinicRadiologyContainer from './radiology/TicketClinicRadiologyContainer.vue'
 import TicketClinicSummaryContainer from './summary/TicketClinicSummaryContainer.vue'
 import TicketClinicUserContainer from './user/TicketClinicUserContainer.vue'
-import ModalTicketPaidHistory from '../../room-ticket-base/ModalTicketPaidHistory.vue'
-import ModalTicketPayDebt from '../../room-ticket-base/ModalTicketPayDebt.vue'
 
 const modalRoomSetting = ref<InstanceType<typeof ModalRoomSetting>>()
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
@@ -384,32 +384,60 @@ const clickDestroyTicket = () => {
 }
 
 const clickCancelDebt = async () => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.value.status)) {
-    return ModalStore.alert({
-      title: 'Trạng thái hồ sơ không hợp lệ ?',
-      content: 'Cần mở lại hồ sơ trước khi hủy nợ',
-    })
-  }
-
   try {
-    const result = await TicketMoneyApi.changeDebt({
-      customerId: ticketRef.value.customerId,
-      paymentActionType: PaymentActionType.RefundDebt,
-      walletId: '',
-      note: '',
-      changeDebtListBody: [
-        {
-          ticketActionType: TicketActionType.RefundDebt,
-          ticketId: ticketRef.value.id,
-          paid: 0,
-          debt: -ticketRef.value.debtTotal,
-        },
-      ],
+    const result = await TicketMoneyApi.changePaid({
+      ticketId: ticketRef.value.id,
+      body: {
+        paymentActionType: PaymentActionType.RefundDebt,
+        ticketActionType: TicketActionType.RefundDebt,
+        walletId: '',
+        isPaymentEachItem: 0,
+        paidTotal: 0,
+        debtTotal: -ticketRef.value.debtTotal,
+        note: '',
+      },
     })
   } catch (error) {
     console.log('🚀 ~ TicketClinicDetailContainer.vue:426 ~ cancelDebt ~ error:', error)
   } finally {
   }
+}
+
+const clickRefundDebt = async () => {
+  const debtRefund = Math.min(
+    ticketRef.value.debtTotal,
+    ticketRef.value.paidTotal + ticketRef.value.debtTotal - ticketRef.value.totalMoney,
+  )
+
+  ModalStore.confirm({
+    title: 'Bạn có chắc chắn muốn sửa nợ của đơn này ?',
+    content: [
+      '- Hiện tại: số nợ + số tiền thanh toán > tổng tiền đơn. Điều này cần được điều chỉnh.',
+      '- Chức năng này sẽ điều chỉnh số nợ của đơn hàng.',
+      '- Số nợ hiện tại: ' + formatMoney(ticketRef.value.debtTotal),
+      '- Số nợ điều chỉnh: ' + formatMoney(-debtRefund),
+      '- Số nợ sau khi điều chỉnh: ' + formatMoney(ticketRef.value.debtTotal - debtRefund),
+    ],
+    async onOk() {
+      try {
+        const result = await TicketMoneyApi.changePaid({
+          ticketId: ticketRef.value.id,
+          body: {
+            paymentActionType: PaymentActionType.RefundDebt,
+            ticketActionType: TicketActionType.RefundDebt,
+            walletId: '',
+            isPaymentEachItem: 0,
+            paidTotal: 0,
+            debtTotal: -debtRefund,
+            note: '',
+          },
+        })
+      } catch (error) {
+        console.log('🚀 ~ TicketClinicDetailContainer.vue:434 ~ clickRefundDebt ~ error:', error)
+      } finally {
+      }
+    },
+  })
 }
 
 const clickRefundMoneyOverall = () => {
@@ -537,7 +565,7 @@ const startPrintTicketClinicAllMoney = async () => {
       </div>
       <div
         style="text-align: right; cursor: pointer"
-        @click="modalTicketPaidHistory?.openModal({ ticket: ticketRef, refetch: true })"
+        @click="modalTicketPaidHistory?.openModal({ ticket: ticketRef })"
         class="hover:opacity-70"
       >
         <div style="font-weight: bold; color: #555">Đã thanh toán</div>
@@ -617,13 +645,27 @@ const startPrintTicketClinicAllMoney = async () => {
         <span class="font-bold">THANH TOÁN</span>
       </VueButton>
       <VueButton
-        v-if="[TicketStatus.Debt].includes(ticketRef.status)"
+        v-if="ticketRef.debtTotal > 0"
         color="green"
         icon="dollar"
         size="default"
-        @click="modalTicketPayDebt?.openModal({ ticket: ticketRef, refetch: true })"
+        @click="modalTicketPayDebt?.openModal({ ticket: ticketRef })"
       >
         <span class="font-bold">TRẢ NỢ</span>
+      </VueButton>
+      <VueButton
+        v-if="
+          [TicketStatus.Executing].includes(ticketRef.status) &&
+          ticketRef.debtTotal > 0 &&
+          ticketRef.debtTotal + ticketRef.paidTotal > ticketRef.totalMoney &&
+          userPermission[PermissionId.TICKET_REFUND_MONEY]
+        "
+        color="green"
+        icon="dollar"
+        size="default"
+        @click="clickRefundDebt"
+      >
+        <span class="font-bold">HOÀN NỢ THỪA</span>
       </VueButton>
       <VueButton
         v-if="
@@ -670,8 +712,9 @@ const startPrintTicketClinicAllMoney = async () => {
           <a
             @click="clickCancelDebt"
             v-if="
-              ticketRef.debtTotal &&
               [TicketStatus.Executing].includes(ticketRef.status) &&
+              !ticketRef.isPaymentEachItem &&
+              ticketRef.debtTotal &&
               userPermission[PermissionId.TICKET_REFUND_MONEY]
             "
           >

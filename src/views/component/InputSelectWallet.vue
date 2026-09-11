@@ -14,14 +14,16 @@ const props = withDefaults(
     disabled?: boolean
     required?: boolean
     autoSelectFirstValue?: boolean
-    optionNull?: boolean
+    prepend?: InputSelectOption<Wallet>[]
+    append?: InputSelectOption<Wallet>[]
   }>(),
   {
     walletId: '',
     disabled: false,
     required: false,
     autoSelectFirstValue: false,
-    optionNull: false,
+    prepend: () => [],
+    append: () => [],
   },
 )
 
@@ -40,13 +42,15 @@ onMounted(async () => {
   walletOptions.value = walletAll.map((i) => {
     return { value: i.id, label: i.name, data: i }
   })
-  if (props.optionNull) {
-    walletOptions.value.unshift({
-      value: '',
-      label: '.',
-      data: Wallet.init(),
-    })
+  if (props.prepend && props.prepend.length) {
+    walletOptions.value.unshift(...props.prepend)
   }
+  if (props.append && props.append.length) {
+    walletOptions.value.push(...props.append)
+  }
+  // if (!walletOptions.value.length) {
+  //   walletOptions.value.push({ value: '', label: '', data: Wallet.blank() })
+  // }
 
   if (props.walletId == '' && props.autoSelectFirstValue && walletAll.length) {
     const firstValue = walletAll[0]

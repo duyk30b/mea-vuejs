@@ -10,7 +10,7 @@ import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { Customer } from '@/modules/customer'
 import { Payment } from '@/modules/payment/payment.model'
-import { PaymentTicketItemType } from '@/modules/payment_ticket'
+import { PaymentTicketItemType } from '@/modules/payment_ticket/payment_ticket.model'
 import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
 import {
   TemplateHtml,

@@ -12,6 +12,7 @@ import type { PaymentPaginationQuery } from '@/modules/payment/payment.dto'
 import { Payment } from '@/modules/payment/payment.model'
 import {
   MoneyDirection,
+  PaymentActionType,
   PaymentActionTypeText,
   PaymentPersonType,
 } from '@/modules/payment/payment.type'
@@ -27,6 +28,7 @@ import { onBeforeMount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ModalPaymentUpdateInfo from './ModalPaymentUpdateInfo.vue'
 import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
+import { Wallet } from '@/modules/wallet'
 
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -239,7 +241,7 @@ const startPrintCustomerPayment = async (options: { payment: Payment }) => {
           <InputSelectWallet
             v-model:walletId="walletId"
             @update:walletId="startSearch"
-            optionNull
+            :prepend="[{ value: '', label: '-- Tất cả --', data: Wallet.blank() }]"
           />
         </div>
       </div>
@@ -370,7 +372,10 @@ const startPrintCustomerPayment = async (options: { payment: Payment }) => {
             </td>
             <td class="text-center">
               <IconPrint
-                v-if="payment.personType === PaymentPersonType.Customer"
+                v-if="
+                  payment.personType === PaymentPersonType.Customer &&
+                  payment.paymentActionType === PaymentActionType.PaymentMoney
+                "
                 style="font-size: 18px; color: var(--text-blue); cursor: pointer"
                 @click="startPrintCustomerPayment({ payment })"
               />

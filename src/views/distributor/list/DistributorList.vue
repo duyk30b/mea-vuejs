@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { onBeforeMount, ref } from 'vue'
 import VueButton from '@/common/VueButton.vue'
 import VuePagination from '@/common/VuePagination.vue'
 import VueTag from '@/common/VueTag.vue'
@@ -8,11 +7,14 @@ import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import { IconEditSquare } from '@/common/icon-google'
 import VueDropdown from '@/common/popover/VueDropdown.vue'
 import { InputSelect, InputText, VueSelect } from '@/common/vue-form'
+import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Distributor, DistributorService } from '@/modules/distributor'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { ESString } from '@/utils'
+import { BugDevelopment } from '@/views/component'
+import { onBeforeMount, ref } from 'vue'
 import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import ModalDistributorDetail from '../detail/ModalDistributorDetail.vue'
 import ModalDistributorUpsert from '../upsert/ModalDistributorUpsert.vue'
@@ -274,6 +276,7 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
       <table>
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE === 'development'"></th>
             <th class="cursor-pointer" @click="changeSort('id')">
               <div class="flex items-center gap-1 justify-center">
                 <span>Mã NCC</span>
@@ -348,7 +351,10 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(distributor, index) in distributorList" :key="index">
-            <td class="text-center">CC{{ distributor.id }}</td>
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+              <BugDevelopment :data="distributor" />
+            </td>
+            <td class="text-center">NCC{{ distributor.id }}</td>
             <td>
               <div>
                 {{ distributor.fullName }}

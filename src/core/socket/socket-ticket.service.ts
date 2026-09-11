@@ -1,5 +1,5 @@
 import { Image } from '@/modules/image/image.model'
-import { PaymentTicket } from '@/modules/payment_ticket'
+import { PaymentTicket } from '@/modules/payment_ticket/payment_ticket.model'
 import { Room } from '@/modules/room'
 import { Ticket } from '@/modules/ticket'
 import { TicketAttribute } from '@/modules/ticket-attribute'
