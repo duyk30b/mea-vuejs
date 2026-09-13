@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { VuePagination, VueTag } from '@/common'
-import { IconFileSearch, IconPrint } from '@/common/icon-antd'
+import { IconDownload, IconFileSearch, IconPrint } from '@/common/icon-antd'
 import { IconEditSquare } from '@/common/icon-google'
 import { InputDate, InputSelect, VueSelect } from '@/common/vue-form'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { CONFIG } from '@/config'
 import type { ConditionEnum } from '@/modules/_base/base-condition'
 import { MeService } from '@/modules/_me/me.service'
@@ -16,7 +17,9 @@ import {
   PaymentActionTypeText,
   PaymentPersonType,
 } from '@/modules/payment/payment.type'
+import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
 import { TemplateHtmlAction } from '@/modules/template-html'
+import { Wallet } from '@/modules/wallet'
 import { ESTimer } from '@/utils'
 import { Breadcrumb, BugDevelopment } from '@/views/component'
 import InputSelectWallet from '@/views/component/InputSelectWallet.vue'
@@ -27,8 +30,7 @@ import TicketLink from '@/views/room/room-ticket-base/TicketLink.vue'
 import { onBeforeMount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ModalPaymentUpdateInfo from './ModalPaymentUpdateInfo.vue'
-import { PaymentTicketService } from '@/modules/payment_ticket/payment_ticket.service'
-import { Wallet } from '@/modules/wallet'
+import { FilePaymentApi } from '@/modules/file-excel/file-payment.api'
 
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -157,6 +159,37 @@ const startPrintCustomerPayment = async (options: { payment: Payment }) => {
     payment: paymentPrint,
   })
 }
+
+const downloadExcelPaymentList = async () => {
+  ModalStore.confirm({
+    title: 'Xác nhận tải file báo cáo',
+    content: 'Thời gian tải file có thể tốn vài phút nếu dữ liệu lớn, bạn vẫn mốn tải ?',
+    onOk: async () => {
+      await FilePaymentApi.downloadExcel({
+        relation: {
+          paymentTicketList: { ticket: true },
+          paymentPurchaseOrderList: { purchaseOrder: true },
+          customer: true,
+          distributor: true,
+          cashier: true,
+          wallet: true,
+        },
+        filter: {
+          createdAt:
+            fromTime.value || toTime.value
+              ? {
+                  GTE: fromTime.value ? ESTimer.startOfDate(fromTime.value) : undefined,
+                  LT: toTime.value ? ESTimer.endOfDate(toTime.value) : undefined,
+                }
+              : undefined,
+          moneyDirection: moneyDirection.value !== null ? moneyDirection.value : undefined,
+          walletId: walletId.value ? walletId.value : undefined,
+        },
+        sort: { createdAt: 'DESC' },
+      })
+    },
+  })
+}
 </script>
 
 <template>
@@ -170,29 +203,6 @@ const startPrintCustomerPayment = async (options: { payment: Payment }) => {
   </div>
 
   <div class="page-main">
-    <div class="mt-2 p-4 flex flex-wrap items-center gap-6">
-      <div v-for="(st, i) in statistics" :key="i" class="card">
-        <template v-if="st.moneyDirection === MoneyDirection.In">
-          <div class="card-title">Tổng thu trong kỳ</div>
-          <div class="card-number" style="font-weight: 500">
-            {{ formatMoney(st.sumPaidTotal) }}
-          </div>
-        </template>
-        <template v-if="st.moneyDirection === MoneyDirection.Out">
-          <div class="card-title">Tổng chi trong kỳ</div>
-          <div class="card-number" style="font-weight: 500">
-            {{ formatMoney(-st.sumPaidTotal) }}
-          </div>
-        </template>
-        <template v-if="st.moneyDirection === MoneyDirection.Other">
-          <div class="card-title">Khác</div>
-          <div class="card-number" style="font-weight: 500">
-            {{ formatMoney(st.sumPaidTotal) }}
-          </div>
-        </template>
-      </div>
-    </div>
-
     <div class="page-main-options">
       <div style="flex: 1; flex-basis: 200px">
         <div>Từ ngày</div>
@@ -246,7 +256,38 @@ const startPrintCustomerPayment = async (options: { payment: Payment }) => {
         </div>
       </div>
     </div>
-    <div class="page-main-table table-wrapper">
+
+    <div class="p-4 flex flex-wrap items-center gap-6">
+      <div v-for="(st, i) in statistics" :key="i" class="card">
+        <template v-if="st.moneyDirection === MoneyDirection.In">
+          <div class="card-title">Tổng thu trong kỳ</div>
+          <div class="card-number" style="font-weight: 500">
+            {{ formatMoney(st.sumPaidTotal) }}
+          </div>
+        </template>
+        <template v-if="st.moneyDirection === MoneyDirection.Out">
+          <div class="card-title">Tổng chi trong kỳ</div>
+          <div class="card-number" style="font-weight: 500">
+            {{ formatMoney(-st.sumPaidTotal) }}
+          </div>
+        </template>
+        <template v-if="st.moneyDirection === MoneyDirection.Other">
+          <div class="card-title">Khác</div>
+          <div class="card-number" style="font-weight: 500">
+            {{ formatMoney(st.sumPaidTotal) }}
+          </div>
+        </template>
+      </div>
+      <div
+        class="ml-auto"
+        style="cursor: pointer; border: 1px solid #ccc; padding: 4px; border-radius: 4px"
+        @click="downloadExcelPaymentList"
+      >
+        <IconDownload width="20" height="20" />
+      </div>
+    </div>
+
+    <div class="mx-4 table-wrapper">
       <table>
         <thead>
           <tr>
@@ -254,7 +295,7 @@ const startPrintCustomerPayment = async (options: { payment: Payment }) => {
             <th>Phiếu</th>
             <th>Loại</th>
             <th>Người nộp/nhận</th>
-            <th style="min-width: 100px">Lý do</th>
+            <th style="min-width: 100px">HĐ</th>
             <th>Tiền thu</th>
             <th>Tiền chi</th>
             <th>Ví thanh toán</th>

@@ -208,7 +208,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <IconAreaChart />
       </template>
       <template #title>Thống kê</template>
-      <a-menu-item v-if="userPermission[PermissionId.STATISTIC]" key="StatisticTicket">
+      <a-menu-item v-if="userPermission[PermissionId.STATISTIC]" key="StatisticOverview">
         <router-link :to="{ name: 'StatisticOverview' }">Tổng quan</router-link>
       </a-menu-item>
       <a-menu-item v-if="userPermission[PermissionId.STATISTIC_PRODUCT]" key="StatisticProduct">

@@ -181,7 +181,7 @@ const downloadTicketList = (menu: { key: string }) => {
       </div>
       <div style="width: 150px">
         <div>&nbsp;</div>
-        <div>
+        <!-- <div>
           <VueButton
             v-if="userPermission[PermissionId.FILE_EXCEL_DOWNLOAD_TICKET_CLINIC]"
             :icon="IconDownload"
@@ -190,7 +190,7 @@ const downloadTicketList = (menu: { key: string }) => {
           >
             Download
           </VueButton>
-        </div>
+        </div> -->
       </div>
       <div class="ml-auto">
         <div>Chọn thời gian</div>
