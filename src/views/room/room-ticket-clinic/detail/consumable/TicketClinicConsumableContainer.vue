@@ -209,7 +209,7 @@ const startPrint = async () => {
           <tr v-if="ticketProductConsumableList!.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr v-for="(tpItem, index) in ticketProductConsumableList || []" :key="tpItem.productId">
+          <tr v-for="(tpItem, index) in ticketProductConsumableList || []" :key="tpItem._localId">
             <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
               <BugDevelopment :data="tpItem" />
             </td>

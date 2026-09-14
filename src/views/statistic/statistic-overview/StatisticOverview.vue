@@ -11,11 +11,11 @@ import InputSelectRoom from '@/views/component/InputSelectRoom.vue'
 import { ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import StatisticOverviewTicket from './StatisticOverviewTicket.vue'
-import StatisticOverviewPayment from './StatisticOverviewPayment.vue'
+import StatisticOverviewChargeItem from './StatisticOverviewChargeItem.vue'
 
 const TABS_KEY = {
   OVERVIEW_TICKET: 'OVERVIEW_TICKET',
-  OVERVIEW_PAYMENT: 'OVERVIEW_PAYMENT',
+  OVERVIEW_CHARGE_ITEM: 'OVERVIEW_CHARGE_ITEM',
 }
 
 const activeTab = ref<any>(TABS_KEY.OVERVIEW_TICKET)
@@ -33,15 +33,15 @@ const activeTab = ref<any>(TABS_KEY.OVERVIEW_TICKET)
     <VueTabs v-model:tabShow="activeTab">
       <template #menu>
         <VueTabMenu :tabKey="TABS_KEY.OVERVIEW_TICKET">Phiếu tiếp đón</VueTabMenu>
-        <!-- <VueTabMenu :tabKey="TABS_KEY.OVERVIEW_PAYMENT">Doanh thu</VueTabMenu> -->
+        <VueTabMenu :tabKey="TABS_KEY.OVERVIEW_CHARGE_ITEM">Doanh thu</VueTabMenu>
       </template>
       <template #panel>
         <VueTabPanel :tabKey="TABS_KEY.OVERVIEW_TICKET">
           <StatisticOverviewTicket />
         </VueTabPanel>
-        <!-- <VueTabPanel :tabKey="TABS_KEY.OVERVIEW_PAYMENT">
-          <StatisticOverviewPayment />
-        </VueTabPanel> -->
+        <VueTabPanel :tabKey="TABS_KEY.OVERVIEW_CHARGE_ITEM">
+          <StatisticOverviewChargeItem />
+        </VueTabPanel>
       </template>
     </VueTabs>
   </div>

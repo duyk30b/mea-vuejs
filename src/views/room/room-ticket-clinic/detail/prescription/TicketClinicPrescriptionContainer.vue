@@ -420,7 +420,7 @@ const clickDestroyTicketProduct = async (ticketProductProp: TicketProduct) => {
           </tr>
           <tr
             v-for="(tpItem, index) in ticketProductPrescriptionList || []"
-            :key="tpItem.productId"
+            :key="tpItem._localId"
           >
             <td v-if="CONFIG.MODE === 'development'" style="text-align: center">
               <BugDevelopment :data="tpItem" />
