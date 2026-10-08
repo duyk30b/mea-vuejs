@@ -4,6 +4,7 @@ import { InputDate, InputSelect } from '@/common/vue-form'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
+import { TicketLaboratoryApi, type TicketLaboratory } from '@/modules/ticket-laboratory'
 import {
   TicketProcedureApi,
   TicketProcedureType,
@@ -13,6 +14,7 @@ import { TicketProductApi, type TicketProduct } from '@/modules/ticket-product'
 import { TicketRadiologyApi, type TicketRadiology } from '@/modules/ticket-radiology'
 import { ESTimer } from '@/utils'
 import { BugDevelopment } from '@/views/component'
+import TicketLaboratoryStatusTooltip from '@/views/room/room-laboratory/TicketLaboratoryStatusTooltip.vue'
 import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadiologyStatusTooltip.vue'
 import TicketDeliveryStatusTooltip from '@/views/room/room-ticket-base/TicketDeliveryStatusTooltip.vue'
 import TicketItemPaymentTypeTooltip from '@/views/room/room-ticket-base/TicketItemPaymentTypeTooltip.vue'
@@ -43,6 +45,12 @@ const ticketRadiologyPagination = reactive({
   limit: 10,
   total: 0,
   ticketRadiologyList: <TicketRadiology[]>[],
+})
+const ticketLaboratoryPagination = reactive({
+  page: 1,
+  limit: 10,
+  total: 0,
+  ticketLaboratoryList: <TicketLaboratory[]>[],
 })
 
 const loaded = ref(false)
@@ -110,6 +118,25 @@ const startFetchTicketRadiology = async () => {
     )
   }
 }
+const startFetchTicketLaboratory = async () => {
+  try {
+    const fetchPromise = await TicketLaboratoryApi.pagination({
+      relation: { customer: true, laboratory: true },
+      filter: {
+        createdAt: getCreatedTimeFilter(),
+      },
+      page: ticketLaboratoryPagination.page,
+      limit: ticketLaboratoryPagination.limit,
+    })
+    ticketLaboratoryPagination.ticketLaboratoryList = fetchPromise.ticketLaboratoryList
+    ticketLaboratoryPagination.total = fetchPromise.total
+  } catch (error) {
+    console.log(
+      '🚀 ~ StatisticOverviewChargeItem.vue:119 ~ startFetchTicketLaboratory ~ error:',
+      error,
+    )
+  }
+}
 
 const startFetchData = async () => {
   try {
@@ -118,6 +145,7 @@ const startFetchData = async () => {
       startFetchTicketProduct(),
       startFetchTicketProcedure(),
       startFetchTicketRadiology(),
+      startFetchTicketLaboratory(),
     ])
   } catch (error) {
     console.log('🚀 ~ file: StatisticOverviewChargeItem.vue:49 ~ startFetchData ~ error:', error)
@@ -464,6 +492,107 @@ const handleChangeTime = async (value: any) => {
         <InputSelect
           v-model:value="ticketRadiologyPagination.limit"
           @update:value="(l: any) => startFetchTicketRadiology()"
+          :options="[
+            { value: 10, label: '10 / page' },
+            { value: 20, label: '20 / page' },
+            { value: 50, label: '50 / page' },
+            { value: 100, label: '100 / page' },
+          ]"
+        />
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <div style="font-weight: 500; font-size: 16px">
+        Thống kê phiếu XN ({{ ticketLaboratoryPagination.total }})
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th v-if="CONFIG.MODE === 'development'"></th>
+              <th>#</th>
+              <th></th>
+              <th></th>
+              <th>Thời gian</th>
+              <th>Khách hàng</th>
+              <th>Tên phiếu</th>
+              <th>Đơn giá</th>
+              <th>Chiết khấu</th>
+              <th>Thành tiền</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="ticketLaboratoryPagination.ticketLaboratoryList.length === 0">
+              <td colspan="20" class="text-center">Không có dữ liệu</td>
+            </tr>
+            <tr
+              v-for="(ticketLaboratory, index) in ticketLaboratoryPagination.ticketLaboratoryList"
+              :key="ticketLaboratory.id"
+            >
+              <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+                <BugDevelopment :data="ticketLaboratory" />
+              </td>
+              <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
+                {{
+                  index +
+                  1 +
+                  (ticketLaboratoryPagination.page - 1) * ticketLaboratoryPagination.limit
+                }}
+              </td>
+              <td>
+                <TicketItemPaymentTypeTooltip
+                  :ticketItemPaymentType="ticketLaboratory.ticketItemPaymentType"
+                />
+              </td>
+              <td class="text-center">
+                <TicketLaboratoryStatusTooltip :status="ticketLaboratory.status" />
+              </td>
+              <td class="text-center">
+                {{ ESTimer.timeToText(ticketLaboratory.createdAt, 'hh:mm DD/MM/YYYY') }}
+              </td>
+              <td>
+                {{ ticketLaboratory.customer?.fullName }}
+              </td>
+              <td>
+                <span>{{ ticketLaboratory.laboratory?.name }}</span>
+              </td>
+
+              <td class="text-right whitespace-nowrap">
+                <div v-if="ticketLaboratory.discountMoney" class="text-xs italic text-red-500">
+                  <del>{{ formatMoney(ticketLaboratory.expectedPrice) }}</del>
+                </div>
+                <div>{{ formatMoney(ticketLaboratory.actualPrice) }}</div>
+              </td>
+
+              <td class="text-center">
+                <div v-if="ticketLaboratory.discountMoney">
+                  <VueTag v-if="ticketLaboratory.discountType === 'VNĐ'" color="green">
+                    {{ formatMoney(ticketLaboratory.discountMoney) }}
+                  </VueTag>
+                  <VueTag v-if="ticketLaboratory.discountType === '%'" color="green">
+                    {{ ticketLaboratory.discountPercent || 0 }}%
+                  </VueTag>
+                </div>
+              </td>
+              <td class="text-right whitespace-nowrap">
+                {{ formatMoney(ticketLaboratory.actualPrice) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="p-4 flex flex-wrap justify-end gap-4">
+        <VuePagination
+          class="ml-auto"
+          v-model:page="ticketLaboratoryPagination.page"
+          :total="ticketLaboratoryPagination.total"
+          :limit="ticketLaboratoryPagination.limit"
+          @update:page="(p: any) => startFetchTicketLaboratory()"
+        />
+        <InputSelect
+          v-model:value="ticketLaboratoryPagination.limit"
+          @update:value="(l: any) => startFetchTicketLaboratory()"
           :options="[
             { value: 10, label: '10 / page' },
             { value: 20, label: '20 / page' },

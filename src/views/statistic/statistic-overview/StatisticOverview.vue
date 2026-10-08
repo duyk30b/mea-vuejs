@@ -33,7 +33,7 @@ const activeTab = ref<any>(TABS_KEY.OVERVIEW_TICKET)
     <VueTabs v-model:tabShow="activeTab">
       <template #menu>
         <VueTabMenu :tabKey="TABS_KEY.OVERVIEW_TICKET">Phiếu tiếp đón</VueTabMenu>
-        <VueTabMenu :tabKey="TABS_KEY.OVERVIEW_CHARGE_ITEM">Doanh thu</VueTabMenu>
+        <VueTabMenu :tabKey="TABS_KEY.OVERVIEW_CHARGE_ITEM">Chi tiết</VueTabMenu>
       </template>
       <template #panel>
         <VueTabPanel :tabKey="TABS_KEY.OVERVIEW_TICKET">

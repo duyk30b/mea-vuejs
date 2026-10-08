@@ -319,6 +319,7 @@ const openBlankStockCheckDetail = async (voucherId: string) => {
             <td>
               <VueTag bg-color="#1890ff">{{ productMovement.user?.fullName }}</VueTag>
             </td>
+            <td></td>
           </template>
 
           <td class="text-center">B{{ productMovement.batchId }}</td>

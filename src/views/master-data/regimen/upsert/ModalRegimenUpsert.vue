@@ -146,6 +146,14 @@ const clickDestroy = () => {
 
 const handleSave = async () => {
   saveLoading.value = true
+  if (!regimen.value.regimenItemList || regimen.value.regimenItemList.length === 0) {
+    ModalStore.alert({
+      title: 'Liệu trình không phù hợp',
+      content: 'Vui lòng thêm ít nhất một thủ thuật cho liệu trình',
+    })
+    saveLoading.value = false
+    return
+  }
 
   try {
     if (!regimen.value.id) {
