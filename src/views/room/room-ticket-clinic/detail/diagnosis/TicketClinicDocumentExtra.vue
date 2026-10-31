@@ -6,6 +6,7 @@ import { TemplateHtml, TemplateHtmlAction } from '@/modules/template-html'
 import { TicketChangeAttributeApi } from '@/modules/ticket'
 import { type TicketAttributeKeyType } from '@/modules/ticket-attribute'
 import { ticketRef } from '@/store/room.store'
+import { ESArray } from '@/utils'
 import { nextTick, ref, watch } from 'vue'
 
 const props = withDefaults(defineProps<{ templateHtml: TemplateHtml }>(), {
@@ -30,7 +31,7 @@ watch(
     templateHtmlIdCurrent = newValue.id
 
     const matchFieldAll = newValue.htmlInput.matchAll(/data-field="([^"]*)"/g)
-    ticketAttributeKeyList = Array.from(matchFieldAll, (match) => match[1])
+    ticketAttributeKeyList = ESArray.uniqueArray(Array.from(matchFieldAll, (match) => match[1]))
 
     ticketAttributeKeyList.forEach((key) => {
       const k = key as unknown as TicketAttributeKeyType
@@ -42,15 +43,38 @@ watch(
     nextTick(() => {
       eval(newValue?.jsInput || '')
       ticketAttributeKeyList.forEach((key) => {
-        const inputElement: HTMLInputElement | null = document.querySelector(
+        const inputElementList: NodeListOf<HTMLInputElement> = document.querySelectorAll(
           `input[data-field="${key}"]`,
         )
-        if (!inputElement) return
-        inputElement.value = ticketAttributeMap[key] || ''
-        inputElement.addEventListener('input', (e) => {
-          const target = e.target as HTMLInputElement
-          ticketAttributeMap[key] = target.value
-          checkHasChangeAttribute()
+        if (!inputElementList || inputElementList.length === 0) return
+
+        inputElementList.forEach((inputElement) => {
+          if (inputElement.type === 'text' || inputElement.type === 'textarea') {
+            inputElement.value = ticketAttributeMap[key] || ''
+            inputElement.addEventListener('input', (e) => {
+              const target = e.target as HTMLInputElement
+              ticketAttributeMap[key] = target.value
+              checkHasChangeAttribute()
+            })
+          }
+          if (inputElement.type === 'checkbox') {
+            inputElement.checked = !!ticketAttributeMap[key]
+            inputElement.addEventListener('change', (e) => {
+              const target = e.target as HTMLInputElement
+              ticketAttributeMap[key] = target.checked
+              checkHasChangeAttribute()
+            })
+          }
+          if (inputElement.type === 'radio') {
+            inputElement.checked = inputElement.value === ticketAttributeMap[key]
+            inputElement.addEventListener('change', (e) => {
+              const target = e.target as HTMLInputElement
+              if (target.checked) {
+                ticketAttributeMap[key] = target.value
+                checkHasChangeAttribute()
+              }
+            })
+          }
         })
       })
     })
@@ -70,11 +94,16 @@ watch(
       ticketAttributeOriginMap[k] = i.value
       ticketAttributeMap[k] = i.value
 
-      const inputElement: HTMLInputElement | null = document.querySelector(
+      const inputElementList: NodeListOf<HTMLInputElement> = document.querySelectorAll(
         `input[data-field="${k}"]`,
       )
-      if (inputElement) {
-        inputElement.value = i.value
+      if (inputElementList && inputElementList.length > 0) {
+        inputElementList.forEach((inputElement) => {
+          if (inputElement.type === 'text') inputElement.value = i.value
+          if (inputElement.type === 'textarea') inputElement.value = i.value
+          if (inputElement.type === 'checkbox') inputElement.checked = !!i.value
+          if (inputElement.type === 'radio') inputElement.checked = inputElement.value === i.value
+        })
       }
     })
     checkHasChangeAttribute()
