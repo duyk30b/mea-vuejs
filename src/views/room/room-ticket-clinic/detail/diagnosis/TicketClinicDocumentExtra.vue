@@ -49,14 +49,6 @@ watch(
         if (!inputElementList || inputElementList.length === 0) return
 
         inputElementList.forEach((inputElement) => {
-          if (inputElement.type === 'text' || inputElement.type === 'textarea') {
-            inputElement.value = ticketAttributeMap[key] || ''
-            inputElement.addEventListener('input', (e) => {
-              const target = e.target as HTMLInputElement
-              ticketAttributeMap[key] = target.value
-              checkHasChangeAttribute()
-            })
-          }
           if (inputElement.type === 'checkbox') {
             inputElement.checked = !!ticketAttributeMap[key]
             inputElement.addEventListener('change', (e) => {
@@ -64,8 +56,7 @@ watch(
               ticketAttributeMap[key] = target.checked
               checkHasChangeAttribute()
             })
-          }
-          if (inputElement.type === 'radio') {
+          } else if (inputElement.type === 'radio') {
             inputElement.checked = inputElement.value === ticketAttributeMap[key]
             inputElement.addEventListener('change', (e) => {
               const target = e.target as HTMLInputElement
@@ -73,6 +64,13 @@ watch(
                 ticketAttributeMap[key] = target.value
                 checkHasChangeAttribute()
               }
+            })
+          } else {
+            inputElement.value = ticketAttributeMap[key] || ''
+            inputElement.addEventListener('input', (e) => {
+              const target = e.target as HTMLInputElement
+              ticketAttributeMap[key] = target.value
+              checkHasChangeAttribute()
             })
           }
         })
@@ -99,10 +97,13 @@ watch(
       )
       if (inputElementList && inputElementList.length > 0) {
         inputElementList.forEach((inputElement) => {
-          if (inputElement.type === 'text') inputElement.value = i.value
-          if (inputElement.type === 'textarea') inputElement.value = i.value
-          if (inputElement.type === 'checkbox') inputElement.checked = !!i.value
-          if (inputElement.type === 'radio') inputElement.checked = inputElement.value === i.value
+          if (inputElement.type === 'checkbox') {
+            inputElement.checked = !!i.value
+          } else if (inputElement.type === 'radio') {
+            inputElement.checked = inputElement.value === i.value
+          } else {
+            inputElement.value = i.value
+          }
         })
       }
     })
